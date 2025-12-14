@@ -1,7 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
+
+// Import Quill styles
+import 'react-quill/dist/quill.snow.css';
+
+// DYNAMIC IMPORT FOR EDITOR (Prevents Next.js Server Error)
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -15,6 +22,7 @@ export default function AdminDashboard() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [newsList, setNewsList] = useState<any[]>([]);
+  const [categoryList, setCategoryList] = useState<any[]>([]); // NEW: Category List
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -34,9 +42,23 @@ export default function AdminDashboard() {
   // --- INPUTS (News CMS) ---
   const [newsTitle, setNewsTitle] = useState("");
   const [newsContent, setNewsContent] = useState("");
-  const [newsCategory, setNewsCategory] = useState("General"); // NEW
+  const [selectedCategory, setSelectedCategory] = useState("General");
+  const [newCategoryInput, setNewCategoryInput] = useState(""); // For creating categories
+  const [newsTags, setNewsTags] = useState(""); // Comma separated string
   const [newsFile, setNewsFile] = useState<File | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null); // NEW: For Editing
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // --- QUILL MODULES (Toolbar Settings) ---
+  const modules = useMemo(() => ({
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }], 
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link', 'blockquote', 'code-block'],
+      ['clean']
+    ],
+  }), []);
 
   // --- INIT ---
   useEffect(() => {
@@ -46,6 +68,7 @@ export default function AdminDashboard() {
         setIsAuthenticated(true);
         fetchSegments();
         fetchNews();
+        fetchCategories();
       } else {
         router.push("/login");
       }
@@ -74,6 +97,10 @@ export default function AdminDashboard() {
   async function fetchNews() {
     const { data } = await supabase.from("news").select("*").order('created_at', { ascending: false });
     setNewsList(data || []);
+  }
+  async function fetchCategories() {
+    const { data } = await supabase.from("categories").select("*").order('name');
+    setCategoryList(data || []);
   }
 
   // --- LOGIC ---
@@ -119,8 +146,20 @@ export default function AdminDashboard() {
   }
 
   // --- NEWS CMS FUNCTIONS ---
+  async function createCategory() {
+    if (!newCategoryInput) return;
+    const { error } = await supabase.from('categories').insert([{ name: newCategoryInput }]);
+    if (!error) {
+        setNewCategoryInput("");
+        fetchCategories();
+        setSelectedCategory(newCategoryInput); // Auto-select new category
+    } else {
+        alert("Error creating category (might already exist)");
+    }
+  }
+
   async function handleNewsSubmit() {
-    if (!newsTitle || !newsContent) return alert("Title & Content required");
+    if (!newsTitle) return alert("Title required");
     setSubmitting(true);
     let imageUrl = null;
 
@@ -133,37 +172,40 @@ export default function AdminDashboard() {
         imageUrl = data.publicUrl;
     }
 
+    // 2. Process Tags (comma separated -> array)
+    const tagsArray = newsTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+
     const payload: any = { 
         title: newsTitle, 
         content: newsContent, 
-        category: newsCategory 
+        category: selectedCategory,
+        tags: tagsArray
     };
     if (imageUrl) payload.image_url = imageUrl;
 
     if (editingId) {
-        // UPDATE EXISTING
         await supabase.from('news').update(payload).eq('id', editingId);
         setEditingId(null);
     } else {
-        // CREATE NEW
         await supabase.from('news').insert([payload]);
     }
 
     fetchNews();
-    setNewsTitle(""); setNewsContent(""); setNewsFile(null); setNewsCategory("General");
+    setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory(""); setNewsTags("");
     setSubmitting(false);
   }
 
   function loadForEdit(item: any) {
     setNewsTitle(item.title);
     setNewsContent(item.content);
-    setNewsCategory(item.category || "General");
+    setSelectedCategory(item.category || "General");
+    setNewsTags(item.tags ? item.tags.join(", ") : "");
     setEditingId(item.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function cancelEdit() {
-    setNewsTitle(""); setNewsContent(""); setNewsCategory("General"); setEditingId(null);
+    setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
   async function deleteItem(table: string, id: number, refresh: () => void) {
@@ -181,7 +223,7 @@ export default function AdminDashboard() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
+    <div className="flex min-h-screen bg-gray-100 font-sans text-gray-800">
       
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-gray-200 fixed h-full z-10 hidden md:flex flex-col">
@@ -210,7 +252,7 @@ export default function AdminDashboard() {
              <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News CMS</button>
         </div>
 
-        {/* --- TAB 1: STUDY MATERIALS --- */}
+        {/* --- TAB 1: STUDY MATERIALS (Unchanged functionality, condensed for clarity) --- */}
         {activeTab === 'materials' && (
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
@@ -232,7 +274,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 2. GROUPS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
@@ -249,7 +290,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 3. SUBJECTS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
@@ -266,7 +306,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 4. UPLOAD */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">4. Uploads</h3>
@@ -282,7 +321,6 @@ export default function AdminDashboard() {
                         </button>
                     </div>
                     <div className="border-t pt-4">
-                        <p className="text-xs font-bold text-gray-400 mb-2">Attached Files:</p>
                         <ul className="space-y-1 max-h-[200px] overflow-y-auto">
                             {resources.map(r => (
                                 <li key={r.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded border border-gray-100">
@@ -299,103 +337,130 @@ export default function AdminDashboard() {
 
         {/* --- TAB 2: NEWS CMS (WORDPRESS STYLE) --- */}
         {activeTab === 'news' && (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
             
-            {/* EDITOR CARD */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 relative">
-                {editingId && (
-                    <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-lg">
-                        EDITING MODE
-                    </div>
-                )}
-                <h3 className="font-bold text-lg mb-4">{editingId ? "Edit Post" : "Write New Post"}</h3>
+            <div className="flex flex-col lg:flex-row gap-6">
                 
-                <div className="space-y-4">
-                    {/* TITLE & CATEGORY */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2">
-                             <input 
-                                className="w-full text-xl font-bold p-3 border-b border-gray-200 outline-none placeholder-gray-300 focus:border-blue-500 transition" 
-                                placeholder="Enter Article Headline..."
-                                value={newsTitle}
-                                onChange={e => setNewsTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="col-span-1">
-                             <select 
-                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-100"
-                                value={newsCategory}
-                                onChange={e => setNewsCategory(e.target.value)}
+                {/* LEFT COLUMN: EDITOR (70%) */}
+                <div className="lg:w-[70%] space-y-4">
+                    <input 
+                        className="w-full text-3xl font-bold p-4 bg-white border border-gray-200 rounded-lg outline-none placeholder-gray-300 focus:border-blue-500 transition" 
+                        placeholder="Add Title"
+                        value={newsTitle}
+                        onChange={e => setNewsTitle(e.target.value)}
+                    />
+                    
+                    {/* RICH TEXT EDITOR */}
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <ReactQuill 
+                            theme="snow" 
+                            value={newsContent} 
+                            onChange={setNewsContent} 
+                            modules={modules}
+                            className="h-[400px] mb-12" // mb-12 to make space for toolbar in mobile
+                        />
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN: SIDEBAR (30%) */}
+                <div className="lg:w-[30%] space-y-6">
+                    
+                    {/* PUBLISH CARD */}
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Publish</h3>
+                        {editingId && (
+                             <div className="mb-4 p-2 bg-yellow-50 text-yellow-800 text-sm rounded font-bold">Editing Post ID: {editingId}</div>
+                        )}
+                        <div className="flex gap-2">
+                             {editingId && <button onClick={cancelEdit} className="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded">Cancel</button>}
+                             <button 
+                                onClick={handleNewsSubmit} 
+                                disabled={submitting} 
+                                className={`flex-1 py-2 rounded text-white font-bold shadow-md transition ${editingId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                              >
-                                <option value="General">General News</option>
-                                <option value="Exam Alert">🚨 Exam Alert</option>
-                                <option value="Suggestion">💡 Suggestions</option>
-                                <option value="Admission">🎓 Admission</option>
-                                <option value="Job Circular">💼 Job Circular</option>
-                             </select>
+                                {submitting ? "Saving..." : (editingId ? "Update" : "Publish")}
+                             </button>
                         </div>
                     </div>
 
-                    {/* CONTENT AREA */}
-                    <textarea 
-                        className="w-full h-48 p-4 bg-gray-50 rounded-xl border border-gray-200 outline-none focus:border-blue-500 transition font-mono text-sm"
-                        placeholder="Write your article content here..."
-                        value={newsContent}
-                        onChange={e => setNewsContent(e.target.value)}
-                    ></textarea>
-                    
-                    {/* FOOTER ACTIONS */}
-                    <div className="flex justify-between items-center pt-2">
-                        <div className="flex items-center gap-2">
-                             <span className="text-xs font-bold text-gray-400 uppercase">Cover Image</span>
-                             <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                        </div>
-                        <div className="flex gap-2">
-                            {editingId && (
-                                <button onClick={cancelEdit} className="px-6 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100">Cancel</button>
-                            )}
-                            <button onClick={handleNewsSubmit} disabled={submitting} className={`text-white px-8 py-2 rounded-lg font-bold transition shadow-lg ${editingId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                {submitting ? "Saving..." : (editingId ? "Update Post" : "Publish Post")}
-                            </button>
+                    {/* CATEGORIES CARD */}
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Categories</h3>
+                        <div className="space-y-3">
+                             <select 
+                                className="w-full p-2 bg-gray-50 border rounded text-sm"
+                                value={selectedCategory}
+                                onChange={e => setSelectedCategory(e.target.value)}
+                             >
+                                <option value="General">General</option>
+                                {categoryList.map(cat => (
+                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                ))}
+                             </select>
+                             
+                             {/* Add New Category */}
+                             <div className="flex gap-2 pt-2 border-t border-dashed">
+                                <input 
+                                    className="flex-1 p-2 border rounded text-xs" 
+                                    placeholder="New Category Name"
+                                    value={newCategoryInput}
+                                    onChange={e => setNewCategoryInput(e.target.value)}
+                                />
+                                <button onClick={createCategory} className="bg-gray-100 px-3 py-1 rounded text-xs font-bold hover:bg-gray-200">Add</button>
+                             </div>
                         </div>
                     </div>
+
+                    {/* TAGS CARD */}
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Tags (SEO)</h3>
+                        <textarea 
+                            className="w-full p-2 border rounded text-sm h-20"
+                            placeholder="Separate tags with commas (e.g. Exam, Routine, PDF)"
+                            value={newsTags}
+                            onChange={e => setNewsTags(e.target.value)}
+                        ></textarea>
+                        <p className="text-xs text-gray-400 mt-1">Separate with commas.</p>
+                    </div>
+
+                    {/* FEATURED IMAGE CARD */}
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Featured Image</h3>
+                        <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    </div>
+
                 </div>
             </div>
 
-            {/* POST LIST */}
-            <div className="flex justify-between items-end mb-4">
-                <h3 className="font-bold text-gray-500 uppercase tracking-wider text-sm">All Posts ({newsList.length})</h3>
-            </div>
-            
-            <div className="grid gap-3">
-                {newsList.map(item => (
-                    <div key={item.id} className="flex gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 items-center hover:shadow-md transition group">
-                        {/* Image Thumbnail */}
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg bg-cover bg-center shrink-0" style={{backgroundImage: `url(${item.image_url || '/placeholder.png'})`}}></div>
-                        
-                        {/* Text Content */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 uppercase tracking-wide border border-gray-200">
-                                    {item.category || "General"}
-                                </span>
-                                <span className="text-xs text-gray-400">{new Date(item.created_at).toLocaleDateString()}</span>
-                            </div>
-                            <h4 className="font-bold text-gray-900 truncate group-hover:text-blue-600 transition">{item.title}</h4>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                            <button onClick={() => loadForEdit(item)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
-                                ✏️
-                            </button>
-                            <button onClick={() => deleteItem('news', item.id, fetchNews)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                ))}
+            {/* POST LIST TABLE */}
+            <div className="mt-12">
+                <h3 className="font-bold text-gray-800 text-xl mb-6">All Posts</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Title</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Category</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Date</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {newsList.map(item => (
+                                <tr key={item.id} className="hover:bg-gray-50 group">
+                                    <td className="p-4 font-bold text-gray-900">{item.title}</td>
+                                    <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{item.category}</span></td>
+                                    <td className="p-4 text-sm text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
+                                    <td className="p-4 text-right">
+                                        <button onClick={() => loadForEdit(item)} className="text-blue-600 font-bold text-sm mr-4 hover:underline">Edit</button>
+                                        <button onClick={() => deleteItem('news', item.id, fetchNews)} className="text-red-500 font-bold text-sm hover:underline">Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
           </div>
