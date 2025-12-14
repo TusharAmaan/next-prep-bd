@@ -20,7 +20,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   if (!post) return notFound();
 
   // 2. Calculate the Absolute URL for this page based on where it's deployed
-  const headersList = headers();
+  const headersList = await headers();
   const host = headersList.get("host") || "";
   // Use https in production, http locally
   const protocol = host.includes("localhost") ? "http" : "https";
