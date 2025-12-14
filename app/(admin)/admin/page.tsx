@@ -3,34 +3,27 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminDashboard() {
-  // --- Data ---
   const [segments, setSegments] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
 
-  // --- Selections ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
 
-  // --- Inputs ---
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
   
-  // --- Resource Inputs ---
   const [resTitle, setResTitle] = useState("");
-  const [resLink, setResLink] = useState(""); // For YouTube/External
-  const [resFile, setResFile] = useState<File | null>(null); // For PDF
-  const [resType, setResType] = useState("pdf"); // 'pdf' or 'video'
-
+  const [resLink, setResLink] = useState("");
+  const [resFile, setResFile] = useState<File | null>(null);
+  const [resType, setResType] = useState("pdf");
   const [loading, setLoading] = useState(false);
 
-  // --- Initial Load ---
   useEffect(() => { fetchSegments(); }, []);
 
-  // --- Fetching Logic ---
   async function fetchSegments() {
     const { data } = await supabase.from("segments").select("*").order('id');
     if (data) setSegments(data);
@@ -44,27 +37,24 @@ export default function AdminDashboard() {
     setSubjects(data || []);
   }
   async function fetchResources(subjectId: string) {
-    const { data } = await supabase.from("resources").select("*").eq("subject_id", subjectId).order('id', { ascending: false });
+    const { data } = await supabase.from("resources").select("*").eq("subject_id", subjectId).order('created_at', { ascending: false });
     setResources(data || []);
   }
 
-  // --- Selection Handlers ---
   const handleSegmentClick = (id: string) => {
     setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); setResources([]);
     fetchGroups(id);
   };
   const handleGroupClick = (id: string) => {
     setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); setResources([]);
-    fetchGroups(selectedSegment); // Refresh current
+    fetchGroups(selectedSegment);
     fetchSubjects(id);
   };
   const handleSubjectClick = (id: string) => {
     setSelectedSubject(id);
-    fetchSubjects(selectedGroup); // Refresh current
     fetchResources(id);
   };
 
-  // --- Add Functions ---
   async function addSegment() {
     if (!newSegment) return;
     const slug = newSegment.toLowerCase().replace(/\s+/g, "-");
@@ -84,35 +74,27 @@ export default function AdminDashboard() {
     setNewSubject(""); fetchSubjects(selectedGroup);
   }
 
-  // --- RESOURCE UPLOAD FUNCTION ---
+  // --- 1. UPLOAD FUNCTION ---
   async function addResource() {
     if (!resTitle || !selectedSubject) return alert("Title required");
     setLoading(true);
 
     let finalUrl = resLink;
 
-    // 1. If it's a PDF file, upload it first
     if (resType === 'pdf' && resFile) {
         const fileName = `${Date.now()}-${resFile.name}`;
-        const { data, error } = await supabase.storage.from('materials').upload(fileName, resFile);
+        const { error: uploadError } = await supabase.storage.from('materials').upload(fileName, resFile);
+        if (uploadError) { alert("Upload Failed: " + uploadError.message); setLoading(false); return; }
         
-        if (error) {
-            alert("Upload Failed: " + error.message);
-            setLoading(false);
-            return;
-        }
-        // Get the public URL
         const { data: urlData } = supabase.storage.from('materials').getPublicUrl(fileName);
         finalUrl = urlData.publicUrl;
     }
 
-    // 2. Save to Database
     const { error } = await supabase.from("resources").insert([{
         subject_id: Number(selectedSubject),
         title: resTitle,
         type: resType,
         content_url: finalUrl,
-        is_premium: false
     }]);
 
     if (!error) {
@@ -124,11 +106,19 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
-  // --- Delete Function ---
-  async function deleteItem(table: string, id: number, callback: () => void) {
-    if(!confirm("Delete this?")) return;
-    await supabase.from(table).delete().eq("id", id);
-    callback();
+  // --- 2. DELETE FUNCTION (FIXED) ---
+  async function deleteResource(id: number) {
+    if(!confirm("Are you sure you want to delete this?")) return;
+    
+    // Delete from Database
+    const { error } = await supabase.from("resources").delete().eq("id", id);
+    
+    if (error) {
+      alert("Error deleting: " + error.message);
+    } else {
+      // Refresh list
+      fetchResources(selectedSubject);
+    }
   }
 
   return (
@@ -185,7 +175,7 @@ export default function AdminDashboard() {
           </ul>
         </div>
 
-        {/* COL 4: RESOURCES (NEW!) */}
+        {/* COL 4: RESOURCES */}
         <div className={`bg-white p-4 rounded shadow border-t-4 border-orange-500 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
           <h2 className="font-bold mb-2">4. Upload Content</h2>
           
@@ -216,7 +206,8 @@ export default function AdminDashboard() {
                         <span className="font-bold block truncate">{r.title}</span>
                         <span className="text-gray-500 uppercase text-[10px]">{r.type}</span>
                     </div>
-                    <button onClick={()=>deleteItem('resources', r.id, ()=>fetchResources(selectedSubject))} className="text-red-500 font-bold ml-2">×</button>
+                    {/* DELETE BUTTON FIXED */}
+                    <button onClick={()=>deleteResource(r.id)} className="text-red-500 font-bold ml-2 hover:bg-red-100 px-2 rounded">Delete</button>
                 </li>
             ))}
           </ul>
