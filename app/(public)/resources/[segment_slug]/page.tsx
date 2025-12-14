@@ -7,11 +7,9 @@ export const dynamic = "force-dynamic";
 export default async function Level1_Groups({ params }: { params: Promise<{ segment_slug: string }> }) {
   const { segment_slug } = await params;
   
-  // 1. Get Segment
   const { data: segment } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segment) return notFound();
 
-  // 2. Get Groups
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segment.id).order("id");
 
   return (
@@ -29,7 +27,7 @@ export default async function Level1_Groups({ params }: { params: Promise<{ segm
                 <Link 
                   key={group.id} 
                   href={`/resources/${segment.slug}/${group.slug}`} 
-                  // --- I FIXED THIS LINE BELOW ---
+                  // --- FIX IS HERE: Quotes added below ---
                   className="block bg-white p-6 rounded shadow hover:border-blue-500 border border-transparent transition"
                 >
                   <h2 className="text-xl font-bold text-gray-800">{group.title}</h2>
