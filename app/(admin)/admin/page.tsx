@@ -73,7 +73,6 @@ export default function AdminDashboard() {
     if (!newSubject || !selectedGroup) return;
     setLoading(true);
     const slug = newSubject.toLowerCase().replace(/\s+/g, "-");
-    // Notice we now link to group_id, AND segment_id (for easier querying later if needed)
     await supabase.from("subjects").insert([{ 
       title: newSubject, 
       slug, 
@@ -100,7 +99,13 @@ export default function AdminDashboard() {
         <div className="bg-white p-4 rounded shadow border-t-4 border-blue-500">
           <h2 className="font-bold text-lg mb-4">1. Exam / Segment</h2>
           <div className="flex gap-2 mb-4">
-            <input className="border p-2 w-full text-sm" value={newSegment} onChange={e=>setNewSegment(e.target.value)} placeholder="e.g. HSC" />
+            <input 
+              className="border p-2 w-full text-sm" 
+              value={newSegment} 
+              onChange={e=>setNewSegment(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && addSegment()} // <--- PRESS ENTER HERE
+              placeholder="e.g. HSC" 
+            />
             <button onClick={addSegment} className="bg-blue-600 text-white px-3 rounded">+</button>
           </div>
           <ul className="space-y-2">
@@ -120,7 +125,13 @@ export default function AdminDashboard() {
         <div className={`bg-white p-4 rounded shadow border-t-4 border-green-500 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
           <h2 className="font-bold text-lg mb-4">2. Group / Department</h2>
           <div className="flex gap-2 mb-4">
-            <input className="border p-2 w-full text-sm" value={newGroup} onChange={e=>setNewGroup(e.target.value)} placeholder="e.g. Science" />
+            <input 
+              className="border p-2 w-full text-sm" 
+              value={newGroup} 
+              onChange={e=>setNewGroup(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && addGroup()} // <--- PRESS ENTER HERE
+              placeholder="e.g. Science" 
+            />
             <button onClick={addGroup} className="bg-green-600 text-white px-3 rounded">+</button>
           </div>
           <ul className="space-y-2">
@@ -141,7 +152,13 @@ export default function AdminDashboard() {
         <div className={`bg-white p-4 rounded shadow border-t-4 border-purple-500 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
           <h2 className="font-bold text-lg mb-4">3. Subjects</h2>
           <div className="flex gap-2 mb-4">
-            <input className="border p-2 w-full text-sm" value={newSubject} onChange={e=>setNewSubject(e.target.value)} placeholder="e.g. Physics 1st" />
+            <input 
+              className="border p-2 w-full text-sm" 
+              value={newSubject} 
+              onChange={e=>setNewSubject(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && addSubject()} // <--- PRESS ENTER HERE
+              placeholder="e.g. Physics 1st" 
+            />
             <button onClick={addSubject} className="bg-purple-600 text-white px-3 rounded">+</button>
           </div>
           <ul className="space-y-2 max-h-96 overflow-y-auto">
