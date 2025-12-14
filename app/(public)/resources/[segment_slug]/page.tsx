@@ -29,6 +29,7 @@ export default async function Level1_Groups({ params }: { params: Promise<{ segm
                 <Link 
                   key={group.id} 
                   href={`/resources/${segment.slug}/${group.slug}`} 
+                  // --- THE FIX IS HERE (Added the missing class string) ---
                   className="block bg-white p-6 rounded shadow hover:border-blue-500 border border-transparent transition"
                 >
                   <h2 className="text-xl font-bold text-gray-800">{group.title}</h2>
