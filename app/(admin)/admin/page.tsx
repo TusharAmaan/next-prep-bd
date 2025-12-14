@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [newsList, setNewsList] = useState<any[]>([]);
-  const [categoryList, setCategoryList] = useState<any[]>([]); // NEW: Category List
+  const [categoryList, setCategoryList] = useState<any[]>([]); 
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -43,12 +43,12 @@ export default function AdminDashboard() {
   const [newsTitle, setNewsTitle] = useState("");
   const [newsContent, setNewsContent] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("General");
-  const [newCategoryInput, setNewCategoryInput] = useState(""); // For creating categories
-  const [newsTags, setNewsTags] = useState(""); // Comma separated string
+  const [newCategoryInput, setNewCategoryInput] = useState(""); 
+  const [newsTags, setNewsTags] = useState(""); 
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // --- QUILL MODULES (Toolbar Settings) ---
+  // --- QUILL MODULES ---
   const modules = useMemo(() => ({
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
     if (!error) {
         setNewCategoryInput("");
         fetchCategories();
-        setSelectedCategory(newCategoryInput); // Auto-select new category
+        setSelectedCategory(newCategoryInput); 
     } else {
         alert("Error creating category (might already exist)");
     }
@@ -163,7 +163,6 @@ export default function AdminDashboard() {
     setSubmitting(true);
     let imageUrl = null;
 
-    // 1. Upload Image (if selected)
     if (newsFile) {
         const fileName = `news-${Date.now()}-${newsFile.name}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, newsFile);
@@ -172,7 +171,6 @@ export default function AdminDashboard() {
         imageUrl = data.publicUrl;
     }
 
-    // 2. Process Tags (comma separated -> array)
     const tagsArray = newsTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
 
     const payload: any = { 
@@ -191,7 +189,8 @@ export default function AdminDashboard() {
     }
 
     fetchNews();
-    setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory(""); setNewsTags("");
+    // FIX APPLIED HERE: using setSelectedCategory instead of setNewsCategory
+    setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory("General"); setNewsTags("");
     setSubmitting(false);
   }
 
@@ -205,6 +204,7 @@ export default function AdminDashboard() {
   }
 
   function cancelEdit() {
+    // FIX APPLIED HERE: using setSelectedCategory instead of setNewsCategory
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
@@ -246,13 +246,14 @@ export default function AdminDashboard() {
             <h1 className="text-xl font-bold">Admin Panel</h1>
             <button onClick={handleLogout} className="text-red-500 font-bold text-sm">Sign Out</button>
         </div>
+        
         {/* Mobile Tabs */}
         <div className="md:hidden flex gap-2 mb-6">
              <button onClick={() => setActiveTab('materials')} className={`px-4 py-2 rounded-full text-sm font-bold ${activeTab === 'materials' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Study Materials</button>
              <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News CMS</button>
         </div>
 
-        {/* --- TAB 1: STUDY MATERIALS (Unchanged functionality, condensed for clarity) --- */}
+        {/* --- TAB 1: STUDY MATERIALS --- */}
         {activeTab === 'materials' && (
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
@@ -274,6 +275,7 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
+
                 {/* 2. GROUPS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
@@ -290,6 +292,7 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
+
                 {/* 3. SUBJECTS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
@@ -306,6 +309,7 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
+
                 {/* 4. UPLOAD */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">4. Uploads</h3>
@@ -335,14 +339,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 2: NEWS CMS (WORDPRESS STYLE) --- */}
+        {/* --- TAB 2: NEWS CMS --- */}
         {activeTab === 'news' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
             
             <div className="flex flex-col lg:flex-row gap-6">
                 
-                {/* LEFT COLUMN: EDITOR (70%) */}
+                {/* LEFT: EDITOR (70%) */}
                 <div className="lg:w-[70%] space-y-4">
                     <input 
                         className="w-full text-3xl font-bold p-4 bg-white border border-gray-200 rounded-lg outline-none placeholder-gray-300 focus:border-blue-500 transition" 
@@ -351,22 +355,21 @@ export default function AdminDashboard() {
                         onChange={e => setNewsTitle(e.target.value)}
                     />
                     
-                    {/* RICH TEXT EDITOR */}
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         <ReactQuill 
                             theme="snow" 
                             value={newsContent} 
                             onChange={setNewsContent} 
                             modules={modules}
-                            className="h-[400px] mb-12" // mb-12 to make space for toolbar in mobile
+                            className="h-[400px] mb-12"
                         />
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: SIDEBAR (30%) */}
+                {/* RIGHT: SIDEBAR (30%) */}
                 <div className="lg:w-[30%] space-y-6">
                     
-                    {/* PUBLISH CARD */}
+                    {/* PUBLISH */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Publish</h3>
                         {editingId && (
@@ -384,7 +387,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* CATEGORIES CARD */}
+                    {/* CATEGORIES */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Categories</h3>
                         <div className="space-y-3">
@@ -399,7 +402,6 @@ export default function AdminDashboard() {
                                 ))}
                              </select>
                              
-                             {/* Add New Category */}
                              <div className="flex gap-2 pt-2 border-t border-dashed">
                                 <input 
                                     className="flex-1 p-2 border rounded text-xs" 
@@ -412,7 +414,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* TAGS CARD */}
+                    {/* TAGS */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Tags (SEO)</h3>
                         <textarea 
@@ -424,7 +426,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-400 mt-1">Separate with commas.</p>
                     </div>
 
-                    {/* FEATURED IMAGE CARD */}
+                    {/* IMAGE */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Featured Image</h3>
                         <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
@@ -433,7 +435,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* POST LIST TABLE */}
+            {/* LIST TABLE */}
             <div className="mt-12">
                 <h3 className="font-bold text-gray-800 text-xl mb-6">All Posts</h3>
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
