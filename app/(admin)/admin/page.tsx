@@ -1,14 +1,7 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import dynamic from 'next/dynamic';
-
-// Import Quill styles
-import 'react-quill/dist/quill.snow.css';
-
-// DYNAMIC IMPORT FOR EDITOR (Prevents Next.js Server Error)
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -47,18 +40,6 @@ export default function AdminDashboard() {
   const [newsTags, setNewsTags] = useState(""); 
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-
-  // --- QUILL MODULES ---
-  const modules = useMemo(() => ({
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }], 
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link', 'blockquote', 'code-block'],
-      ['clean']
-    ],
-  }), []);
 
   // --- INIT ---
   useEffect(() => {
@@ -189,7 +170,6 @@ export default function AdminDashboard() {
     }
 
     fetchNews();
-    // FIX APPLIED HERE: using setSelectedCategory instead of setNewsCategory
     setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory("General"); setNewsTags("");
     setSubmitting(false);
   }
@@ -204,7 +184,6 @@ export default function AdminDashboard() {
   }
 
   function cancelEdit() {
-    // FIX APPLIED HERE: using setSelectedCategory instead of setNewsCategory
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
@@ -339,7 +318,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 2: NEWS CMS --- */}
+        {/* --- TAB 2: NEWS CMS (SAFE MODE - TEXTAREA ONLY) --- */}
         {activeTab === 'news' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
@@ -355,14 +334,14 @@ export default function AdminDashboard() {
                         onChange={e => setNewsTitle(e.target.value)}
                     />
                     
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <ReactQuill 
-                            theme="snow" 
-                            value={newsContent} 
-                            onChange={setNewsContent} 
-                            modules={modules}
-                            className="h-[400px] mb-12"
-                        />
+                    {/* SAFE MODE: Plain Text Area instead of Rich Editor */}
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden p-2">
+                        <textarea 
+                            className="w-full h-[400px] p-4 outline-none resize-none font-mono text-sm"
+                            placeholder="Write your article content here (HTML is supported if you want)..."
+                            value={newsContent}
+                            onChange={(e) => setNewsContent(e.target.value)}
+                        ></textarea>
                     </div>
                 </div>
 
