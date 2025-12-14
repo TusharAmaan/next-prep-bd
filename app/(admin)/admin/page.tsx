@@ -1,29 +1,58 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation"; // New Import
 
 export default function AdminDashboard() {
+  const router = useRouter(); // Hook for redirection
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Security state
+
+  // --- Data States ---
   const [segments, setSegments] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
 
+  // --- Selections ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
 
+  // --- Inputs ---
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
   
+  // --- Resource Inputs ---
   const [resTitle, setResTitle] = useState("");
-  const [resLink, setResLink] = useState("");
-  const [resFile, setResFile] = useState<File | null>(null);
-  const [resType, setResType] = useState("pdf");
+  const [resLink, setResLink] = useState(""); 
+  const [resFile, setResFile] = useState<File | null>(null); 
+  const [resType, setResType] = useState("pdf"); 
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { fetchSegments(); }, []);
+  // --- SECURITY CHECK (THE GUARD) ---
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // If no user found, kick them to login
+        router.push("/login");
+      } else {
+        // If user found, allow access
+        setIsAuthenticated(true);
+        fetchSegments();
+      }
+    }
+    checkUser();
+  }, [router]);
 
+  // --- LOGOUT FUNCTION ---
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  // --- Fetching Logic ---
   async function fetchSegments() {
     const { data } = await supabase.from("segments").select("*").order('id');
     if (data) setSegments(data);
@@ -41,6 +70,7 @@ export default function AdminDashboard() {
     setResources(data || []);
   }
 
+  // --- Selection Handlers ---
   const handleSegmentClick = (id: string) => {
     setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); setResources([]);
     fetchGroups(id);
@@ -55,6 +85,7 @@ export default function AdminDashboard() {
     fetchResources(id);
   };
 
+  // --- Add Functions ---
   async function addSegment() {
     if (!newSegment) return;
     const slug = newSegment.toLowerCase().replace(/\s+/g, "-");
@@ -74,7 +105,6 @@ export default function AdminDashboard() {
     setNewSubject(""); fetchSubjects(selectedGroup);
   }
 
-  // --- 1. UPLOAD FUNCTION ---
   async function addResource() {
     if (!resTitle || !selectedSubject) return alert("Title required");
     setLoading(true);
@@ -85,7 +115,6 @@ export default function AdminDashboard() {
         const fileName = `${Date.now()}-${resFile.name}`;
         const { error: uploadError } = await supabase.storage.from('materials').upload(fileName, resFile);
         if (uploadError) { alert("Upload Failed: " + uploadError.message); setLoading(false); return; }
-        
         const { data: urlData } = supabase.storage.from('materials').getPublicUrl(fileName);
         finalUrl = urlData.publicUrl;
     }
@@ -106,24 +135,26 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
-  // --- 2. DELETE FUNCTION (FIXED) ---
   async function deleteResource(id: number) {
     if(!confirm("Are you sure you want to delete this?")) return;
-    
-    // Delete from Database
     const { error } = await supabase.from("resources").delete().eq("id", id);
-    
-    if (error) {
-      alert("Error deleting: " + error.message);
-    } else {
-      // Refresh list
-      fetchResources(selectedSubject);
-    }
+    if (error) alert("Error deleting: " + error.message);
+    else fetchResources(selectedSubject);
+  }
+
+  // --- IF NOT LOGGED IN, HIDE EVERYTHING ---
+  if (!isAuthenticated) {
+    return <div className="p-10 text-center">Loading Security...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 text-black font-sans">
-      <h1 className="text-3xl font-bold mb-6 text-blue-900">Admin Master Control</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-blue-900">Admin Master Control</h1>
+        <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 font-bold text-sm">
+            Sign Out
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
@@ -178,21 +209,17 @@ export default function AdminDashboard() {
         {/* COL 4: RESOURCES */}
         <div className={`bg-white p-4 rounded shadow border-t-4 border-orange-500 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
           <h2 className="font-bold mb-2">4. Upload Content</h2>
-          
           <div className="bg-gray-50 p-3 rounded mb-4 border">
             <select className="w-full p-2 mb-2 border rounded" value={resType} onChange={(e)=>setResType(e.target.value)}>
                 <option value="pdf">PDF / Document</option>
                 <option value="video">Video Link (YouTube)</option>
             </select>
-            
             <input className="border p-2 w-full text-sm mb-2 rounded" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Title (e.g. Chapter 1 PDF)" />
-            
             {resType === 'pdf' ? (
                 <input type="file" accept="application/pdf" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="text-sm mb-2 w-full" />
             ) : (
                 <input className="border p-2 w-full text-sm mb-2 rounded" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="Paste YouTube Link" />
             )}
-
             <button onClick={addResource} disabled={loading} className="w-full bg-orange-600 text-white py-2 rounded font-bold hover:bg-orange-700">
                 {loading ? "Uploading..." : "Save Resource"}
             </button>
@@ -206,7 +233,6 @@ export default function AdminDashboard() {
                         <span className="font-bold block truncate">{r.title}</span>
                         <span className="text-gray-500 uppercase text-[10px]">{r.type}</span>
                     </div>
-                    {/* DELETE BUTTON FIXED */}
                     <button onClick={()=>deleteResource(r.id)} className="text-red-500 font-bold ml-2 hover:bg-red-100 px-2 rounded">Delete</button>
                 </li>
             ))}
