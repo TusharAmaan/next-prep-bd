@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // New "Loading" state
 
   // --- Data ---
   const [segments, setSegments] = useState<any[]>([]);
@@ -28,16 +29,33 @@ export default function AdminDashboard() {
   const [resLink, setResLink] = useState(""); 
   const [resFile, setResFile] = useState<File | null>(null); 
   const [resType, setResType] = useState("pdf"); 
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // --- SECURITY CHECK ---
+  // --- IMPROVED SECURITY CHECK (PERSISTENT LOGIN) ---
   useEffect(() => {
-    async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.push("/login");
-      else { setIsAuthenticated(true); fetchSegments(); }
-    }
-    checkUser();
+    const checkSession = async () => {
+      // 1. Check Local Storage for an existing session first
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        // User is logged in! Let them in immediately.
+        setIsAuthenticated(true);
+        fetchSegments();
+      } else {
+        // No session found? Double check with the server just in case.
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+           setIsAuthenticated(true);
+           fetchSegments();
+        } else {
+           // Definitely not logged in. Bye!
+           router.push("/login");
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkSession();
   }, [router]);
 
   async function handleLogout() {
@@ -99,13 +117,13 @@ export default function AdminDashboard() {
   }
   async function addResource() {
     if (!resTitle || !selectedSubject) return alert("Title required");
-    setLoading(true);
+    setSubmitting(true);
     let finalUrl = resLink;
 
     if (resType === 'pdf' && resFile) {
         const fileName = `${Date.now()}-${resFile.name}`;
         const { error: uploadError } = await supabase.storage.from('materials').upload(fileName, resFile);
-        if (uploadError) { alert("Upload Failed: " + uploadError.message); setLoading(false); return; }
+        if (uploadError) { alert("Upload Failed: " + uploadError.message); setSubmitting(false); return; }
         const { data: urlData } = supabase.storage.from('materials').getPublicUrl(fileName);
         finalUrl = urlData.publicUrl;
     }
@@ -119,19 +137,20 @@ export default function AdminDashboard() {
 
     if (!error) { setResTitle(""); setResLink(""); setResFile(null); fetchResources(selectedSubject); } 
     else { alert(error.message); }
-    setLoading(false);
+    setSubmitting(false);
   }
 
-  // --- DELETE FUNCTIONS (NEW!) ---
+  // --- DELETE FUNCTIONS ---
   async function deleteItem(table: string, id: number, refresh: () => void) {
     if(!confirm("⚠️ Delete this item? \n(You cannot undo this action)")) return;
-    
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) alert("Could not delete. Make sure it is empty first! \n\nError: " + error.message);
     else refresh();
   }
 
-  if (!isAuthenticated) return <div className="p-10 text-center">Loading...</div>;
+  // Show a blank screen or spinner while checking session (Prevents flashing login page)
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Restoring Session...</div>;
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 text-black font-sans">
@@ -200,7 +219,7 @@ export default function AdminDashboard() {
             <select className="w-full p-2 mb-2 border rounded" value={resType} onChange={(e)=>setResType(e.target.value)}><option value="pdf">PDF</option><option value="video">Video</option></select>
             <input className="border p-2 w-full text-sm mb-2 rounded" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Title" />
             {resType === 'pdf' ? <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="text-sm mb-2 w-full" /> : <input className="border p-2 w-full text-sm mb-2 rounded" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="YouTube Link" />}
-            <button onClick={addResource} disabled={loading} className="w-full bg-orange-600 text-white py-2 rounded font-bold hover:bg-orange-700">{loading ? "Uploading..." : "Save Resource"}</button>
+            <button onClick={addResource} disabled={submitting} className="w-full bg-orange-600 text-white py-2 rounded font-bold hover:bg-orange-700">{submitting ? "Uploading..." : "Save Resource"}</button>
           </div>
           <h3 className="font-bold text-sm text-gray-500 mb-2">Existing Resources:</h3>
           <ul className="space-y-2 max-h-60 overflow-y-auto">
