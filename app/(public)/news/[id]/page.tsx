@@ -71,7 +71,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         {/* 4. Add the Facebook Plugin here, passing the calculated URL */}
         <FacebookComments url={absoluteUrl} />
       </div>
-
+        // Force update deployment
     </div>
   );
 }
