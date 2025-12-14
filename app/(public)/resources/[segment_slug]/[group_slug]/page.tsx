@@ -11,7 +11,7 @@ async function getData(groupSlug: string) {
   return { group, subjects: subjects || [] };
 }
 
-export default async function SubjectListPage({ params }: { params: { segment_slug: string, group_slug: string } }) {
+export default async function SubjectListPage({ params }: { params: Promise<{ segment_slug: string, group_slug: string }> }) {
   const { segment_slug, group_slug } = await params;
   const data = await getData(group_slug);
 

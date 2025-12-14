@@ -5,14 +5,18 @@ import { supabase } from "@/lib/supabaseClient";
 export const dynamic = "force-dynamic";
 
 async function getData(slug: string) {
+  // Get the Segment ID (e.g., HSC)
   const { data: segment } = await supabase.from("segments").select("*").eq("slug", slug).single();
+  
   if (!segment) return null;
+
+  // Get the Groups (Science, Arts)
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segment.id).order("id");
+
   return { segment, groups: groups || [] };
 }
 
-export default async function GroupSelectionPage({ params }: { params: { segment_slug: string } }) {
-  // Await params first (Next.js 15 requirement, good practice for future)
+export default async function SegmentPage({ params }: { params: Promise<{ segment_slug: string }> }) {
   const { segment_slug } = await params;
   const data = await getData(segment_slug);
 
@@ -28,7 +32,9 @@ export default async function GroupSelectionPage({ params }: { params: { segment
         <p className="text-gray-600 mb-8">Select your group to continue.</p>
 
         {groups.length === 0 ? (
-          <p>No groups found. (Go to Admin Panel to add Science/Commerce/Arts)</p>
+          <div className="p-4 bg-yellow-100 text-yellow-800 rounded">
+            No groups found. (Go to Admin Panel to add Science/Commerce!)
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {groups.map((group) => (
