@@ -5,33 +5,28 @@ import { supabase } from "@/lib/supabaseClient";
 export const dynamic = "force-dynamic";
 
 export default async function Level2_Subjects({ params }: { params: Promise<{ segment_slug: string, group_slug: string }> }) {
-  // 1. Await params (Required for Next.js 15)
   const { segment_slug, group_slug } = await params;
 
-  // 2. Fetch the Parent Segment (e.g., SSC) to get its ID
+  // 1. Fetch Segment
   const { data: segment } = await supabase
     .from("segments")
     .select("id, title, slug")
     .eq("slug", segment_slug)
     .single();
 
-  if (!segment) {
-    return notFound(); // If SSC doesn't exist, show 404
-  }
+  if (!segment) return notFound();
 
-  // 3. Fetch the Group (e.g., Science) that matches both the Slug AND the Segment
+  // 2. Fetch Group
   const { data: group } = await supabase
     .from("groups")
     .select("*")
     .eq("slug", group_slug)
-    .eq("segment_id", segment.id) // strict check
+    .eq("segment_id", segment.id)
     .single();
 
-  if (!group) {
-    return notFound(); // If Science isn't found inside SSC, show 404
-  }
+  if (!group) return notFound();
 
-  // 4. Fetch Subjects for this Group
+  // 3. Fetch Subjects
   const { data: subjects } = await supabase
     .from("subjects")
     .select("*")
@@ -41,7 +36,6 @@ export default async function Level2_Subjects({ params }: { params: Promise<{ se
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Breadcrumb Navigation */}
         <div className="text-sm text-gray-500 mb-6 uppercase tracking-wide">
           <Link href="/" className="hover:text-blue-600">Home</Link> / 
           <Link href={`/resources/${segment.slug}`} className="hover:text-blue-600 mx-1">{segment.title}</Link> / 
@@ -54,7 +48,10 @@ export default async function Level2_Subjects({ params }: { params: Promise<{ se
         {(!subjects || subjects.length === 0) ? (
           <div className="bg-white p-8 rounded-lg border border-gray-200 text-center">
             <p className="text-gray-500 mb-2">No subjects found for {group.title}.</p>
-            <p className="text-sm text-gray-400">(Go to Admin Panel -> Click {group.title} -> Add Subject)</p>
+            {/* FIXED LINE BELOW: Used &rarr; instead of -> */}
+            <p className="text-sm text-gray-400">
+              (Go to Admin Panel &rarr; Click {group.title} &rarr; Add Subject)
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
