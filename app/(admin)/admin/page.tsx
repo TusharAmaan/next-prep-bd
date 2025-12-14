@@ -2,6 +2,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
+
+// 1. Import SunEditor CSS
+import 'suneditor/dist/css/suneditor.min.css'; 
+
+// 2. Dynamic Import (Prevents "document is not defined" crash)
+const SunEditor = dynamic(() => import("suneditor-react"), {
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -34,7 +43,7 @@ export default function AdminDashboard() {
 
   // --- INPUTS (News CMS) ---
   const [newsTitle, setNewsTitle] = useState("");
-  const [newsContent, setNewsContent] = useState("");
+  const [newsContent, setNewsContent] = useState(""); // Stores HTML from editor
   const [selectedCategory, setSelectedCategory] = useState("General");
   const [newCategoryInput, setNewCategoryInput] = useState(""); 
   const [newsTags, setNewsTags] = useState(""); 
@@ -156,7 +165,7 @@ export default function AdminDashboard() {
 
     const payload: any = { 
         title: newsTitle, 
-        content: newsContent, 
+        content: newsContent, // Contains the HTML from SunEditor
         category: selectedCategory,
         tags: tagsArray
     };
@@ -318,7 +327,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 2: NEWS CMS (SAFE MODE - TEXTAREA ONLY) --- */}
+        {/* --- TAB 2: NEWS CMS (SUNEDITOR - MS WORD STYLE) --- */}
         {activeTab === 'news' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
@@ -334,14 +343,26 @@ export default function AdminDashboard() {
                         onChange={e => setNewsTitle(e.target.value)}
                     />
                     
-                    {/* SAFE MODE: Plain Text Area instead of Rich Editor */}
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden p-2">
-                        <textarea 
-                            className="w-full h-[400px] p-4 outline-none resize-none font-mono text-sm"
-                            placeholder="Write your article content here (HTML is supported if you want)..."
-                            value={newsContent}
-                            onChange={(e) => setNewsContent(e.target.value)}
-                        ></textarea>
+                    {/* SUNEDITOR - "THE GOOGLE DOCS" STYLE EDITOR */}
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <SunEditor 
+                            setContents={newsContent}
+                            onChange={setNewsContent}
+                            height="450px"
+                            setOptions={{
+                                buttonList: [
+                                    ['undo', 'redo'],
+                                    ['font', 'fontSize', 'formatBlock'],
+                                    ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                                    ['removeFormat'],
+                                    ['fontColor', 'hiliteColor'],
+                                    ['outdent', 'indent'],
+                                    ['align', 'horizontalRule', 'list', 'lineHeight'],
+                                    ['table', 'link', 'image', 'video'], // Added Tables & Video
+                                    ['fullScreen', 'showBlocks', 'codeView']
+                                ]
+                            }}
+                        />
                     </div>
                 </div>
 
