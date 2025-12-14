@@ -22,9 +22,10 @@ export default async function SubjectListPage({ params }: { params: Promise<{ se
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="max-w-4xl mx-auto">
+        {/* Breadcrumb */}
         <div className="text-sm text-gray-500 mb-6">
           <Link href="/" className="hover:underline">Home</Link> / 
-          <Link href={`/resources/${segment_slug}`} className="hover:underline mx-1 capitalize">{segment_slug}</Link> / 
+          <Link href={`/resources/${segment_slug}`} className="hover:underline mx-1 uppercase">{segment_slug}</Link> / 
           <span className="text-gray-800 font-medium ml-1">{group.title}</span>
         </div>
 
@@ -35,10 +36,15 @@ export default async function SubjectListPage({ params }: { params: Promise<{ se
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {subjects.map((sub) => (
-              <div key={sub.id} className="bg-white p-5 rounded-lg border hover:border-blue-400 cursor-pointer shadow-sm">
-                <h3 className="font-bold text-lg">{sub.title}</h3>
-                <p className="text-xs text-gray-400 mt-2">Click to view content</p>
-              </div>
+              // THIS LINK IS NEW: It sends user to the resource page
+              <Link 
+                key={sub.id} 
+                href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`}
+                className="block bg-white p-5 rounded-lg border hover:border-blue-400 cursor-pointer shadow-sm hover:shadow-md transition"
+              >
+                <h3 className="font-bold text-lg text-blue-900">{sub.title}</h3>
+                <p className="text-xs text-gray-400 mt-2">Click to view materials &rarr;</p>
+              </Link>
             ))}
           </div>
         )}
