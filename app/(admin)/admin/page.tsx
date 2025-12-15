@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 // 1. Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
 
-// 2. Dynamic Import (Prevents "document is not defined" crash)
+// 2. Dynamic Import
 const SunEditor = dynamic(() => import("suneditor-react"), {
   ssr: false,
 });
@@ -24,7 +24,8 @@ export default function AdminDashboard() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [newsList, setNewsList] = useState<any[]>([]);
-  const [categoryList, setCategoryList] = useState<any[]>([]); 
+  const [categoryList, setCategoryList] = useState<any[]>([]);
+  const [ebooksList, setEbooksList] = useState<any[]>([]); // NEW: List of eBooks
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -43,16 +44,38 @@ export default function AdminDashboard() {
 
   // --- NEWS INPUTS ---
   const [newsTitle, setNewsTitle] = useState("");
-  const [newsContent, setNewsContent] = useState(""); // Stores HTML from editor
+  const [newsContent, setNewsContent] = useState(""); 
   const [selectedCategory, setSelectedCategory] = useState("General");
   const [newCategoryInput, setNewCategoryInput] = useState(""); 
   const [newsTags, setNewsTags] = useState(""); 
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // --- EBOOK INPUTS (NEW) ---
+  // --- EBOOK INPUTS ---
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
+
+  // --- FETCHERS (Wrapped in useCallback to fix linter warnings) ---
+  const fetchSegments = useCallback(async () => {
+    const { data } = await supabase.from("segments").select("*").order('id');
+    setSegments(data || []);
+  }, []);
+
+  const fetchNews = useCallback(async () => {
+    const { data } = await supabase.from("news").select("*").order('created_at', { ascending: false });
+    setNewsList(data || []);
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    const { data } = await supabase.from("categories").select("*").order('name');
+    setCategoryList(data || []);
+  }, []);
+
+  // NEW: Fetch eBooks
+  const fetchEbooks = useCallback(async () => {
+    const { data } = await supabase.from("ebooks").select("*").order('created_at', { ascending: false });
+    setEbooksList(data || []);
+  }, []);
 
   // --- INIT ---
   useEffect(() => {
@@ -63,19 +86,16 @@ export default function AdminDashboard() {
         fetchSegments();
         fetchNews();
         fetchCategories();
+        fetchEbooks(); // NEW: Fetch eBooks on load
       } else {
         router.push("/login");
       }
       setIsLoading(false);
     };
     checkSession();
-  }, [router]);
+  }, [router, fetchSegments, fetchNews, fetchCategories, fetchEbooks]);
 
-  // --- FETCHERS ---
-  async function fetchSegments() {
-    const { data } = await supabase.from("segments").select("*").order('id');
-    setSegments(data || []);
-  }
+  // --- OTHER FETCHERS ---
   async function fetchGroups(segmentId: string) {
     const { data } = await supabase.from("groups").select("*").eq("segment_id", segmentId).order('id');
     setGroups(data || []);
@@ -87,14 +107,6 @@ export default function AdminDashboard() {
   async function fetchResources(subjectId: string) {
     const { data } = await supabase.from("resources").select("*").eq("subject_id", subjectId).order('created_at', { ascending: false });
     setResources(data || []);
-  }
-  async function fetchNews() {
-    const { data } = await supabase.from("news").select("*").order('created_at', { ascending: false });
-    setNewsList(data || []);
-  }
-  async function fetchCategories() {
-    const { data } = await supabase.from("categories").select("*").order('name');
-    setCategoryList(data || []);
   }
 
   // --- LOGIC ---
@@ -112,11 +124,19 @@ export default function AdminDashboard() {
     fetchResources(id);
   };
 
-  // --- MATERIAL FUNCTIONS ---
+  // --- SHARED FUNCTIONS ---
   async function addItem(table: string, payload: any, refresh: () => void) {
     await supabase.from(table).insert([payload]);
     refresh();
   }
+  
+  async function deleteItem(table: string, id: number, refresh: () => void) {
+    if(!confirm("Are you sure you want to delete this?")) return;
+    await supabase.from(table).delete().eq("id", id);
+    refresh();
+  }
+
+  // --- MATERIAL FUNCTIONS ---
   async function uploadResource() {
     if (!resTitle || !selectedSubject) return alert("Title required");
     setSubmitting(true);
@@ -185,6 +205,7 @@ export default function AdminDashboard() {
     fetchNews();
     setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory("General"); setNewsTags("");
     setSubmitting(false);
+    setEditingId(null);
   }
 
   function loadForEdit(item: any) {
@@ -200,16 +221,6 @@ export default function AdminDashboard() {
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
-  async function deleteItem(table: string, id: number, refresh: () => void) {
-    if(!confirm("Are you sure?")) return;
-    await supabase.from(table).delete().eq("id", id);
-    refresh();
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
 
   if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
   if (!isAuthenticated) return null;
@@ -333,14 +344,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 2: NEWS CMS (SUNEDITOR) --- */}
+        {/* --- TAB 2: NEWS CMS --- */}
         {activeTab === 'news' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
-            
             <div className="flex flex-col lg:flex-row gap-6">
-                
-                {/* LEFT: EDITOR (70%) */}
+                {/* EDITOR */}
                 <div className="lg:w-[70%] space-y-4">
                     <input 
                         className="w-full text-3xl font-bold p-4 bg-white border border-gray-200 rounded-lg outline-none placeholder-gray-300 focus:border-blue-500 transition" 
@@ -348,7 +357,6 @@ export default function AdminDashboard() {
                         value={newsTitle}
                         onChange={e => setNewsTitle(e.target.value)}
                     />
-                    
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         <SunEditor 
                             setContents={newsContent}
@@ -356,182 +364,80 @@ export default function AdminDashboard() {
                             height="450px"
                             setOptions={{
                                 buttonList: [
-                                    ['undo', 'redo'],
-                                    ['font', 'fontSize', 'formatBlock'],
-                                    ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
-                                    ['removeFormat'],
-                                    ['fontColor', 'hiliteColor'],
-                                    ['outdent', 'indent'],
-                                    ['align', 'horizontalRule', 'list', 'lineHeight'],
-                                    ['table', 'link', 'image', 'video'], 
-                                    ['fullScreen', 'showBlocks', 'codeView']
+                                    ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'], ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'], ['fontColor', 'hiliteColor'], ['outdent', 'indent'], ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video'], ['fullScreen', 'showBlocks', 'codeView']
                                 ]
                             }}
                         />
                     </div>
                 </div>
-
-                {/* RIGHT: SIDEBAR (30%) */}
+                {/* SIDEBAR */}
                 <div className="lg:w-[30%] space-y-6">
-                    
-                    {/* PUBLISH */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Publish</h3>
-                        {editingId && (
-                             <div className="mb-4 p-2 bg-yellow-50 text-yellow-800 text-sm rounded font-bold">Editing Post ID: {editingId}</div>
-                        )}
+                        {editingId && <div className="mb-4 p-2 bg-yellow-50 text-yellow-800 text-sm rounded font-bold">Editing ID: {editingId}</div>}
                         <div className="flex gap-2">
                              {editingId && <button onClick={cancelEdit} className="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded">Cancel</button>}
-                             <button 
-                                onClick={handleNewsSubmit} 
-                                disabled={submitting} 
-                                className={`flex-1 py-2 rounded text-white font-bold shadow-md transition ${editingId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                             >
-                                {submitting ? "Saving..." : (editingId ? "Update" : "Publish")}
-                             </button>
+                             <button onClick={handleNewsSubmit} disabled={submitting} className={`flex-1 py-2 rounded text-white font-bold shadow-md transition ${editingId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>{submitting ? "Saving..." : (editingId ? "Update" : "Publish")}</button>
                         </div>
                     </div>
-
-                    {/* CATEGORIES */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Categories</h3>
-                        <div className="space-y-3">
-                             <select 
-                                className="w-full p-2 bg-gray-50 border rounded text-sm"
-                                value={selectedCategory}
-                                onChange={e => setSelectedCategory(e.target.value)}
-                             >
-                                <option value="General">General</option>
-                                {categoryList.map(cat => (
-                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                ))}
-                             </select>
-                             
-                             <div className="flex gap-2 pt-2 border-t border-dashed">
-                                <input 
-                                    className="flex-1 p-2 border rounded text-xs" 
-                                    placeholder="New Category Name"
-                                    value={newCategoryInput}
-                                    onChange={e => setNewCategoryInput(e.target.value)}
-                                />
-                                <button onClick={createCategory} className="bg-gray-100 px-3 py-1 rounded text-xs font-bold hover:bg-gray-200">Add</button>
-                             </div>
-                        </div>
+                        <select className="w-full p-2 bg-gray-50 border rounded text-sm mb-3" value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
+                            <option value="General">General</option>
+                            {categoryList.map(cat => (<option key={cat.id} value={cat.name}>{cat.name}</option>))}
+                        </select>
+                        <div className="flex gap-2"><input className="flex-1 p-2 border rounded text-xs" placeholder="New Category" value={newCategoryInput} onChange={e => setNewCategoryInput(e.target.value)} /><button onClick={createCategory} className="bg-gray-100 px-3 py-1 rounded text-xs font-bold">Add</button></div>
                     </div>
-
-                    {/* TAGS */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Tags (SEO)</h3>
-                        <textarea 
-                            className="w-full p-2 border rounded text-sm h-20"
-                            placeholder="Separate tags with commas (e.g. Exam, Routine, PDF)"
-                            value={newsTags}
-                            onChange={e => setNewsTags(e.target.value)}
-                        ></textarea>
+                        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Tags</h3>
+                        <textarea className="w-full p-2 border rounded text-sm h-20" placeholder="Tags (comma separated)" value={newsTags} onChange={e => setNewsTags(e.target.value)}></textarea>
                     </div>
-
-                    {/* IMAGE */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Featured Image</h3>
-                        <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs"/>
                     </div>
-
                 </div>
             </div>
-
-            {/* LIST TABLE */}
-            <div className="mt-12">
-                <h3 className="font-bold text-gray-800 text-xl mb-6">All Posts</h3>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Title</th>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Category</th>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Date</th>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {newsList.map(item => (
-                                <tr key={item.id} className="hover:bg-gray-50 group">
-                                    <td className="p-4 font-bold text-gray-900">{item.title}</td>
-                                    <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{item.category}</span></td>
-                                    <td className="p-4 text-sm text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
-                                    <td className="p-4 text-right">
-                                        <button onClick={() => loadForEdit(item)} className="text-blue-600 font-bold text-sm mr-4 hover:underline">Edit</button>
-                                        <button onClick={() => deleteItem('news', item.id, fetchNews)} className="text-red-500 font-bold text-sm hover:underline">Delete</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+            {/* LIST */}
+            <div className="mt-12 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Category</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead>
+                    <tbody className="divide-y">{newsList.map(item => (<tr key={item.id}><td className="p-4 font-bold">{item.title}</td><td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{item.category}</span></td><td className="p-4 text-right"><button onClick={() => loadForEdit(item)} className="text-blue-600 font-bold text-sm mr-4">Edit</button><button onClick={() => deleteItem('news', item.id, fetchNews)} className="text-red-500 font-bold text-sm">Delete</button></td></tr>))}</tbody>
+                </table>
             </div>
-
           </div>
         )}
 
-        {/* --- TAB 3: EBOOKS MANAGER (NEW) --- */}
+        {/* --- TAB 3: EBOOKS MANAGER --- */}
         {activeTab === 'ebooks' && (
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📚 Manage Library</h2>
             
-            {/* UPLOAD FORM WITH RICH EDITOR */}
+            {/* UPLOAD FORM */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook Details</h3>
+                <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook</h3>
                 <div className="grid grid-cols-1 gap-4">
-                    {/* Basic Details */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <input className="bg-gray-50 border p-3 rounded-lg font-bold" placeholder="Book Title" id="eb-title" />
                         <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" id="eb-author" />
                         <select className="bg-gray-50 border p-3 rounded-lg" id="eb-category">
-                            <option value="SSC">SSC</option>
-                            <option value="HSC">HSC</option>
-                            <option value="Admission">Admission</option>
-                            <option value="Job Prep">Job Prep</option>
-                            <option value="General">General</option>
+                            <option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Admission">Admission</option><option value="Job Prep">Job Prep</option><option value="General">General</option>
                         </select>
                     </div>
-
-                    {/* Rich Text Description */}
                     <div className="border rounded-lg overflow-hidden">
                         <SunEditor 
                             setContents={ebDescription}
                             onChange={setEbDescription}
                             height="300px"
-                            placeholder="Write book description, summary, or table of contents here..."
-                            setOptions={{
-                                buttonList: [
-                                    ['bold', 'underline', 'italic', 'list', 'align', 'table', 'link', 'image'],
-                                    ['font', 'fontSize', 'formatBlock', 'fontColor', 'hiliteColor'],
-                                    ['fullScreen', 'codeView']
-                                ]
-                            }}
+                            placeholder="Book description..."
+                            setOptions={{ buttonList: [['bold', 'underline', 'italic', 'list', 'align', 'table', 'link'], ['font', 'fontSize', 'fontColor'], ['fullScreen', 'codeView']] }}
                         />
                     </div>
-
-                     {/* Tags */}
-                     <input 
-                        className="bg-gray-50 border p-3 rounded-lg text-sm" 
-                        placeholder="Tags (comma separated, e.g. Physics, Chapter 5, Important)" 
-                        value={ebTags}
-                        onChange={e => setEbTags(e.target.value)}
-                    />
-
-                    {/* Files */}
+                     <input className="bg-gray-50 border p-3 rounded-lg text-sm" placeholder="Tags (comma separated)" value={ebTags} onChange={e => setEbTags(e.target.value)} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
-                            <span className="text-sm font-bold mr-2 text-red-500">📕 PDF File (Required):</span>
-                            <input type="file" className="text-xs" id="eb-file" accept="application/pdf" />
-                        </div>
-                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
-                            <span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover Image:</span>
-                            <input type="file" className="text-xs" id="eb-cover" accept="image/*" />
-                        </div>
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-red-500">📕 PDF (Required):</span><input type="file" className="text-xs" id="eb-file" accept="application/pdf" /></div>
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover:</span><input type="file" className="text-xs" id="eb-cover" accept="image/*" /></div>
                     </div>
-
-                    {/* Submit Button */}
                     <button 
                         disabled={submitting}
                         onClick={async () => {
@@ -544,12 +450,10 @@ export default function AdminDashboard() {
                             if(!title || !pdfFile) return alert("Title and PDF are required!");
                             setSubmitting(true);
                             
-                            // 1. Upload PDF
                             const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
                             await supabase.storage.from('materials').upload(pdfName, pdfFile);
                             const pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
 
-                            // 2. Upload Cover
                             let coverUrl = null;
                             if(coverFile) {
                                 const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
@@ -557,32 +461,52 @@ export default function AdminDashboard() {
                                 coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
                             }
 
-                            // 3. Process Tags
                             const tagsArray = ebTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
 
-                            // 4. Save to DB
-                            const { error } = await supabase.from('ebooks').insert([{ 
-                                title, author, category, 
-                                pdf_url: pdfUrl, 
-                                cover_url: coverUrl,
-                                description: ebDescription, 
-                                tags: tagsArray 
-                            }]);
+                            const { error } = await supabase.from('ebooks').insert([{ title, author, category, pdf_url: pdfUrl, cover_url: coverUrl, description: ebDescription, tags: tagsArray }]);
 
-                            if(error) {
-                                alert("Error uploading: " + error.message);
-                            } else {
-                                alert("eBook Uploaded Successfully!");
+                            if(error) alert("Error: " + error.message);
+                            else {
+                                alert("eBook Uploaded!");
                                 (document.getElementById('eb-title') as HTMLInputElement).value = "";
                                 setEbDescription(""); setEbTags("");
+                                fetchEbooks(); // Refresh list
                             }
                             setSubmitting(false);
                         }}
-                        className="bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center text-lg shadow-md"
+                        className="bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition shadow-md"
                     >
-                        {submitting ? "Uploading... Please wait." : "Upload eBook To Library"}
+                        {submitting ? "Uploading..." : "Upload eBook"}
                     </button>
                 </div>
+            </div>
+
+            {/* NEW: EBOOKS LIST */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b">
+                        <tr>
+                            <th className="p-4 text-xs font-bold text-gray-500">Cover</th>
+                            <th className="p-4 text-xs font-bold text-gray-500">Title</th>
+                            <th className="p-4 text-xs font-bold text-gray-500">Category</th>
+                            <th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                        {ebooksList.map(book => (
+                            <tr key={book.id}>
+                                <td className="p-4">
+                                    {book.cover_url ? <img src={book.cover_url} alt="" className="h-12 w-9 object-cover rounded shadow-sm"/> : <div className="h-12 w-9 bg-gray-100 rounded"></div>}
+                                </td>
+                                <td className="p-4 font-bold">{book.title}</td>
+                                <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{book.category}</span></td>
+                                <td className="p-4 text-right">
+                                    <button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="text-red-500 font-bold text-sm hover:underline">Delete</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
           </div>
         )}
