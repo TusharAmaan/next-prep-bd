@@ -2,52 +2,63 @@
 import { useEffect, useRef } from 'react';
 
 export default function FacebookComments({ url }: { url: string }) {
-  const hasLoaded = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (hasLoaded.current) {
-        if ((window as any).FB) {
-            (window as any).FB.XFBML.parse();
-        }
-        return;
-    }
-    hasLoaded.current = true;
+    // CAST WINDOW TO 'ANY' TO FIX THE RED ERRORS
+    const win = window as any;
 
-    // Standard Facebook SDK loader
-    (window as any).fbAsyncInit = function() {
-      (window as any).FB.init({
-        appId            : '936286300164215', // I added a generic test ID. Replace with yours later!
+    // 1. If FB is already loaded, just parse the new content
+    if (win.FB) {
+      try {
+        win.FB.XFBML.parse(containerRef.current);
+      } catch (e) {
+        console.error("FB Parse Error:", e);
+      }
+    }
+
+    // 2. Define the Init function
+    win.fbAsyncInit = function() {
+      win.FB.init({
+        // NOTE: If you don't have a real App ID yet, this might cause the box to be empty.
+        // You can leave this placeholder for now, but for production, get a real ID from developers.facebook.com
+        appId            : '1153175390297877', 
         autoLogAppEvents : true,
         xfbml            : true,
         version          : 'v18.0'
       });
+      // Force parse after init
+      if (containerRef.current) {
+        win.FB.XFBML.parse(containerRef.current);
+      }
     };
 
-    (function(d, s, id){
-       var js, fjs = d.getElementsByTagName(s)[0];
-       if (d.getElementById(id)) {return;}
-       js = d.createElement(s) as HTMLScriptElement; js.id = id;
-       js.src = "https://connect.facebook.net/en_US/sdk.js";
-       if(fjs && fjs.parentNode) {
-           fjs.parentNode.insertBefore(js, fjs);
-       }
-     }(document, 'script', 'facebook-jssdk'));
-
+    // 3. Load the Script (Standard Facebook SDK Loader)
+    if (!document.getElementById('facebook-jssdk')) {
+      const js = document.createElement('script');
+      js.id = 'facebook-jssdk';
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      js.async = true;
+      js.defer = true;
+      js.crossOrigin = "anonymous";
+      document.body.appendChild(js);
+    }
   }, [url]);
 
   return (
-    <div className="mt-12 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-       <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
+    <div ref={containerRef} className="mt-12 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[200px]">
+       <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
         💬 Discussion
        </h3>
+       
        <div id="fb-root"></div>
+
        <div 
-         className="fb-comments w-full" 
+         className="fb-comments" 
          data-href={url} 
          data-width="100%" 
-         data-numposts="5" 
-         data-colorscheme="light"
-         data-lazy="true"
+         data-numposts="5"
+         style={{ minHeight: '100px', width: '100%' }}
        ></div>
     </div>
   );
