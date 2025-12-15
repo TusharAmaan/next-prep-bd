@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- DATA ---
+  // --- DATA STATE ---
   const [segments, setSegments] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
 
-  // --- INPUTS (Materials) ---
+  // --- MATERIALS INPUTS ---
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
   const [resType, setResType] = useState("pdf");
   const [submitting, setSubmitting] = useState(false);
 
-  // --- INPUTS (News CMS) ---
+  // --- NEWS INPUTS ---
   const [newsTitle, setNewsTitle] = useState("");
   const [newsContent, setNewsContent] = useState(""); // Stores HTML from editor
   const [selectedCategory, setSelectedCategory] = useState("General");
@@ -49,6 +49,10 @@ export default function AdminDashboard() {
   const [newsTags, setNewsTags] = useState(""); 
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // --- EBOOK INPUTS (NEW) ---
+  const [ebDescription, setEbDescription] = useState(""); 
+  const [ebTags, setEbTags] = useState("");
 
   // --- INIT ---
   useEffect(() => {
@@ -119,7 +123,7 @@ export default function AdminDashboard() {
     let finalUrl = resLink;
 
     if (resType === 'pdf' && resFile) {
-        const fileName = `res-${Date.now()}-${resFile.name}`;
+        const fileName = `res-${Date.now()}-${resFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, resFile);
         if (error) { alert("Upload Failed"); setSubmitting(false); return; }
         const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
@@ -154,7 +158,7 @@ export default function AdminDashboard() {
     let imageUrl = null;
 
     if (newsFile) {
-        const fileName = `news-${Date.now()}-${newsFile.name}`;
+        const fileName = `news-${Date.now()}-${newsFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, newsFile);
         if (error) { alert("Image Upload Failed"); setSubmitting(false); return; }
         const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
@@ -165,7 +169,7 @@ export default function AdminDashboard() {
 
     const payload: any = { 
         title: newsTitle, 
-        content: newsContent, // Contains the HTML from SunEditor
+        content: newsContent, 
         category: selectedCategory,
         tags: tagsArray
     };
@@ -222,7 +226,7 @@ export default function AdminDashboard() {
         <nav className="flex-1 p-4 space-y-2">
             <button onClick={() => setActiveTab('materials')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'materials' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📚 Study Materials</button>
             <button onClick={() => setActiveTab('news')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'news' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📰 News CMS</button>
-            <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'ebooks' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📚 Manage eBooks</button>
+            <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'ebooks' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📖 Manage eBooks</button>
         </nav>
         <div className="p-4 border-t border-gray-100">
             <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded">Sign Out</button>
@@ -237,9 +241,10 @@ export default function AdminDashboard() {
         </div>
         
         {/* Mobile Tabs */}
-        <div className="md:hidden flex gap-2 mb-6">
-             <button onClick={() => setActiveTab('materials')} className={`px-4 py-2 rounded-full text-sm font-bold ${activeTab === 'materials' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Study Materials</button>
-             <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News CMS</button>
+        <div className="md:hidden flex gap-2 mb-6 overflow-x-auto">
+             <button onClick={() => setActiveTab('materials')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${activeTab === 'materials' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Materials</button>
+             <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News</button>
+             <button onClick={() => setActiveTab('ebooks')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${activeTab === 'ebooks' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>eBooks</button>
         </div>
 
         {/* --- TAB 1: STUDY MATERIALS --- */}
@@ -328,7 +333,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 2: NEWS CMS (SUNEDITOR - MS WORD STYLE) --- */}
+        {/* --- TAB 2: NEWS CMS (SUNEDITOR) --- */}
         {activeTab === 'news' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
@@ -344,7 +349,6 @@ export default function AdminDashboard() {
                         onChange={e => setNewsTitle(e.target.value)}
                     />
                     
-                    {/* SUNEDITOR - "THE GOOGLE DOCS" STYLE EDITOR */}
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         <SunEditor 
                             setContents={newsContent}
@@ -359,7 +363,7 @@ export default function AdminDashboard() {
                                     ['fontColor', 'hiliteColor'],
                                     ['outdent', 'indent'],
                                     ['align', 'horizontalRule', 'list', 'lineHeight'],
-                                    ['table', 'link', 'image', 'video'], // Added Tables & Video
+                                    ['table', 'link', 'image', 'video'], 
                                     ['fullScreen', 'showBlocks', 'codeView']
                                 ]
                             }}
@@ -424,7 +428,6 @@ export default function AdminDashboard() {
                             value={newsTags}
                             onChange={e => setNewsTags(e.target.value)}
                         ></textarea>
-                        <p className="text-xs text-gray-400 mt-1">Separate with commas.</p>
                     </div>
 
                     {/* IMAGE */}
@@ -468,66 +471,121 @@ export default function AdminDashboard() {
 
           </div>
         )}
-        {/* --- TAB 3: EBOOKS MANAGER --- */}
-{activeTab === 'ebooks' && (
-  <div className="max-w-5xl mx-auto">
-    <h2 className="text-2xl font-bold mb-6 text-gray-900">📚 Manage Library</h2>
-    
-    {/* UPLOAD FORM */}
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Book Title" id="eb-title" />
-            <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" id="eb-author" />
-            <select className="bg-gray-50 border p-3 rounded-lg" id="eb-category">
-                <option value="SSC">SSC</option>
-                <option value="HSC">HSC</option>
-                <option value="Admission">Admission</option>
-                <option value="Job Prep">Job Prep</option>
-            </select>
-            <div className="border border-dashed border-gray-300 p-2 rounded-lg flex items-center">
-                <span className="text-xs font-bold mr-2 text-gray-400">PDF:</span>
-                <input type="file" className="text-xs" id="eb-file" accept="application/pdf" />
+
+        {/* --- TAB 3: EBOOKS MANAGER (NEW) --- */}
+        {activeTab === 'ebooks' && (
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">📚 Manage Library</h2>
+            
+            {/* UPLOAD FORM WITH RICH EDITOR */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook Details</h3>
+                <div className="grid grid-cols-1 gap-4">
+                    {/* Basic Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input className="bg-gray-50 border p-3 rounded-lg font-bold" placeholder="Book Title" id="eb-title" />
+                        <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" id="eb-author" />
+                        <select className="bg-gray-50 border p-3 rounded-lg" id="eb-category">
+                            <option value="SSC">SSC</option>
+                            <option value="HSC">HSC</option>
+                            <option value="Admission">Admission</option>
+                            <option value="Job Prep">Job Prep</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+
+                    {/* Rich Text Description */}
+                    <div className="border rounded-lg overflow-hidden">
+                        <SunEditor 
+                            setContents={ebDescription}
+                            onChange={setEbDescription}
+                            height="300px"
+                            placeholder="Write book description, summary, or table of contents here..."
+                            setOptions={{
+                                buttonList: [
+                                    ['bold', 'underline', 'italic', 'list', 'align', 'table', 'link', 'image'],
+                                    ['font', 'fontSize', 'formatBlock', 'fontColor', 'hiliteColor'],
+                                    ['fullScreen', 'codeView']
+                                ]
+                            }}
+                        />
+                    </div>
+
+                     {/* Tags */}
+                     <input 
+                        className="bg-gray-50 border p-3 rounded-lg text-sm" 
+                        placeholder="Tags (comma separated, e.g. Physics, Chapter 5, Important)" 
+                        value={ebTags}
+                        onChange={e => setEbTags(e.target.value)}
+                    />
+
+                    {/* Files */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
+                            <span className="text-sm font-bold mr-2 text-red-500">📕 PDF File (Required):</span>
+                            <input type="file" className="text-xs" id="eb-file" accept="application/pdf" />
+                        </div>
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
+                            <span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover Image:</span>
+                            <input type="file" className="text-xs" id="eb-cover" accept="image/*" />
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button 
+                        disabled={submitting}
+                        onClick={async () => {
+                            const title = (document.getElementById('eb-title') as HTMLInputElement).value;
+                            const author = (document.getElementById('eb-author') as HTMLInputElement).value;
+                            const category = (document.getElementById('eb-category') as HTMLSelectElement).value;
+                            const pdfFile = (document.getElementById('eb-file') as HTMLInputElement).files?.[0];
+                            const coverFile = (document.getElementById('eb-cover') as HTMLInputElement).files?.[0];
+
+                            if(!title || !pdfFile) return alert("Title and PDF are required!");
+                            setSubmitting(true);
+                            
+                            // 1. Upload PDF
+                            const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+                            await supabase.storage.from('materials').upload(pdfName, pdfFile);
+                            const pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
+
+                            // 2. Upload Cover
+                            let coverUrl = null;
+                            if(coverFile) {
+                                const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+                                await supabase.storage.from('covers').upload(coverName, coverFile);
+                                coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
+                            }
+
+                            // 3. Process Tags
+                            const tagsArray = ebTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+
+                            // 4. Save to DB
+                            const { error } = await supabase.from('ebooks').insert([{ 
+                                title, author, category, 
+                                pdf_url: pdfUrl, 
+                                cover_url: coverUrl,
+                                description: ebDescription, 
+                                tags: tagsArray 
+                            }]);
+
+                            if(error) {
+                                alert("Error uploading: " + error.message);
+                            } else {
+                                alert("eBook Uploaded Successfully!");
+                                (document.getElementById('eb-title') as HTMLInputElement).value = "";
+                                setEbDescription(""); setEbTags("");
+                            }
+                            setSubmitting(false);
+                        }}
+                        className="bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center text-lg shadow-md"
+                    >
+                        {submitting ? "Uploading... Please wait." : "Upload eBook To Library"}
+                    </button>
+                </div>
             </div>
-            <div className="border border-dashed border-gray-300 p-2 rounded-lg flex items-center">
-                <span className="text-xs font-bold mr-2 text-gray-400">Cover:</span>
-                <input type="file" className="text-xs" id="eb-cover" accept="image/*" />
-            </div>
-            <button 
-                onClick={async () => {
-                    const title = (document.getElementById('eb-title') as HTMLInputElement).value;
-                    const author = (document.getElementById('eb-author') as HTMLInputElement).value;
-                    const category = (document.getElementById('eb-category') as HTMLSelectElement).value;
-                    const pdfFile = (document.getElementById('eb-file') as HTMLInputElement).files?.[0];
-                    const coverFile = (document.getElementById('eb-cover') as HTMLInputElement).files?.[0];
-
-                    if(!title || !pdfFile) return alert("Title and PDF are required!");
-                    
-                    // 1. Upload PDF
-                    const pdfName = `pdf-${Date.now()}-${pdfFile.name}`;
-                    await supabase.storage.from('materials').upload(pdfName, pdfFile);
-                    const pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
-
-                    // 2. Upload Cover (Optional)
-                    let coverUrl = null;
-                    if(coverFile) {
-                        const coverName = `cover-${Date.now()}-${coverFile.name}`;
-                        await supabase.storage.from('covers').upload(coverName, coverFile);
-                        coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
-                    }
-
-                    // 3. Save to DB
-                    await supabase.from('ebooks').insert([{ title, author, category, pdf_url: pdfUrl, cover_url: coverUrl }]);
-                    alert("eBook Uploaded!");
-                }}
-                className="bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition"
-            >
-                Upload eBook
-            </button>
-        </div>
-    </div>
-  </div>
-)}
+          </div>
+        )}
       </main>
     </div>
   );
