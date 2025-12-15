@@ -221,8 +221,12 @@ export default function AdminDashboard() {
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
-
-  if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
+        // --- AUTH FUNCTION ---
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            router.push("/login");
+        }
+        if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
   if (!isAuthenticated) return null;
 
   return (
