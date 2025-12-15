@@ -43,9 +43,6 @@ export default async function HomePage() {
             <a href="#segments" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-blue-900/50">
               Start Learning &rarr;
             </a>
-            <Link href="/login" className="px-8 py-3 rounded-full font-bold border border-gray-600 hover:border-gray-400 hover:bg-white/5 transition">
-              Admin Login
-            </Link>
           </div>
         </div>
       </div>

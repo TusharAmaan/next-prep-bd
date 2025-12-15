@@ -30,7 +30,7 @@ export default function Header() {
     { name: "SSC", href: "/resources/ssc" },
     { name: "HSC", href: "/resources/hsc" },
     { name: "Admission", href: "/admission" },
-    { name: "Job Prep", href: "/job-prep" },
+    { name: "Job Prep", href: "/resources/job-prep" },
     { name: "eBooks", href: "/ebooks" },
     { name: "Courses", href: "/courses" },
     { name: "News", href: "/news" },

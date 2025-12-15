@@ -222,6 +222,7 @@ export default function AdminDashboard() {
         <nav className="flex-1 p-4 space-y-2">
             <button onClick={() => setActiveTab('materials')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'materials' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📚 Study Materials</button>
             <button onClick={() => setActiveTab('news')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'news' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📰 News CMS</button>
+            <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'ebooks' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📚 Manage eBooks</button>
         </nav>
         <div className="p-4 border-t border-gray-100">
             <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded">Sign Out</button>
@@ -467,6 +468,66 @@ export default function AdminDashboard() {
 
           </div>
         )}
+        {/* --- TAB 3: EBOOKS MANAGER --- */}
+{activeTab === 'ebooks' && (
+  <div className="max-w-5xl mx-auto">
+    <h2 className="text-2xl font-bold mb-6 text-gray-900">📚 Manage Library</h2>
+    
+    {/* UPLOAD FORM */}
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+        <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Book Title" id="eb-title" />
+            <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" id="eb-author" />
+            <select className="bg-gray-50 border p-3 rounded-lg" id="eb-category">
+                <option value="SSC">SSC</option>
+                <option value="HSC">HSC</option>
+                <option value="Admission">Admission</option>
+                <option value="Job Prep">Job Prep</option>
+            </select>
+            <div className="border border-dashed border-gray-300 p-2 rounded-lg flex items-center">
+                <span className="text-xs font-bold mr-2 text-gray-400">PDF:</span>
+                <input type="file" className="text-xs" id="eb-file" accept="application/pdf" />
+            </div>
+            <div className="border border-dashed border-gray-300 p-2 rounded-lg flex items-center">
+                <span className="text-xs font-bold mr-2 text-gray-400">Cover:</span>
+                <input type="file" className="text-xs" id="eb-cover" accept="image/*" />
+            </div>
+            <button 
+                onClick={async () => {
+                    const title = (document.getElementById('eb-title') as HTMLInputElement).value;
+                    const author = (document.getElementById('eb-author') as HTMLInputElement).value;
+                    const category = (document.getElementById('eb-category') as HTMLSelectElement).value;
+                    const pdfFile = (document.getElementById('eb-file') as HTMLInputElement).files?.[0];
+                    const coverFile = (document.getElementById('eb-cover') as HTMLInputElement).files?.[0];
+
+                    if(!title || !pdfFile) return alert("Title and PDF are required!");
+                    
+                    // 1. Upload PDF
+                    const pdfName = `pdf-${Date.now()}-${pdfFile.name}`;
+                    await supabase.storage.from('materials').upload(pdfName, pdfFile);
+                    const pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
+
+                    // 2. Upload Cover (Optional)
+                    let coverUrl = null;
+                    if(coverFile) {
+                        const coverName = `cover-${Date.now()}-${coverFile.name}`;
+                        await supabase.storage.from('covers').upload(coverName, coverFile);
+                        coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
+                    }
+
+                    // 3. Save to DB
+                    await supabase.from('ebooks').insert([{ title, author, category, pdf_url: pdfUrl, cover_url: coverUrl }]);
+                    alert("eBook Uploaded!");
+                }}
+                className="bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition"
+            >
+                Upload eBook
+            </button>
+        </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );
