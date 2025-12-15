@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { headers } from 'next/headers';
-// 1. Import the new component
 import FacebookComments from "@/components/FacebookComments";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +9,6 @@ export const dynamic = "force-dynamic";
 export default async function SingleNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Fetch specific news item
   const { data: post } = await supabase
     .from("news")
     .select("*")
@@ -19,17 +17,14 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
 
   if (!post) return notFound();
 
-  // 2. Calculate the Absolute URL for this page based on where it's deployed
-  const headersList = await headers();
+  // FIX: Added 'await' here
+  const headersList = await headers(); 
   const host = headersList.get("host") || "";
-  // Use https in production, http locally
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
 
   return (
     <div className="min-h-screen bg-white font-sans pb-20">
-      
-      {/* HERO HEADER (Unchanged) */}
       <div className="w-full h-[400px] bg-gray-900 relative">
         {post.image_url && (
             <img src={post.image_url} alt={post.title} className="w-full h-full object-cover opacity-60" />
@@ -45,14 +40,11 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* CONTENT BODY */}
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div 
           className="prose prose-lg prose-blue max-w-none text-gray-800"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
-        
-        {/* TAGS */}
         {post.tags && post.tags.length > 0 && (
             <div className="mt-12 pt-8 border-t border-gray-100">
                 <p className="text-xs font-bold text-gray-400 uppercase mb-3">Related Tags:</p>
@@ -65,13 +57,13 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      {/* 3. COMMENT SECTION CONTAINER */}
+      {/* FACEBOOK COMMENTS SECTION */}
       <div className="max-w-3xl mx-auto px-6">
         <hr className="border-gray-100 mb-12" />
-        {/* 4. Add the Facebook Plugin here, passing the calculated URL */}
         <FacebookComments url={absoluteUrl} />
       </div>
-        // Force update deployment
     </div>
   );
 }
+
+// FORCE GIT UPDATE v1
