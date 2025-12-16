@@ -54,12 +54,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans">
       
-      {/* --- HERO SECTION (Restored) --- */}
+      {/* --- HERO SECTION --- */}
       <div className="relative bg-gray-900 overflow-hidden">
+        {/* Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-black/80 z-10"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30"></div>
         
-        <div className="relative z-20 max-w-7xl mx-auto px-6 py-32 md:py-48 flex flex-col items-center text-center">
+        {/* Content with padding-top to clear Fixed Header */}
+        <div className="relative z-20 max-w-7xl mx-auto px-6 py-32 md:py-48 flex flex-col items-center text-center mt-10">
             <span className="bg-blue-600 text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-widest mb-6 animate-fade-in-up">
                 Education Reimagined
             </span>
@@ -67,7 +69,7 @@ export default function Home() {
                 Unlock Your <span className="text-blue-400">Potential</span>
             </h1>
             <p className="text-gray-300 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-medium">
-                The ultimate platform for SSC, HSC, and University Admission preparation. Start learning today.
+                The ultimate platform for SSC, HSC, and University Admission preparation.
             </p>
             <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                 <a href="#segments" className="bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold py-4 px-10 rounded-full transition-all transform hover:scale-105 hover:shadow-xl shadow-blue-900/50">
@@ -77,7 +79,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- CLASS SELECTION SECTION (Restored) --- */}
+      {/* --- CLASS SELECTION SECTION --- */}
       <div id="segments" className="max-w-7xl mx-auto px-6 py-20 border-b border-gray-100">
         <div className="border-l-4 border-blue-600 pl-4 mb-10">
             <h2 className="text-3xl font-bold text-gray-900">Select Your Class</h2>
