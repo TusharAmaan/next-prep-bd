@@ -273,7 +273,7 @@ export default function AdminDashboard() {
     setEbTitle(""); setEbAuthor(""); setEbCategory("SSC"); setEbDescription(""); setEbTags(""); setEditingEbookId(null);
   }
 
-  async function handleEbookSubmit() {
+async function handleEbookSubmit() {
       if(!ebTitle) return alert("Title is required!");
       setSubmitting(true);
 
@@ -283,17 +283,19 @@ export default function AdminDashboard() {
       let pdfUrl = null;
       let coverUrl = null;
 
-      // 1. Upload PDF
+      // 1. Upload PDF (Only if new file selected)
       if (pdfFile) {
         const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        await supabase.storage.from('materials').upload(pdfName, pdfFile);
+        const { error } = await supabase.storage.from('materials').upload(pdfName, pdfFile);
+        if (error) { alert("PDF Upload Error: " + error.message); setSubmitting(false); return; }
         pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
       }
 
-      // 2. Upload Cover
+      // 2. Upload Cover (Only if new file selected)
       if (coverFile) {
         const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        await supabase.storage.from('covers').upload(coverName, coverFile);
+        const { error } = await supabase.storage.from('covers').upload(coverName, coverFile);
+        if (error) { alert("Cover Upload Error: " + error.message); setSubmitting(false); return; }
         coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
       }
 
@@ -306,27 +308,53 @@ export default function AdminDashboard() {
           description: ebDescription, 
           tags: tagsArray 
       };
+      
+      // Only attach new URLs if files were uploaded
       if (pdfUrl) payload.pdf_url = pdfUrl;
       if (coverUrl) payload.cover_url = coverUrl;
 
       // 4. Update or Insert
       if (editingEbookId) {
-          const { error } = await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
-          if (error) alert("Error updating: " + error.message);
-          else alert("eBook Updated Successfully!");
+          // UPDATE Logic
+          console.log("Updating ID:", editingEbookId, "with payload:", payload);
+          
+          const { data, error } = await supabase
+              .from('ebooks')
+              .update(payload)
+              .eq('id', editingEbookId)
+              .select(); // <--- Important: returns the updated row to verify success
+
+          if (error) {
+              alert("Update Failed: " + error.message);
+          } else if (!data || data.length === 0) {
+              alert("Update Failed: Database could not find this book ID to update. Try refreshing the page.");
+          } else {
+              alert("eBook Updated Successfully!");
+              cancelEbookEdit(); // Close edit mode
+              fetchEbooks();     // Refresh the list immediately
+          }
       } else {
-          if (!pdfUrl) { alert("PDF is required for new books!"); setSubmitting(false); return; }
-          payload.pdf_url = pdfUrl;
+          // INSERT Logic
+          if (!pdfUrl) {
+              alert("PDF is required for new books!"); 
+              setSubmitting(false); 
+              return;
+          }
+          // Ensure PDF is attached for new items
+          payload.pdf_url = pdfUrl; 
+          
           const { error } = await supabase.from('ebooks').insert([payload]);
-          if (error) alert("Error creating: " + error.message);
-          else alert("eBook Created Successfully!");
+          if (error) {
+              alert("Creation Error: " + error.message);
+          } else {
+              alert("eBook Created Successfully!");
+              cancelEbookEdit();
+              (document.getElementById('eb-file') as HTMLInputElement).value = "";
+              (document.getElementById('eb-cover') as HTMLInputElement).value = "";
+              fetchEbooks();
+          }
       }
 
-      // 5. Cleanup
-      cancelEbookEdit();
-      (document.getElementById('eb-file') as HTMLInputElement).value = "";
-      (document.getElementById('eb-cover') as HTMLInputElement).value = "";
-      fetchEbooks();
       setSubmitting(false);
   }
 
