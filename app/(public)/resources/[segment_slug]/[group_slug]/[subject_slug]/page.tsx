@@ -1,135 +1,178 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function Level3_Resources({ params }: { params: Promise<{ segment_slug: string, group_slug: string, subject_slug: string }> }) {
-  const { segment_slug, group_slug, subject_slug } = await params;
+export default async function SubjectPage({ params }: { params: Promise<{ segment: string; group: string; subject: string }> }) {
+  const { segment, group, subject } = await params;
 
-  // 1. Fetch Subject (Safe Mode)
-  const { data: subject } = await supabase
-    .from("subjects")
-    .select("*")
-    .eq("slug", subject_slug)
-    .limit(1)
-    .maybeSingle();
+  // 1. Fetch Metadata (Segment, Group, Subject)
+  const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment).single();
+  const { data: groupData } = await supabase.from("groups").select("*").eq("slug", group).single();
+  const { data: subjectData } = await supabase.from("subjects").select("*").eq("slug", subject).single();
 
-  if (!subject) return notFound();
+  if (!segmentData || !groupData || !subjectData) return notFound();
 
-  // 2. Fetch Resources
+  // 2. Fetch Resources (Notes, Videos, etc.)
   const { data: resources } = await supabase
     .from("resources")
     .select("*")
-    .eq("subject_id", subject.id)
+    .eq("subject_id", subjectData.id)
     .order("created_at", { ascending: false });
 
+  // 3. Fetch Recommended eBooks (Matching the Segment, e.g., SSC)
+  const { data: relatedEbooks } = await supabase
+    .from("ebooks")
+    .select("*")
+    .eq("category", segmentData.title) // e.g. "SSC"
+    .limit(4);
+
+  // 4. Fetch Recommended Courses (Just showing latest 3 for now)
+  const { data: relatedCourses } = await supabase
+    .from("courses")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  // Filter Resources locally for UI separation
+  const pdfResources = resources?.filter(r => r.type === 'pdf') || [];
+  const videoResources = resources?.filter(r => r.type === 'video') || [];
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       
-      {/* --- HERO HEADER --- */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-16 px-6 shadow-xl relative overflow-hidden">
-        {/* Decorative Background Blob */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none"></div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-            {/* Breadcrumb Pill */}
-            <div className="inline-flex items-center bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-blue-100 mb-6 border border-white/10">
-                <Link href="/" className="hover:text-white transition">Home</Link>
-                <span className="mx-2 opacity-50">/</span>
-                <Link href={`/resources/${segment_slug}`} className="hover:text-white transition uppercase">{segment_slug}</Link>
-                <span className="mx-2 opacity-50">/</span>
-                <Link href={`/resources/${segment_slug}/${group_slug}`} className="hover:text-white transition capitalize">{group_slug.replace('-', ' ')}</Link>
+      {/* PAGE HEADER */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <Link href="/" className="hover:text-blue-600">Home</Link> / 
+                <Link href={`/resources/${segment}/${group}`} className="hover:text-blue-600">{groupData.title}</Link> /
+                <span className="text-blue-600">{subjectData.title}</span>
             </div>
-
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">{subject.title}</h1>
-                    <p className="text-blue-200 text-lg">Access all study materials, notes, and lectures below.</p>
-                </div>
-                {/* Back Button */}
-                <Link 
-                    href={`/resources/${segment_slug}/${group_slug}`}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition font-semibold text-sm w-fit"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                    </svg>
-                    Back to Subjects
-                </Link>
-            </div>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">{subjectData.title}</h1>
+            <p className="text-gray-500 max-w-2xl">Access complete study materials, chapter-wise notes, video lectures, and previous year board questions.</p>
         </div>
       </div>
 
-      {/* --- CONTENT GRID --- */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {(!resources || resources.length === 0) ? (
-          // Empty State
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-gray-200 text-center">
-             <div className="bg-gray-50 p-6 rounded-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-gray-400">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-             </div>
-             <h3 className="text-xl font-bold text-gray-800">No content available yet</h3>
-             <p className="text-gray-500 max-w-sm mt-2">Materials for this subject are being prepared. Check back later!</p>
-          </div>
-        ) : (
-          // Grid Layout
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resources.map((res) => {
-               if (!res.content_url) return null;
-               const isVideo = res.type === 'video';
-
-               return (
-                <a 
-                  key={res.id} 
-                  href={res.content_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className={`group relative flex flex-col bg-white rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl overflow-hidden
-                    ${isVideo ? 'border-blue-100 hover:border-blue-300' : 'border-red-100 hover:border-red-300'}`}
-                >
-                  {/* Top Color Stripe */}
-                  <div className={`h-2 w-full ${isVideo ? 'bg-blue-500' : 'bg-red-500'}`}></div>
-
-                  <div className="p-6 flex-1 flex flex-col">
-                    {/* Header: Type Badge & Icon */}
-                    <div className="flex justify-between items-start mb-4">
-                        <div className={`p-3 rounded-xl ${isVideo ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
-                             {isVideo ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                             ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                             )}
-                        </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider py-1 px-2 rounded-md ${isVideo ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                            {isVideo ? 'Video Class' : 'PDF Notes'}
-                        </span>
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            {/* LEFT CONTENT (8 Cols) */}
+            <div className="lg:col-span-8 space-y-10">
+                
+                {/* 1. LECTURE NOTES & MATERIALS */}
+                <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-600 p-1 rounded">📄</span> Study Materials
+                    </h2>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        {pdfResources.length > 0 ? (
+                            <div className="divide-y divide-gray-100">
+                                {pdfResources.map(res => (
+                                    <div key={res.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+                                        <div className="flex items-center gap-3">
+                                            <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H8z" clipRule="evenodd"/></svg>
+                                            <div>
+                                                <h4 className="font-bold text-gray-800 text-sm">{res.title}</h4>
+                                                <span className="text-xs text-gray-400">PDF Document</span>
+                                            </div>
+                                        </div>
+                                        <a href={res.content_url} target="_blank" className="bg-blue-50 text-blue-600 text-xs font-bold px-4 py-2 rounded-full hover:bg-blue-600 hover:text-white transition">Download</a>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center text-gray-400 italic">No lecture notes available yet.</div>
+                        )}
                     </div>
+                </section>
 
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
-                        {res.title}
-                    </h3>
-                    
-                    {/* Helper text */}
-                    <p className="text-xs text-gray-500 mt-auto">
-                        {isVideo ? 'Click to watch on YouTube' : 'Click to view or download'}
-                    </p>
-                  </div>
+                {/* 2. VIDEO LECTURES */}
+                {videoResources.length > 0 && (
+                    <section>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="bg-red-100 text-red-600 p-1 rounded">🎬</span> Video Classes
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {videoResources.map(video => (
+                                <a href={video.content_url} target="_blank" key={video.id} className="block group bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition">
+                                    <div className="h-40 bg-gray-900 relative flex items-center justify-center">
+                                        {/* Fake Thumbnail Overlay */}
+                                        <div className="text-white flex flex-col items-center">
+                                            <svg className="w-12 h-12 opacity-80 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <h4 className="font-bold text-gray-800 text-sm line-clamp-2 group-hover:text-blue-600">{video.title}</h4>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-                  {/* Bottom Action Area */}
-                  <div className={`px-6 py-3 border-t flex items-center justify-between text-sm font-bold transition-colors
-                    ${isVideo ? 'bg-blue-50/50 border-blue-100 text-blue-700 group-hover:bg-blue-600 group-hover:text-white' : 'bg-red-50/50 border-red-100 text-red-700 group-hover:bg-red-600 group-hover:text-white'}`}>
-                      <span>{isVideo ? 'Watch Now' : 'Read Now'}</span>
-                      <span className="transform group-hover:translate-x-1 transition-transform">&rarr;</span>
-                  </div>
-                </a>
-               );
-            })}
-          </div>
-        )}
+                {/* 3. PREVIOUS YEAR QUESTIONS (Placeholder Section for now) */}
+                <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="bg-yellow-100 text-yellow-700 p-1 rounded">❓</span> Previous Year Questions
+                    </h2>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
+                        <p className="text-yellow-800 font-bold mb-2">Question Bank Coming Soon</p>
+                        <p className="text-sm text-yellow-700">We are currently uploading board questions for {subjectData.title}. Check the "Study Materials" section above for any available PDFs.</p>
+                    </div>
+                </section>
+
+                {/* 4. RECOMMENDED COURSES */}
+                {relatedCourses && relatedCourses.length > 0 && (
+                    <section>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Courses</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {relatedCourses.map(course => (
+                                <Link href={`/courses/${course.id}`} key={course.id} className="flex gap-4 bg-white p-3 rounded-xl border border-gray-200 hover:border-blue-300 transition group">
+                                    <div className="w-24 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                                        {course.thumbnail_url && <img src={course.thumbnail_url} className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 line-clamp-2">{course.title}</h4>
+                                        <span className="text-xs font-bold text-green-600 mt-1 block">{course.price || "Free"}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+            </div>
+
+            {/* RIGHT SIDEBAR (4 Cols) */}
+            <div className="lg:col-span-4 space-y-8">
+                <Sidebar />
+
+                {/* 5. RECOMMENDED EBOOKS (Sidebar Widget) */}
+                {relatedEbooks && relatedEbooks.length > 0 && (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <h3 className="font-bold text-gray-900 mb-4 pb-2 border-b">Recommended Books</h3>
+                        <div className="space-y-4">
+                            {relatedEbooks.map(book => (
+                                <Link href={`/ebooks/${book.id}`} key={book.id} className="flex gap-3 group">
+                                    <div className="w-12 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden border">
+                                        {book.cover_url && <img src={book.cover_url} className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 leading-tight">{book.title}</h4>
+                                        <p className="text-xs text-gray-400 mt-1">{book.author}</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                        <Link href="/ebooks" className="block mt-4 text-center text-xs font-bold text-blue-600 hover:underline">View All eBooks</Link>
+                    </div>
+                )}
+            </div>
+
+        </div>
       </div>
     </div>
   );
