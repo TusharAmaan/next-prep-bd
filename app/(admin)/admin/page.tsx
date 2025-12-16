@@ -27,7 +27,7 @@ export default function AdminDashboard() {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [ebooksList, setEbooksList] = useState<any[]>([]);
-  const [coursesList, setCoursesList] = useState<any[]>([]); // NEW: Courses List
+  const [coursesList, setCoursesList] = useState<any[]>([]);
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -42,14 +42,13 @@ export default function AdminDashboard() {
   const [resLink, setResLink] = useState("");
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
+  const [submitting, setSubmitting] = useState(false);
   
   // Blog Post Inputs (Materials Tab)
   const [blogContent, setBlogContent] = useState("");
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [blogTags, setBlogTags] = useState("");
   const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
-
-  const [submitting, setSubmitting] = useState(false);
 
   // --- NEWS INPUTS ---
   const [newsTitle, setNewsTitle] = useState("");
@@ -68,7 +67,7 @@ export default function AdminDashboard() {
   const [ebTags, setEbTags] = useState("");
   const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
-  // --- COURSE INPUTS (NEW) ---
+  // --- COURSE INPUTS ---
   const [cTitle, setCTitle] = useState("");
   const [cInstructor, setCInstructor] = useState("");
   const [cPrice, setCPrice] = useState("");
@@ -99,7 +98,7 @@ export default function AdminDashboard() {
     fetchNews();
     fetchCategories();
     fetchEbooks();
-    fetchCourses(); // NEW
+    fetchCourses();
   }, []);
 
   async function fetchSegments() {
@@ -118,7 +117,6 @@ export default function AdminDashboard() {
     const { data } = await supabase.from("ebooks").select("*").order('created_at', { ascending: false });
     setEbooksList(data || []);
   }
-  // NEW: Fetch Courses
   async function fetchCourses() {
     const { data } = await supabase.from("courses").select("*").order('created_at', { ascending: false });
     setCoursesList(data || []);
@@ -282,12 +280,14 @@ export default function AdminDashboard() {
 
       if (pdfFile) {
         const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        await supabase.storage.from('materials').upload(pdfName, pdfFile);
+        const { error } = await supabase.storage.from('materials').upload(pdfName, pdfFile);
+        if (error) { alert("PDF Upload Failed: "+ error.message); setSubmitting(false); return; }
         pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
       }
       if (coverFile) {
         const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        await supabase.storage.from('covers').upload(coverName, coverFile);
+        const { error } = await supabase.storage.from('covers').upload(coverName, coverFile);
+        if (error) { alert("Cover Upload Failed: "+ error.message); setSubmitting(false); return; }
         coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
       }
 
@@ -313,7 +313,7 @@ export default function AdminDashboard() {
       setSubmitting(false);
   }
 
-  // --- NEW: COURSE ACTIONS ---
+  // --- COURSE ACTIONS (FIXED) ---
   async function handleCourseSubmit() {
     if(!cTitle) return alert("Course Title is required!");
     setSubmitting(true);
@@ -334,19 +334,23 @@ export default function AdminDashboard() {
     if (thumbUrl) payload.thumbnail_url = thumbUrl;
 
     if (editingCourseId) {
-        await supabase.from('courses').update(payload).eq('id', editingCourseId);
-        alert("Course Updated!");
+        // UPDATE LOGIC
+        const { error } = await supabase.from('courses').update(payload).eq('id', editingCourseId);
+        if (error) alert("Error updating course: " + error.message);
+        else alert("Course Updated Successfully!");
     } else {
+        // INSERT LOGIC
         if(!thumbUrl) { alert("Thumbnail is required for new courses!"); setSubmitting(false); return; }
         payload.thumbnail_url = thumbUrl;
-        await supabase.from('courses').insert([payload]);
-        alert("Course Created!");
+        const { error } = await supabase.from('courses').insert([payload]);
+        if (error) alert("Error creating course: " + error.message);
+        else alert("Course Created Successfully!");
     }
 
     setSubmitting(false);
     setEditingCourseId(null);
     setCTitle(""); setCInstructor(""); setCPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null);
-    fetchCourses();
+    fetchCourses(); // Refresh list
   }
 
   if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
@@ -389,127 +393,159 @@ export default function AdminDashboard() {
              <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News</button>
         </div>
 
-        {/* --- TAB 1: STUDY MATERIALS --- */}
-{activeTab === 'materials' && (
-  <div>
-    <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
-    
-    {/* TOP ROW: SELECTION GRID (3 COLUMNS) */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        
-        {/* 1. SEGMENTS (Keep your existing code for segments here) */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            {/* ... keep segment inputs and list code ... */}
-        </div>
-
-        {/* 2. GROUPS (Keep your existing code for groups here) */}
-        <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
-             {/* ... keep group inputs and list code ... */}
-        </div>
-
-        {/* 3. SUBJECTS (Keep your existing code for subjects here) */}
-        <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
-             {/* ... keep subject inputs and list code ... */}
-        </div>
-
-    </div> {/* <--- CLOSE THE GRID HERE */}
-
-
-    {/* BOTTOM ROW: UPLOADS (FULL WIDTH) */}
-    {/* Note: We changed the width to max-w-4xl and added margin auto to center it nicely */}
-    <div className={`max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-        
-        <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider mb-6 border-b pb-4 flex items-center gap-2">
-            <span>4. Upload Content</span>
-            {selectedSubject && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Selected: Subject ID {selectedSubject}</span>}
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* LEFT SIDE: INPUTS */}
-            <div className="space-y-4">
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Resource Type</label>
-                    <select className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold text-gray-700" value={resType} onChange={(e)=>setResType(e.target.value)}>
-                        <option value="pdf">📄 PDF File</option>
-                        <option value="video">🎬 Video Link</option>
-                        <option value="blog">✍️ Blog Post</option>
-                    </select>
+        {/* --- TAB 1: STUDY MATERIALS (FIXED LAYOUT) --- */}
+        {activeTab === 'materials' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
+            
+            {/* TOP ROW: SELECTION GRID (3 COLUMNS) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                
+                {/* 1. SEGMENTS */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">1. Segments</h3>
+                    <div className="flex gap-2 mb-4">
+                        <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newSegment} onChange={e=>setNewSegment(e.target.value)} placeholder="New Segment..." />
+                        <button onClick={() => addItem('segments', {title: newSegment, slug: newSegment.toLowerCase().replace(/\s+/g, '-')}, fetchSegments)} className="bg-blue-600 text-white px-3 rounded font-bold">+</button>
+                    </div>
+                    <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                        {segments.map(s => (
+                            <li key={s.id} onClick={() => handleSegmentClick(s.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedSegment === s.id ? 'bg-blue-600 text-white' : 'bg-gray-50'}`}>
+                                {s.title}
+                                <button onClick={(e) => {e.stopPropagation(); deleteItem('segments', s.id, fetchSegments)}} className="text-xs opacity-50 hover:opacity-100">✕</button>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Title</label>
-                    <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="e.g. Chapter 1 Lecture Note" />
-                </div>
-                
-                {/* Conditional Inputs */}
-                {resType === 'pdf' && (
-                    <div className="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF</label>
-                        <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" accept="application/pdf"/>
-                    </div>
-                )}
-                {resType === 'video' && (
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Video Link</label>
-                        <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="https://youtube.com/..." />
-                    </div>
-                )}
-                
-                {resType === 'blog' && (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                        <strong>Note:</strong> For Blog Posts, please use the <strong>"✍️ Class Blogs"</strong> tab in the sidebar for the full editor experience.
-                    </div>
-                )}
 
-                {resType !== 'blog' && (
-                    <button onClick={uploadResource} disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg mt-4">
-                        {submitting ? "Uploading..." : "Save Resource"}
-                    </button>
-                )}
+                {/* 2. GROUPS */}
+                <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
+                    <div className="flex gap-2 mb-4">
+                        <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newGroup} onChange={e=>setNewGroup(e.target.value)} placeholder="New Group..." />
+                        <button onClick={() => addItem('groups', {title: newGroup, slug: newGroup.toLowerCase().replace(/\s+/g, '-'), segment_id: Number(selectedSegment)}, () => fetchGroups(selectedSegment))} className="bg-green-600 text-white px-3 rounded font-bold">+</button>
+                    </div>
+                    <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                        {groups.map(g => (
+                            <li key={g.id} onClick={() => handleGroupClick(g.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedGroup === g.id ? 'bg-green-600 text-white' : 'bg-gray-50'}`}>
+                                {g.title}
+                                <button onClick={(e) => {e.stopPropagation(); deleteItem('groups', g.id, () => fetchGroups(selectedSegment))}} className="text-xs opacity-50 hover:opacity-100">✕</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* 3. SUBJECTS */}
+                <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
+                    <div className="flex gap-2 mb-4">
+                        <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newSubject} onChange={e=>setNewSubject(e.target.value)} placeholder="New Subject..." />
+                        <button onClick={() => addItem('subjects', {title: newSubject, slug: newSubject.toLowerCase().replace(/\s+/g, '-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}, () => fetchSubjects(selectedGroup))} className="bg-purple-600 text-white px-3 rounded font-bold">+</button>
+                    </div>
+                    <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                        {subjects.map(s => (
+                            <li key={s.id} onClick={() => handleSubjectClick(s.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedSubject === s.id ? 'bg-purple-600 text-white' : 'bg-gray-50'}`}>
+                                {s.title}
+                                <button onClick={(e) => {e.stopPropagation(); deleteItem('subjects', s.id, () => fetchSubjects(selectedGroup))}} className="text-xs opacity-50 hover:opacity-100">✕</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
 
-            {/* RIGHT SIDE: EXISTING FILES LIST */}
-            <div className="border-l pl-8 border-gray-100">
-                 <h4 className="text-sm font-bold text-gray-700 mb-4">Existing Resources for this Subject</h4>
-                 <div className="bg-gray-50 rounded-xl p-4 h-[300px] overflow-y-auto border border-gray-200">
-                    {resources.length === 0 ? (
-                        <p className="text-gray-400 text-xs text-center mt-10">No resources uploaded yet.</p>
-                    ) : (
-                        <ul className="space-y-2">
-                            {resources.map(r => (
-                                <li key={r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded shadow-sm border border-gray-100 group hover:border-blue-200 transition">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-full">
-                                            {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : '✍️'}
-                                        </span>
-                                        <span className="truncate font-medium text-gray-700">{r.title}</span>
-                                    </div>
-                                    <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-400 hover:text-red-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-50 px-2 py-1 rounded">Delete</button>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                 </div>
-            </div>
-        </div>
-    </div>
-  </div>
-)}
+            {/* BOTTOM ROW: UPLOADS (FULL WIDTH) */}
+            <div className={`max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider mb-6 border-b pb-4 flex items-center gap-2">
+                    <span>4. Upload Content</span>
+                    {selectedSubject && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Selected: Subject ID {selectedSubject}</span>}
+                </h3>
 
-        {/* --- TAB 2: CLASS BLOGS (SEPARATE TAB) --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* LEFT SIDE: INPUTS */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Resource Type</label>
+                            <select className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold text-gray-700" value={resType} onChange={(e)=>setResType(e.target.value)}>
+                                <option value="pdf">📄 PDF File</option>
+                                <option value="video">🎬 Video Link</option>
+                                <option value="blog">✍️ Blog Post</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Title</label>
+                            <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="e.g. Chapter 1 Lecture Note" />
+                        </div>
+                        
+                        {/* Conditional Inputs */}
+                        {resType === 'pdf' && (
+                            <div className="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF</label>
+                                <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" accept="application/pdf"/>
+                            </div>
+                        )}
+                        {resType === 'video' && (
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Video Link</label>
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="https://youtube.com/..." />
+                            </div>
+                        )}
+                        
+                        {resType === 'blog' && (
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                                <strong>Note:</strong> For Blog Posts, please use the <strong>"✍️ Class Blogs"</strong> tab in the sidebar for the full editor experience.
+                            </div>
+                        )}
+
+                        {resType !== 'blog' && (
+                            <button onClick={uploadResource} disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg mt-4">
+                                {submitting ? "Uploading..." : "Save Resource"}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* RIGHT SIDE: EXISTING FILES LIST */}
+                    <div className="border-l pl-8 border-gray-100">
+                         <h4 className="text-sm font-bold text-gray-700 mb-4">Existing Resources for this Subject</h4>
+                         <div className="bg-gray-50 rounded-xl p-4 h-[300px] overflow-y-auto border border-gray-200">
+                            {resources.length === 0 ? (
+                                <p className="text-gray-400 text-xs text-center mt-10">No resources uploaded yet.</p>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {resources.map(r => (
+                                        <li key={r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded shadow-sm border border-gray-100 group hover:border-blue-200 transition">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-full">
+                                                    {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : '✍️'}
+                                                </span>
+                                                <span className="truncate font-medium text-gray-700">{r.title}</span>
+                                            </div>
+                                            <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-400 hover:text-red-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-50 px-2 py-1 rounded">Delete</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                         </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB 2: CLASS BLOGS --- */}
         {activeTab === 'class-blogs' && (
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">✍️ Manage Class Blogs</h2>
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4">
-                <select className="p-3 border rounded-lg bg-gray-50 flex-1" value={selectedSegment} onChange={(e) => handleSegmentClick(e.target.value)}>
+                <select className="p-3 border rounded-lg bg-gray-50 flex-1 font-bold text-gray-700" value={selectedSegment} onChange={(e) => handleSegmentClick(e.target.value)}>
                     <option value="">1. Select Class/Segment...</option>
                     {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                 </select>
-                <select className="p-3 border rounded-lg bg-gray-50 flex-1" value={selectedGroup} onChange={(e) => handleGroupClick(e.target.value)} disabled={!selectedSegment}>
+                <select className="p-3 border rounded-lg bg-gray-50 flex-1 font-bold text-gray-700" value={selectedGroup} onChange={(e) => handleGroupClick(e.target.value)} disabled={!selectedSegment}>
                     <option value="">2. Select Group...</option>
                     {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
                 </select>
-                <select className="p-3 border rounded-lg bg-gray-50 flex-1" value={selectedSubject} onChange={(e) => handleSubjectClick(e.target.value)} disabled={!selectedGroup}>
+                <select className="p-3 border rounded-lg bg-gray-50 flex-1 font-bold text-gray-700" value={selectedSubject} onChange={(e) => handleSubjectClick(e.target.value)} disabled={!selectedGroup}>
                     <option value="">3. Select Subject...</option>
                     {subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                 </select>
@@ -522,6 +558,7 @@ export default function AdminDashboard() {
                     <div className="lg:w-1/3 space-y-4">
                         <div className="flex justify-between items-center"><h3 className="font-bold text-gray-700">Existing Blogs</h3><button onClick={() => { setEditingResourceId(null); setResTitle(""); setBlogContent(""); setBlogTags(""); setBlogImageFile(null); }} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold hover:bg-blue-200">+ New</button></div>
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-h-[600px] overflow-y-auto">
+                            {resources.filter(r => r.type === 'blog').length === 0 && <p className="p-4 text-gray-400 text-sm">No blogs for this subject yet.</p>}
                             {resources.filter(r => r.type === 'blog').map(blog => (
                                 <div key={blog.id} onClick={() => { setEditingResourceId(blog.id); setResTitle(blog.title); setBlogContent(blog.content_body || ""); setBlogTags(blog.tags ? blog.tags.join(", ") : ""); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`p-4 border-b hover:bg-gray-50 cursor-pointer group ${editingResourceId === blog.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''}`}>
                                     <h4 className="font-bold text-gray-800 text-sm mb-1 line-clamp-2">{blog.title}</h4>
@@ -532,7 +569,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="lg:w-2/3">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between items-center">{editingResourceId ? `Editing Blog ID: ${editingResourceId}` : "Write New Blog Post"}</h3>
+                            <h3 className="font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between items-center">{editingResourceId ? `Editing Blog ID: ${editingResourceId}` : "Write New Blog Post"}{editingResourceId && <button onClick={() => setEditingResourceId(null)} className="text-xs text-red-500">Cancel</button>}</h3>
                             <div className="space-y-4">
                                 <input className="w-full text-xl font-bold p-3 bg-gray-50 border rounded-lg" placeholder="Blog Title" value={resTitle} onChange={e => setResTitle(e.target.value)} />
                                 <div className="border rounded-lg overflow-hidden"><SunEditor setContents={blogContent} onChange={setBlogContent} height="400px" setOptions={{ buttonList: [['bold', 'underline', 'italic', 'list', 'align', 'link', 'image', 'video'], ['font', 'fontSize', 'formatBlock', 'fontColor'], ['fullScreen', 'codeView']] }} /></div>
@@ -582,7 +619,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 4: COURSES MANAGER (NEW) --- */}
+        {/* --- TAB 4: COURSES MANAGER (FIXED) --- */}
         {activeTab === 'courses' && (
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🎓 Manage Courses</h2>
@@ -596,7 +633,7 @@ export default function AdminDashboard() {
                     <button onClick={handleCourseSubmit} disabled={submitting} className={`w-full py-3 rounded-lg text-white font-bold shadow-md transition ${editingCourseId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>{submitting ? "Processing..." : (editingCourseId ? "Update Course" : "Launch Course")}</button>
                 </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Thumbnail</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Price</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{coursesList.map(course => (<tr key={course.id}><td className="p-4">{course.thumbnail_url && <img src={course.thumbnail_url} className="w-16 h-10 object-cover rounded" />}</td><td className="p-4 font-bold">{course.title}</td><td className="p-4 text-sm text-green-600 font-bold">{course.price}</td><td className="p-4 text-right"><button onClick={() => { setEditingCourseId(course.id); setCTitle(course.title); setCInstructor(course.instructor); setCPrice(course.price); setCDuration(course.duration); setCLink(course.enrollment_link); setCDesc(course.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-blue-600 font-bold text-sm mr-4">Edit</button><button onClick={() => deleteItem('courses', course.id, fetchCourses)} className="text-red-500 font-bold text-sm">Delete</button></td></tr>))}</tbody></table></div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Thumbnail</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Price</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{coursesList.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-gray-400">No courses found.</td></tr>}{coursesList.map(course => (<tr key={course.id}><td className="p-4">{course.thumbnail_url && <img src={course.thumbnail_url} className="w-16 h-10 object-cover rounded" />}</td><td className="p-4 font-bold">{course.title}</td><td className="p-4 text-sm text-green-600 font-bold">{course.price}</td><td className="p-4 text-right"><button onClick={() => { setEditingCourseId(course.id); setCTitle(course.title); setCInstructor(course.instructor); setCPrice(course.price); setCDuration(course.duration); setCLink(course.enrollment_link); setCDesc(course.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-blue-600 font-bold text-sm mr-4">Edit</button><button onClick={() => deleteItem('courses', course.id, fetchCourses)} className="text-red-500 font-bold text-sm">Delete</button></td></tr>))}</tbody></table></div>
           </div>
         )}
 
