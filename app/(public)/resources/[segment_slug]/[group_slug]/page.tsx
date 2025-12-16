@@ -5,7 +5,6 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-// UPDATED PARAMS TO MATCH YOUR FOLDER NAMES
 export default async function GroupPage({ params }: { params: Promise<{ segment_slug: string; group_slug: string }> }) {
   const { segment_slug, group_slug } = await params;
 
@@ -40,50 +39,60 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
       <div className="max-w-7xl mx-auto px-6">
         
         {/* HEADER */}
-        <div className="mb-8">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                <Link href="/" className="hover:text-blue-600">Home</Link> / 
+        <div className="mb-10 border-b border-gray-200 pb-8">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                <Link href="/" className="hover:text-blue-600 transition">Home</Link> / 
                 <span className="text-gray-600">{segmentData.title}</span> / 
-                <span className="text-blue-600">{groupData.title}</span>
+                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{groupData.title}</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                <span className="text-blue-600">{groupData.title}</span> Subjects
+                Browse <span className="text-blue-600">{groupData.title}</span> Subjects
             </h1>
+            <p className="text-gray-500 mt-2 max-w-2xl">
+                Select a subject below to access chapter-wise notes, PDF suggestions, video classes, and board questions.
+            </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* SUBJECT GRID */}
+            {/* SUBJECT GRID (8 Cols) */}
             <div className="lg:col-span-8">
                 {subjects && subjects.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {subjects.map((sub) => (
                             <Link 
                                 key={sub.id} 
-                                // UPDATED LINK STRUCTURE
                                 href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`}
-                                className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-200 transition-all group flex flex-col justify-between h-40"
+                                className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex items-start gap-5 h-full"
                             >
-                                <div>
-                                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4 font-bold text-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        {sub.title.charAt(0)}
-                                    </div>
-                                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600">{sub.title}</h3>
+                                {/* Icon Box - Fixed Size */}
+                                <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-2xl flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
+                                    {sub.title.charAt(0)}
                                 </div>
-                                <div className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1 group-hover:text-blue-500">
-                                    View Materials <span>→</span>
+                                
+                                {/* Content - Flexible Width */}
+                                <div className="flex-1 min-w-0 py-1">
+                                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-700 leading-snug mb-2 break-words">
+                                        {sub.title}
+                                    </h3>
+                                    <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-wide group-hover:text-blue-500 transition-colors">
+                                        <span>View Materials</span>
+                                        <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                    </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white p-10 rounded-xl border border-dashed text-center text-gray-400">
-                        No subjects found in this group.
+                    <div className="bg-white p-12 rounded-xl border-2 border-dashed text-center">
+                        <div className="text-4xl mb-4">📚</div>
+                        <h3 className="text-gray-900 font-bold text-lg">No subjects found</h3>
+                        <p className="text-gray-500 text-sm mt-1">Check back later for updates.</p>
                     </div>
                 )}
             </div>
 
-            {/* SIDEBAR */}
+            {/* SIDEBAR (4 Cols) */}
             <div className="lg:col-span-4">
                 <Sidebar />
             </div>

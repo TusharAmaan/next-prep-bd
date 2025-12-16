@@ -51,20 +51,27 @@ export default async function CoursesPage() {
                         </div>
 
                         {/* PRICE & ACTION */}
-                        <div className="mt-auto pt-6 border-t border-gray-100 flex items-center justify-between">
-                            <div>
-                                <span className="block text-xs text-gray-400 uppercase font-bold">Price</span>
-                                <span className="text-lg font-extrabold text-blue-600">{course.price || "Free"}</span>
-                            </div>
-                            
-                            {/* BUTTON LINKS TO DETAILS PAGE, NOT GOOGLE FORM */}
-                            <Link 
-                                href={`/courses/${course.id}`} 
-                                className="bg-gray-900 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-500/20"
-                            >
-                                View Details
-                            </Link>
-                        </div>
+{/* PRICE & ACTION */}
+<div className="mt-auto pt-6 border-t border-gray-100 flex items-center justify-between">
+    <div>
+        <span className="block text-xs text-gray-400 uppercase font-bold">Price</span>
+        {course.discount_price ? (
+            <div className="flex flex-col">
+                <span className="text-xs text-gray-400 line-through font-medium">{course.price}</span>
+                <span className="text-lg font-extrabold text-green-600">{course.discount_price}</span>
+            </div>
+        ) : (
+            <span className="text-lg font-extrabold text-blue-600">{course.price || "Free"}</span>
+        )}
+    </div>
+    
+    <Link 
+        href={`/courses/${course.id}`} 
+        className="bg-gray-900 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-500/20"
+    >
+        View Details
+    </Link>
+</div>
                     </div>
                 </div>
             ))

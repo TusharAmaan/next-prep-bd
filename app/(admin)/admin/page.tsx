@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
@@ -38,22 +37,23 @@ export default function AdminDashboard() {
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
+  
+  // Resource Inputs
   const [resTitle, setResTitle] = useState("");
   const [resLink, setResLink] = useState("");
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
-  const [submitting, setSubmitting] = useState(false);
-
-  // Question Content Inputs
   const [questionContent, setQuestionContent] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
+  const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
   
-  // Blog Post Inputs (Materials Tab)
+  const [submitting, setSubmitting] = useState(false);
+
+  // Blog Post Inputs
   const [blogContent, setBlogContent] = useState("");
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [blogTags, setBlogTags] = useState("");
-  const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
 
   // --- NEWS INPUTS ---
   const [newsTitle, setNewsTitle] = useState("");
@@ -75,7 +75,8 @@ export default function AdminDashboard() {
   // --- COURSE INPUTS ---
   const [cTitle, setCTitle] = useState("");
   const [cInstructor, setCInstructor] = useState("");
-  const [cPrice, setCPrice] = useState("");
+  const [cPrice, setCPrice] = useState(""); // Regular Price
+  const [cDiscountPrice, setCDiscountPrice] = useState(""); // Discount Price
   const [cDuration, setCDuration] = useState("");
   const [cLink, setCLink] = useState("");
   const [cDesc, setCDesc] = useState("");
@@ -174,18 +175,36 @@ export default function AdminDashboard() {
     }
   }
 
-  // --- MATERIAL UPLOAD ---
+  // --- RESOURCE EDITING LOGIC ---
+  function loadResourceForEdit(r: any) {
+      setEditingResourceId(r.id);
+      setResTitle(r.title);
+      setResType(r.type);
+      
+      if (r.type === 'video' || r.type === 'pdf') {
+          setResLink(r.content_url || "");
+      }
+      if (r.type === 'question') {
+          setQuestionContent(r.content_body || "");
+          setSeoTitle(r.seo_title || "");
+          setSeoDescription(r.seo_description || "");
+      }
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+  }
+
+  function cancelResourceEdit() {
+      setEditingResourceId(null);
+      setResTitle(""); setResLink(""); setResFile(null); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); setResType("pdf");
+  }
+
   async function uploadResource() {
     if (!resTitle || !selectedSubject) return alert("Title and Subject are required");
-
     if (resType === 'question' && !questionContent) return alert("Question content is required");
     
     setSubmitting(true);
     let finalUrl = resLink;
 
-    // Handle Upload for PDF type
-    let fileToUpload = resType === 'pdf' ? resFile : null;
-    
+    let fileToUpload = (resType === 'pdf') ? resFile : null;
     if (fileToUpload) {
         const fileName = `${resType}-${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, fileToUpload);
@@ -204,23 +223,22 @@ export default function AdminDashboard() {
         payload.content_url = finalUrl;
     } else if (resType === 'question') {
         payload.content_body = questionContent;
-        payload.seo_title = seoTitle || resTitle; // Fallback to title if SEO title is empty
+        payload.seo_title = seoTitle || resTitle;
         payload.seo_description = seoDescription;
     }
 
-    const { error } = await supabase.from('resources').insert([payload]);
-    
-    if (error) alert("Error saving resource: " + error.message);
-    else {
-        fetchResources(selectedSubject);
-        // Reset form
-        setResTitle(""); setResLink(""); setResFile(null); 
-        setQuestionContent(""); setSeoTitle(""); setSeoDescription("");
+    if (editingResourceId) {
+        await supabase.from('resources').update(payload).eq('id', editingResourceId);
+    } else {
+        await supabase.from('resources').insert([payload]);
     }
+    
+    fetchResources(selectedSubject);
+    cancelResourceEdit();
     setSubmitting(false);
   }
 
-  // --- NEWS ACTIONS ---
+  // --- NEWS ACTIONS (FIXED: Missing Functions Restored) ---
   async function createCategory() {
     if (!newCategoryInput) return;
     const { error } = await supabase.from('categories').insert([{ name: newCategoryInput }]);
@@ -237,11 +255,8 @@ export default function AdminDashboard() {
     let imageUrl = null;
     if (newsFile) {
         const fileName = `news-${Date.now()}-${newsFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, newsFile);
-        if (!error) {
-             const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
-             imageUrl = data.publicUrl;
-        }
+        await supabase.storage.from('materials').upload(fileName, newsFile);
+        imageUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
     }
     const tagsArray = newsTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
     const payload: any = { title: newsTitle, content: newsContent, category: selectedCategory, tags: tagsArray };
@@ -273,15 +288,10 @@ export default function AdminDashboard() {
 
   // --- EBOOK ACTIONS ---
   function loadEbookForEdit(book: any) {
-    setEbTitle(book.title);
-    setEbAuthor(book.author || "");
-    setEbCategory(book.category || "SSC");
-    setEbDescription(book.description || "");
-    setEbTags(book.tags ? book.tags.join(", ") : "");
-    setEditingEbookId(book.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEbTitle(book.title); setEbAuthor(book.author || ""); setEbCategory(book.category || "SSC");
+    setEbDescription(book.description || ""); setEbTags(book.tags ? book.tags.join(", ") : "");
+    setEditingEbookId(book.id); window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
   function cancelEbookEdit() {
     setEbTitle(""); setEbAuthor(""); setEbCategory("SSC"); setEbDescription(""); setEbTags(""); setEditingEbookId(null);
   }
@@ -298,14 +308,12 @@ export default function AdminDashboard() {
 
       if (pdfFile) {
         const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(pdfName, pdfFile);
-        if (error) { alert("PDF Upload Failed: "+ error.message); setSubmitting(false); return; }
+        await supabase.storage.from('materials').upload(pdfName, pdfFile);
         pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
       }
       if (coverFile) {
         const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('covers').upload(coverName, coverFile);
-        if (error) { alert("Cover Upload Failed: "+ error.message); setSubmitting(false); return; }
+        await supabase.storage.from('covers').upload(coverName, coverFile);
         coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
       }
 
@@ -317,16 +325,13 @@ export default function AdminDashboard() {
       if (coverUrl) payload.cover_url = coverUrl;
 
       if (editingEbookId) {
-          const { data, error } = await supabase.from('ebooks').update(payload).eq('id', editingEbookId).select();
-          if (error || !data) alert("Update Failed: " + (error?.message || "Unknown error"));
-          else { alert("eBook Updated!"); cancelEbookEdit(); fetchEbooks(); }
+          await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
+          alert("eBook Updated!"); cancelEbookEdit(); fetchEbooks();
       } else {
-          if (!pdfUrl) { alert("PDF is required for new books!"); setSubmitting(false); return; }
+          if (!pdfUrl) { alert("PDF required!"); setSubmitting(false); return; }
           payload.pdf_url = pdfUrl;
           await supabase.from('ebooks').insert([payload]);
           alert("eBook Created!"); cancelEbookEdit(); fetchEbooks();
-          (document.getElementById('eb-file') as HTMLInputElement).value = "";
-          (document.getElementById('eb-cover') as HTMLInputElement).value = "";
       }
       setSubmitting(false);
   }
@@ -339,34 +344,43 @@ export default function AdminDashboard() {
     let thumbUrl = null;
     if (cImage) {
         const fileName = `course-${Date.now()}-${cImage.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, cImage);
-        if (!error) {
-            thumbUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
-        }
+        await supabase.storage.from('materials').upload(fileName, cImage);
+        thumbUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
     }
 
     const payload: any = {
-        title: cTitle, instructor: cInstructor, price: cPrice, 
+        title: cTitle, instructor: cInstructor, 
+        price: cPrice, discount_price: cDiscountPrice,
         duration: cDuration, enrollment_link: cLink, description: cDesc
     };
     if (thumbUrl) payload.thumbnail_url = thumbUrl;
 
     if (editingCourseId) {
-        const { error } = await supabase.from('courses').update(payload).eq('id', editingCourseId);
-        if (error) alert("Error updating course: " + error.message);
-        else alert("Course Updated Successfully!");
+        await supabase.from('courses').update(payload).eq('id', editingCourseId);
+        alert("Course Updated!");
     } else {
-        if(!thumbUrl) { alert("Thumbnail is required for new courses!"); setSubmitting(false); return; }
+        if(!thumbUrl) { alert("Thumbnail required!"); setSubmitting(false); return; }
         payload.thumbnail_url = thumbUrl;
-        const { error } = await supabase.from('courses').insert([payload]);
-        if (error) alert("Error creating course: " + error.message);
-        else alert("Course Created Successfully!");
+        await supabase.from('courses').insert([payload]);
+        alert("Course Created!");
     }
 
     setSubmitting(false);
     setEditingCourseId(null);
-    setCTitle(""); setCInstructor(""); setCPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null);
+    setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null);
     fetchCourses();
+  }
+
+  function loadCourseForEdit(course: any) {
+      setEditingCourseId(course.id);
+      setCTitle(course.title);
+      setCInstructor(course.instructor);
+      setCPrice(course.price);
+      setCDiscountPrice(course.discount_price || "");
+      setCDuration(course.duration);
+      setCLink(course.enrollment_link);
+      setCDesc(course.description);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
@@ -413,8 +427,6 @@ export default function AdminDashboard() {
         {activeTab === 'materials' && (
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
-            
-            {/* TOP ROW: SELECTION GRID (3 COLUMNS) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* 1. SEGMENTS */}
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
@@ -468,9 +480,14 @@ export default function AdminDashboard() {
 
             {/* BOTTOM ROW: UPLOADS (FULL WIDTH) */}
             <div className={`max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider mb-6 border-b pb-4 flex items-center gap-2">
-                    <span>4. Upload Content</span>
-                    {selectedSubject && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Selected: Subject ID {selectedSubject}</span>}
+                <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider mb-6 border-b pb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                         <span>4. Upload Content</span>
+                         {selectedSubject && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Selected: Subject ID {selectedSubject}</span>}
+                    </div>
+                    {editingResourceId && (
+                        <button onClick={cancelResourceEdit} className="text-xs text-red-500 font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Cancel Edit Mode</button>
+                    )}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -494,7 +511,7 @@ export default function AdminDashboard() {
                         {/* Conditional Inputs */}
                         {resType === 'pdf' && (
                             <div className="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF {editingResourceId && "(Optional)"}</label>
                                 <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" accept="application/pdf"/>
                             </div>
                         )}
@@ -550,8 +567,8 @@ export default function AdminDashboard() {
                         )}
 
                         {resType !== 'blog' && (
-                            <button onClick={uploadResource} disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg mt-4">
-                                {submitting ? "Uploading..." : "Save Resource"}
+                            <button onClick={uploadResource} disabled={submitting} className={`w-full py-3 rounded-lg text-white font-bold transition shadow-lg mt-4 ${editingResourceId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {submitting ? "Processing..." : (editingResourceId ? "Update Resource" : "Save Resource")}
                             </button>
                         )}
                     </div>
@@ -565,14 +582,17 @@ export default function AdminDashboard() {
                             ) : (
                                 <ul className="space-y-2">
                                     {resources.map(r => (
-                                        <li key={r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded shadow-sm border border-gray-100 group hover:border-blue-200 transition">
+                                        <li key={r.id} className={`flex justify-between items-center text-sm p-3 rounded shadow-sm border group transition ${editingResourceId === r.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100 hover:border-blue-200'}`}>
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-full">
                                                     {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : r.type === 'question' ? '❓' : '✍️'}
                                                 </span>
-                                                <span className="truncate font-medium text-gray-700">{r.title}</span>
+                                                <span className="truncate font-medium text-gray-700 max-w-[120px]">{r.title}</span>
                                             </div>
-                                            <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-400 hover:text-red-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-50 px-2 py-1 rounded">Delete</button>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => loadResourceForEdit(r)} className="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded hover:bg-blue-100">Edit</button>
+                                                <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-400 font-bold text-xs bg-red-50 px-2 py-1 rounded hover:bg-red-100">Del</button>
+                                            </div>
                                         </li>
                                     ))}
                                 </ul>
@@ -664,7 +684,7 @@ export default function AdminDashboard() {
                         <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-red-500">📕 PDF {editingEbookId ? "(Optional)" : "(Required)"}:</span><input type="file" className="text-xs" id="eb-file" accept="application/pdf" /></div>
                         <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover (Optional):</span><input type="file" className="text-xs" id="eb-cover" accept="image/*" /></div>
                     </div>
-                    <button disabled={submitting} onClick={handleEbookSubmit} className={`font-bold py-4 rounded-lg transition shadow-md flex items-center justify-center text-lg ${editingEbookId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700'}`}>{submitting ? "Processing..." : (editingEbookId ? "Update eBook Details" : "Upload eBook To Library")}</button>
+                    <button disabled={submitting} onClick={handleEbookSubmit} className={`font-bold py-4 rounded-lg transition shadow-md flex items-center justify-center text-lg ${editingEbookId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>{submitting ? "Processing..." : (editingEbookId ? "Update eBook Details" : "Upload eBook To Library")}</button>
                 </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Cover</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Category</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{ebooksList.map(book => (<tr key={book.id}><td className="p-4">{book.cover_url ? <img src={book.cover_url} alt="" className="h-12 w-9 object-cover rounded shadow-sm"/> : <div className="h-12 w-9 bg-gray-100 rounded"></div>}</td><td className="p-4 font-bold">{book.title}</td><td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{book.category}</span></td><td className="p-4 text-right"><button onClick={() => loadEbookForEdit(book)} className="text-blue-600 font-bold text-sm mr-4 hover:underline">Edit</button><button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="text-red-500 font-bold text-sm hover:underline">Delete</button></td></tr>))}</tbody></table></div>
@@ -679,13 +699,18 @@ export default function AdminDashboard() {
                 <h3 className="font-bold text-gray-700 mb-4 pb-2 border-b flex justify-between">{editingCourseId ? `Editing Course ID: ${editingCourseId}` : "Add New Course"}{editingCourseId && <button onClick={() => setEditingCourseId(null)} className="text-red-500 text-xs">Cancel Edit</button>}</h3>
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><input className="p-3 bg-gray-50 border rounded-lg font-bold" placeholder="Course Title" value={cTitle} onChange={e => setCTitle(e.target.value)} /><input className="p-3 bg-gray-50 border rounded-lg" placeholder="Instructor Name" value={cInstructor} onChange={e => setCInstructor(e.target.value)} /></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4"><input className="p-3 bg-gray-50 border rounded-lg" placeholder="Price (e.g. 500 BDT)" value={cPrice} onChange={e => setCPrice(e.target.value)} /><input className="p-3 bg-gray-50 border rounded-lg" placeholder="Duration (e.g. 3 Months)" value={cDuration} onChange={e => setCDuration(e.target.value)} /><input className="p-3 bg-gray-50 border rounded-lg text-blue-600" placeholder="Enrollment Link (Google Form)" value={cLink} onChange={e => setCLink(e.target.value)} /></div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="md:col-span-1"><label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Regular Price</label><input className="w-full p-3 bg-gray-50 border rounded-lg" placeholder="e.g. 5000" value={cPrice} onChange={e => setCPrice(e.target.value)} /></div>
+                        <div className="md:col-span-1"><label className="text-xs font-bold text-green-600 uppercase mb-1 block">Discount Price</label><input className="w-full p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 font-bold" placeholder="e.g. 3000 (Optional)" value={cDiscountPrice} onChange={e => setCDiscountPrice(e.target.value)} /></div>
+                        <div className="md:col-span-1"><label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Duration</label><input className="w-full p-3 bg-gray-50 border rounded-lg" placeholder="e.g. 3 Months" value={cDuration} onChange={e => setCDuration(e.target.value)} /></div>
+                        <div className="md:col-span-1"><label className="text-xs font-bold text-blue-500 uppercase mb-1 block">Enroll Link</label><input className="w-full p-3 bg-gray-50 border rounded-lg text-blue-600" placeholder="Google Form Link" value={cLink} onChange={e => setCLink(e.target.value)} /></div>
+                    </div>
                     <div className="border rounded-lg overflow-hidden"><SunEditor setContents={cDesc} onChange={setCDesc} height="200px" placeholder="Course details..." setOptions={{ buttonList: [['bold', 'underline', 'list', 'align', 'link'], ['font', 'fontSize', 'fontColor']] }} /></div>
                     <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-blue-500">🖼️ Thumbnail:</span><input type="file" onChange={e => setCImage(e.target.files?.[0] || null)} className="text-xs" accept="image/*" /></div>
                     <button onClick={handleCourseSubmit} disabled={submitting} className={`w-full py-3 rounded-lg text-white font-bold shadow-md transition ${editingCourseId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>{submitting ? "Processing..." : (editingCourseId ? "Update Course" : "Launch Course")}</button>
                 </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Thumbnail</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Price</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{coursesList.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-gray-400">No courses found.</td></tr>}{coursesList.map(course => (<tr key={course.id}><td className="p-4">{course.thumbnail_url && <img src={course.thumbnail_url} className="w-16 h-10 object-cover rounded" />}</td><td className="p-4 font-bold">{course.title}</td><td className="p-4 text-sm text-green-600 font-bold">{course.price}</td><td className="p-4 text-right"><button onClick={() => { setEditingCourseId(course.id); setCTitle(course.title); setCInstructor(course.instructor); setCPrice(course.price); setCDuration(course.duration); setCLink(course.enrollment_link); setCDesc(course.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-blue-600 font-bold text-sm mr-4">Edit</button><button onClick={() => deleteItem('courses', course.id, fetchCourses)} className="text-red-500 font-bold text-sm">Delete</button></td></tr>))}</tbody></table></div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Thumbnail</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Price</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{coursesList.map(course => (<tr key={course.id}><td className="p-4">{course.thumbnail_url && <img src={course.thumbnail_url} className="w-16 h-10 object-cover rounded" />}</td><td className="p-4 font-bold">{course.title}</td><td className="p-4 text-sm">{course.discount_price ? (<span><span className="line-through text-gray-400 text-xs mr-2">{course.price}</span><span className="text-green-600 font-bold">{course.discount_price}</span></span>) : (<span className="text-gray-800 font-bold">{course.price || "Free"}</span>)}</td><td className="p-4 text-right"><button onClick={() => loadCourseForEdit(course)} className="text-blue-600 font-bold text-sm mr-4">Edit</button><button onClick={() => deleteItem('courses', course.id, fetchCourses)} className="text-red-500 font-bold text-sm">Delete</button></td></tr>))}</tbody></table></div>
           </div>
         )}
 

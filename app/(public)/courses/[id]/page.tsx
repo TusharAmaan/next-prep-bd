@@ -100,21 +100,28 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                         </div>
                     </div>
 
-                    <div className="p-6">
-                        <div className="flex items-end gap-2 mb-6">
-                            <span className="text-3xl font-extrabold text-gray-900">{course.price || "Free"}</span>
-                            {course.price !== 'Free' && <span className="text-gray-400 text-sm mb-1 line-through">Regular Price</span>}
-                        </div>
+<div className="p-6">
+    <div className="flex items-end gap-2 mb-6">
+        {course.discount_price ? (
+            <>
+                <span className="text-3xl font-extrabold text-green-600">{course.discount_price}</span>
+                <span className="text-gray-400 text-lg mb-1 line-through">{course.price}</span>
+            </>
+        ) : (
+            <span className="text-3xl font-extrabold text-gray-900">{course.price || "Free"}</span>
+        )}
+    </div>
 
-                        <a 
-                            href={enrollLink} 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 mb-4"
-                        >
-                            Enroll Now
-                        </a>
-
+    <a 
+        href={enrollLink} 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 mb-4"
+    >
+        Enroll Now
+    </a>
+    
+    {/* ... rest of the card ... */}
                         <p className="text-xs text-gray-500 text-center mb-6">30-Day Money-Back Guarantee</p>
 
                         <div className="space-y-3">
