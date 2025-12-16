@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
@@ -44,13 +43,8 @@ export default function AdminDashboard() {
   
   // --- A. STRUCTURE INPUTS ---
   const [newSegment, setNewSegment] = useState("");
-  const [segmentIcon, setSegmentIcon] = useState<File | null>(null);
-  
   const [newGroup, setNewGroup] = useState("");
-  const [groupIcon, setGroupIcon] = useState<File | null>(null);
-  
   const [newSubject, setNewSubject] = useState("");
-  const [subjectIcon, setSubjectIcon] = useState<File | null>(null);
 
   // --- B. RESOURCE INPUTS (Materials Tab) ---
   const [resTitle, setResTitle] = useState("");
@@ -92,7 +86,7 @@ export default function AdminDashboard() {
   const [cTitle, setCTitle] = useState("");
   const [cInstructor, setCInstructor] = useState("");
   const [cPrice, setCPrice] = useState("");
-  const [cDiscountPrice, setCDiscountPrice] = useState("");
+  const [cDiscountPrice, setCDiscountPrice] = useState(""); // Discount Price
   const [cDuration, setCDuration] = useState("");
   const [cLink, setCLink] = useState("");
   const [cDesc, setCDesc] = useState("");
@@ -196,73 +190,22 @@ export default function AdminDashboard() {
     fetchResources(id);
   };
 
-  // --- SUBMIT SEGMENT ---
   async function handleSegmentSubmit() {
     if(!newSegment) return alert("Segment Title is required");
-    
-    let iconUrl = null;
-    if (segmentIcon) {
-        const fileName = `icon-seg-${Date.now()}-${segmentIcon.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, segmentIcon);
-        if(!error) iconUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
-    }
-
-    const payload: any = { 
-        title: newSegment, 
-        slug: newSegment.toLowerCase().replace(/\s+/g, '-') 
-    };
-    if(iconUrl) payload.icon_url = iconUrl;
-
-    await supabase.from('segments').insert([payload]);
-    setNewSegment(""); setSegmentIcon(null);
-    fetchSegments();
+    await supabase.from('segments').insert([{ title: newSegment, slug: newSegment.toLowerCase().replace(/\s+/g, '-') }]);
+    setNewSegment(""); fetchSegments();
   }
 
-  // --- SUBMIT GROUP ---
   async function handleGroupSubmit() {
     if(!newGroup || !selectedSegment) return alert("Group Title and Segment selection required");
-    
-    let iconUrl = null;
-    if (groupIcon) {
-        const fileName = `icon-grp-${Date.now()}-${groupIcon.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, groupIcon);
-        if(!error) iconUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
-    }
-
-    const payload: any = { 
-        title: newGroup, 
-        slug: newGroup.toLowerCase().replace(/\s+/g, '-'),
-        segment_id: Number(selectedSegment)
-    };
-    if(iconUrl) payload.icon_url = iconUrl;
-
-    await supabase.from('groups').insert([payload]);
-    setNewGroup(""); setGroupIcon(null);
-    fetchGroups(selectedSegment);
+    await supabase.from('groups').insert([{ title: newGroup, slug: newGroup.toLowerCase().replace(/\s+/g, '-'), segment_id: Number(selectedSegment) }]);
+    setNewGroup(""); fetchGroups(selectedSegment);
   }
 
-  // --- SUBMIT SUBJECT ---
   async function handleSubjectSubmit() {
     if(!newSubject || !selectedGroup) return alert("Subject Title and Group selection required");
-    
-    let iconUrl = null;
-    if (subjectIcon) {
-        const fileName = `icon-sub-${Date.now()}-${subjectIcon.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, subjectIcon);
-        if(!error) iconUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
-    }
-
-    const payload: any = { 
-        title: newSubject, 
-        slug: newSubject.toLowerCase().replace(/\s+/g, '-'),
-        group_id: Number(selectedGroup),
-        segment_id: Number(selectedSegment)
-    };
-    if(iconUrl) payload.icon_url = iconUrl;
-
-    await supabase.from('subjects').insert([payload]);
-    setNewSubject(""); setSubjectIcon(null);
-    fetchSubjects(selectedGroup);
+    await supabase.from('subjects').insert([{ title: newSubject, slug: newSubject.toLowerCase().replace(/\s+/g, '-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment) }]);
+    setNewSubject(""); fetchSubjects(selectedGroup);
   }
 
   // ==========================
@@ -285,7 +228,6 @@ export default function AdminDashboard() {
           setSeoTitle(r.seo_title || "");
           setSeoDescription(r.seo_description || "");
       }
-      // Blog logic
       if (r.type === 'blog') {
           setResTitle(r.title);
           setBlogContent(r.content_body || "");
@@ -306,14 +248,12 @@ export default function AdminDashboard() {
   async function uploadResource() {
     if (!resTitle || !selectedSubject) return alert("Title and Subject are required");
     
-    // Validation for specific types
     if (resType === 'question' && !questionContent) return alert("Question content is required");
     if (resType === 'blog' && !blogContent) return alert("Blog content is required");
 
     setSubmitting(true);
     let finalUrl = resLink;
 
-    // A. Handle File Uploads (PDF or Blog Image)
     let fileToUpload = null;
     let folder = 'materials';
 
@@ -327,7 +267,6 @@ export default function AdminDashboard() {
         finalUrl = supabase.storage.from(folder).getPublicUrl(fileName).data.publicUrl;
     }
 
-    // B. Prepare Payload
     const payload: any = {
         subject_id: Number(selectedSubject),
         title: resTitle,
@@ -342,27 +281,18 @@ export default function AdminDashboard() {
         payload.seo_description = seoDescription;
     } else if (resType === 'blog') {
         payload.content_body = blogContent;
-        payload.content_url = finalUrl; // Blog featured image
+        payload.content_url = finalUrl;
         payload.tags = blogTags.split(',').map(tag => tag.trim()).filter(t => t !== "");
     }
 
-    // C. Insert or Update
-    let error;
     if (editingResourceId) {
-        const { error: updateError } = await supabase.from('resources').update(payload).eq('id', editingResourceId);
-        error = updateError;
+        await supabase.from('resources').update(payload).eq('id', editingResourceId);
     } else {
-        const { error: insertError } = await supabase.from('resources').insert([payload]);
-        error = insertError;
+        await supabase.from('resources').insert([payload]);
     }
     
-    if (error) {
-        alert("Error saving resource: " + error.message);
-    } else {
-        fetchResources(selectedSubject);
-        cancelResourceEdit();
-        alert(editingResourceId ? "Updated Successfully!" : "Saved Successfully!");
-    }
+    fetchResources(selectedSubject);
+    cancelResourceEdit();
     setSubmitting(false);
   }
 
@@ -569,20 +499,14 @@ export default function AdminDashboard() {
                 {/* 1. SEGMENTS */}
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">1. Segments</h3>
-                    <div className="space-y-3 mb-4">
+                    <div className="flex gap-2 mb-4">
                         <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newSegment} onChange={e=>setNewSegment(e.target.value)} placeholder="New Segment..." />
-                        <div className="flex gap-2 items-center">
-                            <input type="file" onChange={e => setSegmentIcon(e.target.files?.[0] || null)} className="text-xs w-full" accept="image/*" />
-                            <button onClick={handleSegmentSubmit} className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
-                        </div>
+                        <button onClick={handleSegmentSubmit} className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
                     </div>
                     <ul className="space-y-2 max-h-[400px] overflow-y-auto">
                         {segments.map(s => (
                             <li key={s.id} onClick={() => handleSegmentClick(s.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedSegment === s.id ? 'bg-blue-600 text-white' : 'bg-gray-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    {s.icon_url && <img src={s.icon_url} className="w-5 h-5 object-contain" alt="icon" />}
-                                    <span>{s.title}</span>
-                                </div>
+                                <span>{s.title}</span>
                                 <button onClick={(e) => {e.stopPropagation(); deleteItem('segments', s.id, fetchSegments)}} className="text-xs opacity-50 hover:opacity-100">✕</button>
                             </li>
                         ))}
@@ -592,20 +516,14 @@ export default function AdminDashboard() {
                 {/* 2. GROUPS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
-                    <div className="space-y-3 mb-4">
+                    <div className="flex gap-2 mb-4">
                         <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newGroup} onChange={e=>setNewGroup(e.target.value)} placeholder="New Group..." />
-                        <div className="flex gap-2 items-center">
-                            <input type="file" onChange={e => setGroupIcon(e.target.files?.[0] || null)} className="text-xs w-full" accept="image/*" />
-                            <button onClick={handleGroupSubmit} className="bg-green-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
-                        </div>
+                        <button onClick={handleGroupSubmit} className="bg-green-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
                     </div>
                     <ul className="space-y-2 max-h-[400px] overflow-y-auto">
                         {groups.map(g => (
                             <li key={g.id} onClick={() => handleGroupClick(g.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedGroup === g.id ? 'bg-green-600 text-white' : 'bg-gray-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    {g.icon_url && <img src={g.icon_url} className="w-5 h-5 object-contain" alt="icon" />}
-                                    <span>{g.title}</span>
-                                </div>
+                                <span>{g.title}</span>
                                 <button onClick={(e) => {e.stopPropagation(); deleteItem('groups', g.id, () => fetchGroups(selectedSegment))}} className="text-xs opacity-50 hover:opacity-100">✕</button>
                             </li>
                         ))}
@@ -615,27 +533,21 @@ export default function AdminDashboard() {
                 {/* 3. SUBJECTS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
-                    <div className="space-y-3 mb-4">
+                    <div className="flex gap-2 mb-4">
                         <input className="bg-gray-50 border p-2 rounded w-full text-sm" value={newSubject} onChange={e=>setNewSubject(e.target.value)} placeholder="New Subject..." />
-                        <div className="flex gap-2 items-center">
-                            <input type="file" onChange={e => setSubjectIcon(e.target.files?.[0] || null)} className="text-xs w-full" accept="image/*" />
-                            <button onClick={handleSubjectSubmit} className="bg-purple-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
-                        </div>
+                        <button onClick={handleSubjectSubmit} className="bg-purple-600 text-white px-3 py-1 rounded font-bold text-xs">Add</button>
                     </div>
                     <ul className="space-y-2 max-h-[400px] overflow-y-auto">
                         {subjects.map(s => (
                             <li key={s.id} onClick={() => handleSubjectClick(s.id)} className={`p-3 rounded-lg cursor-pointer flex justify-between items-center text-sm font-medium ${selectedSubject === s.id ? 'bg-purple-600 text-white' : 'bg-gray-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    {s.icon_url && <img src={s.icon_url} className="w-5 h-5 object-contain" alt="icon" />}
-                                    <span>{s.title}</span>
-                                </div>
+                                <span>{s.title}</span>
                                 <button onClick={(e) => {e.stopPropagation(); deleteItem('subjects', s.id, () => fetchSubjects(selectedGroup))}} className="text-xs opacity-50 hover:opacity-100">✕</button>
                             </li>
                         ))}
                     </ul>
                 </div>
             </div>
-
+            
             {/* BOTTOM ROW: UPLOADS */}
             <div className={`max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider mb-6 border-b pb-4 flex items-center justify-between">

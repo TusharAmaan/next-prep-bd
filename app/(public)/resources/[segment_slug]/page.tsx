@@ -38,26 +38,19 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
             <div className="lg:col-span-8">
                 {groups && groups.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-// Inside the map loop:
-{groups.map((group, index) => (
-    <Link key={group.id} href={`/resources/${segment_slug}/${group.slug}`} className="...">
-        {/* ... color bar ... */}
-        <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-3xl font-bold mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500 overflow-hidden`}>
-                {/* CHECK FOR GROUP ICON */}
-                {group.icon_url ? (
-                    <img src={group.icon_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                    group.title.charAt(0)
-                )}
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
-                {group.title}
-            </h3>
-            <p className="text-sm text-gray-400 font-medium">Click to view subjects</p>
-        </div>
-    </Link>
-))}
+                        {groups.map((group, index) => (
+                            <Link key={group.id} href={`/resources/${segment_slug}/${group.slug}`} className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-64 cursor-pointer">
+                                <div className={`h-2 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
+                                <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
+                                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-3xl font-bold mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500`}>
+                                        {/* REVERTED TO LETTER */}
+                                        {group.title.charAt(0)}
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">{group.title}</h3>
+                                    <p className="text-sm text-gray-400 font-medium">Click to view subjects</p>
+                                </div>
+                            </Link>
+                        ))}
                     </div>
                 ) : (
                     <div className="bg-white p-12 rounded-2xl border-2 border-dashed border-gray-200 text-center"><h3 className="text-xl font-bold text-gray-900 mb-2">No Groups Found</h3></div>

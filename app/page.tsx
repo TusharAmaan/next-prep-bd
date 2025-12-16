@@ -63,9 +63,9 @@ export default function Home() {
                 const color = colors[index % colors.length];
                 return (
                     <Link href={`/resources/${segment.slug}`} key={segment.id} className="group bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative overflow-hidden flex flex-col items-center text-center">
+                        {/* REVERTED TO LETTER BASED */}
                         <div className={`w-16 h-16 ${color} text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
-                            {/* USE ICON IF AVAILABLE */}
-                            {segment.icon_url ? <img src={segment.icon_url} alt="" className="w-10 h-10 object-contain brightness-0 invert" /> : segment.title.charAt(0)}
+                            {segment.title.charAt(0)}
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{segment.title}</h3>
                         <p className="text-gray-400 text-sm font-medium">Explore subjects & materials →</p>
@@ -86,8 +86,7 @@ export default function Home() {
                             <button key={seg.id} onClick={() => setActiveTab(seg.title)} className={`px-5 py-2 rounded-t-lg font-bold text-sm transition-all border-b-2 relative -bottom-[3px] ${activeTab === seg.title ? "bg-white border-blue-600 text-blue-600 shadow-sm z-10" : "bg-transparent border-transparent text-gray-500 hover:bg-gray-100"}`}>{seg.title}</button>
                         ))}
                     </div>
-                    {/* ... (Keep existing Blog Logic here) ... */}
-                    {/* Since I am pasting the whole file, I will just replicate the blog render logic simply */}
+                    {/* Blog Feed */}
                     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-200 min-h-[500px]">
                         {loading ? <div className="animate-pulse space-y-4"><div className="h-64 bg-gray-200 rounded-xl"></div></div> : filteredBlogs.length > 0 ? (
                             <div className="flex flex-col gap-8">
