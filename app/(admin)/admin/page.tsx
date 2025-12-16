@@ -27,6 +27,8 @@ export default function AdminDashboard() {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [ebooksList, setEbooksList] = useState<any[]>([]); 
+  const [blogTags, setBlogTags] = useState("");
+  const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -344,6 +346,10 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('materials')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'materials' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📚 Study Materials</button>
             <button onClick={() => setActiveTab('news')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'news' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📰 News CMS</button>
             <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'ebooks' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>📖 Manage eBooks</button>
+            <button onClick={() => setActiveTab('class-blogs')} 
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${activeTab === 'class-blogs' ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>
+                ✍️ Class Blogs
+            </button>
         </nav>
         <div className="p-4 border-t border-gray-100">
             <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded">Sign Out</button>
@@ -614,6 +620,148 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+{/* --- TAB 4: CLASS BLOGS MANAGER (NEW) --- */}
+{activeTab === 'class-blogs' && (
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-2xl font-bold mb-6 text-gray-900">✍️ Manage Class Blogs</h2>
+    
+    {/* 1. SELECTION BAR */}
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4">
+        <select className="p-3 border rounded-lg font-bold text-gray-700 bg-gray-50 flex-1" value={selectedSegment} onChange={(e) => handleSegmentClick(e.target.value)}>
+            <option value="">1. Select Class/Segment...</option>
+            {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+        </select>
+        <select className="p-3 border rounded-lg font-bold text-gray-700 bg-gray-50 flex-1" value={selectedGroup} onChange={(e) => handleGroupClick(e.target.value)} disabled={!selectedSegment}>
+            <option value="">2. Select Group...</option>
+            {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+        </select>
+        <select className="p-3 border rounded-lg font-bold text-gray-700 bg-gray-50 flex-1" value={selectedSubject} onChange={(e) => handleSubjectClick(e.target.value)} disabled={!selectedGroup}>
+            <option value="">3. Select Subject...</option>
+            {subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+        </select>
+    </div>
+
+    {!selectedSubject ? (
+        <div className="text-center py-20 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed">
+            <p className="text-xl font-bold">Please select a Subject above to manage its blogs.</p>
+        </div>
+    ) : (
+        <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* LEFT: BLOG LIST */}
+            <div className="lg:w-1/3 space-y-4">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-gray-700">Existing Blogs</h3>
+                    <button onClick={() => {
+                        setEditingResourceId(null); setResTitle(""); setBlogContent(""); setBlogTags(""); setBlogImageFile(null);
+                    }} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold hover:bg-blue-200">+ New</button>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-h-[600px] overflow-y-auto">
+                    {resources.filter(r => r.type === 'blog').length === 0 && (
+                        <div className="p-8 text-center text-gray-400 text-sm">No blogs found for this subject.</div>
+                    )}
+                    {resources.filter(r => r.type === 'blog').map(blog => (
+                        <div key={blog.id} onClick={() => {
+                            setEditingResourceId(blog.id);
+                            setResTitle(blog.title);
+                            setBlogContent(blog.content_body || "");
+                            setBlogTags(blog.tags ? blog.tags.join(", ") : "");
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className={`p-4 border-b hover:bg-gray-50 cursor-pointer group ${editingResourceId === blog.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''}`}>
+                            <h4 className="font-bold text-gray-800 text-sm mb-1 line-clamp-2">{blog.title}</h4>
+                            <div className="flex justify-between items-center mt-2">
+                                <span className="text-xs text-gray-400">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                <button onClick={(e) => { e.stopPropagation(); deleteItem('resources', blog.id, () => fetchResources(selectedSubject)); }} className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* RIGHT: EDITOR */}
+            <div className="lg:w-2/3">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 className="font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between items-center">
+                        {editingResourceId ? `Editing Blog ID: ${editingResourceId}` : "Write New Blog Post"}
+                        {editingResourceId && <button onClick={() => setEditingResourceId(null)} className="text-xs text-red-500">Cancel Edit</button>}
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        {/* Title */}
+                        <input className="w-full text-xl font-bold p-3 bg-gray-50 border rounded-lg" placeholder="Blog Title" value={resTitle} onChange={e => setResTitle(e.target.value)} />
+                        
+                        {/* SunEditor */}
+                        <div className="border rounded-lg overflow-hidden">
+                             <SunEditor 
+                                setContents={blogContent}
+                                onChange={setBlogContent}
+                                height="400px"
+                                setOptions={{ buttonList: [['bold', 'underline', 'italic', 'list', 'align', 'link', 'image', 'video'], ['font', 'fontSize', 'formatBlock', 'fontColor'], ['fullScreen', 'codeView']] }}
+                            />
+                        </div>
+
+                        {/* Tags */}
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">SEO Tags</label>
+                            <input className="w-full p-3 bg-gray-50 border rounded-lg text-sm" placeholder="Physics, Chapter 1, Motion (Comma separated)" value={blogTags} onChange={e => setBlogTags(e.target.value)} />
+                        </div>
+
+                        {/* Image */}
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Featured Image</label>
+                            <input type="file" onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 mt-1" accept="image/*" />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button 
+                            disabled={submitting}
+                            onClick={async () => {
+                                if(!resTitle || !blogContent) return alert("Title and Content are required!");
+                                setSubmitting(true);
+
+                                let finalUrl = resLink; // Keeps old URL if editing and no new file
+                                // 1. Upload Image if exists
+                                if (blogImageFile) {
+                                    const fileName = `blog-${Date.now()}-${blogImageFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+                                    await supabase.storage.from('materials').upload(fileName, blogImageFile);
+                                    finalUrl = supabase.storage.from('materials').getPublicUrl(fileName).data.publicUrl;
+                                }
+
+                                const tagsArray = blogTags.split(',').map(tag => tag.trim()).filter(t => t !== "");
+                                const payload: any = {
+                                    subject_id: Number(selectedSubject),
+                                    title: resTitle,
+                                    type: 'blog',
+                                    content_body: blogContent,
+                                    tags: tagsArray,
+                                    content_url: finalUrl
+                                };
+
+                                if(editingResourceId) {
+                                    // UPDATE
+                                    await supabase.from('resources').update(payload).eq('id', editingResourceId);
+                                    alert("Blog Updated!");
+                                } else {
+                                    // INSERT
+                                    await supabase.from('resources').insert([payload]);
+                                    alert("Blog Published!");
+                                }
+                                
+                                fetchResources(selectedSubject);
+                                setResTitle(""); setBlogContent(""); setBlogTags(""); setBlogImageFile(null); setEditingResourceId(null);
+                                setSubmitting(false);
+                            }}
+                            className={`w-full py-3 rounded-lg text-white font-bold shadow-md transition ${editingResourceId ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            {submitting ? "Processing..." : (editingResourceId ? "Update Blog Post" : "Publish Blog Post")}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )}
+  </div>
+)}
       </main>
     </div>
   );
