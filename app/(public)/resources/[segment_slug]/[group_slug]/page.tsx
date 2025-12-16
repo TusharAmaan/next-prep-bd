@@ -5,16 +5,30 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function GroupPage({ params }: { params: Promise<{ segment: string; group: string }> }) {
-  const { segment, group } = await params;
+// UPDATED PARAMS TO MATCH YOUR FOLDER NAMES
+export default async function GroupPage({ params }: { params: Promise<{ segment_slug: string; group_slug: string }> }) {
+  const { segment_slug, group_slug } = await params;
 
-  // 1. Fetch Segment & Group Data
-  const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment).single();
-  const { data: groupData } = await supabase.from("groups").select("*").eq("slug", group).single();
+  // 1. Fetch Segment
+  const { data: segmentData } = await supabase
+    .from("segments")
+    .select("id, title")
+    .eq("slug", segment_slug)
+    .single();
 
-  if (!segmentData || !groupData) return notFound();
+  if (!segmentData) return notFound();
 
-  // 2. Fetch Subjects for this Group
+  // 2. Fetch Group (strictly belonging to this segment)
+  const { data: groupData } = await supabase
+    .from("groups")
+    .select("id, title")
+    .eq("slug", group_slug)
+    .eq("segment_id", segmentData.id)
+    .single();
+
+  if (!groupData) return notFound();
+
+  // 3. Fetch Subjects
   const { data: subjects } = await supabase
     .from("subjects")
     .select("*")
@@ -25,7 +39,7 @@ export default async function GroupPage({ params }: { params: Promise<{ segment:
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* HEADER / BREADCRUMB */}
+        {/* HEADER */}
         <div className="mb-8">
             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                 <Link href="/" className="hover:text-blue-600">Home</Link> / 
@@ -35,19 +49,19 @@ export default async function GroupPage({ params }: { params: Promise<{ segment:
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
                 <span className="text-blue-600">{groupData.title}</span> Subjects
             </h1>
-            <p className="text-gray-500 mt-2">Select a subject to access notes, questions, and videos.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* LEFT: SUBJECT GRID (8 Cols) */}
+            {/* SUBJECT GRID */}
             <div className="lg:col-span-8">
                 {subjects && subjects.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {subjects.map((sub) => (
                             <Link 
                                 key={sub.id} 
-                                href={`/resources/${segment}/${group}/${sub.slug}`}
+                                // UPDATED LINK STRUCTURE
+                                href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`}
                                 className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-200 transition-all group flex flex-col justify-between h-40"
                             >
                                 <div>
@@ -69,12 +83,11 @@ export default async function GroupPage({ params }: { params: Promise<{ segment:
                 )}
             </div>
 
-            {/* RIGHT: SIDEBAR (4 Cols) */}
+            {/* SIDEBAR */}
             <div className="lg:col-span-4">
                 <Sidebar />
             </div>
         </div>
-
       </div>
     </div>
   );

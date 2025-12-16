@@ -176,11 +176,13 @@ export default function AdminDashboard() {
     setSubmitting(true);
     let finalUrl = resLink;
 
-    let fileToUpload = resType === 'pdf' ? resFile : null;
+    // Handle Upload for PDF or Question type
+    let fileToUpload = (resType === 'pdf' || resType === 'question') ? resFile : null;
+    
     if (fileToUpload) {
         const fileName = `${resType}-${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, fileToUpload);
-        if (error) { alert("File Upload Failed"); setSubmitting(false); return; }
+        if (error) { alert("File Upload Failed: " + error.message); setSubmitting(false); return; }
         const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
         finalUrl = data.publicUrl;
     }
@@ -313,7 +315,7 @@ export default function AdminDashboard() {
       setSubmitting(false);
   }
 
-  // --- COURSE ACTIONS (FIXED) ---
+  // --- COURSE ACTIONS ---
   async function handleCourseSubmit() {
     if(!cTitle) return alert("Course Title is required!");
     setSubmitting(true);
@@ -334,12 +336,10 @@ export default function AdminDashboard() {
     if (thumbUrl) payload.thumbnail_url = thumbUrl;
 
     if (editingCourseId) {
-        // UPDATE LOGIC
         const { error } = await supabase.from('courses').update(payload).eq('id', editingCourseId);
         if (error) alert("Error updating course: " + error.message);
         else alert("Course Updated Successfully!");
     } else {
-        // INSERT LOGIC
         if(!thumbUrl) { alert("Thumbnail is required for new courses!"); setSubmitting(false); return; }
         payload.thumbnail_url = thumbUrl;
         const { error } = await supabase.from('courses').insert([payload]);
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
     setSubmitting(false);
     setEditingCourseId(null);
     setCTitle(""); setCInstructor(""); setCPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null);
-    fetchCourses(); // Refresh list
+    fetchCourses();
   }
 
   if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
@@ -393,14 +393,13 @@ export default function AdminDashboard() {
              <button onClick={() => setActiveTab('news')} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${activeTab === 'news' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>News</button>
         </div>
 
-        {/* --- TAB 1: STUDY MATERIALS (FIXED LAYOUT) --- */}
+        {/* --- TAB 1: STUDY MATERIALS --- */}
         {activeTab === 'materials' && (
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
             
             {/* TOP ROW: SELECTION GRID (3 COLUMNS) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                
                 {/* 1. SEGMENTS */}
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">1. Segments</h3>
@@ -417,7 +416,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 2. GROUPS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
@@ -434,7 +432,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 3. SUBJECTS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
@@ -468,17 +465,18 @@ export default function AdminDashboard() {
                             <select className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold text-gray-700" value={resType} onChange={(e)=>setResType(e.target.value)}>
                                 <option value="pdf">📄 PDF File</option>
                                 <option value="video">🎬 Video Link</option>
+                                <option value="question">❓ Previous Year Question</option>
                                 <option value="blog">✍️ Blog Post</option>
                             </select>
                         </div>
                         
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Title</label>
-                            <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="e.g. Chapter 1 Lecture Note" />
+                            <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder={resType === 'question' ? "e.g. Dhaka Board 2023" : "e.g. Chapter 1 Lecture Note"} />
                         </div>
                         
                         {/* Conditional Inputs */}
-                        {resType === 'pdf' && (
+                        {(resType === 'pdf' || resType === 'question') && (
                             <div className="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF</label>
                                 <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" accept="application/pdf"/>
@@ -516,7 +514,7 @@ export default function AdminDashboard() {
                                         <li key={r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded shadow-sm border border-gray-100 group hover:border-blue-200 transition">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-full">
-                                                    {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : '✍️'}
+                                                    {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : r.type === 'question' ? '❓' : '✍️'}
                                                 </span>
                                                 <span className="truncate font-medium text-gray-700">{r.title}</span>
                                             </div>
@@ -619,7 +617,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 4: COURSES MANAGER (FIXED) --- */}
+        {/* --- TAB 4: COURSES MANAGER --- */}
         {activeTab === 'courses' && (
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🎓 Manage Courses</h2>

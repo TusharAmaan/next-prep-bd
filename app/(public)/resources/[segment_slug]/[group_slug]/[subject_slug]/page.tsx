@@ -5,40 +5,54 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function SubjectPage({ params }: { params: Promise<{ segment: string; group: string; subject: string }> }) {
-  const { segment, group, subject } = await params;
+// UPDATED PARAMS HERE
+export default async function SubjectPage({ params }: { params: Promise<{ segment_slug: string; group_slug: string; subject_slug: string }> }) {
+  const { segment_slug, group_slug, subject_slug } = await params;
 
-  // 1. Fetch Metadata (Segment, Group, Subject)
-  const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment).single();
-  const { data: groupData } = await supabase.from("groups").select("*").eq("slug", group).single();
-  const { data: subjectData } = await supabase.from("subjects").select("*").eq("slug", subject).single();
+  // 1. Fetch Segment
+  const { data: segmentData } = await supabase
+    .from("segments")
+    .select("id, title")
+    .eq("slug", segment_slug)
+    .single();
+  
+  if (!segmentData) return notFound();
 
-  if (!segmentData || !groupData || !subjectData) return notFound();
+  // 2. Fetch Group (must belong to segment)
+  const { data: groupData } = await supabase
+    .from("groups")
+    .select("id, title")
+    .eq("slug", group_slug)
+    .eq("segment_id", segmentData.id)
+    .single();
 
-  // 2. Fetch Resources (Notes, Videos, etc.)
+  if (!groupData) return notFound();
+
+  // 3. Fetch Subject (must belong to group)
+  const { data: subjectData } = await supabase
+    .from("subjects")
+    .select("id, title")
+    .eq("slug", subject_slug)
+    .eq("group_id", groupData.id)
+    .single();
+
+  if (!subjectData) return notFound();
+
+  // 4. Fetch Resources
   const { data: resources } = await supabase
     .from("resources")
     .select("*")
     .eq("subject_id", subjectData.id)
     .order("created_at", { ascending: false });
 
-  // 3. Fetch Recommended eBooks (Matching the Segment, e.g., SSC)
-  const { data: relatedEbooks } = await supabase
-    .from("ebooks")
-    .select("*")
-    .eq("category", segmentData.title) // e.g. "SSC"
-    .limit(4);
+  // 5. Fetch Sidebar Data
+  const { data: relatedEbooks } = await supabase.from("ebooks").select("*").eq("category", segmentData.title).limit(4);
+  const { data: relatedCourses } = await supabase.from("courses").select("*").limit(3);
 
-  // 4. Fetch Recommended Courses (Just showing latest 3 for now)
-  const { data: relatedCourses } = await supabase
-    .from("courses")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  // Filter Resources locally for UI separation
+  // Filter types
   const pdfResources = resources?.filter(r => r.type === 'pdf') || [];
   const videoResources = resources?.filter(r => r.type === 'video') || [];
+  const questionResources = resources?.filter(r => r.type === 'question') || [];
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
@@ -48,7 +62,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
         <div className="max-w-7xl mx-auto px-6 py-10">
             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                 <Link href="/" className="hover:text-blue-600">Home</Link> / 
-                <Link href={`/resources/${segment}/${group}`} className="hover:text-blue-600">{groupData.title}</Link> /
+                <Link href={`/resources/${segment_slug}/${group_slug}`} className="hover:text-blue-600">{groupData.title}</Link> /
                 <span className="text-blue-600">{subjectData.title}</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">{subjectData.title}</h1>
@@ -62,7 +76,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
             {/* LEFT CONTENT (8 Cols) */}
             <div className="lg:col-span-8 space-y-10">
                 
-                {/* 1. LECTURE NOTES & MATERIALS */}
+                {/* 1. STUDY MATERIALS (PDFs) */}
                 <section>
                     <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <span className="bg-blue-100 text-blue-600 p-1 rounded">📄</span> Study Materials
@@ -84,12 +98,41 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                                 ))}
                             </div>
                         ) : (
-                            <div className="p-8 text-center text-gray-400 italic">No lecture notes available yet.</div>
+                            <div className="p-8 text-center text-gray-400 italic">No notes uploaded yet.</div>
                         )}
                     </div>
                 </section>
 
-                {/* 2. VIDEO LECTURES */}
+                {/* 2. PREVIOUS YEAR QUESTIONS */}
+                <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="bg-yellow-100 text-yellow-700 p-1 rounded">❓</span> Previous Year Questions
+                    </h2>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        {questionResources.length > 0 ? (
+                            <div className="divide-y divide-gray-100">
+                                {questionResources.map(res => (
+                                    <div key={res.id} className="p-4 flex justify-between items-center hover:bg-yellow-50 transition">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">📝</span>
+                                            <div>
+                                                <h4 className="font-bold text-gray-800 text-sm">{res.title}</h4>
+                                                <span className="text-xs text-gray-400">Board Question</span>
+                                            </div>
+                                        </div>
+                                        <a href={res.content_url} target="_blank" className="bg-yellow-100 text-yellow-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-yellow-600 hover:text-white transition">View PDF</a>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center text-gray-400 italic bg-gray-50">
+                                No previous questions uploaded yet.
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* 3. VIDEO LECTURES */}
                 {videoResources.length > 0 && (
                     <section>
                         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -99,7 +142,6 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                             {videoResources.map(video => (
                                 <a href={video.content_url} target="_blank" key={video.id} className="block group bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition">
                                     <div className="h-40 bg-gray-900 relative flex items-center justify-center">
-                                        {/* Fake Thumbnail Overlay */}
                                         <div className="text-white flex flex-col items-center">
                                             <svg className="w-12 h-12 opacity-80 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
                                         </div>
@@ -112,45 +154,13 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                         </div>
                     </section>
                 )}
-
-                {/* 3. PREVIOUS YEAR QUESTIONS (Placeholder Section for now) */}
-                <section>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="bg-yellow-100 text-yellow-700 p-1 rounded">❓</span> Previous Year Questions
-                    </h2>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-                        <p className="text-yellow-800 font-bold mb-2">Question Bank Coming Soon</p>
-                        <p className="text-sm text-yellow-700">We are currently uploading board questions for {subjectData.title}. Check the "Study Materials" section above for any available PDFs.</p>
-                    </div>
-                </section>
-
-                {/* 4. RECOMMENDED COURSES */}
-                {relatedCourses && relatedCourses.length > 0 && (
-                    <section>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Premium Courses</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {relatedCourses.map(course => (
-                                <Link href={`/courses/${course.id}`} key={course.id} className="flex gap-4 bg-white p-3 rounded-xl border border-gray-200 hover:border-blue-300 transition group">
-                                    <div className="w-24 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                                        {course.thumbnail_url && <img src={course.thumbnail_url} className="w-full h-full object-cover" />}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 line-clamp-2">{course.title}</h4>
-                                        <span className="text-xs font-bold text-green-600 mt-1 block">{course.price || "Free"}</span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
             </div>
 
             {/* RIGHT SIDEBAR (4 Cols) */}
             <div className="lg:col-span-4 space-y-8">
                 <Sidebar />
-
-                {/* 5. RECOMMENDED EBOOKS (Sidebar Widget) */}
+                
+                {/* RECOMMENDED EBOOKS */}
                 {relatedEbooks && relatedEbooks.length > 0 && (
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-900 mb-4 pb-2 border-b">Recommended Books</h3>
@@ -168,6 +178,24 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                             ))}
                         </div>
                         <Link href="/ebooks" className="block mt-4 text-center text-xs font-bold text-blue-600 hover:underline">View All eBooks</Link>
+                    </div>
+                )}
+
+                {/* RECOMMENDED COURSES */}
+                {relatedCourses && relatedCourses.length > 0 && (
+                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6 rounded-2xl shadow-lg">
+                        <h3 className="font-bold text-lg mb-4 border-b border-gray-700 pb-2">Premium Courses</h3>
+                        <div className="space-y-4">
+                            {relatedCourses.map(course => (
+                                <Link href={`/courses/${course.id}`} key={course.id} className="block group">
+                                    <h4 className="font-bold text-sm group-hover:text-blue-300">{course.title}</h4>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <span className="text-xs text-gray-400">{course.duration}</span>
+                                        <span className="text-xs font-bold text-green-400">{course.price || "Free"}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
