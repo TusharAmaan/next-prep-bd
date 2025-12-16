@@ -43,6 +43,11 @@ export default function AdminDashboard() {
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
   const [submitting, setSubmitting] = useState(false);
+
+  // Question Content Inputs
+  const [questionContent, setQuestionContent] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
   
   // Blog Post Inputs (Materials Tab)
   const [blogContent, setBlogContent] = useState("");
@@ -172,12 +177,14 @@ export default function AdminDashboard() {
   // --- MATERIAL UPLOAD ---
   async function uploadResource() {
     if (!resTitle || !selectedSubject) return alert("Title and Subject are required");
+
+    if (resType === 'question' && !questionContent) return alert("Question content is required");
     
     setSubmitting(true);
     let finalUrl = resLink;
 
-    // Handle Upload for PDF or Question type
-    let fileToUpload = (resType === 'pdf' || resType === 'question') ? resFile : null;
+    // Handle Upload for PDF type
+    let fileToUpload = resType === 'pdf' ? resFile : null;
     
     if (fileToUpload) {
         const fileName = `${resType}-${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
@@ -191,15 +198,24 @@ export default function AdminDashboard() {
         subject_id: Number(selectedSubject),
         title: resTitle,
         type: resType,
-        content_url: finalUrl
     };
+
+    if (resType === 'pdf' || resType === 'video') {
+        payload.content_url = finalUrl;
+    } else if (resType === 'question') {
+        payload.content_body = questionContent;
+        payload.seo_title = seoTitle || resTitle; // Fallback to title if SEO title is empty
+        payload.seo_description = seoDescription;
+    }
 
     const { error } = await supabase.from('resources').insert([payload]);
     
     if (error) alert("Error saving resource: " + error.message);
     else {
         fetchResources(selectedSubject);
+        // Reset form
         setResTitle(""); setResLink(""); setResFile(null); 
+        setQuestionContent(""); setSeoTitle(""); setSeoDescription("");
     }
     setSubmitting(false);
   }
@@ -476,7 +492,7 @@ export default function AdminDashboard() {
                         </div>
                         
                         {/* Conditional Inputs */}
-                        {(resType === 'pdf' || resType === 'question') && (
+                        {resType === 'pdf' && (
                             <div className="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50">
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Upload PDF</label>
                                 <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" accept="application/pdf"/>
@@ -486,6 +502,44 @@ export default function AdminDashboard() {
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Video Link</label>
                                 <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="https://youtube.com/..." />
+                            </div>
+                        )}
+
+                        {resType === 'question' && (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Question Content</label>
+                                    <SunEditor 
+                                        setContents={questionContent}
+                                        onChange={setQuestionContent}
+                                        height="300px"
+                                        setOptions={{
+                                            buttonList: [
+                                                ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                                                ['font', 'fontSize', 'formatBlock'],
+                                                ['fontColor', 'hiliteColor'],
+                                                ['removeFormat'],
+                                                ['outdent', 'indent'],
+                                                ['align', 'horizontalRule', 'list', 'lineHeight'],
+                                                ['table', 'link', 'image', 'video'],
+                                                ['fullScreen', 'showBlocks', 'codeView'],
+                                            ],
+                                        }}
+                                    />
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <h4 className="text-sm font-bold text-gray-700 mb-3">SEO Settings</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Meta Title</label>
+                                            <input className="w-full bg-white border p-2 rounded text-sm" value={seoTitle} onChange={e => setSeoTitle(e.target.value)} placeholder="SEO Title (optional)" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Meta Description</label>
+                                            <textarea className="w-full bg-white border p-2 rounded text-sm" rows={3} value={seoDescription} onChange={e => setSeoDescription(e.target.value)} placeholder="SEO Description (optional)"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         
@@ -610,7 +664,7 @@ export default function AdminDashboard() {
                         <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-red-500">📕 PDF {editingEbookId ? "(Optional)" : "(Required)"}:</span><input type="file" className="text-xs" id="eb-file" accept="application/pdf" /></div>
                         <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover (Optional):</span><input type="file" className="text-xs" id="eb-cover" accept="image/*" /></div>
                     </div>
-                    <button disabled={submitting} onClick={handleEbookSubmit} className={`font-bold py-4 rounded-lg transition shadow-md flex items-center justify-center text-lg ${editingEbookId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>{submitting ? "Processing..." : (editingEbookId ? "Update eBook Details" : "Upload eBook To Library")}</button>
+                    <button disabled={submitting} onClick={handleEbookSubmit} className={`font-bold py-4 rounded-lg transition shadow-md flex items-center justify-center text-lg ${editingEbookId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700'}`}>{submitting ? "Processing..." : (editingEbookId ? "Update eBook Details" : "Upload eBook To Library")}</button>
                 </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><table className="w-full text-left"><thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Cover</th><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Category</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead><tbody className="divide-y">{ebooksList.map(book => (<tr key={book.id}><td className="p-4">{book.cover_url ? <img src={book.cover_url} alt="" className="h-12 w-9 object-cover rounded shadow-sm"/> : <div className="h-12 w-9 bg-gray-100 rounded"></div>}</td><td className="p-4 font-bold">{book.title}</td><td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{book.category}</span></td><td className="p-4 text-right"><button onClick={() => loadEbookForEdit(book)} className="text-blue-600 font-bold text-sm mr-4 hover:underline">Edit</button><button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="text-red-500 font-bold text-sm hover:underline">Delete</button></td></tr>))}</tbody></table></div>
