@@ -39,7 +39,7 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // --- LOGIC: Filter Blogs for Main Tabs ---
+  // Filter Blogs based on Active Tab
   const filteredBlogs = blogs.filter(blog => {
     const subject = subjects.find(s => s.id === blog.subject_id);
     if (!subject) return false;
@@ -47,23 +47,14 @@ export default function Home() {
     return segment && segment.title === activeTab;
   });
 
-  // --- LOGIC: Filter Blogs specifically for "Admission" Sidebar ---
-  const admissionBlogs = blogs.filter(blog => {
-      const subject = subjects.find(s => s.id === blog.subject_id);
-      if (!subject) return false;
-      const segment = segments.find(s => s.id === subject.segment_id);
-      // Check if segment title contains "Admission" (case insensitive)
-      return segment && segment.title.toLowerCase().includes("admission");
-  }).slice(0, 5); // Limit to top 5
-
-  // Separate featured vs list for Main Content
+  // Separate featured vs list
   const featuredBlog = filteredBlogs[0];
   const listBlogs = filteredBlogs.slice(1, 6); 
 
   return (
     <div className="min-h-screen bg-white font-sans">
       
-      {/* --- HERO SECTION --- */}
+      {/* --- HERO SECTION (Restored) --- */}
       <div className="relative bg-gray-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-black/80 z-10"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30"></div>
@@ -86,7 +77,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- CLASS SELECTION (SEGMENTS) --- */}
+      {/* --- CLASS SELECTION SECTION (Restored) --- */}
       <div id="segments" className="max-w-7xl mx-auto px-6 py-20 border-b border-gray-100">
         <div className="border-l-4 border-blue-600 pl-4 mb-10">
             <h2 className="text-3xl font-bold text-gray-900">Select Your Class</h2>
@@ -109,7 +100,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
+      {/* --- MAIN CONTENT & SIDEBAR SECTION --- */}
       <div className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-6">
             
@@ -120,10 +111,10 @@ export default function Home() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* ================= LEFT COLUMN (MAIN FEED) - 8 COLS ================= */}
+                {/* LEFT COLUMN (Content) */}
                 <div className="lg:col-span-8">
                     
-                    {/* TABS */}
+                    {/* Tabs */}
                     <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 pb-1">
                         {segments.map((seg) => (
                             <button
@@ -140,7 +131,7 @@ export default function Home() {
                         ))}
                     </div>
 
-                    {/* BLOG CONTENT */}
+                    {/* Blog Feed */}
                     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-200 min-h-[500px]">
                         {loading ? (
                             <div className="animate-pulse space-y-4">
@@ -192,9 +183,10 @@ export default function Home() {
                     </div>
                 </div>
 
-
-                {/* ================= RIGHT COLUMN (SIDEBAR) - 4 COLS ================= */}
-                        <Sidebar />
+                {/* RIGHT COLUMN (Sidebar) */}
+                <div className="lg:col-span-4">
+                    <Sidebar />
+                </div>
 
             </div>
         </div>
