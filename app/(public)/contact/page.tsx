@@ -11,19 +11,31 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+// Inside ContactPage component...
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setStatus("idle");
 
-    const { error } = await supabase.from("messages").insert([formData]);
+    try {
+        // Call our internal API Route
+        const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        });
 
-    if (error) {
-      setStatus("error");
-    } else {
-      setStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" }); // Reset form
+        if (response.ok) {
+            setStatus("success");
+            setFormData({ name: "", email: "", subject: "", message: "" }); // Reset form
+        } else {
+            setStatus("error");
+        }
+    } catch (error) {
+        setStatus("error");
     }
+    
     setLoading(false);
   };
 
