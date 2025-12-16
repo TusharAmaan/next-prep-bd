@@ -129,9 +129,15 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 <ul className="space-y-2">
                     {categories?.map((cat: any) => (
                         <li key={cat.id}>
-                            <Link href={`/resources/${cat.slug}`} className="flex justify-between items-center text-gray-600 hover:text-blue-600 text-sm font-medium transition group">
+                            <Link 
+                                href={`/resources/${cat.slug}`} 
+                                target="_blank" // <--- This prevents losing the blog page
+                                rel="noopener noreferrer"
+                                className="flex justify-between items-center text-gray-600 hover:text-blue-600 text-sm font-medium transition group"
+                            >
                                 <span>{cat.title}</span>
-                                <span className="w-6 h-6 rounded bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 flex items-center justify-center text-[10px]">➜</span>
+                                {/* Changed arrow to 'External Link' icon to indicate new tab */}
+                                <span className="w-6 h-6 rounded bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 flex items-center justify-center text-[10px]">↗</span>
                             </Link>
                         </li>
                     ))}
