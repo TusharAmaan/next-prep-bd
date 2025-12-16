@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
@@ -40,6 +41,10 @@ export default function AdminDashboard() {
   const [resLink, setResLink] = useState("");
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
+  // NEW: States for Blog Post in Materials
+  const [blogContent, setBlogContent] = useState("");
+  const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
+  
   const [submitting, setSubmitting] = useState(false);
 
   // --- NEWS INPUTS ---
@@ -52,12 +57,12 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   // --- EBOOK INPUTS ---
-  const [ebTitle, setEbTitle] = useState(""); // Managed state for edit
+  const [ebTitle, setEbTitle] = useState("");
   const [ebAuthor, setEbAuthor] = useState("");
   const [ebCategory, setEbCategory] = useState("SSC");
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
-  const [editingEbookId, setEditingEbookId] = useState<number | null>(null); // Track editing state
+  const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
   // --- AUTH ---
   useEffect(() => {
@@ -146,27 +151,58 @@ export default function AdminDashboard() {
     }
   }
 
-  // --- MATERIAL UPLOAD ---
+  // --- MATERIAL UPLOAD (UPDATED FOR BLOGS) ---
   async function uploadResource() {
-    if (!resTitle || !selectedSubject) return alert("Title required");
-    setSubmitting(true);
-    let finalUrl = resLink;
+    if (!resTitle || !selectedSubject) return alert("Title and Subject are required");
+    
+    if (resType === 'blog' && !blogContent) {
+        return alert("Blog content is required for blog posts.");
+    }
 
-    if (resType === 'pdf' && resFile) {
-        const fileName = `res-${Date.now()}-${resFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-        const { error } = await supabase.storage.from('materials').upload(fileName, resFile);
-        if (error) { alert("Upload Failed"); setSubmitting(false); return; }
+    setSubmitting(true);
+    let finalUrl = resLink; // For video links or blog image URL
+    let bodyContent = null; // For blog post body
+
+    // 1. Handle File Uploads (PDF or Blog Image)
+    let fileToUpload = resType === 'pdf' ? resFile : (resType === 'blog' ? blogImageFile : null);
+    if (fileToUpload) {
+        const fileName = `${resType}-${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+        const { error } = await supabase.storage.from('materials').upload(fileName, fileToUpload);
+        if (error) { 
+            alert("File Upload Failed: " + error.message); 
+            setSubmitting(false); 
+            return; 
+        }
         const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
         finalUrl = data.publicUrl;
     }
 
-    await addItem('resources', { 
-        subject_id: Number(selectedSubject), 
-        title: resTitle, 
-        type: resType, 
-        content_url: finalUrl 
-    }, () => fetchResources(selectedSubject));
-    setResTitle(""); setResLink(""); setResFile(null); setSubmitting(false);
+    // 2. Prepare Payload based on type
+    const payload: any = {
+        subject_id: Number(selectedSubject),
+        title: resTitle,
+        type: resType,
+    };
+
+    if (resType === 'blog') {
+        payload.content_body = blogContent; // Rich text from editor
+        if (finalUrl) payload.content_url = finalUrl; // Featured image URL
+    } else {
+        payload.content_url = finalUrl; // PDF or Video URL
+    }
+
+    // 3. Save to DB
+    const { error } = await supabase.from('resources').insert([payload]);
+    
+    if (error) {
+        alert("Error saving resource: " + error.message);
+    } else {
+        fetchResources(selectedSubject);
+        // Reset inputs
+        setResTitle(""); setResLink(""); setResFile(null); 
+        setBlogContent(""); setBlogImageFile(null);
+    }
+    setSubmitting(false);
   }
 
   // --- NEWS ACTIONS ---
@@ -220,7 +256,7 @@ export default function AdminDashboard() {
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
-  // --- EBOOK ACTIONS (NEW & FIXED) ---
+  // --- EBOOK ACTIONS ---
   function loadEbookForEdit(book: any) {
     setEbTitle(book.title);
     setEbAuthor(book.author || "");
@@ -245,14 +281,14 @@ export default function AdminDashboard() {
       let pdfUrl = null;
       let coverUrl = null;
 
-      // 1. Upload PDF (Only if new file selected)
+      // 1. Upload PDF
       if (pdfFile) {
         const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         await supabase.storage.from('materials').upload(pdfName, pdfFile);
         pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
       }
 
-      // 2. Upload Cover (Only if new file selected)
+      // 2. Upload Cover
       if (coverFile) {
         const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         await supabase.storage.from('covers').upload(coverName, coverFile);
@@ -268,25 +304,17 @@ export default function AdminDashboard() {
           description: ebDescription, 
           tags: tagsArray 
       };
-      
-      // Only update file URLs if new files were uploaded
       if (pdfUrl) payload.pdf_url = pdfUrl;
       if (coverUrl) payload.cover_url = coverUrl;
 
       // 4. Update or Insert
       if (editingEbookId) {
-          // UPDATE
           const { error } = await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
           if (error) alert("Error updating: " + error.message);
           else alert("eBook Updated Successfully!");
       } else {
-          // INSERT
-          if (!pdfUrl) {
-              alert("PDF is required for new books!"); 
-              setSubmitting(false); 
-              return;
-          }
-          payload.pdf_url = pdfUrl; // Ensure PDF is set for new entries
+          if (!pdfUrl) { alert("PDF is required for new books!"); setSubmitting(false); return; }
+          payload.pdf_url = pdfUrl;
           const { error } = await supabase.from('ebooks').insert([payload]);
           if (error) alert("Error creating: " + error.message);
           else alert("eBook Created Successfully!");
@@ -294,10 +322,8 @@ export default function AdminDashboard() {
 
       // 5. Cleanup
       cancelEbookEdit();
-      // Clear file inputs manually
       (document.getElementById('eb-file') as HTMLInputElement).value = "";
       (document.getElementById('eb-cover') as HTMLInputElement).value = "";
-      
       fetchEbooks();
       setSubmitting(false);
   }
@@ -391,26 +417,65 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-                {/* 4. UPLOAD */}
+                {/* 4. UPLOADS (UPDATED) */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">4. Uploads</h3>
                     <div className="space-y-3 mb-6">
-                        <select className="w-full bg-gray-50 border p-2 rounded text-sm" value={resType} onChange={(e)=>setResType(e.target.value)}>
-                            <option value="pdf">PDF File</option>
-                            <option value="video">Video Link</option>
+                        <select className="w-full bg-gray-50 border p-2 rounded text-sm font-bold text-gray-700" value={resType} onChange={(e)=>setResType(e.target.value)}>
+                            <option value="pdf">📄 PDF File</option>
+                            <option value="video">🎬 Video Link</option>
+                            <option value="blog">✍️ Blog Post</option>
                         </select>
-                        <input className="w-full bg-gray-50 border p-2 rounded text-sm" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Resource Title" />
-                        {resType === 'pdf' ? <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs" /> : <input className="w-full bg-gray-50 border p-2 rounded text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="Video URL" />}
-                        <button onClick={uploadResource} disabled={submitting} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded font-bold transition">
-                            {submitting ? "Uploading..." : "Save Resource"}
+                        
+                        <input className="w-full bg-gray-50 border p-2 rounded text-sm font-bold" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Resource Title" />
+                        
+                        {/* Conditional Inputs based on Type */}
+                        {resType === 'pdf' && (
+                            <input type="file" onChange={(e) => setResFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="application/pdf"/>
+                        )}
+                        {resType === 'video' && (
+                            <input className="w-full bg-gray-50 border p-2 rounded text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="YouTube/Vimeo URL" />
+                        )}
+                        {resType === 'blog' && (
+                            <div className="space-y-3">
+                                <div className="border rounded overflow-hidden">
+                                    <SunEditor 
+                                        setContents={blogContent}
+                                        onChange={setBlogContent}
+                                        height="200px"
+                                        placeholder="Write your blog post here..."
+                                        setOptions={{
+                                            buttonList: [
+                                                ['bold', 'underline', 'italic', 'list', 'align', 'link', 'image'],
+                                                ['font', 'fontSize', 'formatBlock', 'fontColor'],
+                                                ['codeView']
+                                            ]
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 block mb-1">Featured Image (Optional):</label>
+                                    <input type="file" onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*"/>
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={uploadResource} disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition shadow-md">
+                            {submitting ? "Saving..." : "Save Resource"}
                         </button>
                     </div>
                     <div className="border-t pt-4">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Subject Resources</h4>
                         <ul className="space-y-1 max-h-[200px] overflow-y-auto">
                             {resources.map(r => (
-                                <li key={r.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded border border-gray-100">
-                                    <span className="truncate max-w-[120px]">{r.title}</span>
-                                    <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-500 font-bold">Del</button>
+                                <li key={r.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded border border-gray-100 group">
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="text-lg">
+                                            {r.type === 'pdf' ? '📄' : r.type === 'video' ? '🎬' : '✍️'}
+                                        </span>
+                                        <span className="truncate font-medium">{r.title}</span>
+                                    </div>
+                                    <button onClick={() => deleteItem('resources', r.id, () => fetchResources(selectedSubject))} className="text-red-400 hover:text-red-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
                                 </li>
                             ))}
                         </ul>
@@ -454,7 +519,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Featured Image</h3>
-                        <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs"/>
+                        <input type="file" onChange={(e) => setNewsFile(e.target.files?.[0] || null)} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                     </div>
                 </div>
             </div>
@@ -517,7 +582,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* NEW: EBOOKS LIST */}
+            {/* EBOOKS LIST */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b">
@@ -532,7 +597,9 @@ export default function AdminDashboard() {
                         {ebooksList.map(book => (
                             <tr key={book.id}>
                                 <td className="p-4">
-                                    {book.cover_url ? <img src={book.cover_url} alt="" className="h-12 w-9 object-cover rounded shadow-sm"/> : <div className="h-12 w-9 bg-gray-100 rounded"></div>}
+                                    <div className="h-12 w-9 bg-gray-100 rounded overflow-hidden relative">
+                                        {book.cover_url && <Image src={book.cover_url} alt={book.title} fill className="object-cover" />}
+                                    </div>
                                 </td>
                                 <td className="p-4 font-bold">{book.title}</td>
                                 <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{book.category}</span></td>
