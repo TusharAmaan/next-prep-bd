@@ -4,10 +4,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
 
-// 1. Import SunEditor CSS
+// Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
 
-// 2. Dynamic Import
+// Dynamic Import for Editor
 const SunEditor = dynamic(() => import("suneditor-react"), {
   ssr: false,
 });
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [resources, setResources] = useState<any[]>([]);
   const [newsList, setNewsList] = useState<any[]>([]);
   const [categoryList, setCategoryList] = useState<any[]>([]);
-  const [ebooksList, setEbooksList] = useState<any[]>([]); // NEW: List of eBooks
+  const [ebooksList, setEbooksList] = useState<any[]>([]); 
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -52,50 +52,52 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   // --- EBOOK INPUTS ---
+  const [ebTitle, setEbTitle] = useState(""); // Managed state for edit
+  const [ebAuthor, setEbAuthor] = useState("");
+  const [ebCategory, setEbCategory] = useState("SSC");
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
+  const [editingEbookId, setEditingEbookId] = useState<number | null>(null); // Track editing state
 
-  // --- FETCHERS (Wrapped in useCallback to fix linter warnings) ---
-  const fetchSegments = useCallback(async () => {
-    const { data } = await supabase.from("segments").select("*").order('id');
-    setSegments(data || []);
-  }, []);
-
-  const fetchNews = useCallback(async () => {
-    const { data } = await supabase.from("news").select("*").order('created_at', { ascending: false });
-    setNewsList(data || []);
-  }, []);
-
-  const fetchCategories = useCallback(async () => {
-    const { data } = await supabase.from("categories").select("*").order('name');
-    setCategoryList(data || []);
-  }, []);
-
-  // NEW: Fetch eBooks
-  const fetchEbooks = useCallback(async () => {
-    const { data } = await supabase.from("ebooks").select("*").order('created_at', { ascending: false });
-    setEbooksList(data || []);
-  }, []);
-
-  // --- INIT ---
+  // --- AUTH ---
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsAuthenticated(true);
-        fetchSegments();
-        fetchNews();
-        fetchCategories();
-        fetchEbooks(); // NEW: Fetch eBooks on load
+        loadAllData();
       } else {
         router.push("/login");
       }
       setIsLoading(false);
     };
     checkSession();
-  }, [router, fetchSegments, fetchNews, fetchCategories, fetchEbooks]);
+  }, [router]);
 
-  // --- OTHER FETCHERS ---
+  // --- FETCHERS ---
+  const loadAllData = useCallback(() => {
+    fetchSegments();
+    fetchNews();
+    fetchCategories();
+    fetchEbooks();
+  }, []);
+
+  async function fetchSegments() {
+    const { data } = await supabase.from("segments").select("*").order('id');
+    setSegments(data || []);
+  }
+  async function fetchNews() {
+    const { data } = await supabase.from("news").select("*").order('created_at', { ascending: false });
+    setNewsList(data || []);
+  }
+  async function fetchCategories() {
+    const { data } = await supabase.from("categories").select("*").order('name');
+    setCategoryList(data || []);
+  }
+  async function fetchEbooks() {
+    const { data } = await supabase.from("ebooks").select("*").order('created_at', { ascending: false });
+    setEbooksList(data || []);
+  }
   async function fetchGroups(segmentId: string) {
     const { data } = await supabase.from("groups").select("*").eq("segment_id", segmentId).order('id');
     setGroups(data || []);
@@ -123,20 +125,28 @@ export default function AdminDashboard() {
     setSelectedSubject(id);
     fetchResources(id);
   };
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
-  // --- SHARED FUNCTIONS ---
+  // --- SHARED ACTIONS ---
   async function addItem(table: string, payload: any, refresh: () => void) {
     await supabase.from(table).insert([payload]);
     refresh();
   }
   
   async function deleteItem(table: string, id: number, refresh: () => void) {
-    if(!confirm("Are you sure you want to delete this?")) return;
-    await supabase.from(table).delete().eq("id", id);
-    refresh();
+    if(!confirm("Are you sure you want to delete this? This cannot be undone.")) return;
+    const { error } = await supabase.from(table).delete().eq("id", id);
+    if(error) {
+        alert("Delete failed: " + error.message);
+    } else {
+        refresh();
+    }
   }
 
-  // --- MATERIAL FUNCTIONS ---
+  // --- MATERIAL UPLOAD ---
   async function uploadResource() {
     if (!resTitle || !selectedSubject) return alert("Title required");
     setSubmitting(true);
@@ -159,7 +169,7 @@ export default function AdminDashboard() {
     setResTitle(""); setResLink(""); setResFile(null); setSubmitting(false);
   }
 
-  // --- NEWS CMS FUNCTIONS ---
+  // --- NEWS ACTIONS ---
   async function createCategory() {
     if (!newCategoryInput) return;
     const { error } = await supabase.from('categories').insert([{ name: newCategoryInput }]);
@@ -167,8 +177,6 @@ export default function AdminDashboard() {
         setNewCategoryInput("");
         fetchCategories();
         setSelectedCategory(newCategoryInput); 
-    } else {
-        alert("Error creating category (might already exist)");
     }
   }
 
@@ -176,23 +184,16 @@ export default function AdminDashboard() {
     if (!newsTitle) return alert("Title required");
     setSubmitting(true);
     let imageUrl = null;
-
     if (newsFile) {
         const fileName = `news-${Date.now()}-${newsFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
         const { error } = await supabase.storage.from('materials').upload(fileName, newsFile);
-        if (error) { alert("Image Upload Failed"); setSubmitting(false); return; }
-        const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
-        imageUrl = data.publicUrl;
+        if (!error) {
+             const { data } = supabase.storage.from('materials').getPublicUrl(fileName);
+             imageUrl = data.publicUrl;
+        }
     }
-
     const tagsArray = newsTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
-
-    const payload: any = { 
-        title: newsTitle, 
-        content: newsContent, 
-        category: selectedCategory,
-        tags: tagsArray
-    };
+    const payload: any = { title: newsTitle, content: newsContent, category: selectedCategory, tags: tagsArray };
     if (imageUrl) payload.image_url = imageUrl;
 
     if (editingId) {
@@ -201,11 +202,9 @@ export default function AdminDashboard() {
     } else {
         await supabase.from('news').insert([payload]);
     }
-
     fetchNews();
     setNewsTitle(""); setNewsContent(""); setNewsFile(null); setSelectedCategory("General"); setNewsTags("");
     setSubmitting(false);
-    setEditingId(null);
   }
 
   function loadForEdit(item: any) {
@@ -221,12 +220,89 @@ export default function AdminDashboard() {
     setNewsTitle(""); setNewsContent(""); setSelectedCategory("General"); setNewsTags(""); setEditingId(null);
   }
 
-        // --- AUTH FUNCTION ---
-        async function handleLogout() {
-            await supabase.auth.signOut();
-            router.push("/login");
-        }
-        if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
+  // --- EBOOK ACTIONS (NEW & FIXED) ---
+  function loadEbookForEdit(book: any) {
+    setEbTitle(book.title);
+    setEbAuthor(book.author || "");
+    setEbCategory(book.category || "SSC");
+    setEbDescription(book.description || "");
+    setEbTags(book.tags ? book.tags.join(", ") : "");
+    setEditingEbookId(book.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEbookEdit() {
+    setEbTitle(""); setEbAuthor(""); setEbCategory("SSC"); setEbDescription(""); setEbTags(""); setEditingEbookId(null);
+  }
+
+  async function handleEbookSubmit() {
+      if(!ebTitle) return alert("Title is required!");
+      setSubmitting(true);
+
+      const pdfFile = (document.getElementById('eb-file') as HTMLInputElement)?.files?.[0];
+      const coverFile = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
+      
+      let pdfUrl = null;
+      let coverUrl = null;
+
+      // 1. Upload PDF (Only if new file selected)
+      if (pdfFile) {
+        const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+        await supabase.storage.from('materials').upload(pdfName, pdfFile);
+        pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
+      }
+
+      // 2. Upload Cover (Only if new file selected)
+      if (coverFile) {
+        const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+        await supabase.storage.from('covers').upload(coverName, coverFile);
+        coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
+      }
+
+      // 3. Prepare Payload
+      const tagsArray = ebTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+      const payload: any = { 
+          title: ebTitle, 
+          author: ebAuthor, 
+          category: ebCategory, 
+          description: ebDescription, 
+          tags: tagsArray 
+      };
+      
+      // Only update file URLs if new files were uploaded
+      if (pdfUrl) payload.pdf_url = pdfUrl;
+      if (coverUrl) payload.cover_url = coverUrl;
+
+      // 4. Update or Insert
+      if (editingEbookId) {
+          // UPDATE
+          const { error } = await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
+          if (error) alert("Error updating: " + error.message);
+          else alert("eBook Updated Successfully!");
+      } else {
+          // INSERT
+          if (!pdfUrl) {
+              alert("PDF is required for new books!"); 
+              setSubmitting(false); 
+              return;
+          }
+          payload.pdf_url = pdfUrl; // Ensure PDF is set for new entries
+          const { error } = await supabase.from('ebooks').insert([payload]);
+          if (error) alert("Error creating: " + error.message);
+          else alert("eBook Created Successfully!");
+      }
+
+      // 5. Cleanup
+      cancelEbookEdit();
+      // Clear file inputs manually
+      (document.getElementById('eb-file') as HTMLInputElement).value = "";
+      (document.getElementById('eb-cover') as HTMLInputElement).value = "";
+      
+      fetchEbooks();
+      setSubmitting(false);
+  }
+
+  if (isLoading) return <div className="p-10 text-center font-bold text-gray-500">Loading Dashboard...</div>;
   if (!isAuthenticated) return null;
 
   return (
@@ -267,7 +343,6 @@ export default function AdminDashboard() {
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">🗂 Manage Content</h2>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                
                 {/* 1. SEGMENTS */}
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">1. Segments</h3>
@@ -284,7 +359,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 2. GROUPS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">2. Groups</h3>
@@ -301,7 +375,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 3. SUBJECTS */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">3. Subjects</h3>
@@ -318,7 +391,6 @@ export default function AdminDashboard() {
                         ))}
                     </ul>
                 </div>
-
                 {/* 4. UPLOAD */}
                 <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">4. Uploads</h3>
@@ -353,28 +425,12 @@ export default function AdminDashboard() {
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">📰 News CMS</h2>
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* EDITOR */}
                 <div className="lg:w-[70%] space-y-4">
-                    <input 
-                        className="w-full text-3xl font-bold p-4 bg-white border border-gray-200 rounded-lg outline-none placeholder-gray-300 focus:border-blue-500 transition" 
-                        placeholder="Add Title"
-                        value={newsTitle}
-                        onChange={e => setNewsTitle(e.target.value)}
-                    />
+                    <input className="w-full text-3xl font-bold p-4 bg-white border border-gray-200 rounded-lg outline-none placeholder-gray-300 focus:border-blue-500 transition" placeholder="Add Title" value={newsTitle} onChange={e => setNewsTitle(e.target.value)}/>
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <SunEditor 
-                            setContents={newsContent}
-                            onChange={setNewsContent}
-                            height="450px"
-                            setOptions={{
-                                buttonList: [
-                                    ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'], ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'], ['fontColor', 'hiliteColor'], ['outdent', 'indent'], ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video'], ['fullScreen', 'showBlocks', 'codeView']
-                                ]
-                            }}
-                        />
+                        <SunEditor setContents={newsContent} onChange={setNewsContent} height="450px" setOptions={{ buttonList: [['undo', 'redo'], ['font', 'fontSize', 'formatBlock'], ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'], ['fontColor', 'hiliteColor'], ['outdent', 'indent'], ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video'], ['fullScreen', 'showBlocks', 'codeView']] }} />
                     </div>
                 </div>
-                {/* SIDEBAR */}
                 <div className="lg:w-[30%] space-y-6">
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Publish</h3>
@@ -402,7 +458,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </div>
-            {/* LIST */}
             <div className="mt-12 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold text-gray-500">Title</th><th className="p-4 text-xs font-bold text-gray-500">Category</th><th className="p-4 text-xs font-bold text-gray-500 text-right">Actions</th></tr></thead>
@@ -419,12 +474,16 @@ export default function AdminDashboard() {
             
             {/* UPLOAD FORM */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Add New eBook</h3>
+                <div className="flex justify-between items-center mb-4 border-b pb-2">
+                    <h3 className="font-bold text-gray-700">{editingEbookId ? `Editing eBook ID: ${editingEbookId}` : "Add New eBook"}</h3>
+                    {editingEbookId && <button onClick={cancelEbookEdit} className="text-xs text-red-500 font-bold border border-red-200 px-2 py-1 rounded bg-red-50 hover:bg-red-100">Cancel Edit</button>}
+                </div>
+
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input className="bg-gray-50 border p-3 rounded-lg font-bold" placeholder="Book Title" id="eb-title" />
-                        <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" id="eb-author" />
-                        <select className="bg-gray-50 border p-3 rounded-lg" id="eb-category">
+                        <input className="bg-gray-50 border p-3 rounded-lg font-bold" placeholder="Book Title" value={ebTitle} onChange={e => setEbTitle(e.target.value)} />
+                        <input className="bg-gray-50 border p-3 rounded-lg" placeholder="Author Name" value={ebAuthor} onChange={e => setEbAuthor(e.target.value)} />
+                        <select className="bg-gray-50 border p-3 rounded-lg" value={ebCategory} onChange={e => setEbCategory(e.target.value)}>
                             <option value="SSC">SSC</option><option value="HSC">HSC</option><option value="Admission">Admission</option><option value="Job Prep">Job Prep</option><option value="General">General</option>
                         </select>
                     </div>
@@ -439,48 +498,21 @@ export default function AdminDashboard() {
                     </div>
                      <input className="bg-gray-50 border p-3 rounded-lg text-sm" placeholder="Tags (comma separated)" value={ebTags} onChange={e => setEbTags(e.target.value)} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-red-500">📕 PDF (Required):</span><input type="file" className="text-xs" id="eb-file" accept="application/pdf" /></div>
-                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50"><span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover:</span><input type="file" className="text-xs" id="eb-cover" accept="image/*" /></div>
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
+                            <span className="text-sm font-bold mr-2 text-red-500">📕 PDF {editingEbookId ? "(Optional)" : "(Required)"}:</span>
+                            <input type="file" className="text-xs" id="eb-file" accept="application/pdf" />
+                        </div>
+                        <div className="border border-dashed border-gray-300 p-3 rounded-lg flex items-center bg-gray-50">
+                            <span className="text-sm font-bold mr-2 text-blue-500">🖼️ Cover (Optional):</span>
+                            <input type="file" className="text-xs" id="eb-cover" accept="image/*" />
+                        </div>
                     </div>
                     <button 
                         disabled={submitting}
-                        onClick={async () => {
-                            const title = (document.getElementById('eb-title') as HTMLInputElement).value;
-                            const author = (document.getElementById('eb-author') as HTMLInputElement).value;
-                            const category = (document.getElementById('eb-category') as HTMLSelectElement).value;
-                            const pdfFile = (document.getElementById('eb-file') as HTMLInputElement).files?.[0];
-                            const coverFile = (document.getElementById('eb-cover') as HTMLInputElement).files?.[0];
-
-                            if(!title || !pdfFile) return alert("Title and PDF are required!");
-                            setSubmitting(true);
-                            
-                            const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-                            await supabase.storage.from('materials').upload(pdfName, pdfFile);
-                            const pdfUrl = supabase.storage.from('materials').getPublicUrl(pdfName).data.publicUrl;
-
-                            let coverUrl = null;
-                            if(coverFile) {
-                                const coverName = `cover-${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-                                await supabase.storage.from('covers').upload(coverName, coverFile);
-                                coverUrl = supabase.storage.from('covers').getPublicUrl(coverName).data.publicUrl;
-                            }
-
-                            const tagsArray = ebTags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
-
-                            const { error } = await supabase.from('ebooks').insert([{ title, author, category, pdf_url: pdfUrl, cover_url: coverUrl, description: ebDescription, tags: tagsArray }]);
-
-                            if(error) alert("Error: " + error.message);
-                            else {
-                                alert("eBook Uploaded!");
-                                (document.getElementById('eb-title') as HTMLInputElement).value = "";
-                                setEbDescription(""); setEbTags("");
-                                fetchEbooks(); // Refresh list
-                            }
-                            setSubmitting(false);
-                        }}
-                        className="bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition shadow-md"
+                        onClick={handleEbookSubmit}
+                        className={`font-bold py-4 rounded-lg transition shadow-md flex items-center justify-center text-lg ${editingEbookId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                     >
-                        {submitting ? "Uploading..." : "Upload eBook"}
+                        {submitting ? "Processing..." : (editingEbookId ? "Update eBook Details" : "Upload eBook To Library")}
                     </button>
                 </div>
             </div>
@@ -505,6 +537,7 @@ export default function AdminDashboard() {
                                 <td className="p-4 font-bold">{book.title}</td>
                                 <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{book.category}</span></td>
                                 <td className="p-4 text-right">
+                                    <button onClick={() => loadEbookForEdit(book)} className="text-blue-600 font-bold text-sm mr-4 hover:underline">Edit</button>
                                     <button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="text-red-500 font-bold text-sm hover:underline">Delete</button>
                                 </td>
                             </tr>
