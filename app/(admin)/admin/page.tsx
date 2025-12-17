@@ -504,7 +504,17 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
-                                    <select className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}><option>SSC</option><option>HSC</option><option>Admission</option></select>
+                                    <select 
+                                        className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" 
+                                        value={ebCategory} 
+                                        onChange={e=>setEbCategory(e.target.value)}
+                                    >
+                                        <option value="">Select Category</option>
+                                        {/* DYNAMICALLY LOAD SEGMENTS */}
+                                        {segments.map(seg => (
+                                            <option key={seg.id} value={seg.title}>{seg.title}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             <div>

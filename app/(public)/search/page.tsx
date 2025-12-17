@@ -1,125 +1,96 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
-// Define the shape of our search result
-type SearchResult = {
-  id: number;
-  type: string;
-  title: string;
-  url: string;
-  similarity: number;
-};
-
-// --- 1. THE LOGIC COMPONENT (Handles Search) ---
-function SearchResults() {
+export default function SearchPage() {
   const searchParams = useSearchParams();
-  const query = searchParams.get("q"); 
-  
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const query = searchParams.get("q");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function performSearch() {
-      if (!query) return;
+    const fetchResults = async () => {
       setLoading(true);
-
-      const { data, error } = await supabase.rpc("global_search", {
-        keyword: query,
-      });
-
-      if (data) setResults(data);
+      if (query) {
+        // Call the new SQL function
+        const { data, error } = await supabase.rpc("global_search", { keyword: query });
+        if (!error) setResults(data || []);
+      }
       setLoading(false);
-    }
-
-    performSearch();
+    };
+    fetchResults();
   }, [query]);
 
-  // Helper to get Icon based on type
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "pdf": return "📄";
-      case "video": return "🎬";
-      case "course": return "🎓";
-      case "blog": return "✍️";
-      case "question": return "❓";
-      case "ebook": return "📚";
-      default: return "🔍";
-    }
-  };
-
   return (
-    <>
-      {/* Search Header */}
-      <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-              Search Results
-          </h1>
-          <p className="text-gray-500">
-              Showing results for <span className="font-bold text-black">"{query}"</span>
-          </p>
-      </div>
+    <div className="min-h-screen bg-gray-50 pt-32 pb-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* HEADER */}
+        <div className="mb-10 text-center">
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Search Results</h1>
+            <p className="text-gray-500">
+                Showing results for <span className="font-bold text-blue-600">"{query}"</span>
+            </p>
+        </div>
 
-      {/* Loading State */}
-      {loading && (
-          <div className="animate-pulse space-y-4">
-              <div className="h-16 bg-gray-200 rounded-xl"></div>
-              <div className="h-16 bg-gray-200 rounded-xl"></div>
-              <div className="h-16 bg-gray-200 rounded-xl"></div>
-          </div>
-      )}
+        {/* LOADING STATE */}
+        {loading && (
+            <div className="space-y-4 animate-pulse">
+                <div className="h-24 bg-gray-200 rounded-xl"></div>
+                <div className="h-24 bg-gray-200 rounded-xl"></div>
+                <div className="h-24 bg-gray-200 rounded-xl"></div>
+            </div>
+        )}
 
-      {/* No Results */}
-      {!loading && results.length === 0 && query && (
-          <div className="bg-white p-12 rounded-2xl border-2 border-dashed text-center">
-              <div className="text-6xl mb-4">🤔</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No exact matches found</h3>
-              <p className="text-gray-500">Try searching for related keywords like "Physics" or "English".</p>
-          </div>
-      )}
+        {/* RESULTS GRID */}
+        {!loading && results.length > 0 ? (
+            <div className="grid gap-4">
+                {results.map((item, index) => (
+                    <Link 
+                        key={index} 
+                        href={item.url || "#"}
+                        target={item.type === 'pdf' || item.type === 'ebook' ? '_blank' : '_self'}
+                        className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex items-start gap-4"
+                    >
+                        {/* ICON BASED ON TYPE */}
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 
+                            ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 
+                              item.type === 'video' ? 'bg-blue-50 text-blue-500' : 
+                              item.type === 'blog' ? 'bg-purple-50 text-purple-500' : 
+                              'bg-green-50 text-green-500'}`}>
+                            {item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : item.type === 'blog' ? '✍️' : '📚'}
+                        </div>
 
-      {/* Results Grid */}
-      <div className="space-y-3">
-          {results.map((item, index) => (
-              <Link 
-                  key={`${item.type}-${item.id}-${index}`} 
-                  href={item.url}
-                  className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group"
-              >
-                  <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-blue-50 group-hover:scale-110 transition-transform">
-                      {getIcon(item.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded tracking-wider">
-                              {item.type}
-                          </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 truncate transition-colors">
-                          {item.title}
-                      </h3>
-                  </div>
-                  <div className="text-gray-300 group-hover:text-blue-500 transition-colors">
-                      →
-                  </div>
-              </Link>
-          ))}
-      </div>
-    </>
-  );
-}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded text-gray-500">{item.type}</span>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-1">
+                                {item.title}
+                            </h3>
+                            {item.description && (
+                                <p className="text-sm text-gray-500 line-clamp-2">
+                                    {item.description.replace(/<[^>]+>/g, '')}
+                                </p>
+                            )}
+                        </div>
+                        
+                        <span className="text-gray-300 group-hover:text-blue-500 text-xl">→</span>
+                    </Link>
+                ))}
+            </div>
+        ) : (
+            !loading && (
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+                    <span className="text-6xl block mb-4">🔍</span>
+                    <h3 className="text-xl font-bold text-gray-900">No matches found</h3>
+                    <p className="text-gray-500 mt-2">Try checking your spelling or use general keywords like "HSC" or "English".</p>
+                </div>
+            )
+        )}
 
-// --- 2. THE MAIN PAGE WRAPPER (Handles Suspense) ---
-export default function SearchPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
-      <div className="max-w-4xl mx-auto px-6">
-        {/* The Suspense boundary fixes the build error */}
-        <Suspense fallback={<div className="p-10 text-center text-gray-500 font-bold">Loading Search...</div>}>
-            <SearchResults />
-        </Suspense>
       </div>
     </div>
   );
