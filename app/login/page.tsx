@@ -8,58 +8,73 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  async function handleLogin(e: React.FormEvent) {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setErrorMsg("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+      } else {
+        // Successful Login
+        // 1. Refresh router to update server components/middleware context
+        router.refresh();
+        // 2. Redirect to Admin
+        router.replace("/admin");
+      }
+    } catch (err) {
+      setErrorMsg("An unexpected error occurred.");
       setLoading(false);
-    } else {
-      // Login Successful! Go to Admin Panel
-      router.push("/admin");
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-200 p-6">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-300">
-        <h1 className="text-3xl font-extrabold mb-6 text-center text-blue-900">Admin Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
         
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm text-center border border-red-200 font-bold">
-            {error}
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black text-slate-900">Admin Access</h1>
+          <p className="text-slate-500 text-sm mt-1">Enter your credentials to continue.</p>
+        </div>
+
+        {/* Error Message */}
+        {errorMsg && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-bold flex items-center gap-2">
+            <span>⚠️</span> {errorMsg}
           </div>
         )}
 
+        {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-1">Email Address</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address</label>
             <input 
               type="email" 
               required
-              placeholder="Enter your email"
-              className="w-full border border-gray-400 p-3 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-1">Password</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Password</label>
             <input 
               type="password" 
               required
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="••••••••"
-              className="w-full border border-gray-400 p-3 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -68,11 +83,23 @@ export default function LoginPage() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-blue-700 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-black transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Verifying..." : "Login to Dashboard"}
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Verifying...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-xs text-slate-400">Restricted Area • Authorized Personnel Only</p>
+        </div>
+
       </div>
     </div>
   );
