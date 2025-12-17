@@ -105,7 +105,7 @@ export default function EbooksPage() {
         ) : filteredBooks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {filteredBooks.map((book) => (
-                    <div key={book.id} className="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                    <Link href={`/ebooks/${book.id}`} key={book.id} className="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full cursor-pointer">
                         
                         {/* COVER IMAGE */}
                         <div className="relative w-full h-52 bg-slate-100 rounded-xl overflow-hidden mb-5 shadow-inner border border-slate-100">
@@ -144,18 +144,13 @@ export default function EbooksPage() {
 
                             {/* Action Button */}
                             <div className="mt-auto pt-4 border-t border-slate-50">
-                                <a 
-                                    href={book.pdf_url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="block w-full py-3 bg-slate-900 hover:bg-blue-600 text-white text-center text-sm font-bold rounded-xl transition-all shadow-lg shadow-slate-200 hover:shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    Download PDF
-                                </a>
+                                <span className="block w-full py-3 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 text-center text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-md">
+                                    View Details
+                                    <span className="text-lg">→</span>
+                                </span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         ) : (

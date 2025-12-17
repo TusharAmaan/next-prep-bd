@@ -13,7 +13,7 @@ const SunEditor = dynamic(() => import("suneditor-react"), {
 
 // --- EDITOR CONFIG ---
 const editorOptions = {
-    minHeight: "400px", // Made taller as requested
+    minHeight: "400px",
     buttonList: [
         ['undo', 'redo'],
         ['font', 'fontSize', 'formatBlock'],
@@ -25,7 +25,6 @@ const editorOptions = {
     showPathLabel: false,
 };
 
-// --- TYPES ---
 type ModalState = {
     isOpen: boolean;
     type: 'success' | 'confirm' | 'error';
@@ -163,12 +162,13 @@ export default function AdminDashboard() {
       setResLink(r.content_url||""); setRichContent(r.content_body||""); setQuestionContent(r.content_body||""); 
       setSeoTitle(r.seo_title||""); setSeoDescription(r.seo_description||""); setBlogTags(r.tags?.join(", ")||"");
       if(r.type==='blog') setIsBlogEditorOpen(true);
-      // Removed automatic scroll
   };
   
   const uploadResource = async (typeOverride?: string) => {
       const type = typeOverride || resType;
-      if(!resTitle || !selectedSubject) return showError("Please select a subject and enter a title.");
+      if(!resTitle) return showError("Title is required!");
+      if(type !== 'blog' && !selectedSubject) return showError("Please select a subject first.");
+      
       setSubmitting(true);
       
       let url = resLink;
@@ -179,15 +179,24 @@ export default function AdminDashboard() {
           url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
       }
 
-      const payload: any = { subject_id: Number(selectedSubject), title: resTitle, type };
+      const payload: any = { title: resTitle, type };
+      
+      // Handle Subject ID (Blog might not need it if generic, but usually yes)
+      if(selectedSubject) payload.subject_id = Number(selectedSubject);
+
       if(type==='pdf' || type==='video') payload.content_url = url;
       else if(type==='question') { payload.content_body = questionContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
-      else if(type==='blog') { payload.content_body = richContent; if(url) payload.content_url = url; payload.tags = blogTags.split(',').map(t=>t.trim()); }
+      else if(type==='blog') { 
+          // CRITICAL FIX: Ensure richContent is assigned to content_body
+          payload.content_body = richContent; 
+          if(url) payload.content_url = url; 
+          payload.tags = blogTags.split(',').map(t=>t.trim()); 
+      }
 
       if(editingResourceId) await supabase.from('resources').update(payload).eq('id', editingResourceId);
       else await supabase.from('resources').insert([payload]);
 
-      fetchResources(selectedSubject);
+      if(selectedSubject) fetchResources(selectedSubject);
       
       // LOGIC FOR BLOG NAVIGATION
       if(type === 'blog') {
@@ -200,23 +209,43 @@ export default function AdminDashboard() {
       setSubmitting(false);
   };
 
-  // --- EBOOK ---
+  // --- EBOOK LOGIC (PDF OPTIONAL) ---
   const handleEbookSubmit = async () => {
       if(!ebTitle) return showError("Title is required");
       setSubmitting(true);
+      
       const pdf = (document.getElementById('eb-file') as HTMLInputElement)?.files?.[0];
       const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
       let pUrl = null, cUrl = null;
+      
       if(pdf) { const n = `pdf-${Date.now()}`; await supabase.storage.from('materials').upload(n, pdf); pUrl = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
       if(cover) { const n = `cover-${Date.now()}`; await supabase.storage.from('covers').upload(n, cover); cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl; }
 
-      const payload: any = { title: ebTitle, author: ebAuthor, category: ebCategory, description: ebDescription, tags: ebTags.split(',').map(t=>t.trim()) };
-      if(pUrl) payload.pdf_url = pUrl; if(cUrl) payload.cover_url = cUrl;
+      const payload: any = { 
+          title: ebTitle, 
+          author: ebAuthor, 
+          category: ebCategory, 
+          description: ebDescription, 
+          tags: ebTags.split(',').map(t=>t.trim()) 
+      };
+      
+      if(pUrl) payload.pdf_url = pUrl; 
+      if(cUrl) payload.cover_url = cUrl;
 
-      if(editingEbookId) await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
-      else { if(!pUrl) {showError("PDF file is required"); setSubmitting(false); return;} payload.pdf_url = pUrl; await supabase.from('ebooks').insert([payload]); }
-      setSubmitting(false); setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); fetchEbooks(); showSuccess("eBook saved successfully!");
+      if(editingEbookId) {
+          await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
+      } else { 
+          // Removed PDF Requirement Check
+          await supabase.from('ebooks').insert([payload]); 
+      }
+      
+      setSubmitting(false); 
+      setEditingEbookId(null); 
+      setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); 
+      fetchEbooks(); 
+      showSuccess("eBook saved successfully!");
   };
+  
   const loadEbookForEdit = (b:any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description); setEbTags(b.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
@@ -504,16 +533,13 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
-                                    <select 
-                                        className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" 
-                                        value={ebCategory} 
-                                        onChange={e=>setEbCategory(e.target.value)}
-                                    >
+                                    <select className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}>
                                         <option value="">Select Category</option>
-                                        {/* DYNAMICALLY LOAD SEGMENTS */}
-                                        {segments.map(seg => (
-                                            <option key={seg.id} value={seg.title}>{seg.title}</option>
-                                        ))}
+                                        {/* Dynamic Segments */}
+                                        {segments.map(seg => <option key={seg.id} value={seg.title}>{seg.title}</option>)}
+                                        <option value="SSC">SSC</option>
+                                        <option value="HSC">HSC</option>
+                                        <option value="Admission">Admission</option>
                                     </select>
                                 </div>
                             </div>
@@ -593,7 +619,7 @@ export default function AdminDashboard() {
                             {resources.filter(r=>r.type==='blog').map(b=>(
                                 <div key={b.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition group">
                                     <div className="h-40 bg-slate-100 relative">
-                                        {b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}
+                                        {b.content_url ? <img src={b.content_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold">No Image</div>}
                                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                             <button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button>
                                             <button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button>
@@ -663,26 +689,29 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* COURSES GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {coursesList.map(c => (
-                        <div key={c.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
-                            <div className="h-48 bg-slate-200 relative">
-                                {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
-                                    <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
-                                    <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
+                <div>
+                    <h3 className="font-bold text-gray-500 text-sm uppercase mb-4 tracking-wider">Active Courses</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {coursesList.map(c => (
+                            <div key={c.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
+                                <div className="h-40 bg-gray-200 relative">
+                                    {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
+                                        <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
+                                        <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
+                                    </div>
+                                </div>
+                                <div className="p-5">
+                                    <h4 className="font-bold text-lg text-gray-900 mb-1">{c.title}</h4>
+                                    <p className="text-sm text-gray-500 mb-3 font-medium">{c.instructor}</p>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
+                                        {c.discount_price && <span className="text-sm text-gray-400 line-through decoration-2">৳{c.price}</span>}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="p-5">
-                                <h4 className="font-bold text-lg text-slate-900 mb-1">{c.title}</h4>
-                                <p className="text-sm text-slate-500 mb-3 font-medium">{c.instructor}</p>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
-                                    {c.discount_price && <span className="text-sm text-slate-400 line-through decoration-2">৳{c.price}</span>}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
               </div>
             )}
