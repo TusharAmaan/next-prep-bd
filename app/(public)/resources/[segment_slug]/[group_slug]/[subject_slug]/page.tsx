@@ -27,7 +27,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
 
   if (!groupData) return notFound();
 
-  // 3. Fetch Subject (Strict Hierarchy Check)
+  // 3. Fetch Subject
   const { data: subject } = await supabase
     .from("subjects")
     .select("*")
@@ -37,7 +37,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
 
   if (!subject) return notFound();
 
-  // 4. Fetch Content - Blogs (Latest Posts)
+  // 4. Fetch Content - Blogs
   const { data: blogs } = await supabase
     .from("resources")
     .select("*")
@@ -45,7 +45,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
     .eq("type", "blog")
     .order("created_at", { ascending: false });
 
-  // 5. Fetch Content - Study Materials (PDF/Video)
+  // 5. Fetch Content - Materials
   const { data: materials } = await supabase
     .from("resources")
     .select("*")
@@ -86,56 +86,43 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
             {/* LEFT CONTENT (8 Cols) */}
             <div className="lg:col-span-8 space-y-12">
                 
-                {/* SECTION: LATEST POSTS (BLOGS) */}
+                {/* 1. LATEST POSTS */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
                         <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-xl">✍️</span>
                         <h2 className="text-2xl font-bold text-gray-900">Latest Posts</h2>
                     </div>
-                    
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {blogs.map((blog) => (
-                                <Link 
-                                    key={blog.id} 
-                                    href={`/blog/${blog.id}`}
-                                    className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all flex flex-col h-full"
-                                >
+                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all flex flex-col h-full">
                                     <div className="h-40 bg-gray-100 relative overflow-hidden">
                                         {blog.content_url ? (
                                             <img src={blog.content_url} alt={blog.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold bg-gray-100">No Image</div>
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 font-bold">No Image</div>
                                         )}
-                                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">
-                                            BLOG
-                                        </div>
+                                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">BLOG</div>
                                     </div>
                                     <div className="p-5 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-lg text-gray-800 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">
-                                            {blog.title}
-                                        </h3>
+                                        <h3 className="font-bold text-lg text-gray-800 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
                                         <div className="mt-auto pt-4 flex items-center justify-between text-xs text-gray-400 font-medium border-t border-gray-50">
                                             <span>{new Date(blog.created_at).toLocaleDateString()}</span>
-                                            <span className="text-purple-600 font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
-                                                Read More →
-                                            </span>
+                                            <span className="text-purple-600 font-bold flex items-center gap-1 group-hover:gap-2 transition-all">Read More →</span>
                                         </div>
                                     </div>
                                 </Link>
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                            <p className="text-gray-400 text-sm font-medium italic">No blog posts available yet.</p>
-                        </div>
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No blog posts available yet.</div>
                     )}
                 </section>
 
-                {/* SECTION: STUDY MATERIALS */}
+                {/* 2. STUDY MATERIALS */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-xl">📚</span>
+                        <span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-xl">📄</span>
                         <h2 className="text-2xl font-bold text-gray-900">Study Materials</h2>
                     </div>
                     {materials && materials.length > 0 ? (
@@ -143,7 +130,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                             {materials.map((item) => (
                                 <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4 group">
                                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                                        {item.type === 'pdf' ? '📄' : '▶'}
+                                        {item.type === 'pdf' ? '' : '▶'}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors mb-1 truncate">
@@ -161,13 +148,62 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                            <p className="text-gray-400 text-sm font-medium italic">No materials uploaded yet.</p>
-                        </div>
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No materials uploaded yet.</div>
                     )}
                 </section>
 
-                {/* SECTION: PREVIOUS YEAR QUESTIONS */}
+                {/* 3. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-gray-900 text-white rounded-lg text-xl">⏱️</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Live Exams & Quizzes</h2>
+                        </div>
+                        <span className="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full animate-pulse">LIVE NOW</span>
+                    </div>
+                    
+                    <div className="bg-[#0F172A] rounded-2xl p-8 relative overflow-hidden group shadow-xl">
+                        {/* Background Effects */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -ml-16 -mb-16"></div>
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                            <div className="flex-1 text-center md:text-left">
+                                <h3 className="text-2xl font-bold text-white mb-2">Test Your Preparation</h3>
+                                <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+                                    Join over 5,000+ students taking daily model tests. Get instant results, negative marking, and nationwide merit lists.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                                    <button className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition transform hover:-translate-y-1">
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 0 .416 1.737c.365.048.73-.08.977-.345l11.728-11.729a.998.998 0 0 0 0-1.414L4.996.707a1.006 1.006 0 0 0-1.745.36c-.13.364-.035.772.235 1.025l.123-.278zM15.42 12l8.28-8.28a1 1 0 0 0-1.414-1.414L14.006 10.586a1 1 0 0 0 0 1.414l8.28 8.28a1 1 0 0 0 1.414-1.414L15.42 12z"/></svg>
+                                        <span>Download App</span>
+                                    </button>
+                                    <span className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-700 text-gray-300 text-sm font-medium">
+                                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        App Exclusive
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Visual Mockup */}
+                            <div className="w-full md:w-1/3 bg-gray-800/50 rounded-xl p-4 border border-gray-700 backdrop-blur-sm">
+                                <div className="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
+                                    <span className="text-xs font-bold text-gray-400">Physics 1st Paper</span>
+                                    <span className="text-xs font-bold text-red-400">09:59</span>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="h-2 bg-gray-600 rounded w-3/4"></div>
+                                    <div className="h-2 bg-gray-700 rounded w-1/2 mb-4"></div>
+                                    <div className="p-2 rounded border border-gray-600 bg-gray-700/50 text-xs text-gray-300">A. Velocity</div>
+                                    <div className="p-2 rounded border border-blue-500 bg-blue-600 text-xs text-white font-bold">B. Acceleration</div>
+                                    <div className="p-2 rounded border border-gray-600 bg-gray-700/50 text-xs text-gray-300">C. Force</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 4. PREVIOUS YEAR QUESTIONS */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
                         <span className="p-2 bg-yellow-100 text-yellow-600 rounded-lg text-xl">❓</span>
@@ -177,9 +213,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                         <div className="grid grid-cols-1 gap-3">
                             {questions.map((q) => (
                                 <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-yellow-400 hover:shadow-md transition-all group">
-                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">
-                                        {q.title}
-                                    </h3>
+                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">{q.title}</h3>
                                     <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
                                         <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Board Question</span>
                                         <span>•</span>
@@ -189,9 +223,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                            <p className="text-gray-400 text-sm font-medium italic">No questions available yet.</p>
-                        </div>
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No questions available yet.</div>
                     )}
                 </section>
 
