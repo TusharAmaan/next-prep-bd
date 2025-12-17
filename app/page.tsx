@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
+import Image from "next/image";
 
 export default function Home() {
   const [segments, setSegments] = useState<any[]>([]);
@@ -118,11 +119,17 @@ export default function Home() {
                                 {/* 1. FEATURED POST (Left - 7 cols) */}
                                 <div className="lg:col-span-7">
                                     <div className="relative group overflow-hidden rounded-2xl bg-gray-100 mb-5 aspect-[4/3]">
-                                        {featuredBlog.content_url ? (
-                                            <img src={featuredBlog.content_url} alt={featuredBlog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-200 font-bold text-2xl">No Image</div>
-                                        )}
+                                    {featuredBlog.content_url ? (
+                                        <Image 
+                                            src={featuredBlog.content_url} 
+                                            alt={featuredBlog.title} 
+                                            fill
+                                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                            priority // This forces the image to load immediately
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-200 font-bold">No Image</div>
+                                    )}
                                         <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">Latest</div>
                                     </div>
                                     <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors leading-tight">
