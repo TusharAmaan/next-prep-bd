@@ -152,7 +152,31 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                     )}
                 </section>
 
-                {/* 3. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
+                {/* 3. PREVIOUS YEAR QUESTIONS */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <span className="p-2 bg-yellow-100 text-yellow-600 rounded-lg text-xl">❓</span>
+                        <h2 className="text-2xl font-bold text-gray-900">Previous Year Questions</h2>
+                    </div>
+                    {questions && questions.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                            {questions.map((q) => (
+                                <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-yellow-400 hover:shadow-md transition-all group">
+                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">{q.title}</h3>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                                        <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Board Question</span>
+                                        <span>•</span>
+                                        <span>Click to View Solution</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No questions available yet.</div>
+                    )}
+                </section>
+                
+                {/* 4. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -202,31 +226,6 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                         </div>
                     </div>
                 </section>
-
-                {/* 4. PREVIOUS YEAR QUESTIONS */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-yellow-100 text-yellow-600 rounded-lg text-xl">❓</span>
-                        <h2 className="text-2xl font-bold text-gray-900">Previous Year Questions</h2>
-                    </div>
-                    {questions && questions.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-3">
-                            {questions.map((q) => (
-                                <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-yellow-400 hover:shadow-md transition-all group">
-                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">{q.title}</h3>
-                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
-                                        <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Board Question</span>
-                                        <span>•</span>
-                                        <span>Click to View Solution</span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No questions available yet.</div>
-                    )}
-                </section>
-
             </div>
 
             {/* SIDEBAR (4 Cols) */}
