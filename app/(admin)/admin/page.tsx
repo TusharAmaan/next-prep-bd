@@ -14,12 +14,12 @@ const SunEditor = dynamic(() => import("suneditor-react"), {
 
 // --- EDITOR CONFIG ---
 const editorOptions = {
-    minHeight: "300px",
+    minHeight: "200px",
     buttonList: [
         ['undo', 'redo'],
         ['font', 'fontSize', 'formatBlock'],
         ['bold', 'underline', 'italic', 'list', 'align'],
-        ['table', 'link', 'image', 'video'],
+        ['link', 'image', 'video'],
         ['codeView', 'fullScreen']
     ],
     defaultTag: "div",
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
       setResLink(r.content_url||""); setRichContent(r.content_body||""); setQuestionContent(r.content_body||""); 
       setSeoTitle(r.seo_title||""); setSeoDescription(r.seo_description||""); setBlogTags(r.tags?.join(", ")||"");
       if(r.type==='blog') setIsBlogEditorOpen(true);
-      window.scrollTo({top: 800, behavior: 'smooth'}); // Scroll to editor at bottom
+      window.scrollTo({top: 800, behavior: 'smooth'}); 
   };
   const uploadResource = async (typeOverride?: string) => {
       const type = typeOverride || resType;
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
       else { if(!pUrl) {alert("PDF Required"); setSubmitting(false); return;} payload.pdf_url = pUrl; await supabase.from('ebooks').insert([payload]); }
       setSubmitting(false); setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); fetchEbooks();
   };
-  const loadEbookForEdit = (b:any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description); setEbTags(b.tags?.join(", ")); };
+  const loadEbookForEdit = (b:any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description); setEbTags(b.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
   // --- COURSE LOGIC ---
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
       else { if(!thumb) {alert("Thumbnail Required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
       setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null); fetchCourses();
   };
-  const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description); };
+  const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description); window.scrollTo({top:0, behavior:'smooth'}); };
 
   // --- NEWS LOGIC ---
   const createCategory = async () => { if(newCategoryInput) { await supabase.from('categories').insert([{name:newCategoryInput}]); setNewCategoryInput(""); fetchCategories(); }};
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
       else await supabase.from('news').insert([payload]);
       setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsFile(null); fetchNews();
   };
-  const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content); setSelectedCategory(n.category); setNewsTags(n.tags?.join(", ")); };
+  const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content); setSelectedCategory(n.category); setNewsTags(n.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
   const cancelNewsEdit = () => { setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsTags(""); };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-gray-500 font-bold">Admin Panel Loading...</div>;
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* 2. CONTENT MANAGER (FULL WIDTH BOTTOM) */}
+                {/* 2. CONTENT MANAGER (Balanced 50/50 Layout) */}
                 <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${!selectedSubject ? 'opacity-50 pointer-events-none' : ''}`}>
                     <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                         <h3 className="font-bold text-gray-800 flex items-center gap-2">
@@ -352,32 +352,33 @@ export default function AdminDashboard() {
                         {selectedSubject && <span className="text-xs font-mono text-gray-400">Subject ID: {selectedSubject}</span>}
                     </div>
                     
-                    <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* LEFT: UPLOAD FORM */}
-                        <div className="lg:col-span-4 space-y-5 border-r border-gray-100 pr-6">
+                    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* LEFT: UPLOAD FORM (50%) */}
+                        <div className="space-y-5 border-r border-gray-100 pr-6">
                             <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Add New Resource</h4>
                             
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 block mb-1">Type</label>
-                                <select className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-sm font-bold outline-none" value={resType} onChange={e=>setResType(e.target.value)}>
-                                    <option value="pdf">📄 PDF Document</option>
-                                    <option value="video">🎬 Video Class</option>
-                                    <option value="question">❓ Question</option>
-                                    <option value="blog">✍️ Blog Post</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 block mb-1">Title</label>
-                                <input className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-sm outline-none" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Resource Title..." />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 block mb-1">Type</label>
+                                    <select className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-sm font-bold outline-none" value={resType} onChange={e=>setResType(e.target.value)}>
+                                        <option value="pdf">📄 PDF Document</option>
+                                        <option value="video">🎬 Video Class</option>
+                                        <option value="question">❓ Question</option>
+                                        <option value="blog">✍️ Blog Post</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 block mb-1">Title</label>
+                                    <input className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-sm outline-none" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Resource Title..." />
+                                </div>
                             </div>
 
                             {/* Dynamic Inputs */}
                             {resType === 'pdf' && (
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition relative">
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition relative">
                                     <input type="file" onChange={e => setResFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf" />
-                                    <span className="text-2xl block mb-1">📂</span>
-                                    <p className="text-xs font-bold text-gray-500">{resFile ? resFile.name : "Click to Upload PDF"}</p>
+                                    <span className="text-3xl block mb-2">📂</span>
+                                    <p className="text-sm font-bold text-gray-600">{resFile ? resFile.name : "Drop PDF Here"}</p>
                                 </div>
                             )}
                             {resType === 'video' && (
@@ -385,13 +386,13 @@ export default function AdminDashboard() {
                             )}
                             {resType === 'question' && (
                                 <div className="space-y-2">
-                                    <div className="border rounded overflow-hidden"><SunEditor setContents={questionContent} onChange={setQuestionContent} setOptions={{buttonList:[['bold','italic','list']], minHeight:"150px"}}/></div>
+                                    <div className="border rounded overflow-hidden"><SunEditor setContents={questionContent} onChange={setQuestionContent} setOptions={editorOptions}/></div>
                                     <input className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-xs" value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="SEO Title" />
                                 </div>
                             )}
                             {resType === 'blog' && (
-                                <div className="p-3 bg-yellow-50 text-yellow-700 text-xs rounded border border-yellow-200">
-                                    Switch to <strong>"Class Blogs"</strong> tab for the full blog editor.
+                                <div className="p-4 bg-yellow-50 text-yellow-700 text-sm rounded border border-yellow-200">
+                                    Go to <strong>"Class Blogs"</strong> tab to write full articles.
                                 </div>
                             )}
 
@@ -403,11 +404,11 @@ export default function AdminDashboard() {
                             {editingResourceId && <button onClick={resetResourceForm} className="w-full text-red-500 text-xs font-bold mt-2">Cancel Edit</button>}
                         </div>
 
-                        {/* RIGHT: LIBRARY LIST */}
-                        <div className="lg:col-span-8 flex flex-col h-[500px]">
-                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Existing Library ({resources.length})</h4>
+                        {/* RIGHT: LIBRARY LIST (50%) */}
+                        <div className="flex flex-col h-[500px]">
+                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Library ({resources.length})</h4>
                             <div className="flex-1 bg-gray-50 rounded-xl border border-gray-200 p-4 overflow-y-auto custom-scrollbar space-y-2">
-                                {resources.length === 0 && <div className="text-center text-gray-400 text-sm mt-20">No resources found for this subject.</div>}
+                                {resources.length === 0 && <div className="text-center text-gray-400 text-sm mt-20">No resources found.</div>}
                                 {resources.map(r => (
                                     <div key={r.id} className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm flex justify-between items-center group hover:border-blue-300 transition">
                                         <div className="flex items-center gap-3">
@@ -432,44 +433,63 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* === TAB 2: EBOOKS (Clean Cards) === */}
+            {/* === TAB 2: EBOOKS (TOP FORM / BOTTOM GRID) === */}
             {activeTab === 'ebooks' && (
               <div className="space-y-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-gray-800">Manage eBooks</h2>
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    {/* Form */}
-                    <div className="xl:col-span-4">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-700 mb-4">{editingEbookId?"Edit eBook":"Add New eBook"}</h3>
-                            <div className="space-y-4">
-                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold outline-none" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="Book Title" />
-                                <div className="grid grid-cols-2 gap-2">
+                
+                {/* TOP: ADD/EDIT FORM (Full Width) */}
+                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-lg text-gray-800">{editingEbookId?"Edit eBook Details":"Add New eBook"}</h3>
+                        {editingEbookId && <button onClick={cancelEbookEdit} className="text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded">Cancel</button>}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-5">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Book Info</label>
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold outline-none mb-3" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="Book Title" />
+                                <div className="grid grid-cols-2 gap-3">
                                     <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} placeholder="Author" />
                                     <select className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}><option>SSC</option><option>HSC</option><option>Admission</option></select>
                                 </div>
-                                <div className="border rounded overflow-hidden"><SunEditor setContents={ebDescription} onChange={setEbDescription} setOptions={{buttonList:[['bold','italic','list']], minHeight:"150px"}}/></div>
-                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="Tags..." />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="p-4 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-red-500">📄</span><span className="text-xs font-bold text-gray-400">PDF</span><input type="file" id="eb-file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf"/></div>
-                                    <div className="p-4 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-blue-500">🖼️</span><span className="text-xs font-bold text-gray-400">Cover</span><input type="file" id="eb-cover" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Files</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-red-500 text-xl">📄</span><span className="text-xs font-bold text-gray-400">PDF</span><input type="file" id="eb-file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf"/></div>
+                                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-blue-500 text-xl">🖼️</span><span className="text-xs font-bold text-gray-400">Cover</span><input type="file" id="eb-cover" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
                                 </div>
-                                <button onClick={handleEbookSubmit} disabled={submitting} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">{submitting?"Saving...":"Save eBook"}</button>
-                                {editingEbookId && <button onClick={cancelEbookEdit} className="w-full text-red-500 text-xs font-bold py-2">Cancel</button>}
                             </div>
                         </div>
+                        <div className="flex flex-col">
+                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Description & Tags</label>
+                            <div className="border rounded-lg overflow-hidden flex-1 mb-3"><SunEditor setContents={ebDescription} onChange={setEbDescription} setOptions={{...editorOptions, minHeight:"100%"}}/></div>
+                            <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="Tags..." />
+                        </div>
                     </div>
-                    {/* List */}
-                    <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <button onClick={handleEbookSubmit} disabled={submitting} className="mt-6 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">{submitting?"Saving...":"Save eBook"}</button>
+                </div>
+
+                {/* BOTTOM: LIBRARY GRID */}
+                <div>
+                    <h3 className="font-bold text-gray-500 text-sm uppercase mb-4 tracking-wider">Library Collection</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {ebooksList.map(book => (
-                            <div key={book.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-3 group hover:border-blue-300 transition">
-                                <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                                    {book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs">No Cover</div>}
+                            <div key={book.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 group hover:border-blue-400 transition hover:shadow-md">
+                                <div className="w-16 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner">
+                                    {book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Cover</div>}
                                 </div>
                                 <div className="flex-1 flex flex-col justify-between">
-                                    <div><h4 className="font-bold text-sm text-gray-800 line-clamp-2">{book.title}</h4><p className="text-xs text-gray-500">{book.author}</p></div>
+                                    <div>
+                                        <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{book.category}</span>
+                                        <h4 className="font-bold text-sm text-gray-800 mt-1 leading-snug line-clamp-2">{book.title}</h4>
+                                        <p className="text-xs text-gray-500">{book.author}</p>
+                                    </div>
                                     <div className="flex gap-2 mt-2">
-                                        <button onClick={()=>loadEbookForEdit(book)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold">Edit</button>
-                                        <button onClick={()=>deleteItem('ebooks',book.id,fetchEbooks)} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded font-bold">Del</button>
+                                        <button onClick={()=>loadEbookForEdit(book)} className="text-xs bg-gray-100 hover:bg-blue-600 hover:text-white px-2 py-1 rounded font-bold transition">Edit</button>
+                                        <button onClick={()=>deleteItem('ebooks',book.id,fetchEbooks)} className="text-xs bg-gray-100 hover:bg-red-600 hover:text-white px-2 py-1 rounded font-bold transition">Del</button>
                                     </div>
                                 </div>
                             </div>
@@ -528,39 +548,63 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* === TAB 4: COURSES === */}
+            {/* === TAB 4: COURSES (TOP FORM / BOTTOM GRID) === */}
             {activeTab === 'courses' && (
               <div className="space-y-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-gray-800">Manage Courses</h2>
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    <div className="xl:col-span-4">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-700 mb-4">{editingCourseId?"Edit Course":"Create Course"}</h3>
-                            <div className="space-y-4">
-                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold outline-none" value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="Course Title" />
-                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cInstructor} onChange={e=>setCInstructor(e.target.value)} placeholder="Instructor" />
-                                <div className="grid grid-cols-2 gap-2"><input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cPrice} onChange={e=>setCPrice(e.target.value)} placeholder="Price" /><input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none text-green-600" value={cDiscountPrice} onChange={e=>setCDiscountPrice(e.target.value)} placeholder="Discount Price" /></div>
-                                <div className="grid grid-cols-2 gap-2"><input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cDuration} onChange={e=>setCDuration(e.target.value)} placeholder="Duration" /><input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none text-blue-600" value={cLink} onChange={e=>setCLink(e.target.value)} placeholder="Form Link" /></div>
-                                <div className="border rounded overflow-hidden"><SunEditor setContents={cDesc} onChange={setCDesc} setOptions={{buttonList:[['bold','italic','list']], minHeight:"150px"}}/></div>
-                                <div className="p-4 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-gray-400">Thumbnail</span><input type="file" onChange={e=>setCImage(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
-                                <button onClick={handleCourseSubmit} disabled={submitting} className="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition">{submitting?"Saving...":"Launch Course"}</button>
-                                {editingCourseId && <button onClick={()=>setEditingCourseId(null)} className="w-full text-red-500 text-xs font-bold py-2">Cancel</button>}
+                
+                {/* TOP: ADD/EDIT FORM (Full Width) */}
+                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-lg text-gray-800">{editingCourseId?"Edit Course":"Create New Course"}</h3>
+                        {editingCourseId && <button onClick={()=>setEditingCourseId(null)} className="text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded">Cancel</button>}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-5">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Basic Info</label>
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold outline-none mb-3" value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="Course Title" />
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cInstructor} onChange={e=>setCInstructor(e.target.value)} placeholder="Instructor Name" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1">Pricing</label><input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cPrice} onChange={e=>setCPrice(e.target.value)} placeholder="Regular Price" /></div>
+                                <div><label className="text-xs font-bold text-green-600 uppercase block mb-1">Discount</label><input className="w-full bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg text-sm outline-none" value={cDiscountPrice} onChange={e=>setCDiscountPrice(e.target.value)} placeholder="Sale Price" /></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none" value={cDuration} onChange={e=>setCDuration(e.target.value)} placeholder="Duration (e.g. 3 Months)" />
+                                <input className="w-full bg-gray-50 border p-3 rounded-lg text-sm outline-none text-blue-600" value={cLink} onChange={e=>setCLink(e.target.value)} placeholder="Google Form Link" />
                             </div>
                         </div>
+                        <div className="flex flex-col">
+                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Details & Visuals</label>
+                            <div className="border rounded-lg overflow-hidden flex-1 mb-3"><SunEditor setContents={cDesc} onChange={setCDesc} setOptions={{...editorOptions, minHeight:"100%"}} placeholder="Course Description..."/></div>
+                            <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:bg-gray-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-gray-400">Upload Thumbnail</span><input type="file" onChange={e=>setCImage(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
+                        </div>
                     </div>
-                    <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button onClick={handleCourseSubmit} disabled={submitting} className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition shadow-lg">{submitting?"Saving...":"Launch Course"}</button>
+                </div>
+
+                {/* BOTTOM: COURSES GRID */}
+                <div>
+                    <h3 className="font-bold text-gray-500 text-sm uppercase mb-4 tracking-wider">Active Courses</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {coursesList.map(c => (
-                            <div key={c.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition group">
+                            <div key={c.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
                                 <div className="h-40 bg-gray-200 relative">
                                     {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition">
-                                        <button onClick={()=>loadCourseForEdit(c)} className="bg-white px-3 py-1 rounded font-bold text-xs">Edit</button>
-                                        <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-3 py-1 rounded font-bold text-xs">Del</button>
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3 backdrop-blur-sm">
+                                        <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
+                                        <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
                                     </div>
                                 </div>
-                                <div className="p-4">
-                                    <h4 className="font-bold text-gray-800 mb-1">{c.title}</h4>
-                                    <div className="flex gap-2 text-sm"><span className="font-bold text-green-600">{c.discount_price || c.price}</span>{c.discount_price && <span className="line-through text-gray-400">{c.price}</span>}</div>
+                                <div className="p-5">
+                                    <h4 className="font-bold text-lg text-gray-900 mb-1">{c.title}</h4>
+                                    <p className="text-sm text-gray-500 mb-3 font-medium">{c.instructor}</p>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
+                                        {c.discount_price && <span className="text-sm text-gray-400 line-through decoration-2">৳{c.price}</span>}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -576,7 +620,7 @@ export default function AdminDashboard() {
                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                     <div className="xl:col-span-8 space-y-4">
                         <input className="text-4xl font-black w-full bg-transparent border-b border-gray-300 pb-2 outline-none placeholder-gray-300" placeholder="Headline..." value={newsTitle} onChange={e=>setNewsTitle(e.target.value)} />
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><SunEditor setContents={newsContent} onChange={setNewsContent} setOptions={{...editorOptions, minHeight:"500px"}} /></div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><SunEditor setContents={newsContent} onChange={setNewsContent} setOptions={editorOptions} /></div>
                     </div>
                     <div className="xl:col-span-4 space-y-6">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
