@@ -10,13 +10,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -24,15 +24,21 @@ export default function LoginPage() {
       if (error) {
         setErrorMsg(error.message);
         setLoading(false);
-      } else {
-        // Successful Login
-        // 1. Refresh router to update server components/middleware context
-        router.refresh();
-        // 2. Redirect to Admin
-        router.replace("/admin");
+        return;
+      }
+
+      if (data.session) {
+        // SUCCESS: Session is active.
+        // 1. Force the router to refresh (this updates the Middleware check)
+        router.refresh(); 
+        
+        // 2. Wait a tiny bit to ensure the cookie is set, then redirect
+        setTimeout(() => {
+            router.replace("/admin");
+        }, 500);
       }
     } catch (err) {
-      setErrorMsg("An unexpected error occurred.");
+      setErrorMsg("Something went wrong. Please check your connection.");
       setLoading(false);
     }
   };
