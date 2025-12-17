@@ -51,6 +51,7 @@ export default function AdminDashboard() {
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [ebooksList, setEbooksList] = useState<any[]>([]);
   const [coursesList, setCoursesList] = useState<any[]>([]);
+  
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState("");
@@ -94,7 +95,8 @@ export default function AdminDashboard() {
   const [ebCategory, setEbCategory] = useState("SSC");
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
-  const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
+    const [ebLink, setEbLink] = useState(""); // <--- ADD THIS
+    const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
   // Course Form
   const [cTitle, setCTitle] = useState("");
@@ -240,51 +242,57 @@ export default function AdminDashboard() {
   };
 
   // --- EBOOK LOGIC (PDF OPTIONAL) ---
-  const handleEbookSubmit = async () => {
-      if(!ebTitle) return showError("Title is required");
-      setSubmitting(true);
-      
-      const pdf = (document.getElementById('eb-file') as HTMLInputElement)?.files?.[0];
-      const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
-      let pUrl = null, cUrl = null;
-      
-      if(pdf) { const n = `pdf-${Date.now()}`; await supabase.storage.from('materials').upload(n, pdf); pUrl = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
-      if(cover) { const n = `cover-${Date.now()}`; await supabase.storage.from('covers').upload(n, cover); cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl; }
+const handleEbookSubmit = async () => {
+    if (!ebTitle) return showError("Title is required");
+    setSubmitting(true);
 
-      const payload: any = { 
-          title: ebTitle, 
-          author: ebAuthor, 
-          category: ebCategory, 
-          description: ebDescription, 
-          tags: ebTags.split(',').map(t=>t.trim()) 
-      };
-      
-      if(pUrl) payload.pdf_url = pUrl; 
-      if(cUrl) payload.cover_url = cUrl;
+    // 1. Handle Cover Image (Keep as is)
+    const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
+    let cUrl = null;
+    if (cover) {
+        const n = `cover-${Date.now()}`;
+        await supabase.storage.from('covers').upload(n, cover);
+        cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl;
+    }
 
-      if(editingEbookId) {
-          await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
-      } else { 
-          // REMOVED PDF REQUIREMENT - Can save without PDF now
-          await supabase.from('ebooks').insert([payload]); 
-      }
-      
-      setSubmitting(false); 
-      setEditingEbookId(null); 
-      setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); 
-      fetchEbooks(); 
-      showSuccess("eBook saved successfully!");
-  };
+    // 2. Prepare Payload (Use ebLink instead of uploading PDF)
+    const payload: any = {
+        title: ebTitle,
+        author: ebAuthor,
+        category: ebCategory,
+        description: ebDescription,
+        tags: ebTags.split(',').map(t => t.trim()),
+        pdf_url: ebLink // <--- SAVING THE LINK DIRECTLY
+    };
+    if (cUrl) payload.cover_url = cUrl;
+
+    // 3. Insert or Update
+    const { error } = editingEbookId
+        ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId)
+        : await supabase.from('ebooks').insert([payload]);
+
+    setSubmitting(false);
+    if (error) {
+        showError("Error: " + error.message);
+    } else {
+        setEditingEbookId(null);
+        // Reset all fields
+        setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); 
+        fetchEbooks();
+        showSuccess("eBook saved successfully!");
+    }
+};
   
-  const loadEbookForEdit = (b:any) => { 
-      setEditingEbookId(b.id); 
-      setEbTitle(b.title); 
-      setEbAuthor(b.author); 
-      setEbCategory(b.category); 
-      setEbDescription(b.description || ""); // Load description
-      setEbTags(b.tags?.join(", ")); 
-      window.scrollTo({top:0, behavior:'smooth'}); 
-  };
+const loadEbookForEdit = (b: any) => {
+    setEditingEbookId(b.id);
+    setEbTitle(b.title);
+    setEbAuthor(b.author);
+    setEbCategory(b.category);
+    setEbDescription(b.description || "");
+    setEbTags(b.tags?.join(", "));
+    setEbLink(b.pdf_url || ""); // <--- LOAD EXISTING LINK
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
   // --- COURSES ---
@@ -586,11 +594,17 @@ export default function AdminDashboard() {
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4 pt-2">
-                                <div className="border-2 border-dashed border-slate-200 p-4 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative group">
-                                    <span className="block text-red-500 text-2xl mb-1 group-hover:scale-110 transition">📄</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">PDF (Optional)</span>
-                                    <input type="file" id="eb-file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf"/>
-                                </div>
+                            {/* REPLACEMENT FOR PDF UPLOAD FIELD */}
+                            <div>
+                            <label className="text-xs font-bold text-blue-600 uppercase block mb-1.5">
+                                Google Drive / PDF Link
+                            </label>
+                            <input 
+                                className="w-full bg-blue-50 border border-blue-200 text-blue-800 p-3.5 rounded-xl text-sm outline-none font-medium focus:ring-2 focus:ring-blue-500 transition" 
+                                value={ebLink} 
+                                onChange={e => setEbLink(e.target.value)} 
+                                placeholder="https://drive.google.com/file/d/..."/>
+                            </div>
                                 <div className="border-2 border-dashed border-slate-200 p-4 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative group">
                                     <span className="block text-blue-500 text-2xl mb-1 group-hover:scale-110 transition">🖼️</span>
                                     <span className="text-[10px] font-bold text-slate-500 uppercase">Cover</span>

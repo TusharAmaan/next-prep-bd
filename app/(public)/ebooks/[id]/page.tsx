@@ -42,8 +42,13 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
                 </div>
                 
                 {book.pdf_url ? (
-                    <a href={book.pdf_url} target="_blank" rel="noopener noreferrer" className="block w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-center rounded-xl transition shadow-lg shadow-blue-200">
-                        Download PDF Now
+                    <a 
+                        href={book.pdf_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="block w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-center rounded-xl transition shadow-lg shadow-blue-200"
+                    >
+                        View / Download Book
                     </a>
                 ) : (
                     <div className="bg-yellow-50 text-yellow-800 p-4 rounded-xl text-sm font-bold text-center border border-yellow-100">

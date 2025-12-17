@@ -79,7 +79,7 @@ export default function EbooksPage() {
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${
                             selectedCategory === cat 
-                            ? "bg-slate-900 text-white border-slate-900 shadow-lg" 
+                            ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20" 
                             : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                         }`}
                     >
@@ -105,20 +105,21 @@ export default function EbooksPage() {
         ) : filteredBooks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {filteredBooks.map((book) => (
-                    <Link href={`/ebooks/${book.id}`} key={book.id} className="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full cursor-pointer">
+                    <Link href={`/ebooks/${book.id}`} key={book.id} className="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full cursor-pointer relative overflow-hidden">
                         
                         {/* COVER IMAGE */}
-                        <div className="relative w-full h-52 bg-slate-100 rounded-xl overflow-hidden mb-5 shadow-inner border border-slate-100">
+                        <div className="relative w-full h-56 bg-slate-100 rounded-xl overflow-hidden mb-5 shadow-inner border border-slate-100 group-hover:shadow-md transition-shadow">
                             {book.cover_url ? (
-                                <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                     <span className="text-4xl mb-2">📚</span>
                                     <span className="text-xs font-bold uppercase tracking-widest">No Cover</span>
                                 </div>
                             )}
+                            {/* Category Badge */}
                             <div className="absolute top-3 left-3">
-                                <span className="bg-white/90 backdrop-blur-sm text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm uppercase tracking-wide">
+                                <span className="bg-white/90 backdrop-blur-sm text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm uppercase tracking-wide border border-white/50">
                                     {book.category}
                                 </span>
                             </div>
@@ -133,20 +134,20 @@ export default function EbooksPage() {
                             
                             {/* Tags */}
                             {book.tags && book.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 mb-5">
+                                <div className="flex flex-wrap gap-1.5 mb-6">
                                     {book.tags.slice(0, 2).map((tag: string, i: number) => (
-                                        <span key={i} className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
+                                        <span key={i} className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100 font-medium">
                                             #{tag}
                                         </span>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Action Button */}
-                            <div className="mt-auto pt-4 border-t border-slate-50">
-                                <span className="block w-full py-3 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 text-center text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-md">
+                            {/* UPDATED ACTION BUTTON */}
+                            <div className="mt-auto pt-4 border-t border-slate-100">
+                                <span className="block w-full py-3.5 bg-slate-900 text-white hover:bg-blue-600 text-center text-sm font-bold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2 group-hover:translate-y-[-2px]">
                                     View Details
-                                    <span className="text-lg">→</span>
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                                 </span>
                             </div>
                         </div>
