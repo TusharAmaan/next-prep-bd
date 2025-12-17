@@ -69,7 +69,7 @@ export default function AdminDashboard() {
   
   // Content & SEO
   const [richContent, setRichContent] = useState(""); 
-  const [questionContent, setQuestionContent] = useState(""); // Specific for Questions
+  const [questionContent, setQuestionContent] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
   async function fetchEbooks() { const { data } = await supabase.from("ebooks").select("*").order('created_at', { ascending: false }); setEbooksList(data || []); }
   async function fetchCourses() { const { data } = await supabase.from("courses").select("*").order('created_at', { ascending: false }); setCoursesList(data || []); }
 
-  // --- STRUCTURE HANDLERS (Missing in previous Part 1) ---
+  // --- HANDLERS ---
   const handleSegmentClick = (id: string) => {
     setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); 
     setGroups([]); setSubjects([]); setResources([]);
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
     setNewSubject(""); fetchSubjects(selectedGroup);
   }
 
-  // --- BLOG / RESOURCE LOGIC ---
+  // --- RESOURCE LOGIC ---
   function resetResourceForm() {
       setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); 
       setRichContent(""); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); 
@@ -198,7 +198,6 @@ export default function AdminDashboard() {
     const finalType = typeOverride || resType;
     if (!resTitle || !selectedSubject) return alert("Title and Subject Required");
     
-    // Validate Content based on type
     if (finalType === 'question' && !questionContent) return alert("Question content is required");
     if (finalType === 'blog' && !richContent) return alert("Blog content is required");
 
@@ -232,8 +231,8 @@ export default function AdminDashboard() {
     else await supabase.from('resources').insert([payload]);
     
     fetchResources(selectedSubject);
-    if(finalType !== 'blog') resetResourceForm(); // Don't close blog editor immediately on save if you want
-    else alert("Blog Published/Updated!");
+    if(finalType !== 'blog') resetResourceForm(); 
+    else alert("Blog Published!");
     
     setSubmitting(false);
   }
@@ -325,15 +324,15 @@ export default function AdminDashboard() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="flex min-h-screen bg-gray-100 font-sans text-gray-900">
       
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-gray-200 fixed h-full z-20 hidden md:flex flex-col shadow-lg">
+      {/* SIDEBAR (FIXED OVERLAP ISSUE) */}
+      <aside className="w-64 bg-white border-r border-gray-200 fixed top-20 bottom-0 z-10 hidden md:flex flex-col shadow-lg overflow-y-auto">
         <div className="p-8 border-b border-gray-100">
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">NextPrep<span className="text-blue-600">BD</span></h1>
-            <p className="text-xs text-gray-400 mt-1 font-medium tracking-wider uppercase">Admin Command</p>
+            {/* Removed the large logo from sidebar to avoid redundancy with Top Navbar */}
+            <p className="text-xs text-gray-400 font-bold tracking-wider uppercase">Admin Command Center</p>
         </div>
-        <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-6 space-y-2">
             {[
                 { id: 'materials', label: '🗂 Study Materials' },
                 { id: 'class-blogs', label: '✍️ Class Blogs' },
@@ -361,8 +360,8 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT WRAPPER */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8 lg:p-10 overflow-x-hidden">
+      {/* MAIN CONTENT WRAPPER (FIXED OVERLAP ISSUE) */}
+      <main className="flex-1 md:ml-64 p-4 md:p-8 lg:p-10 pt-28 overflow-x-hidden">
         
         {/* Mobile Header */}
         <div className="md:hidden flex justify-between items-center mb-8">
@@ -727,15 +726,15 @@ export default function AdminDashboard() {
                         {editingEbookId && <button onClick={cancelEbookEdit} className="text-xs text-red-500">Cancel</button>}
                     </h3>
                     <div className="space-y-5">
-                        <input className="input-field w-full p-3 bg-gray-50 border rounded-xl font-bold" placeholder="Book Title" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} />
+                        <input className="w-full p-3 bg-gray-50 border rounded-xl font-bold" placeholder="Book Title" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} />
                         <div className="grid grid-cols-2 gap-4">
-                            <input className="input-field w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="Author" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} />
-                            <select className="input-field w-full p-3 bg-gray-50 border rounded-xl text-sm" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}><option>SSC</option><option>HSC</option><option>Admission</option></select>
+                            <input className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="Author" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} />
+                            <select className="w-full p-3 bg-gray-50 border rounded-xl text-sm" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}><option>SSC</option><option>HSC</option><option>Admission</option></select>
                         </div>
                         <div className="border rounded-xl overflow-hidden">
                             <SunEditor setContents={ebDescription} onChange={setEbDescription} setOptions={{...fullToolbarOptions, minHeight: "150px", buttonList: [['bold', 'italic', 'list']]}} />
                         </div>
-                        <input className="input-field w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="Tags..." value={ebTags} onChange={e=>setEbTags(e.target.value)} />
+                        <input className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="Tags..." value={ebTags} onChange={e=>setEbTags(e.target.value)} />
                         
                         <div className="grid grid-cols-2 gap-4">
                             <div className="border border-dashed p-3 rounded-xl text-center"><span className="block text-xs font-bold text-red-500 mb-1">PDF File</span><input type="file" id="eb-file" className="w-full text-[10px]" accept="application/pdf"/></div>
