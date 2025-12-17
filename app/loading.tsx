@@ -1,9 +1,13 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-bold text-sm animate-pulse">Loading Content...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white z-50 relative">
+      {/* Spinner */}
+      <div className="w-12 h-12 border-[5px] border-slate-100 border-t-blue-600 rounded-full animate-spin mb-6"></div>
+      
+      {/* Text */}
+      <div className="text-center space-y-2 animate-pulse">
+        <h3 className="text-slate-800 font-bold text-lg tracking-tight">Preparing study materials...</h3>
+        <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">Please wait</p>
       </div>
     </div>
   );
