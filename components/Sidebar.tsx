@@ -9,7 +9,7 @@ export default function Sidebar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [recentItems, setRecentItems] = useState<any[]>([]);
 
-  // 1. Fetch Recent Uploads for the Sidebar
+  // 1. Fetch Recent Uploads
   useEffect(() => {
     const fetchRecent = async () => {
       const { data } = await supabase
@@ -33,16 +33,16 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 sticky top-24">
       
-      {/* --- WIDGET 1: PROFESSIONAL SEARCH --- */}
+      {/* --- WIDGET 1: SEARCH --- */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 className="font-extrabold text-gray-900 mb-4 text-sm uppercase tracking-wider">Find Resources</h3>
-        <form onSubmit={handleSearch} className="relative">
+        <h3 className="font-extrabold text-gray-900 mb-4 text-sm uppercase tracking-wider">Find Content</h3>
+        <form onSubmit={handleSearch} className="relative group">
             <input 
                 type="text" 
                 placeholder="Search notes, blogs..." 
-                className="w-full bg-white border border-gray-300 text-gray-900 placeholder-gray-400 rounded-xl pl-4 pr-12 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
+                className="w-full bg-white border border-gray-300 text-gray-900 placeholder-gray-400 rounded-xl pl-4 pr-12 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm group-hover:border-blue-300"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -55,7 +55,7 @@ export default function Sidebar() {
         </form>
       </div>
 
-      {/* --- WIDGET 2: QUICK LINKS (Clean List) --- */}
+      {/* --- WIDGET 2: BROWSE CATEGORIES --- */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 bg-gray-50 border-b border-gray-100">
             <h3 className="font-extrabold text-gray-900 text-sm uppercase tracking-wider">Browse Categories</h3>
@@ -72,54 +72,23 @@ export default function Sidebar() {
                     href={item.href} 
                     className="flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors group border-b border-gray-50 last:border-0"
                 >
-                    <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-lg group-hover:bg-white transition-colors">{item.icon}</span>
+                    <span className="text-xl bg-gray-100 w-8 h-8 flex items-center justify-center rounded-lg group-hover:bg-white transition-colors shadow-sm">{item.icon}</span>
                     <span className="font-bold text-sm text-gray-700 group-hover:text-blue-700 flex-1">{item.label}</span>
-                    <span className="text-gray-300 group-hover:text-blue-500">→</span>
+                    <span className="text-gray-300 group-hover:text-blue-500 transition-transform group-hover:translate-x-1">→</span>
                 </Link>
             ))}
         </div>
       </div>
 
-      {/* --- WIDGET 3: SOCIALS (The "Previous" style improved) --- */}
-      <div className="space-y-3">
-        <a 
-            href="https://facebook.com" target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-between px-6 py-4 bg-[#1877F2] text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all group"
-        >
-            <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                <div className="flex flex-col">
-                    <span className="font-bold text-sm">Join Community</span>
-                    <span className="text-xs text-blue-200">On Facebook</span>
-                </div>
-            </div>
-            <span className="bg-white/20 p-1.5 rounded-lg group-hover:bg-white/30 transition">↗</span>
-        </a>
-
-        <a 
-            href="https://youtube.com" target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-between px-6 py-4 bg-[#FF0000] text-white rounded-2xl shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-1 transition-all group"
-        >
-            <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                <div className="flex flex-col">
-                    <span className="font-bold text-sm">Watch Tutorials</span>
-                    <span className="text-xs text-red-200">On YouTube</span>
-                </div>
-            </div>
-            <span className="bg-white/20 p-1.5 rounded-lg group-hover:bg-white/30 transition">↗</span>
-        </a>
-      </div>
-
-      {/* --- WIDGET 4: RECENT UPDATES (New) --- */}
+      {/* --- WIDGET 3: LATEST POSTS (Moved Up) --- */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h3 className="font-extrabold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            New Uploads
+            Recent Uploads
         </h3>
         <div className="space-y-4">
             {recentItems.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">Loading updates...</p>
+                <p className="text-xs text-gray-400 italic">No recent items found.</p>
             ) : (
                 recentItems.map(item => (
                     <a 
@@ -128,17 +97,54 @@ export default function Sidebar() {
                         target={item.type === 'blog' ? '_self' : '_blank'}
                         className="flex gap-3 items-start group"
                     >
-                         <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-400' : item.type === 'video' ? 'bg-blue-400' : 'bg-purple-400'}`}></div>
+                         <div className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-500' : item.type === 'video' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
                          <div>
                             <p className="text-sm font-bold text-gray-700 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
                                 {item.title}
                             </p>
-                            <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase">{item.type}</p>
+                            <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-wide">{item.type}</p>
                          </div>
                     </a>
                 ))
             )}
         </div>
+      </div>
+
+      {/* --- WIDGET 4: SOCIAL MEDIA (Redesigned) --- */}
+      <div className="space-y-4">
+        {/* Facebook */}
+        <a 
+            href="https://www.facebook.com/proyashcoaching" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-between p-1 bg-[#1877F2] text-white rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 transition-all group"
+        >
+            <div className="bg-white/10 p-4 rounded-xl flex-1 flex items-center gap-4">
+                <div className="bg-white text-[#1877F2] w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold">f</div>
+                <div>
+                    <h4 className="font-bold text-sm">Proyash Coaching</h4>
+                    <p className="text-xs text-blue-100 opacity-90">12k Followers</p>
+                </div>
+            </div>
+            <div className="px-4">
+                <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </a>
+
+        {/* YouTube */}
+        <a 
+            href="https://www.youtube.com/@gmatclub" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-between p-1 bg-[#FF0000] text-white rounded-2xl shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:-translate-y-1 transition-all group"
+        >
+            <div className="bg-white/10 p-4 rounded-xl flex-1 flex items-center gap-4">
+                <div className="bg-white text-[#FF0000] w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold">▶</div>
+                <div>
+                    <h4 className="font-bold text-sm">GMAT Club</h4>
+                    <p className="text-xs text-red-100 opacity-90">Subscribe Now</p>
+                </div>
+            </div>
+            <div className="px-4">
+                <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </a>
       </div>
 
     </div>
