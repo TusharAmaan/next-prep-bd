@@ -567,51 +567,69 @@ const loadEbookForEdit = (b: any) => {
                     <h3 className="font-bold text-lg text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingEbookId?"Edit eBook Details":"Add New eBook"}</h3>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-4 space-y-5">
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Book Title</label>
-                                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="e.g. Physics First Paper" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Author</label>
-                                    <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} placeholder="Author Name" />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
-                                    <select className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}>
-                                        <option value="">Select Category</option>
-                                        {segments.map(seg => <option key={seg.id} value={seg.title}>{seg.title}</option>)}
-                                        <option value="SSC">SSC</option>
-                                        <option value="HSC">HSC</option>
-                                        <option value="Admission">Admission</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Tags</label>
-                                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="physics, hsc, vector..." />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4 pt-2">
-                            {/* REPLACEMENT FOR PDF UPLOAD FIELD */}
-                            <div>
-                            <label className="text-xs font-bold text-blue-600 uppercase block mb-1.5">
-                                Google Drive / PDF Link
-                            </label>
-                            <input 
-                                className="w-full bg-blue-50 border border-blue-200 text-blue-800 p-3.5 rounded-xl text-sm outline-none font-medium focus:ring-2 focus:ring-blue-500 transition" 
-                                value={ebLink} 
-                                onChange={e => setEbLink(e.target.value)} 
-                                placeholder="https://drive.google.com/file/d/..."/>
-                            </div>
-                                <div className="border-2 border-dashed border-slate-200 p-4 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative group">
-                                    <span className="block text-blue-500 text-2xl mb-1 group-hover:scale-110 transition">🖼️</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Cover</span>
-                                    <input type="file" id="eb-cover" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/>
-                                </div>
-                            </div>
-                        </div>
+<div className="lg:col-span-4 space-y-6">
+    
+    {/* BASIC INFO */}
+    <div className="space-y-4">
+        <div>
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Book Title</label>
+            <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="e.g. Physics First Paper" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Author</label>
+                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} placeholder="Author" />
+            </div>
+<div>
+    <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
+    <select 
+        className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer font-bold text-slate-700" 
+        value={ebCategory} 
+        onChange={e=>setEbCategory(e.target.value)}
+    >
+        <option value="">Select Category</option>
+        {segments.map(seg => (
+            <option key={seg.id} value={seg.title}>{seg.title}</option>
+        ))}
+    </select>
+</div>
+        </div>
+        <div>
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Tags</label>
+            <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="Tags..." />
+        </div>
+    </div>
+
+    {/* ASSETS SECTION (Highlighted) */}
+    <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl space-y-4">
+        <div>
+            <label className="text-xs font-bold text-blue-600 uppercase block mb-1.5 flex items-center gap-1">
+                <span>🔗</span> Google Drive / PDF Link
+            </label>
+            <input 
+                className="w-full bg-white border border-blue-200 text-blue-800 p-3.5 rounded-xl text-sm outline-none font-medium focus:ring-2 focus:ring-blue-500 transition shadow-sm" 
+                value={ebLink} 
+                onChange={e => setEbLink(e.target.value)} 
+                placeholder="https://drive.google.com/..." 
+            />
+        </div>
+
+        <div>
+            <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5">Cover Image</label>
+            <div className="relative group cursor-pointer">
+                <input type="file" id="eb-cover" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*"/>
+                <div className="bg-white border-2 border-dashed border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 transition-all rounded-xl p-3 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl group-hover:bg-white transition">🖼️</div>
+                    <div className="flex-1">
+                        <p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">Click to Upload Cover</p>
+                        <p className="text-[10px] text-slate-400">JPG, PNG (Max 2MB)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 
                         <div className="lg:col-span-8 flex flex-col">
                             <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label>
