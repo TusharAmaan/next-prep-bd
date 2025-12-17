@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
 
+// Dynamic Import for Editor
 const SunEditor = dynamic(() => import("suneditor-react"), {
   ssr: false,
 });
@@ -65,12 +66,12 @@ export default function AdminDashboard() {
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
   
-  // Resource Form
+  // Resource & Blog Form
   const [resTitle, setResTitle] = useState("");
   const [resLink, setResLink] = useState("");
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
-  const [richContent, setRichContent] = useState(""); 
+  const [richContent, setRichContent] = useState(""); // Shared content body
   const [questionContent, setQuestionContent] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
@@ -147,7 +148,7 @@ export default function AdminDashboard() {
     });
   };
 
-  // --- LOGIC ---
+  // --- HIERARCHY LOGIC ---
   const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); setResources([]); fetchGroups(id); };
   const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); setResources([]); fetchGroups(selectedSegment); fetchSubjects(id); };
   const handleSubjectClick = (id: string) => { setSelectedSubject(id); fetchResources(id); };
@@ -156,11 +157,27 @@ export default function AdminDashboard() {
   const handleGroupSubmit = async () => { if(!newGroup || !selectedSegment) return; await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); };
   const handleSubjectSubmit = async () => { if(!newSubject || !selectedGroup) return; await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); };
 
-  const resetResourceForm = () => { setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); setRichContent(""); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); setBlogImageFile(null); setBlogTags(""); setResType("pdf"); setIsBlogEditorOpen(false); };
+  // --- RESOURCE & BLOG LOGIC ---
+  const resetResourceForm = () => { 
+      setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); 
+      setRichContent(""); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); 
+      setBlogImageFile(null); setBlogTags(""); setResType("pdf"); setIsBlogEditorOpen(false); 
+  };
+  
   const loadResourceForEdit = (r: any) => {
-      setEditingResourceId(r.id); setResTitle(r.title); setResType(r.type);
-      setResLink(r.content_url||""); setRichContent(r.content_body||""); setQuestionContent(r.content_body||""); 
-      setSeoTitle(r.seo_title||""); setSeoDescription(r.seo_description||""); setBlogTags(r.tags?.join(", ")||"");
+      setEditingResourceId(r.id); 
+      setResTitle(r.title); 
+      setResType(r.type);
+      setResLink(r.content_url||""); 
+      
+      // Load content into state properly
+      setRichContent(r.content_body || ""); 
+      setQuestionContent(r.content_body || ""); 
+      
+      setSeoTitle(r.seo_title||""); 
+      setSeoDescription(r.seo_description||""); 
+      setBlogTags(r.tags?.join(", ")||"");
+      
       if(r.type==='blog') setIsBlogEditorOpen(true);
   };
   
@@ -169,10 +186,16 @@ export default function AdminDashboard() {
       if(!resTitle) return showError("Title is required!");
       if(type !== 'blog' && !selectedSubject) return showError("Please select a subject first.");
       
+      // Validation for Blog Content
+      if (type === 'blog' && (!richContent || richContent.trim() === '')) {
+          return showError("Blog content cannot be empty.");
+      }
+
       setSubmitting(true);
       
       let url = resLink;
       let file = (type==='pdf') ? resFile : (type==='blog') ? blogImageFile : null;
+      
       if(file) {
           const name = `${type}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
           await supabase.storage.from('materials').upload(name, file);
@@ -181,32 +204,39 @@ export default function AdminDashboard() {
 
       const payload: any = { title: resTitle, type };
       
-      // Handle Subject ID (Blog might not need it if generic, but usually yes)
       if(selectedSubject) payload.subject_id = Number(selectedSubject);
 
       if(type==='pdf' || type==='video') payload.content_url = url;
-      else if(type==='question') { payload.content_body = questionContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
+      else if(type==='question') { 
+          payload.content_body = questionContent; 
+          payload.seo_title = seoTitle || resTitle; 
+          payload.seo_description = seoDescription; 
+      }
       else if(type==='blog') { 
-          // CRITICAL FIX: Ensure richContent is assigned to content_body
           payload.content_body = richContent; 
           if(url) payload.content_url = url; 
           payload.tags = blogTags.split(',').map(t=>t.trim()); 
       }
 
-      if(editingResourceId) await supabase.from('resources').update(payload).eq('id', editingResourceId);
-      else await supabase.from('resources').insert([payload]);
+      const { error } = editingResourceId 
+          ? await supabase.from('resources').update(payload).eq('id', editingResourceId)
+          : await supabase.from('resources').insert([payload]);
 
-      if(selectedSubject) fetchResources(selectedSubject);
-      
-      // LOGIC FOR BLOG NAVIGATION
-      if(type === 'blog') {
-          setIsBlogEditorOpen(false); // Close editor
-          showSuccess("Blog post published successfully!"); 
-      } else {
-          resetResourceForm();
-          showSuccess("Resource uploaded successfully!");
-      }
       setSubmitting(false);
+
+      if (error) {
+          showError("Failed to save: " + error.message);
+      } else {
+          if(selectedSubject) fetchResources(selectedSubject);
+          
+          if(type === 'blog') {
+              setIsBlogEditorOpen(false); 
+              showSuccess("Blog post published successfully!"); 
+          } else {
+              resetResourceForm();
+              showSuccess("Resource uploaded successfully!");
+          }
+      }
   };
 
   // --- EBOOK LOGIC (PDF OPTIONAL) ---
@@ -235,7 +265,7 @@ export default function AdminDashboard() {
       if(editingEbookId) {
           await supabase.from('ebooks').update(payload).eq('id', editingEbookId);
       } else { 
-          // Removed PDF Requirement Check
+          // REMOVED PDF REQUIREMENT - Can save without PDF now
           await supabase.from('ebooks').insert([payload]); 
       }
       
@@ -246,7 +276,15 @@ export default function AdminDashboard() {
       showSuccess("eBook saved successfully!");
   };
   
-  const loadEbookForEdit = (b:any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description); setEbTags(b.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
+  const loadEbookForEdit = (b:any) => { 
+      setEditingEbookId(b.id); 
+      setEbTitle(b.title); 
+      setEbAuthor(b.author); 
+      setEbCategory(b.category); 
+      setEbDescription(b.description || ""); // Load description
+      setEbTags(b.tags?.join(", ")); 
+      window.scrollTo({top:0, behavior:'smooth'}); 
+  };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
   // --- COURSES ---
@@ -262,7 +300,7 @@ export default function AdminDashboard() {
       else { if(!thumb) {showError("Thumbnail is required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
       setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null); fetchCourses(); showSuccess("Course saved successfully!");
   };
-  const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description); window.scrollTo({top:0, behavior:'smooth'}); };
+  const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description || ""); window.scrollTo({top:0, behavior:'smooth'}); };
 
   // --- NEWS ---
   const createCategory = async () => { if(newCategoryInput) { await supabase.from('categories').insert([{name:newCategoryInput}]); setNewCategoryInput(""); fetchCategories(); }};
@@ -278,7 +316,7 @@ export default function AdminDashboard() {
       else await supabase.from('news').insert([payload]);
       setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsFile(null); fetchNews(); showSuccess("News published successfully!");
   };
-  const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content); setSelectedCategory(n.category); setNewsTags(n.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
+  const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content || ""); setSelectedCategory(n.category); setNewsTags(n.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
   const cancelNewsEdit = () => { setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsTags(""); };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-gray-500 font-bold">Admin Panel Loading...</div>;
@@ -418,7 +456,7 @@ export default function AdminDashboard() {
                 {/* 2. CONTENT MANAGER (2/3 + 1/3 Split) */}
                 <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                     
-                    {/* LEFT: UPLOAD FORM (Takes 8 cols - Matches 1st+2nd Step width) */}
+                    {/* LEFT: UPLOAD FORM (Takes 8 cols) */}
                     <div className="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-lg text-slate-800">4. Add New Resource</h3>
@@ -455,7 +493,14 @@ export default function AdminDashboard() {
                             )}
                             {resType === 'question' && (
                                 <div className="space-y-3">
-                                    <div className="border rounded-xl overflow-hidden"><SunEditor setContents={questionContent} onChange={setQuestionContent} setOptions={editorOptions}/></div>
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <SunEditor 
+                                            key={editingResourceId || 'new-question'}
+                                            setContents={questionContent} 
+                                            onChange={(content) => setQuestionContent(content)} 
+                                            setOptions={editorOptions}
+                                        />
+                                    </div>
                                     <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs" value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="SEO Title" />
                                 </div>
                             )}
@@ -474,7 +519,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* RIGHT: LIBRARY LIST (Takes 4 cols - Matches 3rd Step width) */}
+                    {/* RIGHT: LIBRARY LIST (Takes 4 cols) */}
                     <div className="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[500px] lg:h-auto">
                         <div className="p-5 border-b border-slate-100 bg-slate-50/50">
                             <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Library ({resources.length})</h4>
@@ -504,23 +549,16 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* === TAB 2: EBOOKS (Professional Grid & Form) === */}
+            {/* === TAB 2: EBOOKS === */}
             {activeTab === 'ebooks' && (
               <div className="space-y-8 animate-fade-in">
-                <div className="flex justify-between items-end">
-                    <div>
-                        <h2 className="text-3xl font-black text-slate-900">Manage eBooks</h2>
-                        <p className="text-slate-500 mt-1">Upload and manage digital library content.</p>
-                    </div>
-                    {editingEbookId && <button onClick={cancelEbookEdit} className="text-red-500 font-bold bg-white border border-red-100 px-4 py-2 rounded-lg hover:bg-red-50 transition">Cancel Editing</button>}
-                </div>
+                <h2 className="text-2xl font-bold text-slate-800">Manage eBooks</h2>
                 
-                {/* FORM: CLEAN & SPACIOUS */}
+                {/* TOP FORM */}
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="font-bold text-lg text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingEbookId?"Edit eBook Details":"Add New eBook"}</h3>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Left Column: Metadata */}
                         <div className="lg:col-span-4 space-y-5">
                             <div>
                                 <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Book Title</label>
@@ -535,7 +573,6 @@ export default function AdminDashboard() {
                                     <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
                                     <select className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}>
                                         <option value="">Select Category</option>
-                                        {/* Dynamic Segments */}
                                         {segments.map(seg => <option key={seg.id} value={seg.title}>{seg.title}</option>)}
                                         <option value="SSC">SSC</option>
                                         <option value="HSC">HSC</option>
@@ -551,21 +588,27 @@ export default function AdminDashboard() {
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="border-2 border-dashed border-slate-200 p-4 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative group">
                                     <span className="block text-red-500 text-2xl mb-1 group-hover:scale-110 transition">📄</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">PDF File</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">PDF (Optional)</span>
                                     <input type="file" id="eb-file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf"/>
                                 </div>
                                 <div className="border-2 border-dashed border-slate-200 p-4 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative group">
                                     <span className="block text-blue-500 text-2xl mb-1 group-hover:scale-110 transition">🖼️</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Cover Image</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Cover</span>
                                     <input type="file" id="eb-cover" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Description Editor (TALLER) */}
                         <div className="lg:col-span-8 flex flex-col">
-                            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Synopsis</label>
-                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner"><SunEditor setContents={ebDescription} onChange={setEbDescription} setOptions={{...editorOptions, minHeight:"350px"}}/></div>
+                            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner">
+                                <SunEditor 
+                                    key={editingEbookId || 'new-ebook'}
+                                    setContents={ebDescription} 
+                                    onChange={(content) => setEbDescription(content)} 
+                                    setOptions={{...editorOptions, minHeight:"350px"}}
+                                />
+                            </div>
                         </div>
                     </div>
                     
@@ -575,32 +618,28 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* LIBRARY GRID */}
-                <div>
-                    <h3 className="font-bold text-slate-400 text-xs uppercase mb-6 tracking-widest">Collection ({ebooksList.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {ebooksList.map(book => (
-                            <div key={book.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex gap-4 group">
-                                <div className="w-20 h-28 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner relative">
-                                    {book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 font-bold">No Cover</div>}
-                                </div>
-                                <div className="flex-1 flex flex-col">
-                                    <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full w-fit mb-2">{book.category}</span>
-                                    <h4 className="font-bold text-sm text-slate-800 leading-tight mb-1 line-clamp-2">{book.title}</h4>
-                                    <p className="text-xs text-slate-500 mb-auto line-clamp-1">{book.author}</p>
-                                    
-                                    <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-                                        <button onClick={() => loadEbookForEdit(book)} className="flex-1 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Edit</button>
-                                        <button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="flex-1 bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Del</button>
-                                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {ebooksList.map(book => (
+                        <div key={book.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 group hover:border-blue-400 transition hover:shadow-md">
+                            <div className="w-16 h-24 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner relative">
+                                {book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 font-bold">No Cover</div>}
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                                <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full w-fit mb-2">{book.category}</span>
+                                <h4 className="font-bold text-sm text-slate-800 leading-tight mb-1 line-clamp-2">{book.title}</h4>
+                                <p className="text-xs text-slate-500 mb-auto line-clamp-1">{book.author}</p>
+                                <div className="flex gap-2 mt-3">
+                                    <button onClick={() => loadEbookForEdit(book)} className="flex-1 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Edit</button>
+                                    <button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="flex-1 bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Del</button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
               </div>
             )}
 
-            {/* === TAB 3: CLASS BLOGS (Auto-close Logic Added) === */}
+            {/* === TAB 3: CLASS BLOGS (FIXED STATE BINDING) === */}
             {activeTab === 'class-blogs' && (
               <div className="animate-fade-in">
                 {!isBlogEditorOpen ? (
@@ -615,11 +654,10 @@ export default function AdminDashboard() {
                             <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm outline-none" value={selectedSubject} onChange={e=>handleSubjectClick(e.target.value)} disabled={!selectedGroup}><option value="">Filter Subject</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {resources.filter(r=>r.type==='blog').length===0 && <div className="col-span-full py-20 text-center text-slate-400">No blogs found. Select a subject above.</div>}
                             {resources.filter(r=>r.type==='blog').map(b=>(
                                 <div key={b.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition group">
                                     <div className="h-40 bg-slate-100 relative">
-                                        {b.content_url ? <img src={b.content_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold">No Image</div>}
+                                        {b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}
                                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                             <button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button>
                                             <button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button>
@@ -638,7 +676,14 @@ export default function AdminDashboard() {
                         </div>
                         <div className="p-8 max-w-5xl mx-auto w-full space-y-6">
                             <input className="text-5xl font-black w-full outline-none placeholder-slate-300 text-slate-900 bg-transparent" placeholder="Blog Title..." value={resTitle} onChange={e=>setResTitle(e.target.value)} />
-                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm"><SunEditor setContents={richContent} onChange={setRichContent} setOptions={editorOptions} /></div>
+                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm">
+                                <SunEditor 
+                                    key={editingResourceId || 'new-blog'}
+                                    setContents={richContent} 
+                                    onChange={(content) => setRichContent(content)} 
+                                    setOptions={editorOptions} 
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                                 <div className="border-2 border-dashed p-6 rounded-lg text-center relative hover:bg-slate-50"><input type="file" onChange={e=>setBlogImageFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/><span className="text-2xl">🖼️</span><p className="font-bold text-slate-400 text-xs mt-2">Cover Image</p>{blogImageFile && <p className="text-xs text-green-600 font-bold mt-1">{blogImageFile.name}</p>}</div>
                                 <textarea className="w-full bg-slate-50 border p-4 rounded-lg text-sm resize-none outline-none" placeholder="Tags (comma separated)..." value={blogTags} onChange={e=>setBlogTags(e.target.value)}></textarea>
@@ -649,24 +694,17 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* === TAB 4: COURSES (Redesigned) === */}
+            {/* === TAB 4: COURSES === */}
             {activeTab === 'courses' && (
               <div className="space-y-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-slate-800">Manage Courses</h2>
                 
-                {/* TOP FORM */}
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="font-bold text-lg text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingCourseId?"Edit Course":"Create New Course"}</h3>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div className="lg:col-span-4 space-y-5">
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Course Title</label>
-                                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none" value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="e.g. Complete Web Dev" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Instructor</label>
-                                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={cInstructor} onChange={e=>setCInstructor(e.target.value)} placeholder="Name" />
-                            </div>
+                            <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Course Title</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none" value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="e.g. Complete Web Dev" /></div>
+                            <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Instructor</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={cInstructor} onChange={e=>setCInstructor(e.target.value)} placeholder="Name" /></div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Price</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={cPrice} onChange={e=>setCPrice(e.target.value)} placeholder="5000" /></div>
                                 <div><label className="text-xs font-bold text-green-600 uppercase block mb-1.5">Discount</label><input className="w-full bg-green-50 border border-green-200 text-green-700 p-3.5 rounded-xl text-sm outline-none" value={cDiscountPrice} onChange={e=>setCDiscountPrice(e.target.value)} placeholder="3500" /></div>
@@ -678,7 +716,14 @@ export default function AdminDashboard() {
                         </div>
                         <div className="lg:col-span-8 flex flex-col">
                             <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Details & Visuals</label>
-                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner"><SunEditor setContents={cDesc} onChange={setCDesc} setOptions={{...editorOptions, minHeight:"350px"}} placeholder="Course Description..."/></div>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner">
+                                <SunEditor 
+                                    key={editingCourseId || 'new-course'}
+                                    setContents={cDesc} 
+                                    onChange={(content) => setCDesc(content)} 
+                                    setOptions={{...editorOptions, minHeight:"350px"}}
+                                />
+                            </div>
                             <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-slate-400">Upload Thumbnail</span><input type="file" onChange={e=>setCImage(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
                         </div>
                     </div>
@@ -688,30 +733,26 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* COURSES GRID */}
-                <div>
-                    <h3 className="font-bold text-gray-500 text-sm uppercase mb-4 tracking-wider">Active Courses</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {coursesList.map(c => (
-                            <div key={c.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
-                                <div className="h-40 bg-gray-200 relative">
-                                    {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
-                                        <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
-                                        <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
-                                    </div>
-                                </div>
-                                <div className="p-5">
-                                    <h4 className="font-bold text-lg text-gray-900 mb-1">{c.title}</h4>
-                                    <p className="text-sm text-gray-500 mb-3 font-medium">{c.instructor}</p>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
-                                        {c.discount_price && <span className="text-sm text-gray-400 line-through decoration-2">৳{c.price}</span>}
-                                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {coursesList.map(c => (
+                        <div key={c.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
+                            <div className="h-40 bg-gray-200 relative">
+                                {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
+                                    <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
+                                    <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                            <div className="p-5">
+                                <h4 className="font-bold text-lg text-slate-900 mb-1">{c.title}</h4>
+                                <p className="text-sm text-slate-500 mb-3 font-medium">{c.instructor}</p>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
+                                    {c.discount_price && <span className="text-sm text-slate-400 line-through decoration-2">৳{c.price}</span>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -723,7 +764,14 @@ export default function AdminDashboard() {
                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                     <div className="xl:col-span-8 space-y-4">
                         <input className="text-4xl font-black w-full bg-transparent border-b border-slate-300 pb-2 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>setNewsTitle(e.target.value)} />
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"><SunEditor setContents={newsContent} onChange={setNewsContent} setOptions={editorOptions} /></div>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <SunEditor 
+                                key={editingNewsId || 'new-news'}
+                                setContents={newsContent} 
+                                onChange={(content) => setNewsContent(content)} 
+                                setOptions={editorOptions} 
+                            />
+                        </div>
                     </div>
                     <div className="xl:col-span-4 space-y-6">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -732,6 +780,17 @@ export default function AdminDashboard() {
                                 <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Category</label><select className="w-full bg-slate-50 border p-2 rounded text-sm font-bold outline-none" value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)}><option>General</option>{categoryList.map(c=><option key={c.id}>{c.name}</option>)}</select><div className="flex gap-2 mt-2"><input className="w-full bg-slate-50 border p-2 rounded text-xs outline-none" placeholder="New..." value={newCategoryInput} onChange={e=>setNewCategoryInput(e.target.value)} /><button onClick={createCategory} className="bg-black text-white px-3 rounded text-xs font-bold">+</button></div></div>
                                 <div className="p-4 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-slate-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-slate-400">Cover Image</span><input type="file" onChange={e=>setNewsFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
                                 <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Tags</label><textarea className="w-full bg-slate-50 border p-2 rounded text-sm resize-none outline-none h-24" placeholder="Tags..." value={newsTags} onChange={e=>setNewsTags(e.target.value)}></textarea></div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="p-4 border-b border-gray-100 font-bold text-xs text-gray-400 uppercase">Recent News</div>
+                            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                {newsList.map(n => (
+                                    <div key={n.id} className="p-3 border-b hover:bg-gray-50 flex justify-between items-center group cursor-pointer">
+                                        <span className="font-bold text-xs text-gray-700 truncate w-2/3">{n.title}</span>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-blue-600 text-xs font-bold">Edit</button><button onClick={()=>deleteItem('news',n.id,fetchNews)} className="text-red-600 text-xs font-bold">Del</button></div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

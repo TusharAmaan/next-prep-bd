@@ -41,7 +41,8 @@ export default function Sidebar() {
             {[
                 { label: "SSC Preparation", href: "/resources/ssc", icon: "📘" },
                 { label: "HSC Preparation", href: "/resources/hsc", icon: "📙" },
-                { label: "Admission Test", href: "/resources/university-admission", icon: "🎓" }
+                { label: "Admission Test", href: "/resources/university-admission", icon: "🎓" },
+                { label: "Job Preparation", href: "/resources/job-prep", icon: "💼" }
             ].map((item) => (
                 <Link key={item.href} href={item.href} className="flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors group border-b border-gray-50 last:border-0">
                     <span className="text-lg bg-gray-100 w-8 h-8 flex items-center justify-center rounded-lg group-hover:bg-white">{item.icon}</span>
