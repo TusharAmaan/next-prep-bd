@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-black text-white py-16 border-t border-gray-800 font-sans">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         
         {/* COLUMN 1: BRANDING & APPS */}
         <div>
-          {/* Logo Placeholder */}
+          {/* Logo */}
           <div className="mb-6">
             <h2 className="text-3xl font-extrabold tracking-tight">NextPrep<span className="text-blue-500">BD</span></h2>
             <p className="text-xs text-gray-500 mt-1">Your Ultimate Exam Companion</p>
@@ -15,81 +17,103 @@ export default function Footer() {
           
           <p className="text-sm text-gray-400 mb-4">Download our mobile app</p>
           
-          <div className="flex gap-3">
-            {/* Google Play Placeholder */}
-            <div className="w-36 h-12 bg-gray-900 border border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition">
+          <div className="flex flex-col gap-3">
+             {/* Google Play Button */}
+             <a href="#" className="flex items-center gap-3 bg-gray-900 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-xl transition-all hover:scale-105 w-fit">
+                <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+                    <path d="M3.038 2.5C2.378 2.9 2 3.7 2 4.6v14.8c0 .9.378 1.7 1.038 2.1l9.6-8.4-9.6-8.4zm1.6-1.4l10.6 9.2 4.3-3.8-13.2-7.6c-.6-.3-1.2-.2-1.7.2zm15.8 6.3l-3.6 3.1 3.6 3.1c.8-.5 1.3-1.4 1.3-2.4s-.5-1.9-1.3-2.4zM4.638 22.9c.5.4 1.1.5 1.7.2l13.2-7.6-4.3-3.8-10.6 9.2z"/>
+                </svg>
                 <div className="text-left">
-                    <p className="text-[10px] text-gray-400 leading-none">GET IT ON</p>
-                    <p className="text-sm font-bold">Google Play</p>
+                    <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Get it on</div>
+                    <div className="text-xs font-bold text-white leading-tight">Google Play</div>
                 </div>
-            </div>
-            {/* App Store Placeholder */}
-            <div className="w-36 h-12 bg-gray-900 border border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition">
+            </a>
+
+            {/* App Store Button */}
+            <a href="#" className="flex items-center gap-3 bg-gray-900 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-xl transition-all hover:scale-105 w-fit">
+                <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+                    <path d="M17.354 12.527c-.024-2.506 2.037-3.71 2.13-3.76-1.162-1.7-2.972-1.933-3.615-1.956-1.538-.158-3.004.907-3.785.907-.782 0-1.987-.887-3.283-.867-1.69.02-3.248.986-4.117 2.506-1.757 3.064-.45 7.567 1.255 10.053.835 1.223 1.82 2.6 3.122 2.55 1.252-.048 1.723-.81 3.235-.81 1.513 0 1.944.81 3.258.78 1.35-.02 2.206-1.223 3.037-2.447.953-1.403 1.346-2.766 1.37-2.836-.03-.01-2.64-1.016-2.608-4.02zm-2.722-5.694c.697-.85 1.17-2.03 1.04-3.207-1.01.04-2.235.676-2.963 1.528-.65.752-1.217 1.963-1.065 3.15 1.127.088 2.28-.62 2.948-1.47z"/>
+                </svg>
                 <div className="text-left">
-                    <p className="text-[10px] text-gray-400 leading-none">Download on the</p>
-                    <p className="text-sm font-bold">App Store</p>
+                    <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Download on</div>
+                    <div className="text-xs font-bold text-white leading-tight">App Store</div>
                 </div>
-            </div>
+            </a>
           </div>
         </div>
 
         {/* COLUMN 2: COMPANY */}
         <div>
-          <h3 className="text-lg font-bold mb-6">Company</h3>
-          <ul className="space-y-3 text-sm text-gray-400">
-            <li><Link href="/careers" className="hover:text-white transition">Career / Job Circular</Link></li>
-            <li><Link href="/join-as-teacher" className="hover:text-white transition">Join as a Teacher</Link></li>
-            <li><Link href="/affiliate" className="hover:text-white transition">Affiliate Registration</Link></li>
-            <li><Link href="/privacy-policy" className="hover:text-white transition">Privacy Policy</Link></li>
-            <li><Link href="/refund-policy" className="hover:text-white transition">Refund Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-white transition">Terms of Use</Link></li>
+          <h3 className="text-lg font-bold mb-6 text-white">Company</h3>
+          <ul className="space-y-3 text-sm text-gray-400 font-medium">
+            <li><Link href="/careers" className="hover:text-blue-500 transition-colors">Career / Job Circular</Link></li>
+            <li><Link href="/join-as-teacher" className="hover:text-blue-500 transition-colors">Join as a Teacher</Link></li>
+            <li><Link href="/affiliate" className="hover:text-blue-500 transition-colors">Affiliate Registration</Link></li>
+            <li><Link href="/privacy-policy" className="hover:text-blue-500 transition-colors">Privacy Policy</Link></li>
+            <li><Link href="/refund-policy" className="hover:text-blue-500 transition-colors">Refund Policy</Link></li>
+            <li><Link href="/terms" className="hover:text-blue-500 transition-colors">Terms of Use</Link></li>
           </ul>
         </div>
 
         {/* COLUMN 3: OTHERS */}
         <div>
-          <h3 className="text-lg font-bold mb-6">Others</h3>
-          <ul className="space-y-3 text-sm text-gray-400">
-            <li><Link href="/blog" className="hover:text-white transition">Blog</Link></li>
-            <li><Link href="/book-store" className="hover:text-white transition">Book Store</Link></li>
-            <li><Link href="/free-notes" className="hover:text-white transition">Free Notes & Guides</Link></li>
-            <li><Link href="/job-prep" className="hover:text-white transition">Job Prep Courses</Link></li>
-            <li><Link href="/verify-certificate" className="hover:text-white transition">Verify Certificate</Link></li>
-            <li><Link href="/free-download" className="hover:text-white transition">Free Download</Link></li>
+          <h3 className="text-lg font-bold mb-6 text-white">Resources</h3>
+          <ul className="space-y-3 text-sm text-gray-400 font-medium">
+            <li><Link href="/blog" className="hover:text-blue-500 transition-colors">Class Blogs</Link></li>
+            <li><Link href="/book-store" className="hover:text-blue-500 transition-colors">Book Store</Link></li>
+            <li><Link href="/resources/ssc" className="hover:text-blue-500 transition-colors">SSC Guide</Link></li>
+            <li><Link href="/resources/hsc" className="hover:text-blue-500 transition-colors">HSC Guide</Link></li>
+            <li><Link href="/verify-certificate" className="hover:text-blue-500 transition-colors">Verify Certificate</Link></li>
+            <li><Link href="/ebooks" className="hover:text-blue-500 transition-colors">Free Download</Link></li>
           </ul>
         </div>
 
         {/* COLUMN 4: CONTACT */}
         <div>
-          <h3 className="text-lg font-bold mb-6">Contact Us</h3>
+          <h3 className="text-lg font-bold mb-6 text-white">Contact Us</h3>
           <ul className="space-y-4 text-sm text-gray-400">
             <li className="flex items-center gap-3">
-                <span className="text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                <span>Call: 16910 (24x7)</span>
+                <span className="text-blue-500 bg-blue-500/10 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                <span className="font-medium hover:text-white transition">Call: 16910 (24x7)</span>
             </li>
-            <li className="flex items-center gap-3">
-                <span className="text-green-500"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                <span>WhatsApp: +8801896016252</span>
+            
+            {/* WHATSAPP LINK ENABLED */}
+            <li>
+                <a href="https://wa.me/8801745775697" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
+                    <span className="text-green-500 bg-green-500/10 p-2 rounded-lg group-hover:bg-green-500 group-hover:text-white transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </span>
+                    <span className="font-medium group-hover:text-green-400 transition">WhatsApp: +8801745775697</span>
+                </a>
             </li>
+
             <li className="flex items-center gap-3">
-                <span className="text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
-                <span>Email: support@nextprepbd.com</span>
+                <span className="text-gray-500 bg-gray-800 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                <span className="font-medium hover:text-white transition">support@nextprepbd.com</span>
             </li>
           </ul>
 
-          <div className="flex gap-4 mt-6">
-            {/* Social Icons (Placeholders) */}
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition cursor-pointer">f</div>
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-pink-600 transition cursor-pointer">in</div>
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-600 transition cursor-pointer">yt</div>
+          <div className="flex gap-4 mt-8">
+            {/* Facebook */}
+            <a href="https://facebook.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition-all">
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            {/* Instagram */}
+            <a href="https://instagram.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:border-pink-600 hover:text-white transition-all">
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            {/* YouTube */}
+            <a href="https://youtube.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:border-[#FF0000] hover:text-white transition-all">
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+            </a>
           </div>
         </div>
 
       </div>
       
       {/* COPYRIGHT */}
-      <div className="text-center text-gray-600 text-xs mt-16 pt-8 border-t border-gray-900">
-        &copy; {new Date().getFullYear()} NextPrep BD. All rights reserved.
+      <div className="text-center text-gray-600 text-xs mt-16 pt-8 border-t border-gray-900 font-bold tracking-wide">
+        &copy; {currentYear} NextPrep BD. All rights reserved.
       </div>
     </footer>
   );

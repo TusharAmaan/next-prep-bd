@@ -48,7 +48,7 @@ export default function ContactPage() {
 
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
             
-            {/* LEFT SIDE: Contact Info (Redesigned) */}
+            {/* LEFT SIDE: Contact Info */}
             <div className="lg:col-span-5 bg-[#0f172a] text-white p-10 flex flex-col justify-between relative overflow-hidden">
                 
                 {/* Background Decor */}
@@ -102,19 +102,26 @@ export default function ContactPage() {
                     </div>
                 </div>
 
-                {/* APP DOWNLOAD CTA */}
+                {/* APP DOWNLOAD CTA - UPDATED ICONS */}
                 <div className="relative z-10 mt-auto pt-8 border-t border-white/10">
                     <h4 className="font-bold text-white text-sm mb-3">Learn on the go</h4>
                     <div className="flex gap-3">
-                        <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 rounded-xl transition">
-                            <span className="text-2xl">🤖</span>
+                        {/* Google Play Button */}
+                        <button className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 rounded-xl transition hover:scale-105">
+                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                <path d="M3.038 2.5C2.378 2.9 2 3.7 2 4.6v14.8c0 .9.378 1.7 1.038 2.1l9.6-8.4-9.6-8.4zm1.6-1.4l10.6 9.2 4.3-3.8-13.2-7.6c-.6-.3-1.2-.2-1.7.2zm15.8 6.3l-3.6 3.1 3.6 3.1c.8-.5 1.3-1.4 1.3-2.4s-.5-1.9-1.3-2.4zM4.638 22.9c.5.4 1.1.5 1.7.2l13.2-7.6-4.3-3.8-10.6 9.2z"/>
+                            </svg>
                             <div className="text-left">
                                 <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Get it on</div>
                                 <div className="text-xs font-bold text-white leading-tight">Google Play</div>
                             </div>
                         </button>
-                        <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 rounded-xl transition">
-                            <span className="text-2xl">🍎</span>
+                        
+                        {/* App Store Button */}
+                        <button className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 rounded-xl transition hover:scale-105">
+                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                <path d="M17.354 12.527c-.024-2.506 2.037-3.71 2.13-3.76-1.162-1.7-2.972-1.933-3.615-1.956-1.538-.158-3.004.907-3.785.907-.782 0-1.987-.887-3.283-.867-1.69.02-3.248.986-4.117 2.506-1.757 3.064-.45 7.567 1.255 10.053.835 1.223 1.82 2.6 3.122 2.55 1.252-.048 1.723-.81 3.235-.81 1.513 0 1.944.81 3.258.78 1.35-.02 2.206-1.223 3.037-2.447.953-1.403 1.346-2.766 1.37-2.836-.03-.01-2.64-1.016-2.608-4.02zm-2.722-5.694c.697-.85 1.17-2.03 1.04-3.207-1.01.04-2.235.676-2.963 1.528-.65.752-1.217 1.963-1.065 3.15 1.127.088 2.28-.62 2.948-1.47z"/>
+                            </svg>
                             <div className="text-left">
                                 <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Download on</div>
                                 <div className="text-xs font-bold text-white leading-tight">App Store</div>
