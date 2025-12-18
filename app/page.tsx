@@ -135,9 +135,6 @@ export default function Home() {
                                     <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors leading-tight">
                                         <Link href={`/blog/${featuredBlog.id}`} className="hover:text-blue-700 transition">{featuredBlog.title}</Link>
                                     </h3>
-                                    <p className="text-gray-500 mb-4 line-clamp-3 leading-relaxed">
-                                        {featuredBlog.content_body ? featuredBlog.content_body.replace(/<[^>]+>/g, '').substring(0, 120) + "..." : "Click to read more details about this topic."}
-                                    </p>
                                     <Link href={`/blog/${featuredBlog.id}`} className="inline-flex items-center text-blue-600 font-bold text-sm hover:underline">
                                         Read Full Article <span className="ml-1">→</span>
                                     </Link>
