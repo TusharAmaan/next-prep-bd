@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
 import Sidebar from "@/components/Sidebar"; 
+import DownloadPdfBtn from "@/components/DownloadPdfBtn"; // <--- NEW IMPORT
 import { headers } from 'next/headers';
 
 export const dynamic = "force-dynamic";
@@ -24,22 +25,41 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/blog/${id}`;
+  
+  // Helper for filename
+  const safeFilename = post.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
+      
+      {/* PROGRESS BAR DECOR */}
+      <div className="fixed top-20 left-0 w-full h-1 bg-gray-200 z-40">
+         <div className="h-full bg-blue-600 w-1/3"></div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
         {/* MAIN CONTENT (Left Column) */}
         <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12">
-            
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">
+          
+          {/* HEADER ACTION AREA */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+             {/* Breadcrumb */}
+             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
                 <Link href="/" className="hover:text-blue-600">Home</Link> 
                 <span>/</span>
-                <span className="text-blue-600">{post.subjects?.groups?.segments?.title || "Blog"}</span>
-            </div>
+                <Link href="/blog" className="hover:text-blue-600">Blogs</Link>
+                <span>/</span>
+                <span className="text-blue-600">{post.subjects?.groups?.segments?.title || "Post"}</span>
+             </div>
 
+             {/* DOWNLOAD BUTTON */}
+             <DownloadPdfBtn targetId="print-container" filename={safeFilename} />
+          </div>
+
+          {/* PRINTABLE CONTAINER STARTS HERE */}
+          <div id="print-container" className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12">
+            
             {/* Title */}
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
                 {post.title}
@@ -56,15 +76,21 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
             {/* Featured Image */}
             {post.content_url && (
-                <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 relative shadow-inner">
-                    <img src={post.content_url} alt={post.title} className="w-full h-full object-cover" />
+                <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 relative shadow-inner border border-gray-100">
+                    {/* Standard img tag is safer for PDF generation than next/image */}
+                    <img 
+                        src={post.content_url} 
+                        alt={post.title} 
+                        className="w-full h-full object-cover" 
+                        crossOrigin="anonymous" 
+                    />
                 </div>
             )}
 
             {/* Body Content */}
-            {/* UPDATED: Replaced 'prose' with 'editor-content' to fix list styles */}
+            {/* We use 'prose' from Tailwind Typography to format the HTML beautifully */}
             <div 
-              className="editor-content text-lg leading-relaxed text-gray-700 max-w-none" 
+              className="prose prose-lg max-w-none prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
               dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
             />
 
@@ -80,12 +106,17 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             )}
           </div>
+          {/* PRINTABLE CONTAINER ENDS HERE */}
 
-          <div className="mt-12"><FacebookComments url={absoluteUrl} /></div>
+          {/* Comments Section (Outside PDF) */}
+          <div className="mt-12">
+            <FacebookComments url={absoluteUrl} />
+          </div>
+
         </div>
 
         {/* SIDEBAR (Right Column) */}
-        <aside className="lg:col-span-4">
+        <aside className="lg:col-span-4 space-y-8">
             <Sidebar />
         </aside>
 
