@@ -30,8 +30,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       
-      {/* --- REMOVED THE FAKE LOADING BAR FROM HERE --- */}
-
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
         {/* MAIN CONTENT */}
@@ -62,7 +60,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             </div>
 
-            {/* Featured Image - Using standard img with crossorigin to help PDF generation */}
+            {/* Featured Image */}
             {post.content_url && (
                 <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 border border-gray-100">
                     <img 
@@ -74,11 +72,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             )}
 
-            {/* Main Body */}
-            <div 
-              className="prose prose-lg max-w-none text-gray-800 prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
-              dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
-            />
+            {/* Main Body - THIS SECTION CONTROLS STYLING */}
+            <div className="prose prose-lg max-w-none prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl">
+                 <div dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} />
+            </div>
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
