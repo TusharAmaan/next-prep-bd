@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
-import Sidebar from "@/components/Sidebar"; // Import Sidebar
+import Sidebar from "@/components/Sidebar"; 
 import { headers } from 'next/headers';
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   if (!post || post.type !== 'blog') return notFound();
 
-  // 3. Setup URL for Comments
+  // 2. Setup URL for Comments
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -61,8 +61,12 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             )}
 
-            {/* Body */}
-            <div className="prose prose-lg prose-blue max-w-none text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} />
+            {/* Body Content */}
+            {/* UPDATED: Replaced 'prose' with 'editor-content' to fix list styles */}
+            <div 
+              className="editor-content text-lg leading-relaxed text-gray-700 max-w-none" 
+              dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
+            />
 
             {/* Post Tags */}
             {post.tags && post.tags.length > 0 && (
@@ -80,7 +84,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
           <div className="mt-12"><FacebookComments url={absoluteUrl} /></div>
         </div>
 
-        {/* SIDEBAR (Right Column) - REUSABLE COMPONENT */}
+        {/* SIDEBAR (Right Column) */}
         <aside className="lg:col-span-4">
             <Sidebar />
         </aside>
