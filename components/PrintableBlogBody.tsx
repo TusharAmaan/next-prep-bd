@@ -20,7 +20,7 @@ export default function PrintableBlogBody({ post, formattedDate }: { post: any, 
       <div ref={contentRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12 relative print:p-0 print:shadow-none print:border-none">
         
         {/* Title */}
-        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight text-center md:text-left print:text-center print:text-4xl print:mb-8">
+        <h1 className="text-1xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight text-center md:text-left print:text-center print:text-4xl print:mb-8">
             {post.title}
         </h1>
 
