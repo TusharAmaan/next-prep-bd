@@ -4,6 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import PrintableBlogBody from "@/components/PrintableBlogBody"; 
 import FacebookComments from "@/components/FacebookComments"; 
 import { headers } from 'next/headers';
+import 'katex/dist/katex.min.css'; 
 
 export const dynamic = "force-dynamic";
 

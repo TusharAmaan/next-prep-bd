@@ -7,6 +7,10 @@ import dynamic from 'next/dynamic';
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
 
+// 1. IMPORT KATEX & CSS
+import katex from 'katex'; 
+import 'katex/dist/katex.min.css'; // Vital for styling the math
+
 // Dynamic Import for Editor
 const SunEditor = dynamic(() => import("suneditor-react"), {
   ssr: false,
@@ -19,11 +23,12 @@ const editorOptions = {
         ['undo', 'redo'],
         ['font', 'fontSize', 'formatBlock'],
         ['bold', 'underline', 'italic', 'list', 'align'],
-        ['table', 'link', 'image', 'video'],
+        ['table', 'link', 'image', 'video','math'],
         ['codeView', 'fullScreen']
     ],
     defaultTag: "div",
     showPathLabel: false,
+    katex: katex
 };
 
 type ModalState = {
@@ -518,7 +523,7 @@ const loadEbookForEdit = (b: any) => {
                                             key={editingResourceId || 'new-question'}
                                             setContents={questionContent} 
                                             onChange={(content) => setQuestionContent(content)} 
-                                            setOptions={editorOptions}
+                                            setOptions={{...editorOptions, katex:katex}}
                                         />
                                     </div>
                                     <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs" value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="SEO Title" />
