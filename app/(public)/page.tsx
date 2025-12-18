@@ -24,7 +24,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
       
       {/* =========================================
-          1. HERO SECTION (Taller padding for overlap)
+          1. HERO SECTION
          ========================================= */}
       <section className="relative bg-slate-900 text-white pt-36 pb-32 px-6 overflow-hidden">
         
@@ -67,16 +67,17 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          2. LIVE STATS COUNTER (Floating Card)
+          2. LIVE STATS COUNTER (Updated with SVGs)
          ========================================= */}
       <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-20">
         <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-10">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 
-                {/* Stat 1 */}
+                {/* Stat 1: Materials */}
                 <div className="flex items-center gap-5 px-4">
-                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm text-blue-600">
-                        📚
+                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm transition-transform hover:scale-110">
+                        {/* Document Icon */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     </div>
                     <div>
                         <h3 className="text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
@@ -84,10 +85,11 @@ export default async function HomePage() {
                     </div>
                 </div>
 
-                {/* Stat 2 */}
+                {/* Stat 2: Students */}
                 <div className="flex items-center gap-5 px-4 pt-8 md:pt-0">
-                    <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm text-green-600">
-                        🎓
+                    <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 shadow-sm transition-transform hover:scale-110">
+                        {/* User Group Icon */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </div>
                     <div>
                         <h3 className="text-4xl font-black text-slate-900 tracking-tight">1,200+</h3>
@@ -95,10 +97,11 @@ export default async function HomePage() {
                     </div>
                 </div>
 
-                {/* Stat 3 */}
+                {/* Stat 3: Visitors */}
                 <div className="flex items-center gap-5 px-4 pt-8 md:pt-0">
-                    <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm text-orange-600">
-                        🔥
+                    <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 shadow-sm transition-transform hover:scale-110">
+                        {/* Trending Icon */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                     </div>
                     <div>
                         <h3 className="text-4xl font-black text-slate-900 tracking-tight">500+</h3>
@@ -254,7 +257,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          6. APP DOWNLOAD CTA (Official SVGs)
+          6. APP DOWNLOAD CTA
          ========================================= */}
       <section className="bg-white border-t border-slate-200 py-24 px-6">
         <div className="max-w-5xl mx-auto bg-black rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
@@ -270,7 +273,7 @@ export default async function HomePage() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center gap-5">
-                    {/* APP STORE */}
+                    {/* APP STORE BUTTON */}
                     <button className="flex items-center gap-4 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition group shadow-xl hover:scale-105 transform duration-200">
                        <svg className="w-8 h-8 fill-current" viewBox="0 0 384 512">
                            <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 79.9c5.2 14.7 19.7 42.9 44.9 77.1 19.3 26.2 38.3 49 63.6 49 19.7 0 32.2-12.7 63-12.7 29.5 0 40.7 12.7 62.7 12.7 26.5 0 42.6-20.4 63.3-48.8 17.5-23.7 28.1-46.5 37-67.6-33.8-13.7-54.3-43.2-54.2-74.5zm-59.3-132.2c16.3-18.8 30.2-46.5 25.1-75.1-23.9 1.5-51.7 15.6-67.3 34.2-13.7 16.2-25.2 41.7-22 72.9 26.9 2.1 53.6-13.1 64.2-32z"/>
@@ -281,7 +284,7 @@ export default async function HomePage() {
                        </div>
                     </button>
 
-                    {/* GOOGLE PLAY */}
+                    {/* GOOGLE PLAY BUTTON */}
                     <button className="flex items-center gap-4 bg-white/10 backdrop-blur border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition group shadow-xl hover:scale-105 transform duration-200">
                        <svg className="w-8 h-8 fill-current" viewBox="0 0 512 512">
                            <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
