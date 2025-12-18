@@ -49,3 +49,128 @@ body {
 .editor-content li {
   margin: 0.5rem 0;
 }
+/* app/globals.css */
+
+/* --- BLOG CONTENT STYLES (Restoring Defaults) --- */
+
+.editor-content {
+  color: #374151; /* gray-700 */
+  word-wrap: break-word;
+}
+
+/* 1. RESTORE HEADINGS (Tailwind removes these by default) */
+.editor-content h1 {
+  font-size: 2.25em; /* 36px */
+  font-weight: 800;
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  line-height: 1.2;
+}
+
+.editor-content h2 {
+  font-size: 1.75em; /* 28px */
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  line-height: 1.3;
+}
+
+.editor-content h3 {
+  font-size: 1.5em; /* 24px */
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+
+/* 2. RESTORE PARAGRAPH SPACING */
+.editor-content p {
+  margin-bottom: 1.25em;
+  line-height: 1.75;
+}
+
+/* 3. RESTORE LISTS (Fixes 1, 2, 3 and bullets) */
+.editor-content ol {
+  list-style-type: decimal;
+  padding-left: 1.625rem;
+  margin-bottom: 1.25em;
+}
+
+/* Specifically for "a, b, c" lists from SunEditor */
+.editor-content ol[type="a"] {
+  list-style-type: lower-alpha;
+}
+
+.editor-content ul {
+  list-style-type: disc;
+  padding-left: 1.625rem;
+  margin-bottom: 1.25em;
+}
+
+.editor-content li {
+  margin-bottom: 0.5em;
+  padding-left: 0.25em;
+}
+
+/* 4. RESTORE TEXT FORMATTING */
+.editor-content strong, 
+.editor-content b {
+  font-weight: 700;
+}
+
+.editor-content em, 
+.editor-content i {
+  font-style: italic;
+}
+
+.editor-content u {
+  text-decoration: underline;
+}
+
+/* 5. RESTORE LINKS */
+.editor-content a {
+  color: #2563eb; /* Blue-600 */
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.editor-content a:hover {
+  color: #1d4ed8; /* Blue-700 */
+}
+
+/* 6. RESTORE BLOCKQUOTES */
+.editor-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1.25rem;
+  font-style: italic;
+  color: #4b5563;
+}
+
+/* 7. IMAGES & MEDIA */
+.editor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  display: inline-block; /* Allows text-align center to work */
+}
+
+/* 8. TABLES */
+.editor-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+.editor-content th,
+.editor-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.editor-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
