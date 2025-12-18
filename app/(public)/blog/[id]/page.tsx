@@ -45,13 +45,12 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
              <DownloadPdfBtn targetId="print-container" filename={safeFilename} />
           </div>
 
-          {/* PRINTABLE AREA */}
-          <div id="print-container" className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12">
+          {/* BLOG CARD */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12">
             
-            <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-                {post.title}
-            </h1>
-
+            {/* --- CONTENT NOT IN PDF START --- */}
+            
+            {/* Metadata (Date/Author) - Not in PDF */}
             <div className="flex items-center gap-4 border-b border-gray-100 pb-8 mb-8">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">N</div>
                 <div>
@@ -60,22 +59,35 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             </div>
 
-            {/* Featured Image */}
+            {/* Featured Image - Not in PDF */}
             {post.content_url && (
                 <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 border border-gray-100">
                     <img 
                         src={post.content_url} 
                         alt={post.title} 
                         className="w-full h-full object-cover" 
-                        crossOrigin="anonymous" 
                     />
                 </div>
             )}
+            
+            {/* --- CONTENT NOT IN PDF END --- */}
 
-            {/* Main Body - THIS SECTION CONTROLS STYLING */}
-            <div className="prose prose-lg max-w-none prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl">
-                 <div dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} />
+
+            {/* --- PDF CONTENT STARTS HERE --- */}
+            <div id="print-container">
+                {/* Title (Centered for PDF) */}
+                <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-8 leading-tight text-center">
+                    {post.title}
+                </h1>
+
+                {/* Main Body */}
+                <div 
+                  className="prose prose-lg max-w-none text-gray-800 prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
+                  dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
+                />
             </div>
+            {/* --- PDF CONTENT ENDS HERE --- */}
+
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
