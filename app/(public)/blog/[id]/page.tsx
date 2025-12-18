@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // 1. Fetch the CURRENT blog post
+  // 1. Fetch Data
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
@@ -20,49 +20,40 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   if (!post || post.type !== 'blog') return notFound();
 
-  // 2. Setup URL for Comments
+  // 2. Setup Meta
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/blog/${id}`;
-  
-  // Helper for filename
   const safeFilename = post.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       
-      {/* (Deleted the stuck loading bar code from here) */}
+      {/* --- REMOVED THE FAKE LOADING BAR FROM HERE --- */}
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
-        {/* MAIN CONTENT (Left Column) */}
+        {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
           
-          {/* HEADER ACTION AREA */}
+          {/* Header & Download */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-             {/* Breadcrumb */}
              <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <Link href="/" className="hover:text-blue-600">Home</Link> 
-                <span>/</span>
-                <Link href="/blog" className="hover:text-blue-600">Blogs</Link>
-                <span>/</span>
+                <Link href="/" className="hover:text-blue-600">Home</Link> / 
+                <Link href="/blog" className="hover:text-blue-600">Blogs</Link> /
                 <span className="text-blue-600">{post.subjects?.groups?.segments?.title || "Post"}</span>
              </div>
-
-             {/* DOWNLOAD BUTTON */}
              <DownloadPdfBtn targetId="print-container" filename={safeFilename} />
           </div>
 
-          {/* PRINTABLE CONTAINER STARTS HERE */}
+          {/* PRINTABLE AREA */}
           <div id="print-container" className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 md:p-12">
             
-            {/* Title */}
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
                 {post.title}
             </h1>
 
-            {/* Metadata */}
             <div className="flex items-center gap-4 border-b border-gray-100 pb-8 mb-8">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">N</div>
                 <div>
@@ -71,9 +62,9 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             </div>
 
-            {/* Featured Image */}
+            {/* Featured Image - Using standard img with crossorigin to help PDF generation */}
             {post.content_url && (
-                <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 relative shadow-inner border border-gray-100">
+                <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 border border-gray-100">
                     <img 
                         src={post.content_url} 
                         alt={post.title} 
@@ -83,13 +74,13 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             )}
 
-            {/* Body Content */}
+            {/* Main Body */}
             <div 
-              className="prose prose-lg max-w-none prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
+              className="prose prose-lg max-w-none text-gray-800 prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
               dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
             />
 
-            {/* Post Tags */}
+            {/* Tags */}
             {post.tags && post.tags.length > 0 && (
                 <div className="mt-12 pt-8 border-t border-gray-100">
                     <h4 className="text-sm font-bold text-gray-900 mb-3">Related Topics:</h4>
@@ -101,16 +92,13 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 </div>
             )}
           </div>
-          {/* PRINTABLE CONTAINER ENDS HERE */}
 
-          {/* Comments Section */}
           <div className="mt-12">
             <FacebookComments url={absoluteUrl} />
           </div>
-
         </div>
 
-        {/* SIDEBAR (Right Column) */}
+        {/* SIDEBAR */}
         <aside className="lg:col-span-4 space-y-8">
             <Sidebar />
         </aside>

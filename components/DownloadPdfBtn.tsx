@@ -14,80 +14,78 @@ export default function DownloadPdfBtn({
   const handleDownload = async () => {
     setIsGenerating(true);
 
+    // Safety Timeout: Reset button if it takes too long (e.g., 10 seconds)
+    const safetyTimer = setTimeout(() => {
+        setIsGenerating(false);
+    }, 15000);
+
     try {
-      // 1. Load library dynamically
       const html2pdf = (await import("html2pdf.js")).default;
-      
-      // 2. Get Element
       const element = document.getElementById(targetId);
+
       if (!element) {
         alert("Error: Content not found!");
         setIsGenerating(false);
+        clearTimeout(safetyTimer);
         return;
       }
 
-      // 3. Options (Typed as any to avoid TS errors)
       const opt: any = {
-        margin: [0.5, 0.5, 0.8, 0.5], // Top, Left, Bottom, Right
+        margin: [0.5, 0.5, 0.8, 0.5],
         filename: `${filename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, // Critical for Supabase images
+            allowTaint: true,
+            logging: false 
+        },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
-      // 4. Generate PDF
-      // We start the worker but don't chain .save() at the end yet
+      // Generate PDF
       const worker = html2pdf().from(element).set(opt).toPdf();
 
-      // 5. Inject Footer and Save
       worker.get('pdf').then((pdf: any) => {
           try {
+            // Inject Footer
             const totalPages = pdf.internal.getNumberOfPages();
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
 
             for (let i = 1; i <= totalPages; i++) {
               pdf.setPage(i);
-              
-              // Gray Footer Line
               pdf.setDrawColor(200, 200, 200);
               pdf.line(0.5, pageHeight - 0.6, pageWidth - 0.5, pageHeight - 0.6);
-
-              // Brand Name
+              
               pdf.setFontSize(10);
-              pdf.setTextColor(40, 40, 40); // Dark Gray
+              pdf.setTextColor(40, 40, 40);
               pdf.setFont("helvetica", "bold");
               pdf.text("NextPrepBD", 0.5, pageHeight - 0.35);
               
-              // Tagline
               pdf.setFontSize(8);
               pdf.setFont("helvetica", "normal");
               pdf.setTextColor(100, 100, 100);
               pdf.text("Your Ultimate Exam Companion", 0.5, pageHeight - 0.22);
 
-              // Page Number
               pdf.setFontSize(9);
-              pdf.text(
-                `Page ${i} of ${totalPages}`, 
-                pageWidth - 0.5, 
-                pageHeight - 0.35,
-                { align: 'right' }
-              );
+              pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.35, { align: 'right' });
             }
           } catch (e) {
-            console.warn("Footer injection failed, downloading basic PDF", e);
+            console.warn("Footer injection failed, skipping...");
           }
           
-          // FIX: Save using the internal PDF object directly
+          // Save and Reset
           pdf.save(`${filename}.pdf`);
-      }).then(() => {
           setIsGenerating(false);
+          clearTimeout(safetyTimer);
       });
 
     } catch (error) {
-      console.error("PDF Generation failed:", error);
-      alert("Failed to generate PDF. Please try again.");
+      console.error("PDF Failed:", error);
+      alert("Could not generate PDF. Please try again.");
       setIsGenerating(false);
+      clearTimeout(safetyTimer);
     }
   };
 
@@ -103,7 +101,7 @@ export default function DownloadPdfBtn({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>Generating...</span>
+            <span>Processing...</span>
         </>
       ) : (
         <>
