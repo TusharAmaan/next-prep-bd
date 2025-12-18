@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
@@ -38,6 +38,12 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("materials"); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- REFS (THE FIX) ---
+  const editorRef = useRef<any>(null);
+  const getSunEditorInstance = (sunEditor: any) => {
+      editorRef.current = sunEditor;
+  };
 
   // --- MODAL STATE ---
   const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'success', message: '' });
@@ -95,7 +101,7 @@ export default function AdminDashboard() {
   const [ebCategory, setEbCategory] = useState("SSC");
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
-    const [ebLink, setEbLink] = useState(""); // <--- ADD THIS
+    const [ebLink, setEbLink] = useState(""); 
     const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
   // Course Form
@@ -188,8 +194,18 @@ export default function AdminDashboard() {
       if(!resTitle) return showError("Title is required!");
       if(type !== 'blog' && !selectedSubject) return showError("Please select a subject first.");
       
+      // --- CRITICAL FIX: GET LATEST EDITOR CONTENT ---
+      // Instead of relying on state, we grab the content directly from the editor instance if available.
+      let finalContent = richContent;
+      if(type === 'blog' && editorRef.current) {
+          finalContent = editorRef.current.getContents();
+      } else if (type === 'question') {
+          // If you wanted to fix question editor too, you'd need a separate ref, but sticking to blog for now.
+          finalContent = questionContent; 
+      }
+
       // Validation for Blog Content
-      if (type === 'blog' && (!richContent || richContent.trim() === '')) {
+      if (type === 'blog' && (!finalContent || finalContent.trim() === '')) {
           return showError("Blog content cannot be empty.");
       }
 
@@ -210,12 +226,12 @@ export default function AdminDashboard() {
 
       if(type==='pdf' || type==='video') payload.content_url = url;
       else if(type==='question') { 
-          payload.content_body = questionContent; 
+          payload.content_body = finalContent; 
           payload.seo_title = seoTitle || resTitle; 
           payload.seo_description = seoDescription; 
       }
       else if(type==='blog') { 
-          payload.content_body = richContent; 
+          payload.content_body = finalContent; // Uses the Freshly captured content
           if(url) payload.content_url = url; 
           payload.tags = blogTags.split(',').map(t=>t.trim()); 
       }
@@ -246,7 +262,6 @@ const handleEbookSubmit = async () => {
     if (!ebTitle) return showError("Title is required");
     setSubmitting(true);
 
-    // 1. Handle Cover Image (Keep as is)
     const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
     let cUrl = null;
     if (cover) {
@@ -255,18 +270,16 @@ const handleEbookSubmit = async () => {
         cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl;
     }
 
-    // 2. Prepare Payload (Use ebLink instead of uploading PDF)
     const payload: any = {
         title: ebTitle,
         author: ebAuthor,
         category: ebCategory,
         description: ebDescription,
         tags: ebTags.split(',').map(t => t.trim()),
-        pdf_url: ebLink // <--- SAVING THE LINK DIRECTLY
+        pdf_url: ebLink 
     };
     if (cUrl) payload.cover_url = cUrl;
 
-    // 3. Insert or Update
     const { error } = editingEbookId
         ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId)
         : await supabase.from('ebooks').insert([payload]);
@@ -276,7 +289,6 @@ const handleEbookSubmit = async () => {
         showError("Error: " + error.message);
     } else {
         setEditingEbookId(null);
-        // Reset all fields
         setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); 
         fetchEbooks();
         showSuccess("eBook saved successfully!");
@@ -290,7 +302,7 @@ const loadEbookForEdit = (b: any) => {
     setEbCategory(b.category);
     setEbDescription(b.description || "");
     setEbTags(b.tags?.join(", "));
-    setEbLink(b.pdf_url || ""); // <--- LOAD EXISTING LINK
+    setEbLink(b.pdf_url || ""); 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
@@ -711,6 +723,7 @@ const loadEbookForEdit = (b: any) => {
                             <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm">
                                 <SunEditor 
                                     key={editingResourceId || 'new-blog'}
+                                    getSunEditorInstance={getSunEditorInstance} // <--- THE KEY FIX HERE
                                     setContents={richContent} 
                                     onChange={(content) => setRichContent(content)} 
                                     setOptions={editorOptions} 
