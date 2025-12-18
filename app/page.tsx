@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 import Image from "next/image";
@@ -125,7 +125,7 @@ export default function Home() {
                                             alt={featuredBlog.title} 
                                             fill
                                             className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                            priority // This forces the image to load immediately
+                                            priority 
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-200 font-bold">No Image</div>
@@ -151,7 +151,7 @@ export default function Home() {
                                             <Link href={`/blog/${blog.id}`} key={blog.id} className="flex gap-4 group items-start">
                                                 <div className="w-24 h-20 bg-gray-200 rounded-xl overflow-hidden flex-shrink-0 relative border border-gray-100">
                                                     {blog.content_url ? (
-                                                        <img src={blog.content_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                        <Image src={blog.content_url} alt={blog.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">N/A</div>
                                                     )}
@@ -167,8 +167,13 @@ export default function Home() {
                                             </Link>
                                         ))}
                                     </div>
-                                    <Link href="/news" className="mt-auto w-full text-center py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-xl transition border border-gray-200">
-                                        View All Posts
+                                    
+                                    {/* --- FIXED: "VIEW ALL" BUTTON --- */}
+                                    <Link 
+                                        href={`/blog?segment=${encodeURIComponent(activeTab)}`}
+                                        className="mt-auto w-full text-center py-3 bg-gray-50 hover:bg-slate-900 hover:text-white text-gray-600 text-xs font-bold rounded-xl transition border border-gray-200"
+                                    >
+                                        View All {activeTab} Posts
                                     </Link>
                                 </div>
 
