@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
 import Sidebar from "@/components/Sidebar"; 
-import DownloadPdfBtn from "@/components/DownloadPdfBtn"; // <--- NEW IMPORT
+import DownloadPdfBtn from "@/components/DownloadPdfBtn"; 
 import { headers } from 'next/headers';
 
 export const dynamic = "force-dynamic";
@@ -32,10 +32,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       
-      {/* PROGRESS BAR DECOR */}
-      <div className="fixed top-20 left-0 w-full h-1 bg-gray-200 z-40">
-         <div className="h-full bg-blue-600 w-1/3"></div>
-      </div>
+      {/* (Deleted the stuck loading bar code from here) */}
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
@@ -77,7 +74,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
             {/* Featured Image */}
             {post.content_url && (
                 <div className="w-full aspect-video rounded-xl overflow-hidden mb-10 bg-gray-100 relative shadow-inner border border-gray-100">
-                    {/* Standard img tag is safer for PDF generation than next/image */}
                     <img 
                         src={post.content_url} 
                         alt={post.title} 
@@ -88,7 +84,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
             )}
 
             {/* Body Content */}
-            {/* We use 'prose' from Tailwind Typography to format the HTML beautifully */}
             <div 
               className="prose prose-lg max-w-none prose-headings:font-extrabold prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900 prose-a:text-blue-600 prose-img:rounded-xl" 
               dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
@@ -108,7 +103,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
           </div>
           {/* PRINTABLE CONTAINER ENDS HERE */}
 
-          {/* Comments Section (Outside PDF) */}
+          {/* Comments Section */}
           <div className="mt-12">
             <FacebookComments url={absoluteUrl} />
           </div>
