@@ -1,21 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function MaterialsTabs({ segments, resources }: { segments: any[], resources: any[] }) {
-  // Default to the first segment
-  const [activeTab, setActiveTab] = useState(segments[0]?.id);
+export default function MaterialsTabs({ segments = [], resources = [] }: { segments: any[], resources: any[] }) {
+  // 1. SAFE INITIALIZATION: Handle empty segments gracefully
+  const [activeTab, setActiveTab] = useState<number | null>(null);
 
-  // 1. FILTERING LOGIC
+  useEffect(() => {
+    if (segments && segments.length > 0) {
+      setActiveTab(segments[0].id);
+    }
+  }, [segments]);
+
+  // If no data is loaded yet, show a skeleton or simple loading state
+  if (!activeTab || segments.length === 0) {
+    return <div className="p-10 text-center text-slate-400">Loading categories...</div>;
+  }
+
+  // 2. FILTERING LOGIC
   const activeResources = resources.filter((res) => {
-    // Check direct segment_id
     if (res.segment_id === activeTab) return true;
-    // Check nested relationship (Resource -> Subject -> Group -> Segment)
     const linkedSegmentId = res.subjects?.groups?.segments?.id;
     return linkedSegmentId === activeTab;
   });
 
-  // 2. GET ACTIVE SLUG (Crucial for the link)
   const activeSegmentData = segments.find(s => s.id === activeTab);
 
   return (
@@ -71,13 +79,13 @@ export default function MaterialsTabs({ segments, resources }: { segments: any[]
         )}
       </div>
 
-      {/* VIEW ALL BUTTON (Fixed Link to match your folder structure) */}
+      {/* VIEW ALL BUTTON */}
       <div className="text-center mt-10">
         <Link 
-            href={`/resources/${activeSegmentData?.slug}`} 
+            href={activeSegmentData ? `/resources/${activeSegmentData.slug}` : '#'} 
             className="inline-flex items-center gap-2 text-sm font-black text-blue-600 bg-blue-50 hover:bg-blue-100 px-6 py-3 rounded-xl transition-colors"
         >
-            View All {activeSegmentData?.title} Materials
+            View All {activeSegmentData?.title || 'Materials'}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </Link>
       </div>
