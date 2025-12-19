@@ -5,9 +5,41 @@ import PrintableBlogBody from "@/components/PrintableBlogBody";
 import FacebookComments from "@/components/FacebookComments"; 
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
+import { Metadata } from 'next';
 
 export const dynamic = "force-dynamic";
 
+// --- FIXED METADATA FUNCTION ---
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  // Await params to get the ID
+  const { id } = await params;
+
+  // Fetch the specific post for SEO tags
+  const { data: post } = await supabase
+    .from('resources')
+    .select('title, seo_title, seo_description, content_url')
+    .eq('id', id)
+    .single();
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+    };
+  }
+
+  return {
+    title: post.seo_title || post.title, // Prefer SEO title if available
+    description: post.seo_description || `Read about ${post.title} on NextPrepBD.`,
+    openGraph: {
+      title: post.title,
+      description: post.seo_description,
+      images: post.content_url ? [post.content_url] : [],
+      type: 'article',
+    },
+  };
+}
+
+// --- MAIN PAGE COMPONENT ---
 export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
