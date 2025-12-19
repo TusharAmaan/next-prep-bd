@@ -3,22 +3,25 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function MaterialsTabs({ segments, resources }: { segments: any[], resources: any[] }) {
-  // Default to the first segment (e.g., SSC)
+  // Default to the first segment
   const [activeTab, setActiveTab] = useState(segments[0]?.id);
 
-  // Filter resources: We try to match resource's segment_id or fallback to showing all if specific filtering logic isn't set up yet
-  // Note: Ensure your 'resources' table has a 'segment_id' column, or use this logic to filter roughly.
-  const activeResources = resources.filter(res => 
-    // If you have segment_id in resources table:
-    res.segment_id === activeTab || 
-    // Fallback: Show everything if no filtering (temporary)
-    true 
-  ).slice(0, 6); 
+  // 1. FILTERING LOGIC
+  const activeResources = resources.filter((res) => {
+    // Check direct segment_id
+    if (res.segment_id === activeTab) return true;
+    // Check nested relationship (Resource -> Subject -> Group -> Segment)
+    const linkedSegmentId = res.subjects?.groups?.segments?.id;
+    return linkedSegmentId === activeTab;
+  });
+
+  // 2. GET ACTIVE SLUG (Crucial for the link)
+  const activeSegmentData = segments.find(s => s.id === activeTab);
 
   return (
     <div>
-      {/* 1. THE TABS */}
-      <div className="flex flex-wrap gap-3 mb-8 justify-center">
+      {/* TABS BUTTONS */}
+      <div className="flex flex-wrap gap-3 mb-8">
         {segments.map((seg) => (
           <button
             key={seg.id}
@@ -34,10 +37,10 @@ export default function MaterialsTabs({ segments, resources }: { segments: any[]
         ))}
       </div>
 
-      {/* 2. THE CONTENT GRID */}
+      {/* RESOURCES GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {activeResources.length > 0 ? (
-          activeResources.map((res) => (
+          activeResources.slice(0, 6).map((res) => (
             <Link 
               href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url} 
               key={res.id} 
@@ -50,26 +53,31 @@ export default function MaterialsTabs({ segments, resources }: { segments: any[]
                 <h4 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
                   {res.title}
                 </h4>
-                <p className="text-xs text-slate-400 mt-2 font-medium uppercase tracking-wider">
-                  {new Date(res.created_at).toLocaleDateString()} • {res.type}
-                </p>
+                <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
+                        {res.subjects?.title || res.type}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">
+                        {new Date(res.created_at).toLocaleDateString()}
+                    </span>
+                </div>
               </div>
             </Link>
           ))
         ) : (
-          <div className="col-span-2 text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-            No materials found for this section yet.
+          <div className="col-span-1 md:col-span-2 py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+            <p className="text-slate-500 font-medium">No materials found for {activeSegmentData?.title} yet.</p>
           </div>
         )}
       </div>
 
-      {/* 3. VIEW ALL BUTTON */}
+      {/* VIEW ALL BUTTON (Fixed Link to match your folder structure) */}
       <div className="text-center mt-10">
         <Link 
-            href={`/category/${activeTab}`} 
+            href={`/resources/${activeSegmentData?.slug}`} 
             className="inline-flex items-center gap-2 text-sm font-black text-blue-600 bg-blue-50 hover:bg-blue-100 px-6 py-3 rounded-xl transition-colors"
         >
-            View All {segments.find(s => s.id === activeTab)?.title} Materials
+            View All {activeSegmentData?.title} Materials
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </Link>
       </div>
