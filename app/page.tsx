@@ -65,24 +65,49 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* =========================================
-          2. STATS BAR
+{/* =========================================
+          2. STATS BAR (Redesigned with Icons)
          ========================================= */}
       <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-20">
-        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8">
+        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-                <div className="text-center">
-                    <h3 className="text-4xl font-black text-slate-900">5,000+</h3>
-                    <p className="text-sm font-bold text-slate-500 uppercase mt-1">Study Notes</p>
+                
+                {/* Stat 1: Study Notes */}
+                <div className="flex flex-col items-center text-center p-2 group">
+                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                        {/* Icon: Document Text */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Study Notes</p>
                 </div>
-                <div className="text-center pt-4 md:pt-0">
-                    <h3 className="text-4xl font-black text-slate-900">1,200+</h3>
-                    <p className="text-sm font-bold text-slate-500 uppercase mt-1">Students</p>
+
+                {/* Stat 2: Students */}
+                <div className="flex flex-col items-center text-center p-2 group">
+                    <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                        {/* Icon: Users */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">1,200+</h3>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Active Students</p>
                 </div>
-                <div className="text-center pt-4 md:pt-0">
-                    <h3 className="text-4xl font-black text-slate-900">500+</h3>
-                    <p className="text-sm font-bold text-slate-500 uppercase mt-1">Daily Visitors</p>
+
+                {/* Stat 3: Visitors */}
+                <div className="flex flex-col items-center text-center p-2 group">
+                    <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                        {/* Icon: Trending Up */}
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">500+</h3>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Daily Visitors</p>
                 </div>
+
             </div>
         </div>
       </section>

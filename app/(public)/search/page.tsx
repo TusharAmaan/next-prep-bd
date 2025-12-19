@@ -83,7 +83,7 @@ function SearchContent() {
                           
                           {/* Display SEO Description if available, else standard description */}
                           <p className="text-sm text-gray-500 line-clamp-2">
-                             {item.seo_description || item.description?.replace(/<[^>]+>/g, '') || "No description available."}
+                             {item.seo_description || item.description?.replace(/<[^>]+>/g, '')}
                           </p>
 
                           {/* Metadata Tags */}
