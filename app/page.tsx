@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import HomeMaterialsFilter from "@/components/HomeMaterialsFilter"; // <--- Import the filter
 
-// 1. Force dynamic rendering so new posts show up instantly
+// 1. Force dynamic rendering
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   
-  // 2. FETCH DATA DIRECTLY (No Client Components)
+  // 2. FETCH DATA
   const [segmentsData, latestResources, latestNews] = await Promise.all([
     supabase.from("segments").select("*").order("id"),
-    // Fetch the latest 6 items regardless of category
+    // Fetch MORE items (e.g. 50) so the client-side filter has enough data to show for each tab
     supabase.from("resources")
       .select("*, subjects ( title, groups ( segments ( id, title, slug ) ) )")
-      .limit(6)
+      .limit(50) 
       .order("created_at", { ascending: false }),
     supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
   ]);
 
-  // Safety check: Ensure arrays exist even if DB fails
   const segments = segmentsData.data || [];
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
@@ -88,7 +88,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          3. CATEGORIES (Based on your folder structure)
+          3. CATEGORIES
          ========================================= */}
       <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
@@ -98,13 +98,11 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {segments.map((seg: any, i: number) => (
                 <Link 
-                    // Direct link to your dynamic folder: /resources/[segment_slug]
                     href={`/resources/${seg.slug}`} 
                     key={seg.id} 
                     className="group relative bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center"
                 >
                     <div className="w-20 h-20 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-4xl mb-4 group-hover:scale-110 transition-transform">
-                         {/* Simple emoji logic based on index */}
                          {i === 0 ? '📘' : i === 1 ? '🎓' : i === 2 ? '🏛️' : '💼'}
                     </div>
                     <h3 className="font-bold text-xl text-slate-800 group-hover:text-blue-600 transition-colors">{seg.title}</h3>
@@ -114,58 +112,20 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. MAIN CONTENT AREA
+          4. MAIN CONTENT AREA (Now with Filter!)
          ========================================= */}
       <section className="py-16 max-w-7xl mx-auto px-6 border-t border-slate-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            {/* LEFT COLUMN: LATEST MATERIALS (Static List - No Tabs) */}
+            {/* LEFT COLUMN: INTERACTIVE FILTER & LIST */}
             <div className="lg:col-span-8">
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-extrabold text-slate-900">Freshly Added</h2>
+                <div className="mb-8">
+                    <h2 className="text-2xl font-extrabold text-slate-900">Latest Materials</h2>
+                    <p className="text-slate-500 text-sm mt-1">Pick a category to filter the list instantly.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                    {resources.length > 0 ? (
-                        resources.map((res: any) => (
-                            <Link 
-                              href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url} 
-                              key={res.id} 
-                              className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group"
-                            >
-                              {/* Icon */}
-                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${res.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                                 {res.type === 'pdf' ? '📄' : '✍️'}
-                              </div>
-                              
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-slate-900 truncate group-hover:text-blue-600 transition text-lg">
-                                  {res.title}
-                                </h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                    {/* Show which subject/segment this belongs to */}
-                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                                        {res.subjects?.title || "General"}
-                                    </span>
-                                    <span className="text-xs text-slate-400 font-medium">
-                                        {new Date(res.created_at).toLocaleDateString()}
-                                    </span>
-                                </div>
-                              </div>
-                              
-                              {/* Arrow */}
-                              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                              </div>
-                            </Link>
-                        ))
-                    ) : (
-                        <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                            No materials added yet.
-                        </div>
-                    )}
-                </div>
+                {/* THIS IS THE COMPONENT THAT HANDLES FILTERING */}
+                <HomeMaterialsFilter segments={segments} resources={resources} />
             </div>
 
             {/* RIGHT COLUMN: SIDEBAR */}
@@ -215,28 +175,39 @@ export default async function HomePage() {
          ========================================= */}
       <section className="bg-white border-t border-slate-200 py-24 px-6">
         <div className="max-w-5xl mx-auto bg-black rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
-            {/* Simple Background */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-gradient-to-r from-gray-800 to-gray-900"></div>
+            {/* Background Effects */}
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-40"></div>
+            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600 rounded-full blur-[100px] opacity-40"></div>
 
             <div className="relative z-10">
                 <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">Study Anytime, Anywhere.</h2>
                 <p className="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                    Download the NextPrepBD app to save notes offline and take quizzes on the go.
+                    Download the NextPrepBD app to save notes offline, take quizzes on the go, and get instant notifications about exams.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center gap-5">
-                    {/* Placeholder Buttons */}
-                    <button className="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition">
-                        Download on App Store
+                    {/* APP STORE */}
+                    <button className="flex items-center gap-4 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition group shadow-xl hover:scale-105 transform duration-200">
+                        <svg className="w-8 h-8 fill-current" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 79.9c5.2 14.7 19.7 42.9 44.9 77.1 19.3 26.2 38.3 49 63.6 49 19.7 0 32.2-12.7 63-12.7 29.5 0 40.7 12.7 62.7 12.7 26.5 0 42.6-20.4 63.3-48.8 17.5-23.7 28.1-46.5 37-67.6-33.8-13.7-54.3-43.2-54.2-74.5zm-59.3-132.2c16.3-18.8 30.2-46.5 25.1-75.1-23.9 1.5-51.7 15.6-67.3 34.2-13.7 16.2-25.2 41.7-22 72.9 26.9 2.1 53.6-13.1 64.2-32z"/></svg>
+                        <div className="text-left leading-none">
+                            <div className="text-[10px] uppercase font-bold text-gray-500 mb-1">Download on the</div>
+                            <div className="text-xl font-black">App Store</div>
+                        </div>
                     </button>
-                    <button className="bg-white/10 border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition">
-                        Get it on Google Play
+
+                    {/* PLAY STORE */}
+                    <button className="flex items-center gap-4 bg-white/10 backdrop-blur border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition group shadow-xl hover:scale-105 transform duration-200">
+                        <svg className="w-8 h-8 fill-current" viewBox="0 0 512 512"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>
+                        <div className="text-left leading-none">
+                            <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">GET IT ON</div>
+                            <div className="text-xl font-black">Google Play</div>
+                        </div>
                     </button>
                 </div>
             </div>
         </div>
       </section>
-
     </div>
   );
 }

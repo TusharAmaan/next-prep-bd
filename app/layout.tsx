@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Next Prep BD",
   description: "Your all in one prep guide.",
+
 };
 
 export default function RootLayout({
