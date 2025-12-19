@@ -27,7 +27,6 @@ body {
 .blog-content {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #111827; /* Dark Gray for web readability */
-  line-height: 1.7;
 }
 
 /* Headings (Web) */
