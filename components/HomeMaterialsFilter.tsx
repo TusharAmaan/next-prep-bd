@@ -3,19 +3,14 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function HomeMaterialsFilter({ segments = [], resources = [] }: { segments: any[], resources: any[] }) {
-  // Default to the first segment ID (usually SSC) so the list isn't empty on load
+  // Default to the first segment ID
   const [activeTab, setActiveTab] = useState<number | null>(segments.length > 0 ? segments[0].id : null);
 
   // --- FILTER LOGIC ---
   const filteredResources = resources.filter((res) => {
-    // 1. If no tab is selected, show nothing (or everything, your choice)
     if (!activeTab) return true;
-
-    // 2. Direct Match (if resource has segment_id)
     if (res.segment_id === activeTab) return true;
-
-    // 3. Nested Match (Resource -> Subject -> Group -> Segment)
-    // We check if the resource belongs to the active segment via its relationships
+    // Safe navigation for nested properties
     const linkedSegment = res.subjects?.groups?.segments?.id;
     return linkedSegment === activeTab;
   });
@@ -24,7 +19,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
 
   return (
     <div>
-      {/* 1. FILTER BUTTONS (Pills) */}
+      {/* 1. FILTER BUTTONS */}
       <div className="flex flex-wrap gap-3 mb-8">
         {segments.map((seg) => (
           <button
@@ -46,7 +41,9 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
         {filteredResources.length > 0 ? (
           filteredResources.slice(0, 6).map((res) => (
             <Link 
-              href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url} 
+              // --- THE FIX IS HERE ---
+              // If content_url is null, we fallback to '#' to prevent the crash
+              href={res.type === 'blog' ? `/blog/${res.id}` : (res.content_url || "#")} 
               key={res.id} 
               className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group"
             >
@@ -87,7 +84,8 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
       {activeSegmentData && (
           <div className="text-center mt-6">
               <Link 
-                href={`/resources/${activeSegmentData.slug}`} 
+                // Safety check for slug too
+                href={`/resources/${activeSegmentData.slug || '#'}`} 
                 className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1"
               >
                   View All {activeSegmentData.title} Materials
