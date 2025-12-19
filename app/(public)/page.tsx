@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 
 // Revalidate data every 60 seconds (keeps homepage fresh)
-export const revalidate = 60;
+export const revalidate = 30;
 
 export default async function HomePage() {
   

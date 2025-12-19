@@ -162,9 +162,9 @@ export default async function HomePage() {
                 <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden">
                     <h4 className="font-black text-xl mb-2 relative z-10">Need 1-on-1 Help?</h4>
                     <p className="text-indigo-100 text-xs mb-4 relative z-10">Book a private session with our expert teachers.</p>
-                    <button className="bg-white text-indigo-700 w-full py-3 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-md relative z-10">
+                    <a><button className="bg-white text-indigo-700 w-full py-3 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-md relative z-10">
                         Find a Teacher
-                    </button>
+                    </button></a>
                 </div>
             </div>
         </div>
