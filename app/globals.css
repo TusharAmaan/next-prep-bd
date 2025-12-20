@@ -1,7 +1,7 @@
+@import 'katex/dist/katex.min.css'; /* <--- MUST BE LINE 1 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import 'katex/dist/katex.min.css';
 
 :root {
   --background: #ffffff;
