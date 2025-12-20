@@ -19,57 +19,103 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
   // 3. Fetch Subjects
   const { data: subjects } = await supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id");
 
+  // Gradient Helper for consistent branding
+  const getGradient = (index: number) => {
+    const gradients = [
+      "from-blue-500 to-indigo-600",
+      "from-emerald-500 to-teal-600",
+      "from-purple-500 to-violet-600",
+      "from-orange-500 to-red-500"
+    ];
+    return gradients[index % gradients.length];
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans">
+      
+      {/* =========================================
+          1. HERO SECTION (Dark & Premium)
+         ========================================= */}
+      <section className="bg-slate-900 text-white pt-32 pb-20 px-6 relative overflow-hidden">
+        {/* Ambient Glow */}
+        <div className="absolute top-[-50%] left-[20%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         
-        {/* HEADER */}
-        <div className="mb-10 border-b border-gray-200 pb-8">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                <Link href="/" className="hover:text-blue-600 transition">Home</Link> / 
-                <span className="text-gray-600">{segmentData.title}</span> / 
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{groupData.title}</span>
+        <div className="max-w-7xl mx-auto relative z-10">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">
+                <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
+                <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> / 
+                <span className="text-blue-400">{groupData.title}</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                Browse <span className="text-blue-600">{groupData.title}</span> Subjects
+
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-tight">
+                Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{groupData.title}</span> Subjects
             </h1>
-            <p className="text-gray-500 mt-2 max-w-2xl">
-                Select a subject below to access chapter-wise notes, PDF suggestions, video classes, and board questions.
+            <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
+                Select a subject below to access chapter-wise notes, PDF suggestions, video classes, and board questions tailored for your exam.
             </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* =========================================
+          2. CONTENT AREA
+         ========================================= */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            {/* LEFT COLUMN: Subjects Grid */}
             <div className="lg:col-span-8">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
+                    <h2 className="text-2xl font-bold text-slate-900">Available Subjects</h2>
+                </div>
+
                 {subjects && subjects.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {subjects.map((sub) => (
-                            <Link key={sub.id} href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`} className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex items-start gap-5 h-full">
-                                {/* REVERTED TO LETTER BOX */}
-                                <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-2xl flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
-                                    {sub.title.charAt(0)}
-                                </div>
+                        {subjects.map((sub, index) => (
+                            <Link 
+                                key={sub.id} 
+                                href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`} 
+                                className="group bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full relative"
+                            >
+                                {/* Top Accent Strip */}
+                                <div className={`h-1.5 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
                                 
-                                <div className="flex-1 min-w-0 py-1">
-                                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-700 leading-snug mb-2 break-words">{sub.title}</h3>
-                                    <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-wide group-hover:text-blue-500 transition-colors">
-                                        <span>View Materials</span>
-                                        <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                <div className="p-6 flex items-start gap-5">
+                                    {/* Icon Box */}
+                                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center font-black text-2xl shadow-md group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                                        {sub.title.charAt(0)}
+                                    </div>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-1 line-clamp-2">
+                                            {sub.title}
+                                        </h3>
+                                        <div className="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-wide group-hover:text-blue-400 transition-colors mt-2">
+                                            <span>View Materials</span>
+                                            <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white p-12 rounded-xl border-2 border-dashed text-center">
+                    <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center">
                         <div className="text-4xl mb-4">📚</div>
-                        <h3 className="text-gray-900 font-bold text-lg">No subjects found</h3>
-                        <p className="text-gray-500 text-sm mt-1">Check back later for updates.</p>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">No subjects found</h3>
+                        <p className="text-slate-500">We are adding subjects for this group soon.</p>
                     </div>
                 )}
             </div>
-            <div className="lg:col-span-4"><Sidebar /></div>
+
+            {/* RIGHT COLUMN: Sidebar */}
+            <div className="lg:col-span-4 space-y-8">
+                <Sidebar />
+            </div>
         </div>
-      </div>
+      </section>
+
     </div>
   );
 }
