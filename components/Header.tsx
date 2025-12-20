@@ -4,15 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-// --- 1. THE FIX FOR THE RED ERROR ---
-// We define exactly what a 'NavLink' looks like so TypeScript doesn't panic.
-interface NavLink {
-  name: string;
-  href: string;
-  isDropdown?: boolean;
-  submenu?: { name: string; href: string }[];
-}
-
 export default function Header() {
   // --- STATE ---
   const [isOpen, setIsOpen] = useState(false);
@@ -26,68 +17,46 @@ export default function Header() {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
-  const [isLoadingExams, setIsLoadingExams] = useState(true); // Track loading state
 
-  // --- 2. APPLY THE INTERFACE HERE ---
-  const [navLinks, setNavLinks] = useState<NavLink[]>([
+  // --- 1. HARDCODED EXAM DATA (No more database fetching delays) ---
+  const examLinks = [
+    { name: "SSC", href: "/resources/ssc" },
+    { name: "HSC", href: "/resources/hsc" },
+    { name: "Job Prep", href: "/resources/job-prep" },
+    { name: "University Admission", href: "/resources/university-admission" },
+    { name: "Specialized Exams", href: "/resources/specialized-exams" },
+  ];
+
+  // --- 2. MAIN NAVIGATION CONFIG ---
+  const navLinks = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { 
       name: "Exams", 
       href: "#", 
       isDropdown: true, 
-      submenu: [] 
+      submenu: examLinks 
     },
     { name: "eBooks", href: "/ebooks" },
     { name: "Courses", href: "/courses" },
     { name: "News", href: "/news" },
     { name: "Contact", href: "/contact" },
-  ]);
+  ];
 
   // --- EFFECTS ---
   useEffect(() => {
+    // Scroll detection
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
+    // User Session Check
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
     };
     checkUser();
 
-    // --- 3. FETCH DATA (DEBUGGED) ---
-    const fetchSegments = async () => {
-      console.log("Fetching segments...");
-
-      // IMPORTANT: Check if your table is actually named 'segments' in Supabase!
-      const { data, error } = await supabase
-        .from('segments') 
-        .select('name, slug');
-
-      if (error) {
-        console.error("Supabase Error:", error.message);
-        setIsLoadingExams(false); // Stop loading on error
-        return;
-      }
-
-      console.log("Supabase Data:", data); // Check F12 console to see if this is []
-
-      if (data && data.length > 0) {
-        const dynamicSubmenu = data.map((item: any) => ({
-          name: item.name,
-          href: `/resources/${item.slug}`
-        }));
-
-        setNavLinks((prev) => prev.map((link) => 
-          link.name === "Exams" 
-            ? { ...link, submenu: dynamicSubmenu } 
-            : link
-        ));
-      }
-      setIsLoadingExams(false); // Stop loading whether found or empty
-    };
-    fetchSegments();
-
+    // Click Outside detection for dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveDropdown(null);
@@ -134,7 +103,7 @@ export default function Header() {
         <nav ref={navRef} className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) => (
             <div key={link.name} className="relative">
-              {link.submenu || link.isDropdown ? (
+              {link.isDropdown ? (
                 <>
                   <button 
                     onClick={(e) => handleDropdownToggle(e, link.name)}
@@ -152,27 +121,19 @@ export default function Header() {
                   </button>
                   
                   {/* DROPDOWN MENU */}
-                  <div className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-left z-50 
+                  <div className={`absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-left z-50 
                     ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
-                    <div className="p-2 flex flex-col gap-1 max-h-64 overflow-y-auto">
-                      {/* LOGIC: IF Submenu exists, show items. IF NOT, check if loading. */}
-                      {link.submenu && link.submenu.length > 0 ? (
-                        link.submenu.map((subItem) => (
-                          <Link 
-                            key={subItem.name} 
-                            href={subItem.href}
-                            onClick={() => setActiveDropdown(null)}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left truncate"
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-400 italic">
-                          {/* SHOW THIS IF TABLE IS EMPTY */}
-                          {isLoadingExams ? "Loading..." : "No exams found"}
-                        </div>
-                      )}
+                    <div className="p-2 flex flex-col gap-1">
+                      {link.submenu?.map((subItem) => (
+                        <Link 
+                          key={subItem.name} 
+                          href={subItem.href}
+                          onClick={() => setActiveDropdown(null)}
+                          className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left"
+                        >
+                          {subItem.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 </>
@@ -203,7 +164,7 @@ export default function Header() {
                 </button>
             </form>
             {user ? (
-                <Link href="/admin" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Dashboard ↗</Link>
+                <Link href="/dashboard" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Dashboard ↗</Link>
             ) : (
                 <Link href="/login" className={`px-5 py-2 rounded-full font-bold text-sm border-2 transition ${isScrolled || pathname !== '/' ? 'border-blue-600 text-blue-600 hover:bg-blue-50' : 'border-white text-white hover:bg-white/20'}`}>Login</Link>
             )}
@@ -226,7 +187,7 @@ export default function Header() {
            </form>
            {navLinks.map((link) => (
              <div key={link.name}>
-               {link.submenu || link.isDropdown ? (
+               {link.isDropdown ? (
                  <>
                    <button onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)} className="w-full flex justify-between items-center text-lg font-bold text-gray-800 hover:text-blue-600 py-2">
                       {link.name}
@@ -234,9 +195,9 @@ export default function Header() {
                    </button>
                    {mobileSubmenuOpen && (
                      <div className="pl-4 border-l-2 border-gray-100 flex flex-col gap-2 mt-1 mb-2">
-                       {link.submenu && link.submenu.length > 0 ? link.submenu.map((sub) => (
+                       {link.submenu?.map((sub) => (
                          <Link key={sub.name} href={sub.href} onClick={() => setIsOpen(false)} className="text-gray-600 font-medium py-1 hover:text-blue-600 text-base">{sub.name}</Link>
-                       )) : <span className="text-gray-400 italic text-sm">{isLoadingExams ? "Loading..." : "No exams found"}</span>}
+                       ))}
                      </div>
                    )}
                  </>
@@ -246,7 +207,11 @@ export default function Header() {
              </div>
            ))}
            <hr className="my-2" />
-           {user ? <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold">Dashboard</Link> : <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold">Admin Login</Link>}
+           {user ? (
+               <Link href="/dashboard" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">Dashboard</Link>
+           ) : (
+               <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold border border-gray-200">Login / Signup</Link>
+           )}
         </div>
       )}
     </header>
