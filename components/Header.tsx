@@ -89,18 +89,41 @@ export default function Header() {
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || pathname !== '/' ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center gap-4">
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4 lg:gap-8">
         
-        {/* LOGO */}
-        <Link href="/" className="flex items-center gap-1 group flex-shrink-0">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:rotate-12 transition-transform">N</div>
-          <span className={`text-2xl font-extrabold tracking-tight ${getTextColor()}`}>
-            NextPrep<span className="text-blue-500">BD</span>
-          </span>
-        </Link>
+        {/* --- LEFT GROUP: LOGO + SEARCH --- */}
+        <div className="flex items-center gap-6 flex-1 lg:flex-none lg:w-auto">
+            
+            {/* 1. LOGO */}
+            <Link href="/" className="flex items-center gap-1 group flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:rotate-12 transition-transform">N</div>
+                <span className={`text-2xl font-extrabold tracking-tight ${getTextColor()} hidden sm:block`}>
+                    NextPrep<span className="text-blue-500">BD</span>
+                </span>
+            </Link>
 
-        {/* --- DESKTOP NAVIGATION --- */}
-        <nav ref={navRef} className="hidden lg:flex items-center gap-6">
+            {/* 2. SEARCH BAR (Moved Here) */}
+            <form onSubmit={handleSearch} className="relative group flex-1 hidden md:block max-w-sm">
+                <input 
+                    type="text" 
+                    placeholder="Search courses, exams..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-full text-sm outline-none transition-all border shadow-sm ${
+                        isScrolled || pathname !== '/' 
+                        ? 'bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 text-gray-900 placeholder-gray-500' 
+                        : 'bg-white/10 border-white/20 text-white placeholder-gray-300 focus:bg-white focus:text-gray-900 focus:border-white'
+                    }`}
+                />
+                <button type="submit" className={`absolute left-3 top-1/2 -translate-y-1/2 ${isScrolled || pathname !== '/' ? 'text-gray-400' : 'text-gray-300'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </form>
+
+        </div>
+
+        {/* --- 3. CENTER/RIGHT: NAVIGATION --- */}
+        <nav ref={navRef} className="hidden lg:flex items-center gap-6 ml-auto">
           {navLinks.map((link) => (
             <div key={link.name} className="relative">
               {link.isDropdown ? (
@@ -121,7 +144,7 @@ export default function Header() {
                   </button>
                   
                   {/* DROPDOWN MENU */}
-                  <div className={`absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-left z-50 
+                  <div className={`absolute top-full right-0 mt-4 w-56 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-right z-50 
                     ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
                     <div className="p-2 flex flex-col gap-1">
                       {link.submenu?.map((subItem) => (
@@ -149,48 +172,35 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* --- RIGHT SIDE (AUTH & SEARCH) --- */}
-        <div className="hidden md:flex items-center gap-4">
-            <form onSubmit={handleSearch} className="relative group">
-                <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`pl-10 pr-4 py-2 rounded-full text-sm outline-none transition-all w-48 focus:w-64 border ${isScrolled || pathname !== '/' ? 'bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 text-gray-900 placeholder-gray-500' : 'bg-white/10 border-white/20 text-white placeholder-gray-300 focus:bg-white focus:text-gray-900 focus:border-white'}`}
-                />
-                <button type="submit" className={`absolute left-3 top-1/2 -translate-y-1/2 ${isScrolled || pathname !== '/' ? 'text-gray-400' : 'text-gray-300'}`}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </button>
-            </form>
+        {/* --- 4. FAR RIGHT: DASHBOARD & MOBILE MENU --- */}
+        <div className="flex items-center gap-4">
             
-            {/* LOGIC CHANGE: 
-                1. Only show button if `user` exists.
-                2. If user exists, link to `/admin`.
-                3. If no user, show NOTHING (no login button).
-            */}
+            {/* DASHBOARD BUTTON (Only if User Exists) */}
             {user && (
-                <Link href="/admin" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
-                    Dashboard ↗
+                <Link href="/admin" className="hidden md:block bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 whitespace-nowrap">
+                    Dashboard
                 </Link>
             )}
+
+            {/* MOBILE MENU BUTTON */}
+            <button className={`lg:hidden p-2 ${getTextColor()}`} onClick={() => setIsOpen(!isOpen)}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+                </svg>
+            </button>
         </div>
 
-        {/* MOBILE MENU BUTTON */}
-        <button className={`md:hidden p-2 ${getTextColor()}`} onClick={() => setIsOpen(!isOpen)}>
-           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-             {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-           </svg>
-        </button>
       </div>
 
       {/* --- MOBILE DROPDOWN --- */}
       {isOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl flex flex-col p-6 gap-4 max-h-[80vh] overflow-y-auto animate-fade-in-down">
-           <form onSubmit={handleSearch} className="relative">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl flex flex-col p-6 gap-4 max-h-[80vh] overflow-y-auto animate-fade-in-down">
+           {/* Mobile Search shows here if screen is small */}
+           <form onSubmit={handleSearch} className="relative md:hidden">
                 <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-gray-50 border border-gray-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
            </form>
+
            {navLinks.map((link) => (
              <div key={link.name}>
                {link.isDropdown ? (
@@ -213,7 +223,7 @@ export default function Header() {
              </div>
            ))}
            
-           {/* MOBILE LOGIC: Only show if user exists, and link to /admin */}
+           {/* MOBILE LOGIC: Dashboard Button */}
            {user && (
                <>
                    <hr className="my-2" />
