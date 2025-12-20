@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/api/'], // Don't let Google index your admin panel
+      disallow: ['/admin/', '/api/','/dashboard'], // Don't let Google index your admin panel
     },
-    sitemap: 'https://www.nextprepbd.com/sitemap.xml', // CHANGE THIS to your domain
+    sitemap: 'https://www.nextprepbd.com/sitemap.xml',
   };
 }

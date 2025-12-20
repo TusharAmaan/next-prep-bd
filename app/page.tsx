@@ -41,7 +41,7 @@ export default async function HomePage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                Bangladesh's #1 Education Portal
+                Bangladesh's Largest Education Portal
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
@@ -50,15 +50,25 @@ export default async function HomePage() {
             </h1>
             
             {/* SEARCH FORM */}
-            <form action="/search" method="GET" className="bg-white p-2 rounded-2xl max-w-2xl mx-auto flex shadow-2xl transform transition-transform hover:scale-[1.01]">
+{/* SEARCH FORM (Mobile Optimized) */}
+            <form 
+                action="/search" 
+                method="GET" 
+                className="bg-white p-2 rounded-2xl max-w-2xl mx-auto flex flex-col sm:flex-row gap-2 shadow-2xl transform transition-transform hover:scale-[1.01]"
+            >
                 <input 
                     name="q" 
                     type="text" 
                     placeholder="Search for notes (e.g. Physics)" 
-                    className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 px-6 py-4 text-lg"
+                    // Mobile: Full width, smaller padding. Desktop: Flex-1, larger padding.
+                    className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 px-4 py-3 sm:px-6 sm:py-4 text-base sm:text-lg w-full"
                     required
                 />
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-md">
+                <button 
+                    type="submit" 
+                    // Mobile: Full width button. Desktop: Auto width.
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 sm:px-8 sm:py-3 rounded-xl font-bold text-lg transition-all shadow-md w-full sm:w-auto"
+                >
                     Search
                 </button>
             </form>

@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import 'katex/dist/katex.min.css';
-@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -23,24 +22,22 @@ body {
 /* =========================================
    1. WEB STYLES (For the Browser)
    ========================================= */
-/* This handles the look on the screen (larger text, comfortable reading) */
 .blog-content {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: #111827; /* Dark Gray for web readability */
+  color: #111827; 
 }
 
 /* Headings (Web) */
-.blog-content h1 { font-size: 2.25em; font-weight: 800;line-height: 1.2; color: #000; }
+.blog-content h1 { font-size: 2.25em; font-weight: 800; line-height: 1.2; color: #000; }
 .blog-content h2 { font-size: 1.75em; font-weight: 700; color: #000; }
 .blog-content h3 { font-size: 1.5em; font-weight: 600; color: #000; }
 .blog-content h4 { font-size: 1.25em; font-weight: 600; color: #000; }
-
 
 /* Lists (Web) */
 .blog-content ul { list-style-type: disc; padding-left: 1.625rem;}
 .blog-content ol { list-style-type: decimal; padding-left: 1.625rem;}
 .blog-content ol[type="a"] { list-style-type: lower-alpha; }
-.blog-content li {padding-left: 0.25em; }
+.blog-content li { padding-left: 0.25em; }
 
 /* Links (Web) */
 .blog-content a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -65,7 +62,7 @@ body {
   /* A. Paper Setup */
   @page {
     size: auto;
-    margin: 20mm 20mm 20mm 20mm; /* Standard 2cm margins like a Word Doc */
+    margin: 20mm; /* Standard 2cm margins prevents edge cutting */
   }
 
   /* B. Hide Website Elements */
@@ -83,24 +80,25 @@ body {
     overflow: visible !important;
   }
 
-  /* D. FORMAL TYPOGRAPHY (The Fix for "Too Large") */
-  /* Scale content down to 11pt (standard document size) */
+  /* D. FORMAL TYPOGRAPHY */
   .blog-content {
     font-size: 11pt !important;
     color: #000000 !important;
+    text-align: justify; /* Makes it look like a book */
   }
 
   .blog-content p, .blog-content li, .blog-content td {
     font-size: 11pt !important;
     color: #000000 !important;
+    line-height: 1.5 !important;
   }
 
-  /* Scale Headings Down */
-  .blog-content h1 { font-size: 18pt !important; margin-top: 0 !important;}
-  .blog-content h2 { font-size: 14pt !important; margin-top: 1.5em !important;}
-  .blog-content h3 { font-size: 12pt !important; margin-top: 1.2em !important;}
+  /* Scale Headings */
+  .blog-content h1 { font-size: 18pt !important; margin-top: 0 !important; margin-bottom: 0.5em !important; }
+  .blog-content h2 { font-size: 14pt !important; margin-top: 1.5em !important; margin-bottom: 0.5em !important; page-break-after: avoid; }
+  .blog-content h3 { font-size: 12pt !important; margin-top: 1.2em !important; margin-bottom: 0.5em !important; page-break-after: avoid; }
 
-  /* E. FORCE PURE BLACK (Fixes Faded Text) */
+  /* E. FORCE PURE BLACK */
   * {
     color: #000000 !important;
     text-shadow: none !important;
@@ -108,16 +106,28 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* F. TABLE FIXES FOR PRINT */
-  .blog-content table { margin: 1em 0 !important; border: 1px solid #000 !important; width: 100% !important; }
+  /* F. TABLE FIXES */
+  .blog-content table { margin: 1em 0 !important; border: 1px solid #000 !important; width: 100% !important; border-collapse: collapse !important;}
   .blog-content th { background-color: #eee !important; font-weight: bold !important; font-size: 10pt !important; }
   .blog-content td { font-size: 10pt !important; }
   .blog-content th, .blog-content td { border: 1px solid #000 !important; padding: 4px 8px !important; }
 
-  /* G. LINKS */
+  /* G. PREVENT CUT-OFFS (This is the Fix!) */
+  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, div, tr, td {
+    break-inside: avoid;       /* Modern Browsers */
+    page-break-inside: avoid;  /* Older Browsers */
+  }
+
+  img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  /* H. LINKS */
   .blog-content a { text-decoration: none !important; color: #000 !important; font-weight: bold !important; }
 
-  /* H. FOOTER */
+  /* I. FOOTER */
   .print-footer {
     display: flex !important;
     justify-content: space-between;
