@@ -4,33 +4,39 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+// 1. DEFINE THE TYPE (The Fix)
+// This tells TypeScript: "Every link has a name and href. Sometimes it has a submenu or isDropdown."
+interface NavLink {
+  name: string;
+  href: string;
+  submenu?: { name: string; href: string }[]; // Optional array
+  isDropdown?: boolean; // Optional boolean
+}
+
 export default function Header() {
-  // --- STATE MANAGEMENT ---
-  const [isOpen, setIsOpen] = useState(false); // Mobile Menu Toggle
-  const [isScrolled, setIsScrolled] = useState(false); // Scroll detection
-  const [user, setUser] = useState<any>(null); // Auth State
+  // --- STATE ---
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
-  // Desktop Dropdown State
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
-
-  // Mobile Submenu State
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
 
-  // Search State
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
 
-  // --- DYNAMIC NAVIGATION STATE ---
-  // We initialize with the static links. The "Exams" submenu starts empty or with defaults.
-  const [navLinks, setNavLinks] = useState([
+  // 2. USE THE TYPE HERE (The Fix)
+  // We explicitly tell useState to expect an array of 'NavLink' objects
+  const [navLinks, setNavLinks] = useState<NavLink[]>([
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { 
       name: "Exams", 
       href: "#", 
-      submenu: [] as any[] // Will be populated from Supabase
+      isDropdown: true, 
+      submenu: [] 
     },
     { name: "eBooks", href: "/ebooks" },
     { name: "Courses", href: "/courses" },
@@ -40,44 +46,42 @@ export default function Header() {
 
   // --- EFFECTS ---
   useEffect(() => {
-    // 1. Handle Scroll
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    // 2. Check Auth
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
     };
     checkUser();
 
-    // 3. FETCH EXAM SEGMENTS FROM SUPABASE (Like a Boss)
+    // 3. FETCH DATA
     const fetchSegments = async () => {
-      // REPLACE 'segments' with your actual table name (e.g., 'exam_segments', 'categories')
+      // Ensure your table is named 'segments' and has 'name' and 'slug'
       const { data, error } = await supabase
         .from('segments') 
-        .select('name, slug'); // Ensure your table has these columns
+        .select('id, name, slug');
 
-      if (data) {
-        // Map the DB data to the menu structure
-        const dynamicSubmenu = data.map(item => ({
+      if (error) {
+        console.error("Supabase Error:", error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const dynamicSubmenu = data.map((item: any) => ({
           name: item.name,
-          href: `/resources/${item.slug}` // Adjust this path structure if needed
+          href: `/resources/${item.slug}`
         }));
 
-        // Update the navLinks state with the new submenu
-        setNavLinks(prevLinks => prevLinks.map(link => 
+        setNavLinks((prev) => prev.map((link) => 
           link.name === "Exams" 
             ? { ...link, submenu: dynamicSubmenu } 
             : link
         ));
-      } else if (error) {
-        console.error("Error fetching segments:", error);
       }
     };
     fetchSegments();
 
-    // 4. Handle Click Outside
     const handleClickOutside = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveDropdown(null);
@@ -85,7 +89,6 @@ export default function Header() {
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Cleanup
     return () => {
       window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -101,11 +104,11 @@ export default function Header() {
     }
   };
 
-  const handleDropdownToggle = (name: string) => {
+  const handleDropdownToggle = (e: React.MouseEvent, name: string) => {
+    e.preventDefault();
     setActiveDropdown(activeDropdown === name ? null : name);
   };
 
-  // Helper styles
   const getTextColor = () => isScrolled || pathname !== '/' ? 'text-gray-900' : 'text-white';
   const getHoverColor = () => isScrolled || pathname !== '/' ? 'hover:text-blue-600' : 'hover:text-gray-200';
 
@@ -125,11 +128,11 @@ export default function Header() {
         <nav ref={navRef} className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) => (
             <div key={link.name} className="relative">
-              {link.submenu && link.submenu.length > 0 ? (
-                // DROPDOWN PARENT (CLICKABLE)
+              {/* Check if it has a submenu OR is marked as a dropdown */}
+              {link.submenu || link.isDropdown ? (
                 <>
                   <button 
-                    onClick={() => handleDropdownToggle(link.name)}
+                    onClick={(e) => handleDropdownToggle(e, link.name)}
                     className={`flex items-center gap-1 text-sm font-bold transition-colors ${getTextColor()} ${getHoverColor()} ${activeDropdown === link.name ? 'text-blue-600' : ''}`}
                   >
                     {link.name}
@@ -147,16 +150,22 @@ export default function Header() {
                   <div className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-left z-50 
                     ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
                     <div className="p-2 flex flex-col gap-1 max-h-64 overflow-y-auto">
-                      {link.submenu.map((subItem) => (
-                        <Link 
-                          key={subItem.name} 
-                          href={subItem.href}
-                          onClick={() => setActiveDropdown(null)}
-                          className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left truncate"
-                        >
-                          {subItem.name}
-                        </Link>
-                      ))}
+                      {link.submenu && link.submenu.length > 0 ? (
+                        link.submenu.map((subItem) => (
+                          <Link 
+                            key={subItem.name} 
+                            href={subItem.href}
+                            onClick={() => setActiveDropdown(null)}
+                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left truncate"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-gray-400 italic">
+                          {link.name === "Exams" ? "Loading Exams..." : "No items"}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -173,10 +182,8 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* --- RIGHT SIDE: SEARCH + ACTIONS --- */}
+        {/* --- RIGHT SIDE --- */}
         <div className="hidden md:flex items-center gap-4">
-            
-            {/* DESKTOP SEARCH BAR */}
             <form onSubmit={handleSearch} className="relative group">
                 <input 
                     type="text" 
@@ -189,91 +196,51 @@ export default function Header() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
             </form>
-
-            {/* LOGIN / DASHBOARD BUTTON */}
             {user ? (
-                <Link href="/admin" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
-                Dashboard ↗
-                </Link>
+                <Link href="/admin" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Dashboard ↗</Link>
             ) : (
-                <Link href="/login" className={`px-5 py-2 rounded-full font-bold text-sm border-2 transition ${isScrolled || pathname !== '/' ? 'border-blue-600 text-blue-600 hover:bg-blue-50' : 'border-white text-white hover:bg-white/20'}`}>
-                Login
-                </Link>
+                <Link href="/login" className={`px-5 py-2 rounded-full font-bold text-sm border-2 transition ${isScrolled || pathname !== '/' ? 'border-blue-600 text-blue-600 hover:bg-blue-50' : 'border-white text-white hover:bg-white/20'}`}>Login</Link>
             )}
         </div>
 
         {/* MOBILE MENU BUTTON */}
         <button className={`md:hidden p-2 ${getTextColor()}`} onClick={() => setIsOpen(!isOpen)}>
            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-             {isOpen 
-               ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-               : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-             }
+             {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
            </svg>
         </button>
       </div>
 
-      {/* --- MOBILE MENU DROPDOWN --- */}
+      {/* --- MOBILE DROPDOWN --- */}
       {isOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl flex flex-col p-6 gap-4 max-h-[80vh] overflow-y-auto animate-fade-in-down">
-           
-           {/* MOBILE SEARCH BAR */}
            <form onSubmit={handleSearch} className="relative">
-                <input 
-                    type="text" 
-                    placeholder="Search topics..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
+                <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-gray-50 border border-gray-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
            </form>
-
            {navLinks.map((link) => (
              <div key={link.name}>
-               {link.submenu && link.submenu.length > 0 ? (
+               {link.submenu || link.isDropdown ? (
                  <>
-                   <button 
-                     onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)}
-                     className="w-full flex justify-between items-center text-lg font-bold text-gray-800 hover:text-blue-600 py-2"
-                   >
+                   <button onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)} className="w-full flex justify-between items-center text-lg font-bold text-gray-800 hover:text-blue-600 py-2">
                       {link.name}
                       <svg className={`w-5 h-5 transition-transform ${mobileSubmenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                    </button>
                    {mobileSubmenuOpen && (
                      <div className="pl-4 border-l-2 border-gray-100 flex flex-col gap-2 mt-1 mb-2">
-                       {link.submenu.map(sub => (
-                         <Link 
-                           key={sub.name} 
-                           href={sub.href}
-                           onClick={() => setIsOpen(false)}
-                           className="text-gray-600 font-medium py-1 hover:text-blue-600 text-base"
-                         >
-                            {sub.name}
-                         </Link>
-                       ))}
+                       {link.submenu && link.submenu.length > 0 ? link.submenu.map((sub) => (
+                         <Link key={sub.name} href={sub.href} onClick={() => setIsOpen(false)} className="text-gray-600 font-medium py-1 hover:text-blue-600 text-base">{sub.name}</Link>
+                       )) : <span className="text-gray-400 italic text-sm">Loading...</span>}
                      </div>
                    )}
                  </>
                ) : (
-                 <Link 
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="block text-lg font-bold text-gray-800 hover:text-blue-600 py-2"
-                 >
-                    {link.name}
-                 </Link>
+                 <Link href={link.href} onClick={() => setIsOpen(false)} className="block text-lg font-bold text-gray-800 hover:text-blue-600 py-2">{link.name}</Link>
                )}
              </div>
            ))}
            <hr className="my-2" />
-           {user ? (
-             <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold">Dashboard</Link>
-           ) : (
-             <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold">Admin Login</Link>
-           )}
+           {user ? <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold">Dashboard</Link> : <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold">Admin Login</Link>}
         </div>
       )}
     </header>
