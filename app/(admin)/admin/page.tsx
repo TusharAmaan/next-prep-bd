@@ -7,9 +7,9 @@ import dynamic from 'next/dynamic';
 // Import SunEditor CSS
 import 'suneditor/dist/css/suneditor.min.css'; 
 
-// 1. IMPORT KATEX & CSS
+// Import Katex & CSS
 import katex from 'katex'; 
-import 'katex/dist/katex.min.css'; // Vital for styling the math
+import 'katex/dist/katex.min.css'; 
 
 // Dynamic Import for Editor
 const SunEditor = dynamic(() => import("suneditor-react"), {
@@ -18,7 +18,7 @@ const SunEditor = dynamic(() => import("suneditor-react"), {
 
 // --- EDITOR CONFIG ---
 const editorOptions = {
-    minHeight: "400px",
+    minHeight: "300px",
     buttonList: [
         ['undo', 'redo'],
         ['font', 'fontSize', 'formatBlock'],
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- REFS (THE FIX) ---
+  // --- REFS ---
   const editorRef = useRef<any>(null);
   const getSunEditorInstance = (sunEditor: any) => {
       editorRef.current = sunEditor;
@@ -63,6 +63,8 @@ export default function AdminDashboard() {
   const [ebooksList, setEbooksList] = useState<any[]>([]);
   const [coursesList, setCoursesList] = useState<any[]>([]);
   
+  // NEW: Segment Updates List
+  const [segmentUpdates, setSegmentUpdates] = useState<any[]>([]);
 
   // --- SELECTIONS ---
   const [selectedSegment, setSelectedSegment] = useState("");
@@ -83,7 +85,7 @@ export default function AdminDashboard() {
   const [resLink, setResLink] = useState("");
   const [resFile, setResFile] = useState<File | null>(null);
   const [resType, setResType] = useState("pdf");
-  const [richContent, setRichContent] = useState(""); // Shared content body
+  const [richContent, setRichContent] = useState(""); 
   const [questionContent, setQuestionContent] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
@@ -106,8 +108,8 @@ export default function AdminDashboard() {
   const [ebCategory, setEbCategory] = useState("SSC");
   const [ebDescription, setEbDescription] = useState(""); 
   const [ebTags, setEbTags] = useState("");
-    const [ebLink, setEbLink] = useState(""); 
-    const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
+  const [ebLink, setEbLink] = useState(""); 
+  const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
   // Course Form
   const [cTitle, setCTitle] = useState("");
@@ -119,6 +121,15 @@ export default function AdminDashboard() {
   const [cDesc, setCDesc] = useState("");
   const [cImage, setCImage] = useState<File | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
+
+  // --- NEW: SEGMENT UPDATES FORM ---
+  const [updateTitle, setUpdateTitle] = useState("");
+  const [updateType, setUpdateType] = useState("routine"); // routine, syllabus, exam_result
+  const [updateSegmentId, setUpdateSegmentId] = useState("");
+  const [updateContent, setUpdateContent] = useState("");
+  const [updateFile, setUpdateFile] = useState<File | null>(null);
+  const [editingUpdateId, setEditingUpdateId] = useState<number | null>(null);
+
 
   // --- INIT ---
   useEffect(() => {
@@ -132,7 +143,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   const loadAllData = useCallback(() => {
-    fetchSegments(); fetchNews(); fetchCategories(); fetchEbooks(); fetchCourses();
+    fetchSegments(); fetchNews(); fetchCategories(); fetchEbooks(); fetchCourses(); fetchSegmentUpdates();
   }, []);
 
   // --- HELPER: SHOW MODAL ---
@@ -150,6 +161,7 @@ export default function AdminDashboard() {
   const fetchCategories = async () => { const {data} = await supabase.from("categories").select("*").order('name'); setCategoryList(data||[]); };
   const fetchEbooks = async () => { const {data} = await supabase.from("ebooks").select("*").order('created_at',{ascending:false}); setEbooksList(data||[]); };
   const fetchCourses = async () => { const {data} = await supabase.from("courses").select("*").order('created_at',{ascending:false}); setCoursesList(data||[]); };
+  const fetchSegmentUpdates = async () => { const {data} = await supabase.from("segment_updates").select("*, segments(title)").order('created_at',{ascending:false}); setSegmentUpdates(data||[]); };
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
   
@@ -182,15 +194,11 @@ export default function AdminDashboard() {
       setResTitle(r.title); 
       setResType(r.type);
       setResLink(r.content_url||""); 
-      
-      // Load content into state properly
       setRichContent(r.content_body || ""); 
       setQuestionContent(r.content_body || ""); 
-      
       setSeoTitle(r.seo_title||""); 
       setSeoDescription(r.seo_description||""); 
       setBlogTags(r.tags?.join(", ")||"");
-      
       if(r.type==='blog') setIsBlogEditorOpen(true);
   };
   
@@ -199,20 +207,11 @@ export default function AdminDashboard() {
       if(!resTitle) return showError("Title is required!");
       if(type !== 'blog' && !selectedSubject) return showError("Please select a subject first.");
       
-      // --- CRITICAL FIX: GET LATEST EDITOR CONTENT ---
-      // Instead of relying on state, we grab the content directly from the editor instance if available.
       let finalContent = richContent;
-      if(type === 'blog' && editorRef.current) {
-          finalContent = editorRef.current.getContents();
-      } else if (type === 'question') {
-          // If you wanted to fix question editor too, you'd need a separate ref, but sticking to blog for now.
-          finalContent = questionContent; 
-      }
+      if(type === 'blog' && editorRef.current) finalContent = editorRef.current.getContents();
+      else if (type === 'question') finalContent = questionContent; 
 
-      // Validation for Blog Content
-      if (type === 'blog' && (!finalContent || finalContent.trim() === '')) {
-          return showError("Blog content cannot be empty.");
-      }
+      if (type === 'blog' && (!finalContent || finalContent.trim() === '')) return showError("Blog content cannot be empty.");
 
       setSubmitting(true);
       
@@ -226,20 +225,10 @@ export default function AdminDashboard() {
       }
 
       const payload: any = { title: resTitle, type };
-      
       if(selectedSubject) payload.subject_id = Number(selectedSubject);
-
       if(type==='pdf' || type==='video') payload.content_url = url;
-      else if(type==='question') { 
-          payload.content_body = finalContent; 
-          payload.seo_title = seoTitle || resTitle; 
-          payload.seo_description = seoDescription; 
-      }
-      else if(type==='blog') { 
-          payload.content_body = finalContent; // Uses the Freshly captured content
-          if(url) payload.content_url = url; 
-          payload.tags = blogTags.split(',').map(t=>t.trim()); 
-      }
+      else if(type==='question') { payload.content_body = finalContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
+      else if(type==='blog') { payload.content_body = finalContent; if(url) payload.content_url = url; payload.tags = blogTags.split(',').map(t=>t.trim()); }
 
       const { error } = editingResourceId 
           ? await supabase.from('resources').update(payload).eq('id', editingResourceId)
@@ -247,26 +236,67 @@ export default function AdminDashboard() {
 
       setSubmitting(false);
 
-      if (error) {
-          showError("Failed to save: " + error.message);
-      } else {
+      if (error) { showError("Failed to save: " + error.message); } 
+      else {
           if(selectedSubject) fetchResources(selectedSubject);
-          
-          if(type === 'blog') {
-              setIsBlogEditorOpen(false); 
-              showSuccess("Blog post published successfully!"); 
-          } else {
-              resetResourceForm();
-              showSuccess("Resource uploaded successfully!");
-          }
+          if(type === 'blog') { setIsBlogEditorOpen(false); showSuccess("Blog post published successfully!"); } 
+          else { resetResourceForm(); showSuccess("Resource uploaded successfully!"); }
       }
   };
 
-  // --- EBOOK LOGIC (PDF OPTIONAL) ---
-const handleEbookSubmit = async () => {
+  // --- NEW: SEGMENT UPDATES LOGIC ---
+  const handleUpdateSubmit = async () => {
+    if(!updateTitle) return showError("Title is required");
+    if(!updateSegmentId) return showError("Please select a segment");
+
+    setSubmitting(true);
+    let url = null;
+    if(updateFile) {
+        const name = `update-${Date.now()}-${updateFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+        await supabase.storage.from('materials').upload(name, updateFile);
+        url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
+    }
+
+    const payload: any = {
+        title: updateTitle,
+        type: updateType,
+        segment_id: Number(updateSegmentId),
+        content_body: updateContent,
+    };
+    if(url) payload.attachment_url = url;
+
+    const { error } = editingUpdateId
+        ? await supabase.from('segment_updates').update(payload).eq('id', editingUpdateId)
+        : await supabase.from('segment_updates').insert([payload]);
+
+    setSubmitting(false);
+    if(error) showError("Error: " + error.message);
+    else {
+        setEditingUpdateId(null);
+        setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null);
+        fetchSegmentUpdates();
+        showSuccess("Update published successfully!");
+    }
+  };
+
+  const loadUpdateForEdit = (u: any) => {
+      setEditingUpdateId(u.id);
+      setUpdateTitle(u.title);
+      setUpdateType(u.type);
+      setUpdateSegmentId(u.segment_id);
+      setUpdateContent(u.content_body || "");
+      window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  const cancelUpdateEdit = () => {
+      setEditingUpdateId(null);
+      setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null);
+  }
+
+  // --- EBOOK & COURSE & NEWS (Keeping existing logic) ---
+  const handleEbookSubmit = async () => {
     if (!ebTitle) return showError("Title is required");
     setSubmitting(true);
-
     const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
     let cUrl = null;
     if (cover) {
@@ -274,45 +304,17 @@ const handleEbookSubmit = async () => {
         await supabase.storage.from('covers').upload(n, cover);
         cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl;
     }
-
-    const payload: any = {
-        title: ebTitle,
-        author: ebAuthor,
-        category: ebCategory,
-        description: ebDescription,
-        tags: ebTags.split(',').map(t => t.trim()),
-        pdf_url: ebLink 
-    };
+    const payload: any = { title: ebTitle, author: ebAuthor, category: ebCategory, description: ebDescription, tags: ebTags.split(',').map(t => t.trim()), pdf_url: ebLink };
     if (cUrl) payload.cover_url = cUrl;
-
-    const { error } = editingEbookId
-        ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId)
-        : await supabase.from('ebooks').insert([payload]);
-
+    const { error } = editingEbookId ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId) : await supabase.from('ebooks').insert([payload]);
     setSubmitting(false);
-    if (error) {
-        showError("Error: " + error.message);
-    } else {
-        setEditingEbookId(null);
-        setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); 
-        fetchEbooks();
-        showSuccess("eBook saved successfully!");
-    }
-};
+    if (error) showError("Error: " + error.message);
+    else { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); fetchEbooks(); showSuccess("eBook saved successfully!"); }
+  };
   
-const loadEbookForEdit = (b: any) => {
-    setEditingEbookId(b.id);
-    setEbTitle(b.title);
-    setEbAuthor(b.author);
-    setEbCategory(b.category);
-    setEbDescription(b.description || "");
-    setEbTags(b.tags?.join(", "));
-    setEbLink(b.pdf_url || ""); 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+  const loadEbookForEdit = (b: any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description || ""); setEbTags(b.tags?.join(", ")); setEbLink(b.pdf_url || ""); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
-  // --- COURSES ---
   const handleCourseSubmit = async () => {
       if(!cTitle) return showError("Course Title is required");
       setSubmitting(true);
@@ -320,14 +322,12 @@ const loadEbookForEdit = (b: any) => {
       if(cImage) { const n = `course-${Date.now()}`; await supabase.storage.from('materials').upload(n, cImage); thumb = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
       const payload: any = { title: cTitle, instructor: cInstructor, price: cPrice, discount_price: cDiscountPrice, duration: cDuration, enrollment_link: cLink, description: cDesc };
       if(thumb) payload.thumbnail_url = thumb;
-
       if(editingCourseId) await supabase.from('courses').update(payload).eq('id', editingCourseId);
       else { if(!thumb) {showError("Thumbnail is required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
       setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null); fetchCourses(); showSuccess("Course saved successfully!");
   };
   const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description || ""); window.scrollTo({top:0, behavior:'smooth'}); };
 
-  // --- NEWS ---
   const createCategory = async () => { if(newCategoryInput) { await supabase.from('categories').insert([{name:newCategoryInput}]); setNewCategoryInput(""); fetchCategories(); }};
   const handleNewsSubmit = async () => {
       if(!newsTitle) return showError("Headline is required");
@@ -336,7 +336,6 @@ const loadEbookForEdit = (b: any) => {
       if(newsFile) { const n = `news-${Date.now()}`; await supabase.storage.from('materials').upload(n, newsFile); url = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
       const payload: any = { title: newsTitle, content: newsContent, category: selectedCategory, tags: newsTags.split(',').map(t=>t.trim()) };
       if(url) payload.image_url = url;
-
       if(editingNewsId) await supabase.from('news').update(payload).eq('id', editingNewsId);
       else await supabase.from('news').insert([payload]);
       setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsFile(null); fetchNews(); showSuccess("News published successfully!");
@@ -350,7 +349,7 @@ const loadEbookForEdit = (b: any) => {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* --- CUSTOM MODERN MODAL --- */}
+      {/* MODAL */}
       {modal.isOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full transform transition-all scale-100">
@@ -381,6 +380,7 @@ const loadEbookForEdit = (b: any) => {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {[
                 { id: 'materials', label: 'Study Materials', icon: '📂' },
+                { id: 'updates', label: 'Segment Updates', icon: '📢' }, // NEW TAB
                 { id: 'class-blogs', label: 'Class Blogs', icon: '✍️' },
                 { id: 'ebooks', label: 'Manage eBooks', icon: '📚' },
                 { id: 'courses', label: 'Manage Courses', icon: '🎓' },
@@ -406,88 +406,43 @@ const loadEbookForEdit = (b: any) => {
             
             {/* MOBILE NAV */}
             <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                {['materials','class-blogs','ebooks','courses','news'].map(t => (
+                {['materials','updates','class-blogs','ebooks','courses','news'].map(t => (
                     <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap ${activeTab===t?'bg-blue-600 text-white':'bg-white text-slate-600'}`}>{t.toUpperCase()}</button>
                 ))}
             </div>
 
-            {/* === TAB 1: STUDY MATERIALS === */}
+            {/* === TAB: STUDY MATERIALS === */}
             {activeTab === 'materials' && (
               <div className="space-y-8 animate-fade-in">
-                
-                {/* 1. HIERARCHY SELECTOR (3 COLUMNS) */}
+                {/* 1. HIERARCHY SELECTOR */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* SEGMENTS */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-80">
-                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">1. Segments</span>
-                            <span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{segments.length}</span>
-                        </div>
-                        <div className="p-3 border-b border-slate-100 flex gap-2">
-                            <input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-blue-100 outline-none" placeholder="New Segment..." value={newSegment} onChange={e=>setNewSegment(e.target.value)} />
-                            <button onClick={handleSegmentSubmit} className="bg-blue-600 text-white w-8 rounded-lg font-bold hover:bg-blue-700">+</button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                            {segments.map(s => (
-                                <div key={s.id} onClick={()=>handleSegmentClick(s.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedSegment===s.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                    <span>{s.title}</span>
-                                    <button onClick={(e)=>{e.stopPropagation();deleteItem('segments',s.id,fetchSegments)}} className={`px-2 ${selectedSegment===s.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">1. Segments</span><span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{segments.length}</span></div>
+                        <div className="p-3 border-b border-slate-100 flex gap-2"><input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-blue-100 outline-none" placeholder="New Segment..." value={newSegment} onChange={e=>setNewSegment(e.target.value)} /><button onClick={handleSegmentSubmit} className="bg-blue-600 text-white w-8 rounded-lg font-bold hover:bg-blue-700">+</button></div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">{segments.map(s => (<div key={s.id} onClick={()=>handleSegmentClick(s.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedSegment===s.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}><span>{s.title}</span><button onClick={(e)=>{e.stopPropagation();deleteItem('segments',s.id,fetchSegments)}} className={`px-2 ${selectedSegment===s.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button></div>))}</div>
                     </div>
-
                     {/* GROUPS */}
                     <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-80 ${!selectedSegment ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">2. Groups</span>
-                            <span className="text-xs font-bold bg-green-100 text-green-600 px-2 py-0.5 rounded-full">{groups.length}</span>
-                        </div>
-                        <div className="p-3 border-b border-slate-100 flex gap-2">
-                            <input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-green-100 outline-none" placeholder="New Group..." value={newGroup} onChange={e=>setNewGroup(e.target.value)} />
-                            <button onClick={handleGroupSubmit} className="bg-green-600 text-white w-8 rounded-lg font-bold hover:bg-green-700">+</button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                            {groups.map(g => (
-                                <div key={g.id} onClick={()=>handleGroupClick(g.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedGroup===g.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                    <span>{g.title}</span>
-                                    <button onClick={(e)=>{e.stopPropagation();deleteItem('groups',g.id,()=>fetchGroups(selectedSegment))}} className={`px-2 ${selectedGroup===g.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">2. Groups</span><span className="text-xs font-bold bg-green-100 text-green-600 px-2 py-0.5 rounded-full">{groups.length}</span></div>
+                        <div className="p-3 border-b border-slate-100 flex gap-2"><input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-green-100 outline-none" placeholder="New Group..." value={newGroup} onChange={e=>setNewGroup(e.target.value)} /><button onClick={handleGroupSubmit} className="bg-green-600 text-white w-8 rounded-lg font-bold hover:bg-green-700">+</button></div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">{groups.map(g => (<div key={g.id} onClick={()=>handleGroupClick(g.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedGroup===g.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}><span>{g.title}</span><button onClick={(e)=>{e.stopPropagation();deleteItem('groups',g.id,()=>fetchGroups(selectedSegment))}} className={`px-2 ${selectedGroup===g.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button></div>))}</div>
                     </div>
-
                     {/* SUBJECTS */}
                     <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-80 ${!selectedGroup ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">3. Subjects</span>
-                            <span className="text-xs font-bold bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{subjects.length}</span>
-                        </div>
-                        <div className="p-3 border-b border-slate-100 flex gap-2">
-                            <input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-purple-100 outline-none" placeholder="New Subject..." value={newSubject} onChange={e=>setNewSubject(e.target.value)} />
-                            <button onClick={handleSubjectSubmit} className="bg-purple-600 text-white w-8 rounded-lg font-bold hover:bg-purple-700">+</button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                            {subjects.map(s => (
-                                <div key={s.id} onClick={()=>handleSubjectClick(s.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedSubject===s.id ? 'bg-purple-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                    <span>{s.title}</span>
-                                    <button onClick={(e)=>{e.stopPropagation();deleteItem('subjects',s.id,()=>fetchSubjects(selectedGroup))}} className={`px-2 ${selectedSubject===s.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">3. Subjects</span><span className="text-xs font-bold bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{subjects.length}</span></div>
+                        <div className="p-3 border-b border-slate-100 flex gap-2"><input className="w-full text-sm p-2 bg-white border rounded-lg focus:ring-2 ring-purple-100 outline-none" placeholder="New Subject..." value={newSubject} onChange={e=>setNewSubject(e.target.value)} /><button onClick={handleSubjectSubmit} className="bg-purple-600 text-white w-8 rounded-lg font-bold hover:bg-purple-700">+</button></div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">{subjects.map(s => (<div key={s.id} onClick={()=>handleSubjectClick(s.id)} className={`flex justify-between items-center p-3 rounded-lg cursor-pointer text-sm font-bold transition-all ${selectedSubject===s.id ? 'bg-purple-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}><span>{s.title}</span><button onClick={(e)=>{e.stopPropagation();deleteItem('subjects',s.id,()=>fetchSubjects(selectedGroup))}} className={`px-2 ${selectedSubject===s.id?'text-white/70 hover:text-white':'text-slate-300 hover:text-red-500'}`}>×</button></div>))}</div>
                     </div>
                 </div>
 
-                {/* 2. CONTENT MANAGER (2/3 + 1/3 Split) */}
+                {/* 2. CONTENT MANAGER */}
                 <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                    
-                    {/* LEFT: UPLOAD FORM (Takes 8 cols) */}
                     <div className="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-lg text-slate-800">4. Add New Resource</h3>
                             {editingResourceId && <button onClick={resetResourceForm} className="text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full">Cancel Editing</button>}
                         </div>
-                        
                         <div className="space-y-5">
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="col-span-1">
@@ -513,28 +468,14 @@ const loadEbookForEdit = (b: any) => {
                                     <p className="text-sm font-bold text-slate-600">{resFile ? resFile.name : "Drop PDF Here or Click to Browse"}</p>
                                 </div>
                             )}
-                            {resType === 'video' && (
-                                <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm outline-none" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="YouTube Embed Link..." />
-                            )}
+                            {resType === 'video' && (<input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm outline-none" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="YouTube Embed Link..." />)}
                             {resType === 'question' && (
                                 <div className="space-y-3">
-                                    <div className="border rounded-xl overflow-hidden">
-                                        <SunEditor 
-                                            key={editingResourceId || 'new-question'}
-                                            setContents={questionContent} 
-                                            onChange={(content) => setQuestionContent(content)} 
-                                            setOptions={{...editorOptions, katex:katex}}
-                                        />
-                                    </div>
+                                    <div className="border rounded-xl overflow-hidden"><SunEditor key={editingResourceId || 'new-question'} setContents={questionContent} onChange={(content) => setQuestionContent(content)} setOptions={{...editorOptions, katex:katex}} /></div>
                                     <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs" value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="SEO Title" />
                                 </div>
                             )}
-                            {resType === 'blog' && (
-                                <div className="p-6 bg-blue-50 text-blue-700 text-sm rounded-xl border border-blue-100 flex items-center gap-4">
-                                    <span className="text-2xl">✍️</span>
-                                    <p>Please switch to the <strong>"Class Blogs"</strong> tab to write full articles with the dedicated editor.</p>
-                                </div>
-                            )}
+                            {resType === 'blog' && (<div className="p-6 bg-blue-50 text-blue-700 text-sm rounded-xl border border-blue-100 flex items-center gap-4"><span className="text-2xl">✍️</span><p>Please switch to the <strong>"Class Blogs"</strong> tab to write full articles with the dedicated editor.</p></div>)}
 
                             {resType !== 'blog' && (
                                 <button onClick={()=>uploadResource()} disabled={submitting} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-lg shadow-slate-200">
@@ -544,28 +485,18 @@ const loadEbookForEdit = (b: any) => {
                         </div>
                     </div>
 
-                    {/* RIGHT: LIBRARY LIST (Takes 4 cols) */}
+                    {/* RIGHT: LIBRARY LIST */}
                     <div className="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[500px] lg:h-auto">
-                        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Library ({resources.length})</h4>
-                        </div>
+                        <div className="p-5 border-b border-slate-100 bg-slate-50/50"><h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Library ({resources.length})</h4></div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                             {resources.length === 0 && <div className="text-center text-slate-400 text-sm mt-10">No resources found.</div>}
                             {resources.map(r => (
                                 <div key={r.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-blue-300 transition">
                                     <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type==='pdf'?'bg-red-50 text-red-500':r.type==='video'?'bg-blue-50 text-blue-500':'bg-yellow-50 text-yellow-600'}`}>
-                                            {r.type==='pdf'?'📄':r.type==='video'?'▶':'❓'}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h5 className="text-xs font-bold text-slate-700 truncate w-32">{r.title}</h5>
-                                            <span className="text-[10px] text-slate-400 uppercase">{new Date(r.created_at).toLocaleDateString()}</span>
-                                        </div>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type==='pdf'?'bg-red-50 text-red-500':r.type==='video'?'bg-blue-50 text-blue-500':'bg-yellow-50 text-yellow-600'}`}>{r.type==='pdf'?'📄':r.type==='video'?'▶':'❓'}</div>
+                                        <div className="min-w-0"><h5 className="text-xs font-bold text-slate-700 truncate w-32">{r.title}</h5><span className="text-[10px] text-slate-400 uppercase">{new Date(r.created_at).toLocaleDateString()}</span></div>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                                        <button onClick={()=>loadResourceForEdit(r)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">✏️</button>
-                                        <button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSubject))} className="p-1.5 hover:bg-red-50 rounded text-red-600">🗑️</button>
-                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(r)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSubject))} className="p-1.5 hover:bg-red-50 rounded text-red-600">🗑️</button></div>
                                 </div>
                             ))}
                         </div>
@@ -574,129 +505,114 @@ const loadEbookForEdit = (b: any) => {
               </div>
             )}
 
-            {/* === TAB 2: EBOOKS === */}
+            {/* === NEW TAB: SEGMENT UPDATES === */}
+            {activeTab === 'updates' && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-800">Segment Updates (Admin)</h2>{editingUpdateId && <button onClick={cancelUpdateEdit} className="text-red-500 font-bold border px-3 py-1 rounded">Cancel Edit</button>}</div>
+                
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                    {/* LEFT: FORM */}
+                    <div className="xl:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Target Segment</label>
+                                <select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" value={updateSegmentId} onChange={e=>setUpdateSegmentId(e.target.value)}>
+                                    <option value="">Select Segment...</option>
+                                    {segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Update Type</label>
+                                <select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" value={updateType} onChange={e=>setUpdateType(e.target.value)}>
+                                    <option value="routine">📅 Routine</option>
+                                    <option value="syllabus">📝 Syllabus</option>
+                                    <option value="exam_result">🏆 Exam Result</option>
+                                </select>
+                            </div>
+                         </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Update Title</label>
+                            <input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none" placeholder="e.g. HSC 2026 Revised Routine" value={updateTitle} onChange={e=>setUpdateTitle(e.target.value)} />
+                         </div>
+                         <div className="border rounded-xl overflow-hidden">
+                            <SunEditor key={editingUpdateId || 'update-editor'} setContents={updateContent} onChange={(content) => setUpdateContent(content)} setOptions={editorOptions} />
+                         </div>
+                         <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-50 relative">
+                             <input type="file" onChange={e => setUpdateFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                             <span className="text-2xl">📎</span> <span className="text-sm font-bold text-slate-600">{updateFile ? updateFile.name : "Attach PDF/Image (Optional)"}</span>
+                         </div>
+                         <button onClick={handleUpdateSubmit} disabled={submitting} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg">{submitting ? "Publishing..." : "Publish Update"}</button>
+                    </div>
+
+                    {/* RIGHT: LIST */}
+                    <div className="xl:col-span-4 space-y-4">
+                        <div className="bg-white p-4 rounded-xl border border-slate-200">
+                             <h4 className="font-bold text-slate-500 uppercase text-xs mb-4">Recent Updates</h4>
+                             <div className="space-y-3">
+                                {segmentUpdates.map(u => (
+                                    <div key={u.id} className="p-3 border rounded-lg hover:bg-slate-50 group relative">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${u.type==='routine'?'bg-blue-100 text-blue-600':u.type==='syllabus'?'bg-green-100 text-green-600':'bg-purple-100 text-purple-600'}`}>{u.type.replace('_', ' ')}</span>
+                                                <h5 className="font-bold text-sm text-slate-800 mt-1">{u.title}</h5>
+                                                <p className="text-xs text-slate-500">{u.segments?.title} • {new Date(u.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                                <button onClick={()=>loadUpdateForEdit(u)} className="text-blue-600 text-xs font-bold">Edit</button>
+                                                <button onClick={()=>deleteItem('segment_updates',u.id,fetchSegmentUpdates)} className="text-red-600 text-xs font-bold">Del</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            )}
+
+            {/* === TAB: EBOOKS === */}
             {activeTab === 'ebooks' && (
               <div className="space-y-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-slate-800">Manage eBooks</h2>
-                
-                {/* TOP FORM */}
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="font-bold text-lg text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingEbookId?"Edit eBook Details":"Add New eBook"}</h3>
-                    
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-<div className="lg:col-span-4 space-y-6">
-    
-    {/* BASIC INFO */}
-    <div className="space-y-4">
-        <div>
-            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Book Title</label>
-            <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="e.g. Physics First Paper" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Author</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} placeholder="Author" />
-            </div>
-<div>
-    <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label>
-    <select 
-        className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer font-bold text-slate-700" 
-        value={ebCategory} 
-        onChange={e=>setEbCategory(e.target.value)}
-    >
-        <option value="">Select Category</option>
-        {segments.map(seg => (
-            <option key={seg.id} value={seg.title}>{seg.title}</option>
-        ))}
-    </select>
-</div>
-        </div>
-        <div>
-            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Tags</label>
-            <input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="Tags..." />
-        </div>
-    </div>
-
-    {/* ASSETS SECTION (Highlighted) */}
-    <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl space-y-4">
-        <div>
-            <label className="text-xs font-bold text-blue-600 uppercase block mb-1.5 flex items-center gap-1">
-                <span>🔗</span> Google Drive / PDF Link
-            </label>
-            <input 
-                className="w-full bg-white border border-blue-200 text-blue-800 p-3.5 rounded-xl text-sm outline-none font-medium focus:ring-2 focus:ring-blue-500 transition shadow-sm" 
-                value={ebLink} 
-                onChange={e => setEbLink(e.target.value)} 
-                placeholder="https://drive.google.com/..." 
-            />
-        </div>
-
-        <div>
-            <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5">Cover Image</label>
-            <div className="relative group cursor-pointer">
-                <input type="file" id="eb-cover" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*"/>
-                <div className="bg-white border-2 border-dashed border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 transition-all rounded-xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl group-hover:bg-white transition">🖼️</div>
-                    <div className="flex-1">
-                        <p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">Click to Upload Cover</p>
-                        <p className="text-[10px] text-slate-400">JPG, PNG (Max 2MB)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-                        <div className="lg:col-span-8 flex flex-col">
-                            <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label>
-                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner">
-                                <SunEditor 
-                                    key={editingEbookId || 'new-ebook'}
-                                    setContents={ebDescription} 
-                                    onChange={(content) => setEbDescription(content)} 
-                                    setOptions={{...editorOptions, minHeight:"350px"}}
-                                />
+                        <div className="lg:col-span-4 space-y-6">
+                            <div className="space-y-4">
+                                <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Book Title</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm font-bold outline-none" value={ebTitle} onChange={e=>setEbTitle(e.target.value)} placeholder="e.g. Physics First Paper" /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Author</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebAuthor} onChange={e=>setEbAuthor(e.target.value)} placeholder="Author" /></div>
+                                    <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Category</label><select className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none cursor-pointer font-bold text-slate-700" value={ebCategory} onChange={e=>setEbCategory(e.target.value)}><option value="">Select Category</option>{segments.map(seg => (<option key={seg.id} value={seg.title}>{seg.title}</option>))}</select></div>
+                                </div>
+                                <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Tags</label><input className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none" value={ebTags} onChange={e=>setEbTags(e.target.value)} placeholder="Tags..." /></div>
+                            </div>
+                            <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl space-y-4">
+                                <div><label className="text-xs font-bold text-blue-600 uppercase block mb-1.5 flex items-center gap-1"><span>🔗</span> Google Drive / PDF Link</label><input className="w-full bg-white border border-blue-200 text-blue-800 p-3.5 rounded-xl text-sm outline-none font-medium focus:ring-2 focus:ring-blue-500 transition shadow-sm" value={ebLink} onChange={e => setEbLink(e.target.value)} placeholder="https://drive.google.com/..." /></div>
+                                <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1.5">Cover Image</label><div className="relative group cursor-pointer"><input type="file" id="eb-cover" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*"/><div className="bg-white border-2 border-dashed border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 transition-all rounded-xl p-3 flex items-center gap-3"><div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl group-hover:bg-white transition">🖼️</div><div className="flex-1"><p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">Click to Upload Cover</p><p className="text-[10px] text-slate-400">JPG, PNG (Max 2MB)</p></div></div></div></div>
                             </div>
                         </div>
+                        <div className="lg:col-span-8 flex flex-col"><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label><div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner"><SunEditor key={editingEbookId || 'new-ebook'} setContents={ebDescription} onChange={(content) => setEbDescription(content)} setOptions={{...editorOptions, minHeight:"350px"}} /></div></div>
                     </div>
-                    
-                    <div className="mt-8 flex justify-end">
-                        <button onClick={handleEbookSubmit} disabled={submitting} className="bg-slate-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-black transition shadow-lg transform active:scale-95">{submitting?"Saving...":"Save eBook to Library"}</button>
-                    </div>
+                    <div className="mt-8 flex justify-end"><button onClick={handleEbookSubmit} disabled={submitting} className="bg-slate-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-black transition shadow-lg transform active:scale-95">{submitting?"Saving...":"Save eBook to Library"}</button></div>
                 </div>
-
-                {/* LIBRARY GRID */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {ebooksList.map(book => (
                         <div key={book.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 group hover:border-blue-400 transition hover:shadow-md">
-                            <div className="w-16 h-24 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner relative">
-                                {book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 font-bold">No Cover</div>}
-                            </div>
-                            <div className="flex-1 flex flex-col">
-                                <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full w-fit mb-2">{book.category}</span>
-                                <h4 className="font-bold text-sm text-slate-800 leading-tight mb-1 line-clamp-2">{book.title}</h4>
-                                <p className="text-xs text-slate-500 mb-auto line-clamp-1">{book.author}</p>
-                                <div className="flex gap-2 mt-3">
-                                    <button onClick={() => loadEbookForEdit(book)} className="flex-1 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Edit</button>
-                                    <button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="flex-1 bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Del</button>
-                                </div>
-                            </div>
+                            <div className="w-16 h-24 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner relative">{book.cover_url ? <img src={book.cover_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 font-bold">No Cover</div>}</div>
+                            <div className="flex-1 flex flex-col"><span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full w-fit mb-2">{book.category}</span><h4 className="font-bold text-sm text-slate-800 leading-tight mb-1 line-clamp-2">{book.title}</h4><p className="text-xs text-slate-500 mb-auto line-clamp-1">{book.author}</p><div className="flex gap-2 mt-3"><button onClick={() => loadEbookForEdit(book)} className="flex-1 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Edit</button><button onClick={() => deleteItem('ebooks', book.id, fetchEbooks)} className="flex-1 bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 text-xs font-bold py-1.5 rounded-lg transition">Del</button></div></div>
                         </div>
                     ))}
                 </div>
               </div>
             )}
 
-            {/* === TAB 3: CLASS BLOGS (FIXED STATE BINDING) === */}
+            {/* === TAB: CLASS BLOGS === */}
             {activeTab === 'class-blogs' && (
               <div className="animate-fade-in">
                 {!isBlogEditorOpen ? (
                     <div>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-slate-800">Class Blogs</h2>
-                            <button onClick={()=>{resetResourceForm();setIsBlogEditorOpen(true);setResType('blog')}} className="bg-black text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition">+ New Post</button>
-                        </div>
+                        <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-slate-800">Class Blogs</h2><button onClick={()=>{resetResourceForm();setIsBlogEditorOpen(true);setResType('blog')}} className="bg-black text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition">+ New Post</button></div>
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 mb-6">
                             <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm outline-none" value={selectedSegment} onChange={e=>handleSegmentClick(e.target.value)}><option value="">Filter Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
                             <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm outline-none" value={selectedGroup} onChange={e=>handleGroupClick(e.target.value)} disabled={!selectedSegment}><option value="">Filter Group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
@@ -705,13 +621,7 @@ const loadEbookForEdit = (b: any) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {resources.filter(r=>r.type==='blog').map(b=>(
                                 <div key={b.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition group">
-                                    <div className="h-40 bg-slate-100 relative">
-                                        {b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}
-                                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                                            <button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button>
-                                            <button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button>
-                                        </div>
-                                    </div>
+                                    <div className="h-40 bg-slate-100 relative">{b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}<div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button></div></div>
                                     <div className="p-4"><h3 className="font-bold text-sm text-slate-800 line-clamp-2">{b.title}</h3></div>
                                 </div>
                             ))}
@@ -725,15 +635,7 @@ const loadEbookForEdit = (b: any) => {
                         </div>
                         <div className="p-8 max-w-5xl mx-auto w-full space-y-6">
                             <input className="text-5xl font-black w-full outline-none placeholder-slate-300 text-slate-900 bg-transparent" placeholder="Blog Title..." value={resTitle} onChange={e=>setResTitle(e.target.value)} />
-                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm">
-                                <SunEditor 
-                                    key={editingResourceId || 'new-blog'}
-                                    getSunEditorInstance={getSunEditorInstance} // <--- THE KEY FIX HERE
-                                    setContents={richContent} 
-                                    onChange={(content) => setRichContent(content)} 
-                                    setOptions={editorOptions} 
-                                />
-                            </div>
+                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm"><SunEditor key={editingResourceId || 'new-blog'} getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={(content) => setRichContent(content)} setOptions={editorOptions} /></div>
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                                 <div className="border-2 border-dashed p-6 rounded-lg text-center relative hover:bg-slate-50"><input type="file" onChange={e=>setBlogImageFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/><span className="text-2xl">🖼️</span><p className="font-bold text-slate-400 text-xs mt-2">Cover Image</p>{blogImageFile && <p className="text-xs text-green-600 font-bold mt-1">{blogImageFile.name}</p>}</div>
                                 <textarea className="w-full bg-slate-50 border p-4 rounded-lg text-sm resize-none outline-none" placeholder="Tags (comma separated)..." value={blogTags} onChange={e=>setBlogTags(e.target.value)}></textarea>
@@ -744,11 +646,10 @@ const loadEbookForEdit = (b: any) => {
               </div>
             )}
 
-            {/* === TAB 4: COURSES === */}
+            {/* === TAB: COURSES === */}
             {activeTab === 'courses' && (
               <div className="space-y-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-slate-800">Manage Courses</h2>
-                
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="font-bold text-lg text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingCourseId?"Edit Course":"Create New Course"}</h3>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -766,14 +667,7 @@ const loadEbookForEdit = (b: any) => {
                         </div>
                         <div className="lg:col-span-8 flex flex-col">
                             <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Details & Visuals</label>
-                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner">
-                                <SunEditor 
-                                    key={editingCourseId || 'new-course'}
-                                    setContents={cDesc} 
-                                    onChange={(content) => setCDesc(content)} 
-                                    setOptions={{...editorOptions, minHeight:"350px"}}
-                                />
-                            </div>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner"><SunEditor key={editingCourseId || 'new-course'} setContents={cDesc} onChange={(content) => setCDesc(content)} setOptions={{...editorOptions, minHeight:"350px"}} /></div>
                             <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-slate-400">Upload Thumbnail</span><input type="file" onChange={e=>setCImage(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
                         </div>
                     </div>
@@ -782,32 +676,18 @@ const loadEbookForEdit = (b: any) => {
                         <button onClick={handleCourseSubmit} disabled={submitting} className="bg-slate-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-black transition shadow-lg">{submitting?"Saving...":"Launch Course"}</button>
                     </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {coursesList.map(c => (
                         <div key={c.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
-                            <div className="h-40 bg-gray-200 relative">
-                                {c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
-                                    <button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button>
-                                    <button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button>
-                                </div>
-                            </div>
-                            <div className="p-5">
-                                <h4 className="font-bold text-lg text-slate-900 mb-1">{c.title}</h4>
-                                <p className="text-sm text-slate-500 mb-3 font-medium">{c.instructor}</p>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>
-                                    {c.discount_price && <span className="text-sm text-slate-400 line-through decoration-2">৳{c.price}</span>}
-                                </div>
-                            </div>
+                            <div className="h-40 bg-gray-200 relative">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3 backdrop-blur-sm"><button onClick={()=>loadCourseForEdit(c)} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Edit</button><button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 transition">Delete</button></div></div>
+                            <div className="p-5"><h4 className="font-bold text-lg text-slate-900 mb-1">{c.title}</h4><p className="text-sm text-slate-500 mb-3 font-medium">{c.instructor}</p><div className="flex items-center gap-3"><span className="text-xl font-bold text-green-600">৳{c.discount_price || c.price}</span>{c.discount_price && <span className="text-sm text-slate-400 line-through decoration-2">৳{c.price}</span>}</div></div>
                         </div>
                     ))}
                 </div>
               </div>
             )}
 
-            {/* === TAB 5: NEWS === */}
+            {/* === TAB: NEWS === */}
             {activeTab === 'news' && (
               <div className="space-y-8 animate-fade-in">
                  <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-800">Newsroom</h2>{editingNewsId && <button onClick={cancelNewsEdit} className="text-red-500 font-bold border px-3 py-1 rounded">Cancel Edit</button>}</div>
@@ -815,12 +695,7 @@ const loadEbookForEdit = (b: any) => {
                     <div className="xl:col-span-8 space-y-4">
                         <input className="text-4xl font-black w-full bg-transparent border-b border-slate-300 pb-2 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>setNewsTitle(e.target.value)} />
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <SunEditor 
-                                key={editingNewsId || 'new-news'}
-                                setContents={newsContent} 
-                                onChange={(content) => setNewsContent(content)} 
-                                setOptions={editorOptions} 
-                            />
+                            <SunEditor key={editingNewsId || 'new-news'} setContents={newsContent} onChange={(content) => setNewsContent(content)} setOptions={editorOptions} />
                         </div>
                     </div>
                     <div className="xl:col-span-4 space-y-6">
