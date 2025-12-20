@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-// 1. DEFINE THE TYPE (The Fix)
-// This tells TypeScript: "Every link has a name and href. Sometimes it has a submenu or isDropdown."
+// --- 1. THE FIX FOR THE RED ERROR ---
+// We define exactly what a 'NavLink' looks like so TypeScript doesn't panic.
 interface NavLink {
   name: string;
   href: string;
-  submenu?: { name: string; href: string }[]; // Optional array
-  isDropdown?: boolean; // Optional boolean
+  isDropdown?: boolean;
+  submenu?: { name: string; href: string }[];
 }
 
 export default function Header() {
@@ -26,9 +26,9 @@ export default function Header() {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const pathname = usePathname();
+  const [isLoadingExams, setIsLoadingExams] = useState(true); // Track loading state
 
-  // 2. USE THE TYPE HERE (The Fix)
-  // We explicitly tell useState to expect an array of 'NavLink' objects
+  // --- 2. APPLY THE INTERFACE HERE ---
   const [navLinks, setNavLinks] = useState<NavLink[]>([
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
@@ -55,17 +55,22 @@ export default function Header() {
     };
     checkUser();
 
-    // 3. FETCH DATA
+    // --- 3. FETCH DATA (DEBUGGED) ---
     const fetchSegments = async () => {
-      // Ensure your table is named 'segments' and has 'name' and 'slug'
+      console.log("Fetching segments...");
+
+      // IMPORTANT: Check if your table is actually named 'segments' in Supabase!
       const { data, error } = await supabase
         .from('segments') 
-        .select('id, name, slug');
+        .select('name, slug');
 
       if (error) {
         console.error("Supabase Error:", error.message);
+        setIsLoadingExams(false); // Stop loading on error
         return;
       }
+
+      console.log("Supabase Data:", data); // Check F12 console to see if this is []
 
       if (data && data.length > 0) {
         const dynamicSubmenu = data.map((item: any) => ({
@@ -79,6 +84,7 @@ export default function Header() {
             : link
         ));
       }
+      setIsLoadingExams(false); // Stop loading whether found or empty
     };
     fetchSegments();
 
@@ -128,7 +134,6 @@ export default function Header() {
         <nav ref={navRef} className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) => (
             <div key={link.name} className="relative">
-              {/* Check if it has a submenu OR is marked as a dropdown */}
               {link.submenu || link.isDropdown ? (
                 <>
                   <button 
@@ -150,6 +155,7 @@ export default function Header() {
                   <div className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-left z-50 
                     ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
                     <div className="p-2 flex flex-col gap-1 max-h-64 overflow-y-auto">
+                      {/* LOGIC: IF Submenu exists, show items. IF NOT, check if loading. */}
                       {link.submenu && link.submenu.length > 0 ? (
                         link.submenu.map((subItem) => (
                           <Link 
@@ -163,14 +169,14 @@ export default function Header() {
                         ))
                       ) : (
                         <div className="px-4 py-2 text-sm text-gray-400 italic">
-                          {link.name === "Exams" ? "Loading Exams..." : "No items"}
+                          {/* SHOW THIS IF TABLE IS EMPTY */}
+                          {isLoadingExams ? "Loading..." : "No exams found"}
                         </div>
                       )}
                     </div>
                   </div>
                 </>
               ) : (
-                // STANDARD LINK
                 <Link 
                   href={link.href}
                   className={`text-sm font-bold transition-colors ${pathname === link.href ? "text-blue-500" : `${getTextColor()} ${getHoverColor()}`}`}
@@ -230,7 +236,7 @@ export default function Header() {
                      <div className="pl-4 border-l-2 border-gray-100 flex flex-col gap-2 mt-1 mb-2">
                        {link.submenu && link.submenu.length > 0 ? link.submenu.map((sub) => (
                          <Link key={sub.name} href={sub.href} onClick={() => setIsOpen(false)} className="text-gray-600 font-medium py-1 hover:text-blue-600 text-base">{sub.name}</Link>
-                       )) : <span className="text-gray-400 italic text-sm">Loading...</span>}
+                       )) : <span className="text-gray-400 italic text-sm">{isLoadingExams ? "Loading..." : "No exams found"}</span>}
                      </div>
                    )}
                  </>
