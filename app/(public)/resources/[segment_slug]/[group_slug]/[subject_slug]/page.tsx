@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
+import DarkAppPromo from "@/components/DarkAppPromo";
 
 export const dynamic = "force-dynamic";
 
@@ -176,7 +177,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                     )}
                 </section>
                 
-                {/* 4. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
+{/* 4. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -197,19 +198,13 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                                 <p className="text-gray-400 mb-6 text-sm leading-relaxed">
                                     Join over 5,000+ students taking daily model tests. Get instant results, negative marking, and nationwide merit lists.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                                    <button className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition transform hover:-translate-y-1">
-                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 0 .416 1.737c.365.048.73-.08.977-.345l11.728-11.729a.998.998 0 0 0 0-1.414L4.996.707a1.006 1.006 0 0 0-1.745.36c-.13.364-.035.772.235 1.025l.123-.278zM15.42 12l8.28-8.28a1 1 0 0 0-1.414-1.414L14.006 10.586a1 1 0 0 0 0 1.414l8.28 8.28a1 1 0 0 0 1.414-1.414L15.42 12z"/></svg>
-                                        <span>Download App</span>
-                                    </button>
-                                    <span className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-700 text-gray-300 text-sm font-medium">
-                                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                        App Exclusive
-                                    </span>
-                                </div>
+                                
+                                {/* INTERACTIVE BUTTONS COMPONENT */}
+                                <DarkAppPromo />
+
                             </div>
                             
-                            {/* Visual Mockup */}
+                            {/* Visual Mockup (Keep this as is) */}
                             <div className="w-full md:w-1/3 bg-gray-800/50 rounded-xl p-4 border border-gray-700 backdrop-blur-sm">
                                 <div className="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
                                     <span className="text-xs font-bold text-gray-400">Physics 1st Paper</span>

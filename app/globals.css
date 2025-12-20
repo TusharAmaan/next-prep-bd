@@ -59,7 +59,7 @@ body {
   /* A. Paper Setup */
   @page {
     size: auto;
-    margin: 20mm; /* Standard 2cm margins prevents edge cutting */
+    margin: 20mm; /* Standard 2cm margins */
   }
 
   /* B. Hide Website Elements */
@@ -109,16 +109,25 @@ body {
   .blog-content td { font-size: 10pt !important; }
   .blog-content th, .blog-content td { border: 1px solid #000 !important; padding: 4px 8px !important; }
 
-  /* G. PREVENT CUT-OFFS (This is the Fix!) */
-  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, div, tr, td {
-    break-inside: avoid;       /* Modern Browsers */
-    page-break-inside: avoid;  /* Older Browsers */
+  /* G. PREVENT CUT-OFFS (FIXED!) */
+  /* We removed 'div' from this list to prevent the empty page bug */
+  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, td {
+    break-inside: avoid;       
+    page-break-inside: avoid;  
   }
 
+  /* Allow the main content container to split across pages naturally */
+  div {
+    break-inside: auto; 
+  }
+
+  /* Ensure images don't break and look professional */
   img {
     break-inside: avoid;
     page-break-inside: avoid;
     max-width: 100% !important;
+    display: block;
+    margin: 10px auto; 
   }
 
   /* H. LINKS */
