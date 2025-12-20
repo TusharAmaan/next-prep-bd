@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_Bengali } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -70,10 +70,10 @@ export const metadata: Metadata = {
   },
 };
 // 2. Setup the Bangla Font
-const kalpurush = localFont({
-  src: "./fonts/Kalpurush.ttf", // Make sure filename matches exactly
-  variable: "--font-bangla",    // We will use this variable in CSS
-  display: "swap",
+const bangla = Noto_Serif_Bengali({
+  subsets: ["bengali"],
+  weight: ["400", "700"], // Regular and Bold
+  variable: "--font-bangla",
 });
 
 export default function RootLayout({
@@ -84,7 +84,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kalpurush.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bangla.variable} antialiased`}
       >
         {/* 2. JSON-LD SCRIPT (This helps get the Sitelinks/Search Box on Google) */}
         <script
