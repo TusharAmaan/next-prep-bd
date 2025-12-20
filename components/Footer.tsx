@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MobileAppButtons from "./MobileAppButtons"; // <--- Import the popup component
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -15,31 +16,12 @@ export default function Footer() {
             <p className="text-xs text-gray-500 mt-1">Your Ultimate Exam Companion</p>
           </div>
           
-          <p className="text-sm text-gray-400 mb-4">Download our mobile app</p>
+          <p className="text-sm text-gray-400 mb-2">Download our mobile app</p>
           
-          <div className="flex flex-col gap-3">
-             {/* Google Play Button */}
-             <a href="#" className="flex items-center gap-3 bg-gray-900 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-xl transition-all hover:scale-105 w-fit">
-                <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
-                    <path d="M3.038 2.5C2.378 2.9 2 3.7 2 4.6v14.8c0 .9.378 1.7 1.038 2.1l9.6-8.4-9.6-8.4zm1.6-1.4l10.6 9.2 4.3-3.8-13.2-7.6c-.6-.3-1.2-.2-1.7.2zm15.8 6.3l-3.6 3.1 3.6 3.1c.8-.5 1.3-1.4 1.3-2.4s-.5-1.9-1.3-2.4zM4.638 22.9c.5.4 1.1.5 1.7.2l13.2-7.6-4.3-3.8-10.6 9.2z"/>
-                </svg>
-                <div className="text-left">
-                    <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Get it on</div>
-                    <div className="text-xs font-bold text-white leading-tight">Google Play</div>
-                </div>
-            </a>
+          {/* --- NEW POPUP SYSTEM INTEGRATED HERE --- */}
+          <MobileAppButtons />
+          {/* -------------------------------------- */}
 
-            {/* App Store Button */}
-            <a href="#" className="flex items-center gap-3 bg-gray-900 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-xl transition-all hover:scale-105 w-fit">
-                <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
-                    <path d="M17.354 12.527c-.024-2.506 2.037-3.71 2.13-3.76-1.162-1.7-2.972-1.933-3.615-1.956-1.538-.158-3.004.907-3.785.907-.782 0-1.987-.887-3.283-.867-1.69.02-3.248.986-4.117 2.506-1.757 3.064-.45 7.567 1.255 10.053.835 1.223 1.82 2.6 3.122 2.55 1.252-.048 1.723-.81 3.235-.81 1.513 0 1.944.81 3.258.78 1.35-.02 2.206-1.223 3.037-2.447.953-1.403 1.346-2.766 1.37-2.836-.03-.01-2.64-1.016-2.608-4.02zm-2.722-5.694c.697-.85 1.17-2.03 1.04-3.207-1.01.04-2.235.676-2.963 1.528-.65.752-1.217 1.963-1.065 3.15 1.127.088 2.28-.62 2.948-1.47z"/>
-                </svg>
-                <div className="text-left">
-                    <div className="text-[9px] uppercase font-bold text-gray-400 leading-none">Download on</div>
-                    <div className="text-xs font-bold text-white leading-tight">App Store</div>
-                </div>
-            </a>
-          </div>
         </div>
 
         {/* COLUMN 2: COMPANY */}
@@ -55,7 +37,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* COLUMN 3: OTHERS */}
+        {/* COLUMN 3: RESOURCES */}
         <div>
           <h3 className="text-lg font-bold mb-6 text-white">Resources</h3>
           <ul className="space-y-3 text-sm text-gray-400 font-medium">
@@ -77,7 +59,6 @@ export default function Footer() {
                 <span className="font-medium hover:text-white transition">Call: 16910 (24x7)</span>
             </li>
             
-            {/* WHATSAPP LINK ENABLED */}
             <li>
                 <a href="https://wa.me/8801745775697" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
                     <span className="text-green-500 bg-green-500/10 p-2 rounded-lg group-hover:bg-green-500 group-hover:text-white transition-all">
@@ -93,16 +74,14 @@ export default function Footer() {
             </li>
           </ul>
 
+          {/* Social Icons */}
           <div className="flex gap-4 mt-8">
-            {/* Facebook */}
             <a href="https://facebook.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition-all">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             </a>
-            {/* Instagram */}
             <a href="https://instagram.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:border-pink-600 hover:text-white transition-all">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
             </a>
-            {/* YouTube */}
             <a href="https://youtube.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:border-[#FF0000] hover:text-white transition-all">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
             </a>

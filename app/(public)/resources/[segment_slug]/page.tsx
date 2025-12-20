@@ -8,17 +8,27 @@ export const dynamic = "force-dynamic";
 export default async function SegmentPage({ params }: { params: Promise<{ segment_slug: string }> }) {
   const { segment_slug } = await params;
 
-  // 1. Fetch Segment Data (Now including the new URL columns)
-  const { data: segmentData } = await supabase
-    .from("segments")
-    .select("*")
-    .eq("slug", segment_slug)
-    .single();
-
+  // 1. Fetch Segment Data
+  const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segmentData) return notFound();
 
+  // 2. Fetch Groups
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
+  // 3. FETCH LATEST UPDATES (Routine, Syllabus, Results)
+  // We fetch all updates for this segment, order by newest, so we can pick the latest one of each type.
+  const { data: updates } = await supabase
+    .from("segment_updates")
+    .select("id, type, title, created_at")
+    .eq("segment_id", segmentData.id)
+    .order("created_at", { ascending: false });
+
+  // Filter to find the single latest item for each category
+  const routine = updates?.find(u => u.type === 'routine');
+  const syllabus = updates?.find(u => u.type === 'syllabus');
+  const result = updates?.find(u => u.type === 'exam_result');
+
+  // Helper for colors
   const getGradient = (index: number) => {
     const gradients = [
       "from-blue-500 to-indigo-600",
@@ -89,11 +99,12 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     </div>
                 ) : (
                     <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center mb-16">
-                        <h3 className="text-xl font-bold text-slate-900">No Groups Found</h3>
+                        <div className="text-4xl mb-4">📂</div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">No Groups Found</h3>
                     </div>
                 )}
 
-                {/* B. ESSENTIAL TOOLS (DYNAMIC) */}
+                {/* B. ESSENTIAL TOOLS (NOW DYNAMIC & CONNECTED) */}
                 <div className="mb-16">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <span className="text-2xl">⚡</span> Quick Tools
@@ -101,43 +112,52 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         {/* 1. ROUTINE TOOL */}
-                        <a 
-                           href={segmentData.routine_url || "#"} 
-                           target={segmentData.routine_url ? "_blank" : "_self"}
-                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.routine_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
-                        >
-                            <div className="text-blue-600 text-2xl mb-3">📅</div>
-                            <h4 className="font-bold text-slate-800">Exam Routine</h4>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {segmentData.routine_url ? "View Latest PDF" : "Not Published Yet"}
-                            </p>
-                        </a>
+                        {routine ? (
+                            <Link href={`/resources/${segment_slug}/updates/${routine.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition cursor-pointer group">
+                                <div className="text-blue-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📅</div>
+                                <h4 className="font-bold text-slate-800">Exam Routine</h4>
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p>
+                                <p className="text-[10px] text-blue-600 font-bold mt-2 uppercase">View Update →</p>
+                            </Link>
+                        ) : (
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
+                                <div className="text-slate-400 text-2xl mb-3">📅</div>
+                                <h4 className="font-bold text-slate-400">Exam Routine</h4>
+                                <p className="text-xs text-slate-400 mt-1">Not published yet</p>
+                            </div>
+                        )}
 
                         {/* 2. SYLLABUS TOOL */}
-                        <a 
-                           href={segmentData.syllabus_url || "#"} 
-                           target={segmentData.syllabus_url ? "_blank" : "_self"}
-                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.syllabus_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
-                        >
-                            <div className="text-emerald-600 text-2xl mb-3">📝</div>
-                            <h4 className="font-bold text-slate-800">Syllabus</h4>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {segmentData.syllabus_url ? "Download PDF" : "Updating..."}
-                            </p>
-                        </a>
+                        {syllabus ? (
+                            <Link href={`/resources/${segment_slug}/updates/${syllabus.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition cursor-pointer group">
+                                <div className="text-emerald-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📝</div>
+                                <h4 className="font-bold text-slate-800">Syllabus</h4>
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p>
+                                <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase">Download →</p>
+                            </Link>
+                        ) : (
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
+                                <div className="text-slate-400 text-2xl mb-3">📝</div>
+                                <h4 className="font-bold text-slate-400">Syllabus</h4>
+                                <p className="text-xs text-slate-400 mt-1">Updating...</p>
+                            </div>
+                        )}
 
                         {/* 3. RESULTS TOOL */}
-                        <a 
-                           href={segmentData.results_url || "#"} 
-                           target={segmentData.results_url ? "_blank" : "_self"}
-                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.results_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
-                        >
-                            <div className="text-purple-600 text-2xl mb-3">🏆</div>
-                            <h4 className="font-bold text-slate-800">Board Results</h4>
-                            <p className="text-sm text-slate-500 mt-1">
-                                {segmentData.results_url ? "Check Now" : "Available Soon"}
-                            </p>
-                        </a>
+                        {result ? (
+                            <Link href={`/resources/${segment_slug}/updates/${result.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition cursor-pointer group">
+                                <div className="text-purple-600 text-2xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
+                                <h4 className="font-bold text-slate-800">Exam Results</h4>
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p>
+                                <p className="text-[10px] text-purple-600 font-bold mt-2 uppercase">Check Now →</p>
+                            </Link>
+                        ) : (
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
+                                <div className="text-slate-400 text-2xl mb-3">🏆</div>
+                                <h4 className="font-bold text-slate-400">Board Results</h4>
+                                <p className="text-xs text-slate-400 mt-1">Coming Soon</p>
+                            </div>
+                        )}
 
                     </div>
                 </div>
