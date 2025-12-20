@@ -18,7 +18,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // --- 1. HARDCODED EXAM DATA (No more database fetching delays) ---
+  // --- 1. HARDCODED EXAM DATA ---
   const examLinks = [
     { name: "SSC", href: "/resources/ssc" },
     { name: "HSC", href: "/resources/hsc" },
@@ -149,7 +149,7 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* --- RIGHT SIDE --- */}
+        {/* --- RIGHT SIDE (AUTH & SEARCH) --- */}
         <div className="hidden md:flex items-center gap-4">
             <form onSubmit={handleSearch} className="relative group">
                 <input 
@@ -163,10 +163,16 @@ export default function Header() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
             </form>
-            {user ? (
-                <Link href="/dashboard" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Dashboard ↗</Link>
-            ) : (
-                <Link href="/login" className={`px-5 py-2 rounded-full font-bold text-sm border-2 transition ${isScrolled || pathname !== '/' ? 'border-blue-600 text-blue-600 hover:bg-blue-50' : 'border-white text-white hover:bg-white/20'}`}>Login</Link>
+            
+            {/* LOGIC CHANGE: 
+                1. Only show button if `user` exists.
+                2. If user exists, link to `/admin`.
+                3. If no user, show NOTHING (no login button).
+            */}
+            {user && (
+                <Link href="/admin" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+                    Dashboard ↗
+                </Link>
             )}
         </div>
 
@@ -206,11 +212,15 @@ export default function Header() {
                )}
              </div>
            ))}
-           <hr className="my-2" />
-           {user ? (
-               <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">Dashboard</Link>
-           ) : (
-               <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold border border-gray-200">Login / Signup</Link>
+           
+           {/* MOBILE LOGIC: Only show if user exists, and link to /admin */}
+           {user && (
+               <>
+                   <hr className="my-2" />
+                   <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">
+                       Dashboard
+                   </Link>
+               </>
            )}
         </div>
       )}
