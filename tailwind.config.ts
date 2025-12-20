@@ -8,6 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // 1. THIS IS THE NEW FONT SETUP
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "var(--font-bangla)", "sans-serif"],
+      },
+      // (Your existing background images)
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
@@ -16,7 +21,7 @@ const config: Config = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'), // This is the magic line you need!
+    require('@tailwindcss/typography'), 
   ],
 };
 export default config;

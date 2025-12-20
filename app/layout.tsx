@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import localFont from "next/font/local";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,6 +69,12 @@ export const metadata: Metadata = {
     "google-adsense-account": "ca-pub-3105440348785747",
   },
 };
+// 2. Setup the Bangla Font
+const kalpurush = localFont({
+  src: "./fonts/Kalpurush.ttf", // Make sure filename matches exactly
+  variable: "--font-bangla",    // We will use this variable in CSS
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -77,7 +84,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kalpurush.variable} antialiased`}
       >
         {/* 2. JSON-LD SCRIPT (This helps get the Sitelinks/Search Box on Google) */}
         <script
