@@ -208,7 +208,7 @@ export default function Header() {
            ))}
            <hr className="my-2" />
            {user ? (
-               <Link href="/dashboard" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">Dashboard</Link>
+               <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">Dashboard</Link>
            ) : (
                <Link href="/login" onClick={() => setIsOpen(false)} className="bg-gray-100 text-gray-700 text-center py-3 rounded-lg font-bold border border-gray-200">Login / Signup</Link>
            )}
