@@ -9,11 +9,7 @@ import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
 
 export const dynamic = "force-dynamic";
-const bengaliFont = Noto_Serif_Bengali({ 
-  subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+
 // --- FIXED METADATA FUNCTION ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   // Await params to get the ID
@@ -71,9 +67,9 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
         
         {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
-           <div className={bengaliFont.className}>
+            {/* Printable Content Area (Client Component) */}
             <PrintableBlogBody post={post} formattedDate={formattedDate} />
-            </div>
+
             {/* Comments - Hidden during print via CSS */}
             <div className="mt-12 comments-section">
                 <FacebookComments url={absoluteUrl} />

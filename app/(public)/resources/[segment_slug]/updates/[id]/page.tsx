@@ -2,22 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
+// 1. Import the font directly here
 import { Noto_Serif_Bengali } from "next/font/google";
-import Script from "next/script";
 
 export const dynamic = "force-dynamic";
 
-// 1. Initialize Font
+// 2. Initialize the font with the "bengali" subset
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"], // Loading multiple weights for bold text support
   display: "swap",
 });
 
 export default async function UpdateDetailsPage({ params }: { params: Promise<{ segment_slug: string; id: string }> }) {
   const { segment_slug, id } = await params;
 
-  // 2. Fetch Data (Selecting * ensures we get attachment_url)
+  // Fetch the Update Post
   const { data: post } = await supabase
     .from("segment_updates")
     .select("*, segments(title)")
@@ -36,39 +36,29 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
     exam_result: "bg-purple-100 text-purple-700 border-purple-200"
   };
 
+  // Current URL for comments
   const currentUrl = `https://nextprepbd.com/resources/${segment_slug}/updates/${id}`;
 
   return (
-    <div className={`min-h-screen bg-[#F8FAFC] font-sans ${bengaliFont.className}`}>
-      
-      {/* Facebook SDK */}
-      <div id="fb-root"></div>
-      <Script 
-        async 
-        defer 
-        crossOrigin="anonymous" 
-        src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0" 
-        strategy="lazyOnload"
-      />
-
+    <div className="min-h-screen bg-[#F8FAFC] font-sans">
       {/* HEADER */}
       <section className="bg-white border-b border-slate-200 pt-32 pb-10 px-6">
         <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 font-sans">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
                 <Link href="/" className="hover:text-blue-600 transition">Home</Link> / 
                 <Link href={`/resources/${segment_slug}`} className="hover:text-blue-600 transition">{post.segments?.title}</Link> /
                 <span>Update</span>
             </div>
             
-            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border mb-4 font-sans ${typeColors[post.type] || "bg-gray-100"}`}>
+            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border mb-4 ${typeColors[post.type] || "bg-gray-100"}`}>
                 {post.type.replace('_', ' ')}
             </span>
 
-            {/* Title with Bangla Font */}
-            <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
+            {/* Title with Bangla Font applied just in case the title is in Bangla */}
+            <h1 className={`text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight ${bengaliFont.className}`}>
                 {post.title}
             </h1>
-            <p className="text-slate-500 font-medium font-sans">Posted on {formattedDate}</p>
+            <p className="text-slate-500 font-medium">Posted on {formattedDate}</p>
         </div>
       </section>
 
@@ -79,9 +69,9 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
             <div className="lg:col-span-8">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 mb-8">
                     
-                    {/* PDF Button Logic: Checks if attachment_url is not null and not empty */}
-                    {post.attachment_url && post.attachment_url.length > 0 && (
-                        <div className="mb-10 bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 font-sans">
+                    {/* PDF/Attachment Download Button */}
+                    {post.attachment_url && (
+                        <div className="mb-10 bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white text-blue-600 rounded-lg flex items-center justify-center text-2xl shadow-sm">
                                     📄
@@ -103,21 +93,22 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                         </div>
                     )}
 
-                    {/* Blog Body with Bangla Font */}
+                    {/* Rich Text Content WITH BANGLA FONT */}
                     <div 
-                        className="blog-content text-lg text-slate-800 leading-relaxed"
+                        // 3. Apply the font class specifically to this div
+                        className={`blog-content text-lg text-slate-800 leading-relaxed ${bengaliFont.className}`}
                         dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No details provided.</p>" }}
                     />
                 </div>
 
                 {/* Discussion Section */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2 font-sans">
+                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                         💬 Discussion
                     </h3>
                     <div className="w-full bg-slate-50 rounded-xl p-4 min-h-[100px] flex justify-center">
                          <div 
-                            className="fb-comments w-full" 
+                            className="fb-comments" 
                             data-href={currentUrl} 
                             data-width="100%" 
                             data-numposts="5">
