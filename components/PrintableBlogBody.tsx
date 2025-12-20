@@ -3,20 +3,27 @@
 import { useRef } from "react";
 import PrintBtn from "./PrintBtn";
 
-// 1. Add optional 'attachmentUrl' to the props definition
 interface PrintableBlogBodyProps {
   post: any;
   formattedDate: string;
-  attachmentUrl?: string; // Optional: Won't affect normal blogs
+  attachmentUrl?: string;
+  bengaliFontClass?: string; // <--- 1. Add this optional prop
 }
 
-export default function PrintableBlogBody({ post, formattedDate, attachmentUrl }: PrintableBlogBodyProps) {
+export default function PrintableBlogBody({ 
+  post, 
+  formattedDate, 
+  attachmentUrl,
+  bengaliFontClass // <--- 2. Destructure it here
+}: PrintableBlogBodyProps) {
+  
   const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
-      {/* === WEB ACTION BAR (Hidden in Print) === */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 no-print">
+      {/* === WEB ACTION BAR === */}
+      {/* Added 'pt-4' to give the breadcrumbs a little breathing room */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 no-print pt-4">
          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
             <span>Home</span> / <span>Resources</span> / <span className="text-blue-600">{post.subjects?.groups?.segments?.title || "Post"}</span>
          </div>
@@ -29,7 +36,7 @@ export default function PrintableBlogBody({ post, formattedDate, attachmentUrl }
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-12 relative print:shadow-none print:border-none print:p-0 print:block"
       >
         
-        {/* 1. PRINT-ONLY LETTERHEAD HEADER (Visible ONLY on Paper) */}
+        {/* PRINT-ONLY HEADER */}
         <div className="hidden print:flex justify-between items-end border-b-2 border-black pb-4 mb-8">
             <div>
                 <h1 className="text-3xl font-black tracking-tighter text-black">
@@ -43,9 +50,10 @@ export default function PrintableBlogBody({ post, formattedDate, attachmentUrl }
             </div>
         </div>
 
-        {/* 2. ARTICLE TITLE & META */}
+        {/* TITLE & META */}
         <div className="mb-8 print:mb-6">
-            <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-tight print:text-4xl print:text-black">
+            {/* 3. Apply the font class to the Title */}
+            <h1 className={`text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-tight print:text-4xl print:text-black ${bengaliFontClass}`}>
                 {post.title}
             </h1>
             <div className="flex items-center gap-3 text-sm text-gray-500 print:text-black">
@@ -59,8 +67,7 @@ export default function PrintableBlogBody({ post, formattedDate, attachmentUrl }
             </div>
         </div>
 
-        {/* 3. ATTACHMENT SECTION (Only shows if attachmentUrl exists - Updates Only) */}
-        {/* Added 'print:hidden' so this download button doesn't appear on the paper PDF */}
+        {/* ATTACHMENT SECTION (Updates Only) */}
         {attachmentUrl && (
           <div className="mb-8 bg-blue-50 border border-blue-100 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
             <div className="flex items-center gap-4">
@@ -83,13 +90,14 @@ export default function PrintableBlogBody({ post, formattedDate, attachmentUrl }
           </div>
         )}
 
-        {/* 4. MAIN CONTENT */}
+        {/* MAIN CONTENT */}
         <div 
-          className="blog-content text-lg text-gray-800 leading-relaxed print:text-base print:text-justify print:text-black print:leading-normal" 
+          // 4. Apply the font class to the Body Content
+          className={`blog-content text-lg text-gray-800 leading-relaxed print:text-base print:text-justify print:text-black print:leading-normal ${bengaliFontClass}`} 
           dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
         />
         
-        {/* 5. PRINT-ONLY FOOTER */}
+        {/* PRINT-ONLY FOOTER */}
         <div className="hidden print:flex flex-row justify-center items-center text-gray-400 mt-12 pt-6 border-t border-gray-200">
             <p className="text-[10px] uppercase tracking-widest">
                  © {new Date().getFullYear()} NextPrepBD — Your Ultimate Exam Companion

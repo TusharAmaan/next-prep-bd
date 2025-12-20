@@ -10,12 +10,17 @@ import { Noto_Serif_Bengali } from "next/font/google";
 
 export const dynamic = "force-dynamic";
 
+// --- 1. INITIALIZE THE FONT ---
+const bengaliFont = Noto_Serif_Bengali({ 
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"], 
+  display: "swap",
+});
+
 // --- FIXED METADATA FUNCTION ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  // Await params to get the ID
   const { id } = await params;
 
-  // Fetch the specific post for SEO tags
   const { data: post } = await supabase
     .from('resources')
     .select('title, seo_title, seo_description, content_url')
@@ -29,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: post.seo_title || post.title, // Prefer SEO title if available
+    title: post.seo_title || post.title, 
     description: post.seo_description || `Read about ${post.title} on NextPrepBD.`,
     openGraph: {
       title: post.title,
@@ -67,8 +72,14 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
         
         {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
-            {/* Printable Content Area (Client Component) */}
-            <PrintableBlogBody post={post} formattedDate={formattedDate} />
+            {/* 3. Pass the font class here. 
+               The component will now apply the Bangla font to the title and body.
+            */}
+            <PrintableBlogBody 
+                post={post} 
+                formattedDate={formattedDate}
+                bengaliFontClass={bengaliFont.className} 
+            />
 
             {/* Comments - Hidden during print via CSS */}
             <div className="mt-12 comments-section">
