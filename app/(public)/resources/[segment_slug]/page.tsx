@@ -8,14 +8,17 @@ export const dynamic = "force-dynamic";
 export default async function SegmentPage({ params }: { params: Promise<{ segment_slug: string }> }) {
   const { segment_slug } = await params;
 
-  // 1. Fetch Segment Data
-  const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
+  // 1. Fetch Segment Data (Now including the new URL columns)
+  const { data: segmentData } = await supabase
+    .from("segments")
+    .select("*")
+    .eq("slug", segment_slug)
+    .single();
+
   if (!segmentData) return notFound();
 
-  // 2. Fetch Groups
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
-  // Helper for colors
   const getGradient = (index: number) => {
     const gradients = [
       "from-blue-500 to-indigo-600",
@@ -29,9 +32,7 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
       
-      {/* =========================================
-          1. HERO SECTION
-         ========================================= */}
+      {/* HERO SECTION */}
       <section className="bg-slate-900 text-white pt-32 pb-20 px-6 relative overflow-hidden">
         <div className="absolute top-[-50%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
@@ -50,13 +51,11 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
         </div>
       </section>
 
-      {/* =========================================
-          2. MAIN CONTENT
-         ========================================= */}
+      {/* MAIN CONTENT */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            {/* LEFT COLUMN (The Main Content) */}
+            {/* LEFT COLUMN */}
             <div className="lg:col-span-8">
                 
                 {/* A. GROUPS GRID */}
@@ -90,62 +89,71 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     </div>
                 ) : (
                     <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center mb-16">
-                        <div className="text-4xl mb-4">📂</div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No Groups Found</h3>
+                        <h3 className="text-xl font-bold text-slate-900">No Groups Found</h3>
                     </div>
                 )}
 
-                {/* B. ESSENTIAL TOOLS (New Section to fill space!) */}
+                {/* B. ESSENTIAL TOOLS (DYNAMIC) */}
                 <div className="mb-16">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <span className="text-2xl">⚡</span> Quick Tools
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Tool 1 */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition cursor-pointer">
+                        
+                        {/* 1. ROUTINE TOOL */}
+                        <a 
+                           href={segmentData.routine_url || "#"} 
+                           target={segmentData.routine_url ? "_blank" : "_self"}
+                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.routine_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                        >
                             <div className="text-blue-600 text-2xl mb-3">📅</div>
                             <h4 className="font-bold text-slate-800">Exam Routine</h4>
-                            <p className="text-sm text-slate-500 mt-1">Check the latest schedules</p>
-                        </div>
-                        {/* Tool 2 */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition cursor-pointer">
+                            <p className="text-sm text-slate-500 mt-1">
+                                {segmentData.routine_url ? "View Latest PDF" : "Not Published Yet"}
+                            </p>
+                        </a>
+
+                        {/* 2. SYLLABUS TOOL */}
+                        <a 
+                           href={segmentData.syllabus_url || "#"} 
+                           target={segmentData.syllabus_url ? "_blank" : "_self"}
+                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.syllabus_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                        >
                             <div className="text-emerald-600 text-2xl mb-3">📝</div>
-                            <h4 className="font-bold text-slate-800">Syllabus 2026</h4>
-                            <p className="text-sm text-slate-500 mt-1">Download official PDF</p>
-                        </div>
-                        {/* Tool 3 */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition cursor-pointer">
+                            <h4 className="font-bold text-slate-800">Syllabus</h4>
+                            <p className="text-sm text-slate-500 mt-1">
+                                {segmentData.syllabus_url ? "Download PDF" : "Updating..."}
+                            </p>
+                        </a>
+
+                        {/* 3. RESULTS TOOL */}
+                        <a 
+                           href={segmentData.results_url || "#"} 
+                           target={segmentData.results_url ? "_blank" : "_self"}
+                           className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition ${segmentData.results_url ? 'hover:border-blue-400 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                        >
                             <div className="text-purple-600 text-2xl mb-3">🏆</div>
                             <h4 className="font-bold text-slate-800">Board Results</h4>
-                            <p className="text-sm text-slate-500 mt-1">View your marksheet</p>
-                        </div>
+                            <p className="text-sm text-slate-500 mt-1">
+                                {segmentData.results_url ? "Check Now" : "Available Soon"}
+                            </p>
+                        </a>
+
                     </div>
                 </div>
 
-                {/* C. WHY CHOOSE SECTION (SEO & Trust) */}
+                {/* C. WHY CHOOSE SECTION */}
                 <div className="bg-blue-50 rounded-2xl p-8 border border-blue-100">
                     <h3 className="text-xl font-bold text-blue-900 mb-4">Why study for {segmentData.title} with NextPrep?</h3>
                     <p className="text-slate-700 leading-relaxed mb-4">
                         We provide the most up-to-date resources for <strong>{segmentData.title}</strong> students in Bangladesh. 
-                        Unlike other platforms, our content is verified by expert teachers and updated weekly to match the 
-                        latest NCTB curriculum.
+                        Unlike other platforms, our content is verified by expert teachers.
                     </p>
-                    <ul className="space-y-2">
-                        <li className="flex items-center gap-2 text-slate-700">
-                            <span className="text-green-500">✔</span> 100% Free Chapter-wise Notes
-                        </li>
-                        <li className="flex items-center gap-2 text-slate-700">
-                            <span className="text-green-500">✔</span> Previous Year Board Questions
-                        </li>
-                        <li className="flex items-center gap-2 text-slate-700">
-                            <span className="text-green-500">✔</span> Exclusive Suggestions for A+
-                        </li>
-                    </ul>
                 </div>
 
             </div>
 
-            {/* RIGHT COLUMN: Sidebar */}
+            {/* SIDEBAR */}
             <div className="lg:col-span-4 space-y-8">
                 <Sidebar />
             </div>
