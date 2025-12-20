@@ -104,7 +104,7 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     </div>
                 )}
 
-                {/* B. ESSENTIAL TOOLS (NOW DYNAMIC & CONNECTED) */}
+                {/* B. ESSENTIAL TOOLS (NOW DYNAMIC & CONNECTED TO ARCHIVE) */}
                 <div className="mb-16">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <span className="text-2xl">⚡</span> Quick Tools
@@ -112,52 +112,40 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         {/* 1. ROUTINE TOOL */}
-                        {routine ? (
-                            <Link href={`/resources/${segment_slug}/updates/${routine.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition cursor-pointer group">
-                                <div className="text-blue-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📅</div>
-                                <h4 className="font-bold text-slate-800">Exam Routine</h4>
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p>
-                                <p className="text-[10px] text-blue-600 font-bold mt-2 uppercase">View Update →</p>
-                            </Link>
-                        ) : (
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
-                                <div className="text-slate-400 text-2xl mb-3">📅</div>
-                                <h4 className="font-bold text-slate-400">Exam Routine</h4>
-                                <p className="text-xs text-slate-400 mt-1">Not published yet</p>
-                            </div>
-                        )}
+                        <Link href={`/resources/${segment_slug}/category/routine`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition cursor-pointer group">
+                            <div className="text-blue-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📅</div>
+                            <h4 className="font-bold text-slate-800">Exam Routine</h4>
+                            {routine ? (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {routine.title}</p>
+                            ) : (
+                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
+                            )}
+                            <p className="text-[10px] text-blue-600 font-bold mt-2 uppercase">View All →</p>
+                        </Link>
 
                         {/* 2. SYLLABUS TOOL */}
-                        {syllabus ? (
-                            <Link href={`/resources/${segment_slug}/updates/${syllabus.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition cursor-pointer group">
-                                <div className="text-emerald-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📝</div>
-                                <h4 className="font-bold text-slate-800">Syllabus</h4>
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p>
-                                <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase">Download →</p>
-                            </Link>
-                        ) : (
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
-                                <div className="text-slate-400 text-2xl mb-3">📝</div>
-                                <h4 className="font-bold text-slate-400">Syllabus</h4>
-                                <p className="text-xs text-slate-400 mt-1">Updating...</p>
-                            </div>
-                        )}
+                        <Link href={`/resources/${segment_slug}/category/syllabus`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition cursor-pointer group">
+                            <div className="text-emerald-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📝</div>
+                            <h4 className="font-bold text-slate-800">Syllabus</h4>
+                            {syllabus ? (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {syllabus.title}</p>
+                            ) : (
+                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
+                            )}
+                            <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase">View All →</p>
+                        </Link>
 
                         {/* 3. RESULTS TOOL */}
-                        {result ? (
-                            <Link href={`/resources/${segment_slug}/updates/${result.id}`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition cursor-pointer group">
-                                <div className="text-purple-600 text-2xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
-                                <h4 className="font-bold text-slate-800">Exam Results</h4>
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p>
-                                <p className="text-[10px] text-purple-600 font-bold mt-2 uppercase">Check Now →</p>
-                            </Link>
-                        ) : (
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 opacity-60">
-                                <div className="text-slate-400 text-2xl mb-3">🏆</div>
-                                <h4 className="font-bold text-slate-400">Board Results</h4>
-                                <p className="text-xs text-slate-400 mt-1">Coming Soon</p>
-                            </div>
-                        )}
+                        <Link href={`/resources/${segment_slug}/category/exam_result`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition cursor-pointer group">
+                            <div className="text-purple-600 text-2xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
+                            <h4 className="font-bold text-slate-800">Exam Results</h4>
+                            {result ? (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {result.title}</p>
+                            ) : (
+                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
+                            )}
+                            <p className="text-[10px] text-purple-600 font-bold mt-2 uppercase">View All →</p>
+                        </Link>
 
                     </div>
                 </div>
