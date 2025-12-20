@@ -2,22 +2,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
-// 1. Import the font directly here
 import { Noto_Serif_Bengali } from "next/font/google";
+// 1. Import the Script component
+import Script from "next/script";
 
 export const dynamic = "force-dynamic";
 
-// 2. Initialize the font with the "bengali" subset
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"], // Loading multiple weights for bold text support
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
 export default async function UpdateDetailsPage({ params }: { params: Promise<{ segment_slug: string; id: string }> }) {
   const { segment_slug, id } = await params;
 
-  // Fetch the Update Post
   const { data: post } = await supabase
     .from("segment_updates")
     .select("*, segments(title)")
@@ -36,11 +35,21 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
     exam_result: "bg-purple-100 text-purple-700 border-purple-200"
   };
 
-  // Current URL for comments
   const currentUrl = `https://nextprepbd.com/resources/${segment_slug}/updates/${id}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
+      
+      {/* 2. REQUIRED: Facebook SDK Root Div & Script */}
+      <div id="fb-root"></div>
+      <Script 
+        async 
+        defer 
+        crossOrigin="anonymous" 
+        src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0" 
+        strategy="lazyOnload"
+      />
+
       {/* HEADER */}
       <section className="bg-white border-b border-slate-200 pt-32 pb-10 px-6">
         <div className="max-w-7xl mx-auto">
@@ -54,7 +63,6 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                 {post.type.replace('_', ' ')}
             </span>
 
-            {/* Title with Bangla Font applied just in case the title is in Bangla */}
             <h1 className={`text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight ${bengaliFont.className}`}>
                 {post.title}
             </h1>
@@ -69,7 +77,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
             <div className="lg:col-span-8">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 mb-8">
                     
-                    {/* PDF/Attachment Download Button */}
+                    {/* PDF Button: Only shows if attachment_url exists in database */}
                     {post.attachment_url && (
                         <div className="mb-10 bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
@@ -93,9 +101,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                         </div>
                     )}
 
-                    {/* Rich Text Content WITH BANGLA FONT */}
                     <div 
-                        // 3. Apply the font class specifically to this div
                         className={`blog-content text-lg text-slate-800 leading-relaxed ${bengaliFont.className}`}
                         dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No details provided.</p>" }}
                     />
@@ -107,8 +113,9 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                         💬 Discussion
                     </h3>
                     <div className="w-full bg-slate-50 rounded-xl p-4 min-h-[100px] flex justify-center">
+                         {/* 3. Ensure width is 100% explicitly in className as well */}
                          <div 
-                            className="fb-comments" 
+                            className="fb-comments w-full" 
                             data-href={currentUrl} 
                             data-width="100%" 
                             data-numposts="5">
