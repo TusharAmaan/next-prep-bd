@@ -148,3 +148,75 @@ body {
     background: white;
   }
 }
+
+    /* Container styles */
+    .question-bank-container {
+        font-family: 'SolaimanLipi', 'Kalpurush', sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    /* Header for each exam year */
+    .exam-header {
+        background-color: #f4f4f4;
+        padding: 12px 15px;
+        border-left: 5px solid #007bff;
+        margin-top: 30px;
+        margin-bottom: 20px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    /* Individual Question Card */
+    .question-card {
+        border-bottom: 1px solid #e0e0e0;
+        padding: 20px 0;
+    }
+
+    /* Question Text */
+    .question-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        margin-top: 0;
+        color: #000;
+    }
+
+    /* Options Container (Grid) - Replaces UL */
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    /* Individual Option styling - Replaces LI */
+    .option-item {
+        background: #fafafa;
+        padding: 8px 12px;
+        border-radius: 5px;
+        border: 1px solid #eee;
+        margin: 0; /* Remove default paragraph margin */
+    }
+
+    /* Correct Answer styling */
+    .correct-answer {
+        font-size: 0.95em;
+        color: #2e7d32; /* Green color */
+        font-weight: bold;
+        background-color: #e8f5e9;
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 4px;
+        border: 1px solid #c8e6c9;
+        margin: 0;
+    }
+
+    /* Mobile responsive: stack options on small screens */
+    @media (max-width: 600px) {
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+    }
