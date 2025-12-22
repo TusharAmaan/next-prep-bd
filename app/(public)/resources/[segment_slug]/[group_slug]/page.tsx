@@ -19,6 +19,15 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
   // 3. Fetch Subjects
   const { data: subjects } = await supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id");
 
+  // 4. NEW: FETCH GENERAL RESOURCES FOR THIS GROUP
+  // Fetch latest 10 resources assigned specifically to this Group
+  const { data: resources } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at, content_url")
+    .eq("group_id", groupData.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
   // Gradient Helper for consistent branding
   const getGradient = (index: number) => {
     const gradients = [
@@ -28,6 +37,17 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
       "from-orange-500 to-red-500"
     ];
     return gradients[index % gradients.length];
+  };
+
+  // Helper icon
+  const getIcon = (type: string) => {
+    switch(type) {
+        case 'pdf': return '📄';
+        case 'video': return '▶️';
+        case 'blog': return '✍️';
+        case 'question': return '❓';
+        default: return '📁';
+    }
   };
 
   return (
@@ -65,13 +85,15 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
             
             {/* LEFT COLUMN: Subjects Grid */}
             <div className="lg:col-span-8">
+                
+                {/* A. SUBJECTS GRID */}
                 <div className="flex items-center gap-3 mb-8">
                     <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
                     <h2 className="text-2xl font-bold text-slate-900">Available Subjects</h2>
                 </div>
 
                 {subjects && subjects.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
                         {subjects.map((sub, index) => (
                             <Link 
                                 key={sub.id} 
@@ -101,12 +123,47 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center">
+                    <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center mb-16">
                         <div className="text-4xl mb-4">📚</div>
                         <h3 className="text-xl font-bold text-slate-900 mb-2">No subjects found</h3>
                         <p className="text-slate-500">We are adding subjects for this group soon.</p>
                     </div>
                 )}
+
+                {/* B. LATEST RESOURCES (NEW SECTION) */}
+                <div className="mb-16">
+                     <div className="flex items-center gap-3 mb-6">
+                        <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
+                        <h2 className="text-2xl font-bold text-slate-900">Latest Materials</h2>
+                    </div>
+                    
+                    {resources && resources.length > 0 ? (
+                        <div className="space-y-4">
+                             {resources.map((res) => (
+                                <Link key={res.id} href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url || '#'} target={res.type === 'blog' ? '_self' : '_blank'} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-300 hover:shadow-md transition group">
+                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                        {getIcon(res.type)}
+                                     </div>
+                                     <div className="flex-1">
+                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors">{res.title}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
+                                            <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                     </div>
+                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">
+                                        ➔
+                                     </div>
+                                </Link>
+                             ))}
+                        </div>
+                    ) : (
+                        <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
+                            No general materials posted for this group yet.
+                        </div>
+                    )}
+                </div>
+
             </div>
 
             {/* RIGHT COLUMN: Sidebar */}

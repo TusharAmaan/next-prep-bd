@@ -12,18 +12,26 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segmentData) return notFound();
 
-  // 2. Fetch Groups
+  // 2. Fetch Groups (Sub-categories like Science, Arts)
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
   // 3. FETCH LATEST UPDATES (Routine, Syllabus, Results)
-  // We fetch all updates for this segment, order by newest, so we can pick the latest one of each type.
   const { data: updates } = await supabase
     .from("segment_updates")
     .select("id, type, title, created_at")
     .eq("segment_id", segmentData.id)
     .order("created_at", { ascending: false });
 
-  // Filter to find the single latest item for each category
+  // 4. NEW: FETCH GENERAL RESOURCES FOR THIS SEGMENT
+  // This gets resources posted specifically for this Segment (e.g., "All SSC Students")
+  const { data: resources } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at, content_url")
+    .eq("segment_id", segmentData.id)
+    .order("created_at", { ascending: false })
+    .limit(10); // Show latest 10
+
+  // Filter updates
   const routine = updates?.find(u => u.type === 'routine');
   const syllabus = updates?.find(u => u.type === 'syllabus');
   const result = updates?.find(u => u.type === 'exam_result');
@@ -37,6 +45,17 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
       "from-orange-500 to-red-500"
     ];
     return gradients[index % gradients.length];
+  };
+
+  // Helper icon for resources
+  const getIcon = (type: string) => {
+    switch(type) {
+        case 'pdf': return '📄';
+        case 'video': return '▶️';
+        case 'blog': return '✍️';
+        case 'question': return '❓';
+        default: return '📁';
+    }
   };
 
   return (
@@ -104,59 +123,72 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                     </div>
                 )}
 
-                {/* B. ESSENTIAL TOOLS (NOW DYNAMIC & CONNECTED TO ARCHIVE) */}
+                {/* B. ESSENTIAL TOOLS */}
                 <div className="mb-16">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <span className="text-2xl">⚡</span> Quick Tools
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
-                        {/* 1. ROUTINE TOOL */}
+                        {/* 1. ROUTINE */}
                         <Link href={`/resources/${segment_slug}/category/routine`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-blue-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📅</div>
                             <h4 className="font-bold text-slate-800">Exam Routine</h4>
-                            {routine ? (
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {routine.title}</p>
-                            ) : (
-                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
-                            )}
+                            {routine ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {routine.title}</p> : <p className="text-xs text-slate-400 mt-1">View Archive</p>}
                             <p className="text-[10px] text-blue-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
 
-                        {/* 2. SYLLABUS TOOL */}
+                        {/* 2. SYLLABUS */}
                         <Link href={`/resources/${segment_slug}/category/syllabus`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-emerald-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📝</div>
                             <h4 className="font-bold text-slate-800">Syllabus</h4>
-                            {syllabus ? (
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {syllabus.title}</p>
-                            ) : (
-                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
-                            )}
+                            {syllabus ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {syllabus.title}</p> : <p className="text-xs text-slate-400 mt-1">View Archive</p>}
                             <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
 
-                        {/* 3. RESULTS TOOL */}
+                        {/* 3. RESULTS */}
                         <Link href={`/resources/${segment_slug}/category/exam_result`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-purple-600 text-2xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
                             <h4 className="font-bold text-slate-800">Exam Results</h4>
-                            {result ? (
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {result.title}</p>
-                            ) : (
-                                <p className="text-xs text-slate-400 mt-1">View Archive</p>
-                            )}
+                            {result ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {result.title}</p> : <p className="text-xs text-slate-400 mt-1">View Archive</p>}
                             <p className="text-[10px] text-purple-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
 
                     </div>
                 </div>
 
-                {/* C. WHY CHOOSE SECTION */}
-                <div className="bg-blue-50 rounded-2xl p-8 border border-blue-100">
-                    <h3 className="text-xl font-bold text-blue-900 mb-4">Why study for {segmentData.title} with NextPrep?</h3>
-                    <p className="text-slate-700 leading-relaxed mb-4">
-                        We provide the most up-to-date resources for <strong>{segmentData.title}</strong> students in Bangladesh. 
-                        Unlike other platforms, our content is verified by expert teachers.
-                    </p>
+                {/* C. LATEST RESOURCES (NEW: Shows items posted specifically for this Segment) */}
+                <div className="mb-16">
+                     <div className="flex items-center gap-3 mb-6">
+                        <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
+                        <h2 className="text-2xl font-bold text-slate-900">Latest Materials</h2>
+                    </div>
+                    
+                    {resources && resources.length > 0 ? (
+                        <div className="space-y-4">
+                             {resources.map((res) => (
+                                <Link key={res.id} href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url || '#'} target={res.type === 'blog' ? '_self' : '_blank'} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-300 hover:shadow-md transition group">
+                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                        {getIcon(res.type)}
+                                     </div>
+                                     <div className="flex-1">
+                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors">{res.title}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
+                                            <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                     </div>
+                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">
+                                        ➔
+                                     </div>
+                                </Link>
+                             ))}
+                        </div>
+                    ) : (
+                        <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
+                            No general materials available for this section yet.
+                        </div>
+                    )}
                 </div>
 
             </div>

@@ -156,7 +156,29 @@ export default function AdminDashboard() {
   const fetchSegments = async () => { const {data} = await supabase.from("segments").select("*").order('id'); setSegments(data||[]); };
   const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
   const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
-  const fetchResources = async (subId: string) => { const {data} = await supabase.from("resources").select("*").eq("subject_id", subId).order('created_at',{ascending:false}); setResources(data||[]); };
+  
+  // --- UPDATED RESOURCE FETCHER: HANDLES HIERARCHY ---
+  const fetchResources = async (segId: string | null, grpId: string | null, subId: string | null) => { 
+      let query = supabase.from("resources").select("*").order('created_at',{ascending:false});
+      
+      // LOGIC: Only fetch resources for the EXACT level selected
+      if (subId) {
+          query = query.eq("subject_id", subId);
+      } else if (grpId) {
+          // Fetch items that belong to this group but NO subject (Group Global)
+          query = query.eq("group_id", grpId).is("subject_id", null);
+      } else if (segId) {
+          // Fetch items that belong to this segment but NO group/subject (Segment Global)
+          query = query.eq("segment_id", segId).is("group_id", null).is("subject_id", null);
+      } else {
+          setResources([]); 
+          return;
+      }
+      
+      const {data} = await query; 
+      setResources(data||[]); 
+  };
+
   const fetchNews = async () => { const {data} = await supabase.from("news").select("*").order('created_at',{ascending:false}); setNewsList(data||[]); };
   const fetchCategories = async () => { const {data} = await supabase.from("categories").select("*").order('name'); setCategoryList(data||[]); };
   const fetchEbooks = async () => { const {data} = await supabase.from("ebooks").select("*").order('created_at',{ascending:false}); setEbooksList(data||[]); };
@@ -173,10 +195,39 @@ export default function AdminDashboard() {
     });
   };
 
-  // --- HIERARCHY LOGIC ---
-  const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); setResources([]); fetchGroups(id); };
-  const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); setResources([]); fetchGroups(selectedSegment); fetchSubjects(id); };
-  const handleSubjectClick = (id: string) => { setSelectedSubject(id); fetchResources(id); };
+  // --- HIERARCHY LOGIC (UPDATED) ---
+  const handleSegmentClick = (id: string) => { 
+      // 1. Set Selections
+      setSelectedSegment(id); 
+      setSelectedGroup(""); 
+      setSelectedSubject(""); 
+      
+      // 2. Clear Child Data
+      setGroups([]); 
+      setSubjects([]); 
+      
+      // 3. Fetch Data for this level
+      fetchGroups(id); 
+      fetchResources(id, null, null); // Fetch Segment-level resources
+  };
+
+  const handleGroupClick = (id: string) => { 
+      // 1. Set Selections
+      setSelectedGroup(id); 
+      setSelectedSubject(""); 
+      
+      // 2. Clear Child Data
+      setSubjects([]); 
+      
+      // 3. Fetch Data for this level
+      fetchSubjects(id); 
+      fetchResources(selectedSegment, id, null); // Fetch Group-level resources
+  };
+
+  const handleSubjectClick = (id: string) => { 
+      setSelectedSubject(id); 
+      fetchResources(selectedSegment, selectedGroup, id); // Fetch Subject-level resources
+  };
 
   const handleSegmentSubmit = async () => { if(!newSegment) return; await supabase.from('segments').insert([{title:newSegment, slug:newSegment.toLowerCase().replace(/\s+/g,'-')}]); setNewSegment(""); fetchSegments(); };
   const handleGroupSubmit = async () => { if(!newGroup || !selectedSegment) return; await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); };
@@ -204,8 +255,10 @@ export default function AdminDashboard() {
   
   const uploadResource = async (typeOverride?: string) => {
       const type = typeOverride || resType;
+      
+      // Validation: Just ensure we are at least inside a Segment
       if(!resTitle) return showError("Title is required!");
-      if(type !== 'blog' && !selectedSubject) return showError("Please select a subject first.");
+      if(type !== 'blog' && !selectedSegment) return showError("Please select at least a Segment.");
       
       let finalContent = richContent;
       if(type === 'blog' && editorRef.current) finalContent = editorRef.current.getContents();
@@ -224,8 +277,18 @@ export default function AdminDashboard() {
           url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
       }
 
+      // --- PAYLOAD CONSTRUCTION (UPDATED FOR HIERARCHY) ---
       const payload: any = { title: resTitle, type };
+      
+      // Always attach the Segment ID if selected
+      if(selectedSegment) payload.segment_id = Number(selectedSegment);
+      
+      // Attach Group ID only if selected
+      if(selectedGroup) payload.group_id = Number(selectedGroup);
+      
+      // Attach Subject ID only if selected
       if(selectedSubject) payload.subject_id = Number(selectedSubject);
+
       if(type==='pdf' || type==='video') payload.content_url = url;
       else if(type==='question') { payload.content_body = finalContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
       else if(type==='blog') { payload.content_body = finalContent; if(url) payload.content_url = url; payload.tags = blogTags.split(',').map(t=>t.trim()); }
@@ -238,7 +301,8 @@ export default function AdminDashboard() {
 
       if (error) { showError("Failed to save: " + error.message); } 
       else {
-          if(selectedSubject) fetchResources(selectedSubject);
+          // Refresh the library for the current level
+          fetchResources(selectedSegment, selectedGroup, selectedSubject);
           if(type === 'blog') { setIsBlogEditorOpen(false); showSuccess("Blog post published successfully!"); } 
           else { resetResourceForm(); showSuccess("Resource uploaded successfully!"); }
       }
@@ -380,7 +444,7 @@ export default function AdminDashboard() {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {[
                 { id: 'materials', label: 'Study Materials', icon: '📂' },
-                { id: 'updates', label: 'Segment Updates', icon: '📢' }, // NEW TAB
+                { id: 'updates', label: 'Segment Updates', icon: '📢' }, 
                 { id: 'class-blogs', label: 'Class Blogs', icon: '✍️' },
                 { id: 'ebooks', label: 'Manage eBooks', icon: '📚' },
                 { id: 'courses', label: 'Manage Courses', icon: '🎓' },
@@ -437,7 +501,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* 2. CONTENT MANAGER */}
-                <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${!selectedSubject ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${!selectedSegment ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                     <div className="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-lg text-slate-800">4. Add New Resource</h3>
@@ -458,6 +522,13 @@ export default function AdminDashboard() {
                                     <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Title</label>
                                     <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm outline-none font-medium" value={resTitle} onChange={e=>setResTitle(e.target.value)} placeholder="Resource Title..." />
                                 </div>
+                            </div>
+                            
+                            {/* Current Context Display - Helps admin know where they are posting */}
+                            <div className="text-xs font-bold bg-slate-100 p-2 rounded text-slate-500">
+                                Posting to: <span className="text-blue-600">{segments.find(s=>s.id.toString()===selectedSegment)?.title}</span>
+                                {selectedGroup && <span> › <span className="text-green-600">{groups.find(g=>g.id.toString()===selectedGroup)?.title}</span></span>}
+                                {selectedSubject && <span> › <span className="text-purple-600">{subjects.find(s=>s.id.toString()===selectedSubject)?.title}</span></span>}
                             </div>
 
                             {/* Dynamic Inputs */}
@@ -489,14 +560,15 @@ export default function AdminDashboard() {
                     <div className="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[500px] lg:h-auto">
                         <div className="p-5 border-b border-slate-100 bg-slate-50/50"><h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Library ({resources.length})</h4></div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-                            {resources.length === 0 && <div className="text-center text-slate-400 text-sm mt-10">No resources found.</div>}
+                            {resources.length === 0 && <div className="text-center text-slate-400 text-sm mt-10">No resources found for this level.</div>}
                             {resources.map(r => (
                                 <div key={r.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-blue-300 transition">
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type==='pdf'?'bg-red-50 text-red-500':r.type==='video'?'bg-blue-50 text-blue-500':'bg-yellow-50 text-yellow-600'}`}>{r.type==='pdf'?'📄':r.type==='video'?'▶':'❓'}</div>
                                         <div className="min-w-0"><h5 className="text-xs font-bold text-slate-700 truncate w-32">{r.title}</h5><span className="text-[10px] text-slate-400 uppercase">{new Date(r.created_at).toLocaleDateString()}</span></div>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(r)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSubject))} className="p-1.5 hover:bg-red-50 rounded text-red-600">🗑️</button></div>
+                                    {/* Delete now passes correct context to refresh list */}
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(r)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSegment, selectedGroup, selectedSubject))} className="p-1.5 hover:bg-red-50 rounded text-red-600">🗑️</button></div>
                                 </div>
                             ))}
                         </div>
@@ -505,7 +577,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* === NEW TAB: SEGMENT UPDATES === */}
+            {/* === TAB: SEGMENT UPDATES === */}
             {activeTab === 'updates' && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-800">Segment Updates (Admin)</h2>{editingUpdateId && <button onClick={cancelUpdateEdit} className="text-red-500 font-bold border px-3 py-1 rounded">Cancel Edit</button>}</div>
@@ -513,7 +585,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                     {/* LEFT: FORM */}
                     <div className="xl:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
-                         <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Target Segment</label>
                                 <select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" value={updateSegmentId} onChange={e=>setUpdateSegmentId(e.target.value)}>
@@ -529,19 +601,19 @@ export default function AdminDashboard() {
                                     <option value="exam_result">🏆 Exam Result</option>
                                 </select>
                             </div>
-                         </div>
-                         <div>
+                          </div>
+                          <div>
                             <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Update Title</label>
                             <input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none" placeholder="e.g. HSC 2026 Revised Routine" value={updateTitle} onChange={e=>setUpdateTitle(e.target.value)} />
-                         </div>
-                         <div className="border rounded-xl overflow-hidden">
+                          </div>
+                          <div className="border rounded-xl overflow-hidden">
                             <SunEditor key={editingUpdateId || 'update-editor'} setContents={updateContent} onChange={(content) => setUpdateContent(content)} setOptions={editorOptions} />
-                         </div>
-                         <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-50 relative">
+                          </div>
+                          <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-50 relative">
                              <input type="file" onChange={e => setUpdateFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
                              <span className="text-2xl">📎</span> <span className="text-sm font-bold text-slate-600">{updateFile ? updateFile.name : "Attach PDF/Image (Optional)"}</span>
-                         </div>
-                         <button onClick={handleUpdateSubmit} disabled={submitting} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg">{submitting ? "Publishing..." : "Publish Update"}</button>
+                          </div>
+                          <button onClick={handleUpdateSubmit} disabled={submitting} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg">{submitting ? "Publishing..." : "Publish Update"}</button>
                     </div>
 
                     {/* RIGHT: LIST */}
@@ -621,7 +693,7 @@ export default function AdminDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {resources.filter(r=>r.type==='blog').map(b=>(
                                 <div key={b.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition group">
-                                    <div className="h-40 bg-slate-100 relative">{b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}<div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button></div></div>
+                                    <div className="h-40 bg-slate-100 relative">{b.content_url && <img src={b.content_url} className="w-full h-full object-cover"/>}<div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs hover:text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSegment, selectedGroup, selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs hover:text-red-500">🗑️</button></div></div>
                                     <div className="p-4"><h3 className="font-bold text-sm text-slate-800 line-clamp-2">{b.title}</h3></div>
                                 </div>
                             ))}
