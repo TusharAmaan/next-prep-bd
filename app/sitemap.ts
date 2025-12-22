@@ -1,70 +1,87 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 
-const BASE_URL = 'https://nextprepbd.com';
+// ⚠️ CHANGE THIS TO YOUR ACTUAL DOMAIN
+const BASE_URL = 'https://nextprepbd.com'; 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // 1. FETCH DATA
-  const { data: segments } = await supabase.from('segments').select('slug');
-  const { data: blogs } = await supabase.from('resources').select('id, updated_at').eq('type', 'blog');
-  const { data: news } = await supabase.from('news').select('id, created_at');
-  const { data: courses } = await supabase.from('courses').select('id, created_at');
+  
+  // 1. Fetch BLOGS (Only type='blog')
+  const { data: blogs } = await supabase
+    .from('resources')
+    .select('id, updated_at')
+    .eq('type', 'blog');
 
-  // 2. STATIC ROUTES
-  // Fix: Explicitly tell TypeScript that 'daily'/'monthly' are valid types
-  const staticRoutes = [
+  // 2. Fetch NEWS
+  const { data: news } = await supabase
+    .from('news')
+    .select('id, created_at');
+
+  // 3. Fetch UPDATES (Notices)
+  const { data: updates } = await supabase
+    .from('segment_updates')
+    .select('id, created_at');
+
+  // 4. Fetch SEGMENTS & GROUPS (For Landing Pages)
+  const { data: segments } = await supabase.from('segments').select('slug');
+  // Note: Fetching groups requires a bit more logic, keeping it simple for now or fetch if needed
+  
+  // --- BUILD URLS ---
+
+  // Static Pages (High Priority)
+  const staticRoutes: MetadataRoute.Sitemap = [
     '',
     '/about',
     '/contact',
     '/courses',
+    '/ebooks',
     '/news',
-    '/privacy-policy',
-    '/refund-policy',
+    '/search',
   ].map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: new Date(),
-    changeFrequency: (route === '' ? 'daily' : 'monthly') as 'daily' | 'monthly',
-    priority: route === '' ? 1 : 0.6,
+    changeFrequency: 'daily',
+    priority: 1.0,
   }));
 
-  // 3. CATEGORY ROUTES
-  const categoryRoutes = (segments || []).map((seg) => ({
-    url: `${BASE_URL}/resources/${seg.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as 'weekly', // Explicit cast
+  // Blog URLs
+  const blogRoutes: MetadataRoute.Sitemap = (blogs || []).map((post) => ({
+    url: `${BASE_URL}/blog/${post.id}`,
+    lastModified: new Date(post.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
+
+  // News URLs (News needs to be fresh!)
+  const newsRoutes: MetadataRoute.Sitemap = (news || []).map((item) => ({
+    url: `${BASE_URL}/news/${item.id}`,
+    lastModified: new Date(item.created_at),
+    changeFrequency: 'daily',
     priority: 0.9,
   }));
 
-  // 4. BLOG ROUTES
-  const blogRoutes = (blogs || []).map((post) => ({
-    url: `${BASE_URL}/blog/${post.id}`,
-    lastModified: new Date(post.updated_at || new Date()),
-    changeFrequency: 'weekly' as 'weekly', // Explicit cast
+  // Update URLs
+  const updateRoutes: MetadataRoute.Sitemap = (updates || []).map((item) => ({
+    url: `${BASE_URL}/updates/${item.id}`,
+    lastModified: new Date(item.created_at),
+    changeFrequency: 'weekly',
     priority: 0.7,
   }));
 
-  // 5. NEWS ROUTES
-  const newsRoutes = (news || []).map((item) => ({
-    url: `${BASE_URL}/news/${item.id}`,
-    lastModified: new Date(item.created_at),
-    changeFrequency: 'daily' as 'daily', // Explicit cast
-    priority: 0.8,
+  // Segment Landing Pages
+  const segmentRoutes: MetadataRoute.Sitemap = (segments || []).map((seg) => ({
+    url: `${BASE_URL}/resources/${seg.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.9,
   }));
 
-  // 6. COURSE ROUTES
-  const courseRoutes = (courses || []).map((course) => ({
-    url: `${BASE_URL}/courses/${course.id}`,
-    lastModified: new Date(course.created_at),
-    changeFrequency: 'weekly' as 'weekly', // Explicit cast
-    priority: 0.8,
-  }));
-
-  // Combine everything
+  // COMBINE EVERYTHING
   return [
     ...staticRoutes,
-    ...categoryRoutes,
+    ...segmentRoutes,
     ...blogRoutes,
     ...newsRoutes,
-    ...courseRoutes,
+    ...updateRoutes,
   ];
 }
