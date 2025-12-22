@@ -5,18 +5,8 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-const ITEMS_PER_PAGE = 12;
-
-type Props = {
-  params: Promise<{ segment_slug: string }>;
-  searchParams: Promise<{ page?: string; type?: string }>;
-};
-
-export default async function SegmentPage({ params, searchParams }: Props) {
+export default async function SegmentPage({ params }: { params: Promise<{ segment_slug: string }> }) {
   const { segment_slug } = await params;
-  const { page = "1", type = "all" } = await searchParams;
-
-  const currentPage = parseInt(page) || 1;
 
   // 1. Fetch Segment Data
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
@@ -32,24 +22,34 @@ export default async function SegmentPage({ params, searchParams }: Props) {
     .eq("segment_id", segmentData.id)
     .order("created_at", { ascending: false });
 
-  // 4. FETCH RESOURCES (PAGINATED)
-  let query = supabase
+  // 4. FETCH CONTENT BY TYPE (Separate Queries)
+  
+  // A. Blogs (Latest 4)
+  const { data: blogs } = await supabase
     .from("resources")
-    .select("id, title, type, created_at, content_url, seo_description", { count: "exact" })
+    .select("id, title, type, created_at, content_url, seo_description")
     .eq("segment_id", segmentData.id)
-    .order("created_at", { ascending: false });
+    .eq("type", "blog")
+    .order("created_at", { ascending: false })
+    .limit(4);
 
-  // Apply Filter
-  if (type !== "all") {
-    query = query.eq("type", type);
-  }
+  // B. Materials (PDF/Video - Latest 6)
+  const { data: materials } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at, content_url")
+    .eq("segment_id", segmentData.id)
+    .in("type", ["pdf", "video"])
+    .order("created_at", { ascending: false })
+    .limit(6);
 
-  // Apply Pagination
-  const from = (currentPage - 1) * ITEMS_PER_PAGE;
-  const to = from + ITEMS_PER_PAGE - 1;
-
-  const { data: resources, count } = await query.range(from, to);
-  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
+  // C. Questions (Latest 6)
+  const { data: questions } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at")
+    .eq("segment_id", segmentData.id)
+    .eq("type", "question")
+    .order("created_at", { ascending: false })
+    .limit(6);
 
   // Filter updates helpers
   const routine = updates?.find(u => u.type === 'routine');
@@ -65,17 +65,6 @@ export default async function SegmentPage({ params, searchParams }: Props) {
       "from-orange-500 to-red-500"
     ];
     return gradients[index % gradients.length];
-  };
-
-  // Helper icon for resources
-  const getIcon = (type: string) => {
-    switch(type) {
-        case 'pdf': return '📄';
-        case 'video': return '▶️';
-        case 'blog': return '✍️';
-        case 'question': return '❓';
-        default: return '📁';
-    }
   };
 
   return (
@@ -105,46 +94,48 @@ export default async function SegmentPage({ params, searchParams }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
             {/* LEFT COLUMN */}
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-8 space-y-12">
                 
                 {/* A. GROUPS GRID */}
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
-                    <h2 className="text-2xl font-bold text-slate-900">Select Your Group</h2>
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
+                        <h2 className="text-2xl font-bold text-slate-900">Select Your Group</h2>
+                    </div>
+
+                    {groups && groups.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {groups.map((group, index) => (
+                                <Link 
+                                    key={group.id} 
+                                    href={`/resources/${segment_slug}/${group.slug}`} 
+                                    className="group relative bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-64 cursor-pointer"
+                                >
+                                    <div className={`h-1.5 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
+                                    <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
+                                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-3xl font-black mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500`}>
+                                            {group.title.charAt(0)}
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                                            {group.title}
+                                        </h3>
+                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest group-hover:text-blue-400 transition-colors">
+                                            View Subjects →
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center">
+                            <div className="text-4xl mb-4">📂</div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">No Groups Found</h3>
+                        </div>
+                    )}
                 </div>
 
-                {groups && groups.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-                        {groups.map((group, index) => (
-                            <Link 
-                                key={group.id} 
-                                href={`/resources/${segment_slug}/${group.slug}`} 
-                                className="group relative bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-64 cursor-pointer"
-                            >
-                                <div className={`h-1.5 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
-                                <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
-                                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-3xl font-black mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500`}>
-                                        {group.title.charAt(0)}
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                                        {group.title}
-                                    </h3>
-                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest group-hover:text-blue-400 transition-colors">
-                                        View Subjects →
-                                    </p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center mb-16">
-                        <div className="text-4xl mb-4">📂</div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No Groups Found</h3>
-                    </div>
-                )}
-
                 {/* B. ESSENTIAL TOOLS */}
-                <div className="mb-16">
+                <div>
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <span className="text-2xl">⚡</span> Quick Tools
                     </h3>
@@ -172,70 +163,112 @@ export default async function SegmentPage({ params, searchParams }: Props) {
                     </div>
                 </div>
 
-                {/* C. LATEST RESOURCES (PAGINATED & FILTERED) */}
-                <div className="mb-16">
-                     <div className="flex items-center gap-3 mb-6">
-                        <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-slate-900">Latest Materials</h2>
-                    </div>
+                {/* --- SEPARATE CONTENT SECTIONS START HERE --- */}
 
-                    {/* Filter Tabs */}
-                    <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-4">
-                        {['all', 'pdf', 'video', 'question', 'blog'].map((t) => (
-                            <Link 
-                                key={t}
-                                href={`/resources/${segment_slug}?type=${t}&page=1`}
-                                scroll={false}
-                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${type === t ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400'}`}
-                            >
-                                {t}
-                            </Link>
-                        ))}
+                {/* 1. LATEST POSTS (BLOGS) */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-xl">✍️</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Latest Posts</h2>
+                        </div>
+                        {blogs && blogs.length > 0 && (
+                            <Link href={`/blog?segment=${segmentData.title}`} className="text-sm font-bold text-purple-600 hover:underline">View All</Link>
+                        )}
                     </div>
-                    
-                    {resources && resources.length > 0 ? (
-                        <div className="space-y-4">
-                             {resources.map((res) => (
-                                <Link key={res.id} href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url || '#'} target={res.type === 'blog' ? '_self' : '_blank'} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-300 hover:shadow-md transition group">
-                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                                        {getIcon(res.type)}
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors line-clamp-1">{res.title}</h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
-                                            <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
+                    {blogs && blogs.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {blogs.map((blog) => (
+                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all flex flex-col h-full">
+                                    <div className="h-40 bg-gray-100 relative overflow-hidden">
+                                        {blog.content_url ? (
+                                            <img src={blog.content_url} alt={blog.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 font-bold">No Image</div>
+                                        )}
+                                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">BLOG</div>
+                                    </div>
+                                    <div className="p-5 flex-1 flex flex-col">
+                                        <h3 className="font-bold text-lg text-gray-800 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
+                                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-gray-400 font-medium border-t border-gray-50">
+                                            <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            <span className="text-purple-600 font-bold flex items-center gap-1 group-hover:gap-2 transition-all">Read More →</span>
                                         </div>
-                                     </div>
-                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">➔</div>
+                                    </div>
                                 </Link>
-                             ))}
+                            ))}
                         </div>
                     ) : (
-                        <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
-                            No materials available for this section yet.
-                        </div>
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No blog posts available yet.</div>
                     )}
+                </section>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-4 mt-8">
-                            <Link 
-                                href={`/resources/${segment_slug}?type=${type}&page=${currentPage - 1}`}
-                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage <= 1 ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
-                            >
-                                ← Prev
-                            </Link>
-                            <span className="text-sm font-bold text-slate-600">Page {currentPage} of {totalPages}</span>
-                            <Link 
-                                href={`/resources/${segment_slug}?type=${type}&page=${currentPage + 1}`}
-                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage >= totalPages ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
-                            >
-                                Next →
-                            </Link>
+                {/* 2. STUDY MATERIALS (PDF/VIDEO) */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-xl">📄</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Study Materials</h2>
                         </div>
+                        {materials && materials.length > 0 && (
+                            <Link href={`/resources/${segment_slug}?type=pdf`} className="text-sm font-bold text-blue-600 hover:underline">View All</Link>
+                        )}
+                    </div>
+                    {materials && materials.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                            {materials.map((item) => (
+                                <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4 group">
+                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                        {item.type === 'pdf' ? '' : '▶'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors mb-1 truncate">
+                                            <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                        </h3>
+                                        <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
+                                            <span className="uppercase bg-gray-100 px-2 py-0.5 rounded">{item.type}</span>
+                                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg text-xs font-bold hover:bg-black hover:text-white transition whitespace-nowrap">
+                                        {item.type === 'pdf' ? 'Download' : 'Watch'}
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No materials uploaded yet.</div>
                     )}
-                </div>
+                </section>
+
+                {/* 3. PREVIOUS YEAR QUESTIONS */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-yellow-100 text-yellow-600 rounded-lg text-xl">❓</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Previous Year Questions</h2>
+                        </div>
+                        {questions && questions.length > 0 && (
+                            <Link href={`/resources/${segment_slug}?type=question`} className="text-sm font-bold text-yellow-600 hover:underline">View All</Link>
+                        )}
+                    </div>
+                    {questions && questions.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                            {questions.map((q) => (
+                                <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-yellow-400 hover:shadow-md transition-all group">
+                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">{q.title}</h3>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                                        <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Board Question</span>
+                                        <span>•</span>
+                                        <span>Click to View Solution</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No questions available yet.</div>
+                    )}
+                </section>
 
             </div>
 
