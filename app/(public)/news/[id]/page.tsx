@@ -3,9 +3,43 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { headers } from 'next/headers';
 import FacebookComments from "@/components/FacebookComments";
+import { Metadata } from 'next';
 
 export const dynamic = "force-dynamic";
 
+// --- STEP 4 IMPLEMENTATION: DYNAMIC SEO METADATA ---
+// This function runs on the server BEFORE the page loads to tell Google what this page is about
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  
+  // Fetch just the SEO data for this news item
+  const { data: news } = await supabase
+    .from('news')
+    .select('title, seo_title, seo_description, tags, image_url')
+    .eq('id', id)
+    .single();
+
+  if (!news) {
+    return { title: 'News Not Found' };
+  }
+
+  return {
+    // Use the SEO Title if you wrote one, otherwise use the normal Title
+    title: news.seo_title || news.title,
+    // Use the SEO Description if available, otherwise cut the title as fallback
+    description: news.seo_description || `Read the latest news: ${news.title}`,
+    // Add your tags here
+    keywords: news.tags,
+    // This makes the image show up large on Facebook/Twitter/LinkedIn
+    openGraph: {
+      title: news.seo_title || news.title,
+      description: news.seo_description || `Read the latest news: ${news.title}`,
+      images: news.image_url ? [news.image_url] : [],
+    },
+  };
+}
+
+// --- MAIN PAGE COMPONENT ---
 export default async function SingleNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -17,7 +51,6 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
 
   if (!post) return notFound();
 
-  // FIX: Added 'await' here
   const headersList = await headers(); 
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -65,5 +98,3 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
     </div>
   );
 }
-
-// FORCE GIT UPDATE v1

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 import PrintableBlogBody from "@/components/PrintableBlogBody";
-import { Noto_Serif_Bengali } from "next/font/google"; // Ensure this is imported
+import { Noto_Serif_Bengali } from "next/font/google"; 
+import { Metadata } from 'next'; // Import Metadata type
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,34 @@ const bengaliFont = Noto_Serif_Bengali({
   display: "swap",
 });
 
+// --- STEP 4 IMPLEMENTATION: DYNAMIC SEO METADATA ---
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+
+  // Fetch SEO data for this update
+  const { data: update } = await supabase
+    .from('segment_updates')
+    .select('title, seo_title, seo_description, tags')
+    .eq('id', id)
+    .single();
+
+  if (!update) {
+    return { title: 'Update Not Found' };
+  }
+
+  return {
+    title: update.seo_title || update.title,
+    description: update.seo_description || `Latest update: ${update.title}`,
+    keywords: update.tags,
+    openGraph: {
+      title: update.seo_title || update.title,
+      description: update.seo_description,
+      type: 'article',
+    },
+  };
+}
+
+// --- MAIN PAGE COMPONENT ---
 export default async function UpdateDetailsPage({ params }: { params: Promise<{ segment_slug: string; id: string }> }) {
   const { segment_slug, id } = await params;
 
@@ -46,9 +75,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
       
-      {/* FIX 1: Added 'pt-32' (Padding Top). 
-         This pushes the content down so it doesn't hide behind your Fixed Header.
-      */}
+      {/* Added 'pt-32' to prevent content hiding behind fixed header */}
       <section className="max-w-7xl mx-auto px-6 py-12 pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
@@ -57,7 +84,6 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                     post={compatiblePost}
                     formattedDate={formattedDate}
                     attachmentUrl={post.attachment_url}
-                    // FIX 2: Pass the font class here so the component can use it
                     bengaliFontClass={bengaliFont.className} 
                 />
 

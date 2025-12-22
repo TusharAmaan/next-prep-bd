@@ -3,9 +3,39 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
 import { headers } from 'next/headers';
+import { Metadata } from 'next'; // Import Metadata type
 
 export const dynamic = "force-dynamic";
 
+// --- STEP 4: DYNAMIC SEO METADATA ---
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+
+  // Fetch SEO data
+  const { data: course } = await supabase
+    .from('courses')
+    .select('title, seo_title, seo_description, tags, thumbnail_url, instructor')
+    .eq('id', id)
+    .single();
+
+  if (!course) {
+    return { title: 'Course Not Found' };
+  }
+
+  return {
+    title: course.seo_title || course.title,
+    description: course.seo_description || `Enroll in ${course.title} by ${course.instructor}. Master this subject with expert guidance.`,
+    keywords: course.tags, // SEO tags
+    openGraph: {
+      title: course.seo_title || course.title,
+      description: course.seo_description,
+      images: course.thumbnail_url ? [course.thumbnail_url] : [],
+      type: 'website', // Courses are usually 'website' or 'product' schema
+    },
+  };
+}
+
+// --- MAIN PAGE COMPONENT ---
 export default async function SingleCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -18,7 +48,7 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
 
   if (!course) return notFound();
 
-  // 2. Fix the Link Logic (The "Messy Link" Fix)
+  // 2. Fix the Link Logic
   let enrollLink = course.enrollment_link || "#";
   if (enrollLink !== "#" && !enrollLink.startsWith("http")) {
       enrollLink = `https://${enrollLink}`;
@@ -92,7 +122,6 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Preview</div>
                         )}
-                        {/* Play Button Overlay (Visual) */}
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg cursor-default">
                                 <svg className="w-5 h-5 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
@@ -100,28 +129,27 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                         </div>
                     </div>
 
-<div className="p-6">
-    <div className="flex items-end gap-2 mb-6">
-        {course.discount_price ? (
-            <>
-                <span className="text-3xl font-extrabold text-green-600">{course.discount_price}</span>
-                <span className="text-gray-400 text-lg mb-1 line-through">{course.price}</span>
-            </>
-        ) : (
-            <span className="text-3xl font-extrabold text-gray-900">{course.price || "Free"}</span>
-        )}
-    </div>
+                    <div className="p-6">
+                        <div className="flex items-end gap-2 mb-6">
+                            {course.discount_price ? (
+                                <>
+                                    <span className="text-3xl font-extrabold text-green-600">{course.discount_price}</span>
+                                    <span className="text-gray-400 text-lg mb-1 line-through">{course.price}</span>
+                                </>
+                            ) : (
+                                <span className="text-3xl font-extrabold text-gray-900">{course.price || "Free"}</span>
+                            )}
+                        </div>
 
-    <a 
-        href={enrollLink} 
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 mb-4"
-    >
-        Enroll Now
-    </a>
-    
-    {/* ... rest of the card ... */}
+                        <a 
+                            href={enrollLink} 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 mb-4"
+                        >
+                            Enroll Now
+                        </a>
+                        
                         <p className="text-xs text-gray-500 text-center mb-6">30-Day Money-Back Guarantee</p>
 
                         <div className="space-y-3">

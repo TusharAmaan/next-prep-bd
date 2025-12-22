@@ -17,13 +17,13 @@ const bengaliFont = Noto_Serif_Bengali({
   display: "swap",
 });
 
-// --- FIXED METADATA FUNCTION ---
+// --- FIXED METADATA FUNCTION (Now includes Keywords/Tags) ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
 
   const { data: post } = await supabase
     .from('resources')
-    .select('title, seo_title, seo_description, content_url')
+    .select('title, seo_title, seo_description, content_url, tags') // Added tags here
     .eq('id', id)
     .single();
 
@@ -36,8 +36,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: post.seo_title || post.title, 
     description: post.seo_description || `Read about ${post.title} on NextPrepBD.`,
+    keywords: post.tags, // This connects your Admin tags to Google
     openGraph: {
-      title: post.title,
+      title: post.seo_title || post.title,
       description: post.seo_description,
       images: post.content_url ? [post.content_url] : [],
       type: 'article',
@@ -72,9 +73,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
         
         {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
-            {/* 3. Pass the font class here. 
-               The component will now apply the Bangla font to the title and body.
-            */}
             <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}

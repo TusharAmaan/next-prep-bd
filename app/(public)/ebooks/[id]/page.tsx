@@ -1,9 +1,39 @@
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Metadata } from 'next'; // Import Metadata type
 
 export const dynamic = "force-dynamic";
 
+// --- STEP 4: DYNAMIC SEO METADATA ---
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+
+  // Fetch SEO data
+  const { data: book } = await supabase
+    .from('ebooks')
+    .select('title, seo_title, seo_description, tags, cover_url, author')
+    .eq('id', id)
+    .single();
+
+  if (!book) {
+    return { title: 'Book Not Found' };
+  }
+
+  return {
+    title: book.seo_title || book.title,
+    description: book.seo_description || `Read or download ${book.title} by ${book.author} on NextPrepBD.`,
+    keywords: book.tags, // Tags are sent to Google here, but hidden from UI
+    openGraph: {
+      title: book.seo_title || book.title,
+      description: book.seo_description,
+      images: book.cover_url ? [book.cover_url] : [],
+      type: 'book',
+    },
+  };
+}
+
+// --- MAIN PAGE COMPONENT ---
 export default async function EbookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -61,9 +91,7 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
             <div className="md:col-span-8">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                     <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase">{book.category}</span>
-                    {book.tags?.map((tag: string) => (
-                        <span key={tag} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">#{tag}</span>
-                    ))}
+                    {/* TAGS REMOVED FROM UI AS REQUESTED */}
                 </div>
                 
                 <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 leading-tight">{book.title}</h1>
@@ -79,5 +107,6 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
     </div>
+    
   );
 }
