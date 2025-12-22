@@ -5,33 +5,53 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function SegmentPage({ params }: { params: Promise<{ segment_slug: string }> }) {
+const ITEMS_PER_PAGE = 12;
+
+type Props = {
+  params: Promise<{ segment_slug: string }>;
+  searchParams: Promise<{ page?: string; type?: string }>;
+};
+
+export default async function SegmentPage({ params, searchParams }: Props) {
   const { segment_slug } = await params;
+  const { page = "1", type = "all" } = await searchParams;
+
+  const currentPage = parseInt(page) || 1;
 
   // 1. Fetch Segment Data
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segmentData) return notFound();
 
-  // 2. Fetch Groups (Sub-categories like Science, Arts)
+  // 2. Fetch Groups
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
-  // 3. FETCH LATEST UPDATES (Routine, Syllabus, Results)
+  // 3. FETCH UPDATES
   const { data: updates } = await supabase
     .from("segment_updates")
     .select("id, type, title, created_at")
     .eq("segment_id", segmentData.id)
     .order("created_at", { ascending: false });
 
-  // 4. NEW: FETCH GENERAL RESOURCES FOR THIS SEGMENT
-  // This gets resources posted specifically for this Segment (e.g., "All SSC Students")
-  const { data: resources } = await supabase
+  // 4. FETCH RESOURCES (PAGINATED)
+  let query = supabase
     .from("resources")
-    .select("id, title, type, created_at, content_url")
+    .select("id, title, type, created_at, content_url, seo_description", { count: "exact" })
     .eq("segment_id", segmentData.id)
-    .order("created_at", { ascending: false })
-    .limit(10); // Show latest 10
+    .order("created_at", { ascending: false });
 
-  // Filter updates
+  // Apply Filter
+  if (type !== "all") {
+    query = query.eq("type", type);
+  }
+
+  // Apply Pagination
+  const from = (currentPage - 1) * ITEMS_PER_PAGE;
+  const to = from + ITEMS_PER_PAGE - 1;
+
+  const { data: resources, count } = await query.range(from, to);
+  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
+
+  // Filter updates helpers
   const routine = updates?.find(u => u.type === 'routine');
   const syllabus = updates?.find(u => u.type === 'syllabus');
   const result = updates?.find(u => u.type === 'exam_result');
@@ -129,8 +149,6 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                         <span className="text-2xl">⚡</span> Quick Tools
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        
-                        {/* 1. ROUTINE */}
                         <Link href={`/resources/${segment_slug}/category/routine`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-blue-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📅</div>
                             <h4 className="font-bold text-slate-800">Exam Routine</h4>
@@ -138,7 +156,6 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                             <p className="text-[10px] text-blue-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
 
-                        {/* 2. SYLLABUS */}
                         <Link href={`/resources/${segment_slug}/category/syllabus`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-emerald-600 text-2xl mb-3 group-hover:scale-110 transition-transform">📝</div>
                             <h4 className="font-bold text-slate-800">Syllabus</h4>
@@ -146,22 +163,34 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                             <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
 
-                        {/* 3. RESULTS */}
                         <Link href={`/resources/${segment_slug}/category/exam_result`} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition cursor-pointer group">
                             <div className="text-purple-600 text-2xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
                             <h4 className="font-bold text-slate-800">Exam Results</h4>
                             {result ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">Latest: {result.title}</p> : <p className="text-xs text-slate-400 mt-1">View Archive</p>}
                             <p className="text-[10px] text-purple-600 font-bold mt-2 uppercase">View All →</p>
                         </Link>
-
                     </div>
                 </div>
 
-                {/* C. LATEST RESOURCES (NEW: Shows items posted specifically for this Segment) */}
+                {/* C. LATEST RESOURCES (PAGINATED & FILTERED) */}
                 <div className="mb-16">
                      <div className="flex items-center gap-3 mb-6">
                         <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
                         <h2 className="text-2xl font-bold text-slate-900">Latest Materials</h2>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-4">
+                        {['all', 'pdf', 'video', 'question', 'blog'].map((t) => (
+                            <Link 
+                                key={t}
+                                href={`/resources/${segment_slug}?type=${t}&page=1`}
+                                scroll={false}
+                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${type === t ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400'}`}
+                            >
+                                {t}
+                            </Link>
+                        ))}
                     </div>
                     
                     {resources && resources.length > 0 ? (
@@ -171,22 +200,39 @@ export default async function SegmentPage({ params }: { params: Promise<{ segmen
                                      <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                                         {getIcon(res.type)}
                                      </div>
-                                     <div className="flex-1">
-                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors">{res.title}</h4>
+                                     <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors line-clamp-1">{res.title}</h4>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
                                             <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
                                         </div>
                                      </div>
-                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">
-                                        ➔
-                                     </div>
+                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">➔</div>
                                 </Link>
                              ))}
                         </div>
                     ) : (
                         <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
-                            No general materials available for this section yet.
+                            No materials available for this section yet.
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-8">
+                            <Link 
+                                href={`/resources/${segment_slug}?type=${type}&page=${currentPage - 1}`}
+                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage <= 1 ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                            >
+                                ← Prev
+                            </Link>
+                            <span className="text-sm font-bold text-slate-600">Page {currentPage} of {totalPages}</span>
+                            <Link 
+                                href={`/resources/${segment_slug}?type=${type}&page=${currentPage + 1}`}
+                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage >= totalPages ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                            >
+                                Next →
+                            </Link>
                         </div>
                     )}
                 </div>

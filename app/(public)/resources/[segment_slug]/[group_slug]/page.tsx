@@ -5,8 +5,18 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function GroupPage({ params }: { params: Promise<{ segment_slug: string; group_slug: string }> }) {
+type Props = {
+  params: Promise<{ segment_slug: string; group_slug: string }>;
+  searchParams: Promise<{ page?: string; type?: string }>;
+};
+
+const ITEMS_PER_PAGE = 12;
+
+export default async function GroupPage({ params, searchParams }: Props) {
   const { segment_slug, group_slug } = await params;
+  const { page = "1", type = "all" } = await searchParams;
+
+  const currentPage = parseInt(page) || 1;
 
   // 1. Fetch Segment
   const { data: segmentData } = await supabase.from("segments").select("id, title").eq("slug", segment_slug).single();
@@ -19,14 +29,24 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
   // 3. Fetch Subjects
   const { data: subjects } = await supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id");
 
-  // 4. NEW: FETCH GENERAL RESOURCES FOR THIS GROUP
-  // Fetch latest 10 resources assigned specifically to this Group
-  const { data: resources } = await supabase
+  // 4. FETCH RESOURCES WITH PAGINATION & FILTER
+  let query = supabase
     .from("resources")
-    .select("id, title, type, created_at, content_url")
+    .select("id, title, type, created_at, content_url, seo_description", { count: "exact" })
     .eq("group_id", groupData.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+    .order("created_at", { ascending: false });
+
+  // Apply Filter
+  if (type !== "all") {
+    query = query.eq("type", type);
+  }
+
+  // Apply Pagination
+  const from = (currentPage - 1) * ITEMS_PER_PAGE;
+  const to = from + ITEMS_PER_PAGE - 1;
+
+  const { data: resources, count } = await query.range(from, to);
+  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
 
   // Gradient Helper for consistent branding
   const getGradient = (index: number) => {
@@ -130,22 +150,38 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
                     </div>
                 )}
 
-                {/* B. LATEST RESOURCES (NEW SECTION) */}
+                {/* B. LATEST RESOURCES (PAGINATED) */}
                 <div className="mb-16">
-                     <div className="flex items-center gap-3 mb-6">
-                        <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-slate-900">Latest Materials</h2>
+                     <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
+                            <h2 className="text-2xl font-bold text-slate-900">General Materials</h2>
+                        </div>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-4">
+                        {['all', 'pdf', 'video', 'question', 'blog'].map((t) => (
+                            <Link 
+                                key={t}
+                                href={`/resources/${segment_slug}/${group_slug}?type=${t}&page=1`}
+                                scroll={false}
+                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${type === t ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400'}`}
+                            >
+                                {t}
+                            </Link>
+                        ))}
                     </div>
                     
                     {resources && resources.length > 0 ? (
                         <div className="space-y-4">
                              {resources.map((res) => (
                                 <Link key={res.id} href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url || '#'} target={res.type === 'blog' ? '_self' : '_blank'} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-300 hover:shadow-md transition group">
-                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
                                         {getIcon(res.type)}
                                      </div>
-                                     <div className="flex-1">
-                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors">{res.title}</h4>
+                                     <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors line-clamp-1">{res.title}</h4>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
                                             <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
@@ -159,7 +195,26 @@ export default async function GroupPage({ params }: { params: Promise<{ segment_
                         </div>
                     ) : (
                         <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
-                            No general materials posted for this group yet.
+                            No general materials found for this filter.
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-8">
+                            <Link 
+                                href={`/resources/${segment_slug}/${group_slug}?type=${type}&page=${currentPage - 1}`}
+                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage <= 1 ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                            >
+                                ← Prev
+                            </Link>
+                            <span className="text-sm font-bold text-slate-600">Page {currentPage} of {totalPages}</span>
+                            <Link 
+                                href={`/resources/${segment_slug}/${group_slug}?type=${type}&page=${currentPage + 1}`}
+                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage >= totalPages ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                            >
+                                Next →
+                            </Link>
                         </div>
                     )}
                 </div>

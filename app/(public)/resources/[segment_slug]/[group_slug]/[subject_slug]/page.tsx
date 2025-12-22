@@ -38,29 +38,32 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
 
   if (!subject) return notFound();
 
-  // 4. Fetch Content - Blogs
+  // 4. Fetch Content - Blogs (Limit 6 for performance)
   const { data: blogs } = await supabase
     .from("resources")
     .select("*")
     .eq("subject_id", subject.id)
     .eq("type", "blog")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(6);
 
-  // 5. Fetch Content - Materials
+  // 5. Fetch Content - Materials (Limit 12)
   const { data: materials } = await supabase
     .from("resources")
     .select("*")
     .eq("subject_id", subject.id)
     .in("type", ["pdf", "video"])
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(12);
 
-  // 6. Fetch Content - Questions
+  // 6. Fetch Content - Questions (Limit 12)
   const { data: questions } = await supabase
     .from("resources")
     .select("*")
     .eq("subject_id", subject.id)
     .eq("type", "question")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(12);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
@@ -89,9 +92,11 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                 
                 {/* 1. LATEST POSTS */}
                 <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-xl">✍️</span>
-                        <h2 className="text-2xl font-bold text-gray-900">Latest Posts</h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-xl">✍️</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Latest Posts</h2>
+                        </div>
                     </div>
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -177,7 +182,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
                     )}
                 </section>
                 
-{/* 4. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
+                {/* 4. NEW SECTION: TAKE EXAMS (APP PROMOTION) */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -204,7 +209,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ segmen
 
                             </div>
                             
-                            {/* Visual Mockup (Keep this as is) */}
+                            {/* Visual Mockup */}
                             <div className="w-full md:w-1/3 bg-gray-800/50 rounded-xl p-4 border border-gray-700 backdrop-blur-sm">
                                 <div className="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
                                     <span className="text-xs font-bold text-gray-400">Physics 1st Paper</span>

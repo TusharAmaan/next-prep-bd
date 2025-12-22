@@ -2,12 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
-import ProfessionalAppBanner from "@/components/ProfessionalAppBanner"; // IMPORT THE NEW COMPONENT
+import ProfessionalAppBanner from "@/components/ProfessionalAppBanner"; 
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoryListPage({ params }: { params: Promise<{ segment_slug: string; type: string }> }) {
+const ITEMS_PER_PAGE = 12;
+
+type Props = {
+  params: Promise<{ segment_slug: string; type: string }>;
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function CategoryListPage({ params, searchParams }: Props) {
   const { segment_slug, type } = await params;
+  const { page = "1" } = await searchParams;
+
+  const currentPage = parseInt(page) || 1;
 
   // Validate type
   const validTypes = ["routine", "syllabus", "exam_result"];
@@ -22,13 +32,19 @@ export default async function CategoryListPage({ params }: { params: Promise<{ s
 
   if (!segmentData) return notFound();
 
-  // 2. Fetch All Updates
-  const { data: posts } = await supabase
+  // 2. Fetch Updates with Pagination
+  const from = (currentPage - 1) * ITEMS_PER_PAGE;
+  const to = from + ITEMS_PER_PAGE - 1;
+
+  const { data: posts, count } = await supabase
     .from("segment_updates")
-    .select("id, title, created_at")
+    .select("id, title, created_at", { count: "exact" })
     .eq("segment_id", segmentData.id)
     .eq("type", type)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
 
   // Formatting helper
   const formatType = (t: string) => t.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -59,16 +75,16 @@ export default async function CategoryListPage({ params }: { params: Promise<{ s
                     </div>
                     
                     <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">
-                         {formatType(type)} Archive
+                          {formatType(type)} Archive
                     </h1>
                     <p className="text-slate-500">
                         Official list of all {type.replace('_', ' ')}s published for {segmentData.title}.
                     </p>
                 </div>
 
-                {/* Posts List (Redesigned as Professional Document List) */}
+                {/* Posts List */}
                 {posts && posts.length > 0 ? (
-                    <div className="flex flex-col gap-4 mb-16">
+                    <div className="flex flex-col gap-4 mb-10">
                         {posts.map(post => (
                             <Link 
                                 key={post.id} 
@@ -109,6 +125,25 @@ export default async function CategoryListPage({ params }: { params: Promise<{ s
                         <div className="text-4xl mb-4 opacity-30 grayscale">📂</div>
                         <h3 className="text-lg font-bold text-slate-700">No documents found</h3>
                         <p className="text-sm text-slate-400 mt-1">There are no updates in this category yet.</p>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-4 mb-16">
+                        <Link 
+                            href={`/resources/${segment_slug}/${type}?page=${currentPage - 1}`}
+                            className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage <= 1 ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                        >
+                            ← Prev
+                        </Link>
+                        <span className="text-sm font-bold text-slate-600">Page {currentPage} of {totalPages}</span>
+                        <Link 
+                            href={`/resources/${segment_slug}/${type}?page=${currentPage + 1}`}
+                            className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage >= totalPages ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
+                        >
+                            Next →
+                        </Link>
                     </div>
                 )}
 
