@@ -9,7 +9,7 @@ type SearchResult = {
     id: number;
     title: string;
     type: 'resource' | 'news' | 'ebook' | 'course' | 'update';
-    subtype?: string; // e.g. 'pdf', 'video'
+    subtype?: string; 
     url: string;
     date: string;
     description: string;
@@ -28,13 +28,13 @@ function SearchContent() {
       if (!query.trim()) { setResults([]); return; }
       setLoading(true);
 
-      const searchTerm = `%${query}%`; // Wildcard search
+      const searchTerm = `%${query}%`; 
 
       // 1. Search RESOURCES
       const resourcesPromise = supabase
         .from("resources")
         .select("id, title, type, content_url, created_at, seo_description, tags, subjects(title)")
-        .or(`title.ilike.${searchTerm},seo_title.ilike.${searchTerm},tags.cs.{${query}}`) // 'cs' = contains value for arrays
+        .or(`title.ilike.${searchTerm},seo_title.ilike.${searchTerm},tags.cs.{${query}}`)
         .limit(10);
 
       // 2. Search NEWS
@@ -58,10 +58,10 @@ function SearchContent() {
         .or(`title.ilike.${searchTerm},seo_title.ilike.${searchTerm},tags.cs.{${query}}`)
         .limit(5);
 
-      // 5. Search UPDATES
+      // 5. Search UPDATES (FIXED: Fetching 'segments(slug)' to build correct URL)
       const updatesPromise = supabase
         .from("segment_updates")
-        .select("id, title, type, created_at, seo_description, tags")
+        .select("id, title, type, created_at, seo_description, tags, segments(slug)") // <--- Added segments(slug)
         .or(`title.ilike.${searchTerm},seo_title.ilike.${searchTerm},tags.cs.{${query}}`)
         .limit(5);
 
@@ -91,23 +91,33 @@ function SearchContent() {
       // Process eBooks
       ebookData.data?.forEach((item: any) => combinedResults.push({
           id: item.id, title: item.title, type: 'ebook', subtype: 'PDF',
-          url: item.pdf_url || '#', date: item.created_at, description: item.seo_description || `By ${item.author}`,
+          url: `/ebooks/${item.id}`, date: item.created_at, description: item.seo_description || `By ${item.author}`,
           tags: item.tags, sourceTable: 'eBooks'
       }));
 
       // Process Courses
       courseData.data?.forEach((item: any) => combinedResults.push({
           id: item.id, title: item.title, type: 'course', subtype: 'Online',
-          url: item.enrollment_link || '#', date: item.created_at, description: item.seo_description || `Instructor: ${item.instructor}`,
+          url: `/courses/${item.id}`, date: item.created_at, description: item.seo_description || `Instructor: ${item.instructor}`,
           tags: item.tags, sourceTable: 'Courses'
       }));
 
-      // Process Updates
-      updateData.data?.forEach((item: any) => combinedResults.push({
-          id: item.id, title: item.title, type: 'update', subtype: item.type,
-          url: `/updates/${item.id}`, date: item.created_at, description: item.seo_description || "Official Notice",
-          tags: item.tags, sourceTable: 'Updates'
-      }));
+      // Process Updates (FIXED URL LOGIC)
+      updateData.data?.forEach((item: any) => {
+          // Construct URL: /resources/[segment_slug]/updates/[id]
+          const segmentSlug = item.segments?.slug || 'general'; 
+          combinedResults.push({
+            id: item.id, 
+            title: item.title, 
+            type: 'update', 
+            subtype: item.type,
+            url: `/resources/${segmentSlug}/updates/${item.id}`, // <--- Corrected Path
+            date: item.created_at, 
+            description: item.seo_description || "Official Notice",
+            tags: item.tags, 
+            sourceTable: 'Updates'
+          });
+      });
 
       // Sort by relevance/date (Newest first)
       setResults(combinedResults.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
