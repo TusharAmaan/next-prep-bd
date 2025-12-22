@@ -24,7 +24,6 @@ export default async function HomePage() {
   const news = latestNews.data || [];
 
   // --- HELPER: Get Dynamic Styles based on DB Slug ---
-  // This bridges the gap between your Database and the "Vibrant Design"
   const getSegmentTheme = (slug: string) => {
     switch (slug) {
       case "ssc":
@@ -160,8 +159,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          3. CATEGORIES (REDESIGNED)
-          Now uses the "getSegmentTheme" helper to style dynamic data
+          3. CATEGORIES
          ========================================= */}
       <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-4">
@@ -184,20 +182,16 @@ export default async function HomePage() {
                           transition-all duration-300 hover:-translate-y-2
                         `}
                     >
-                        {/* Gradient Background Fade-In */}
                         <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br ${theme.gradient} -z-10`}></div>
                         
-                        {/* Icon Circle */}
                         <div className={`
                           w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm
                           transition-colors duration-300
                           ${theme.bg} ${theme.text} group-hover:text-white group-hover:bg-white/20 group-hover:backdrop-blur-sm
                         `}>
-                             {/* If it's an SVG component, render it, else render text */}
-                             {typeof theme.icon === 'string' ? theme.icon : theme.icon}
+                            {typeof theme.icon === 'string' ? theme.icon : theme.icon}
                         </div>
 
-                        {/* Text */}
                         <h3 className={`font-bold text-xl text-slate-800 group-hover:text-white transition-colors`}>
                           {seg.title}
                         </h3>
@@ -227,39 +221,83 @@ export default async function HomePage() {
 
             {/* RIGHT COLUMN: SIDEBAR */}
             <div className="lg:col-span-4 space-y-8">
-                {/* Notice Board */}
+                
+                {/* 1. PROFESSIONAL NOTICE BOARD */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-                        <h3 className="font-bold">Notice Board</h3>
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <div className="bg-[#0f172a] text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                        <h3 className="font-bold flex items-center gap-2">
+                            <span>📢</span> Notice Board
+                        </h3>
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
                     </div>
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto custom-scrollbar">
                          {news.map((n: any) => (
-                             <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-slate-50 transition">
-                                 <h4 className="font-bold text-sm text-slate-800 line-clamp-1">{n.title}</h4>
-                                 <p className="text-xs text-slate-400 mt-1">{new Date(n.created_at).toDateString()}</p>
+                             <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-blue-50 transition group">
+                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-1 inline-block group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                     {n.category || 'Update'}
+                                 </span>
+                                 <h4 className="font-bold text-sm text-slate-800 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
+                                     {n.title}
+                                 </h4>
+                                 <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                     {new Date(n.created_at).toLocaleDateString()}
+                                 </p>
                              </Link>
                          ))}
                     </div>
+                    <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">
+                        View All Notices →
+                    </Link>
                 </div>
                 
-                {/* Social Widgets */}
-                <div className="grid grid-cols-2 gap-4">
-                    <a href="#" className="bg-[#1877F2] text-white p-4 rounded-2xl text-center hover:opacity-90 transition shadow-lg shadow-blue-200">
-                        <div className="text-3xl mb-1">f</div>
-                        <div className="text-xs font-bold">Join Group</div>
+                {/* 2. PROFESSIONAL SOCIAL WIDGETS */}
+                <div className="space-y-4">
+                    {/* Facebook Card */}
+                    <a 
+                        href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 bg-[#1877F2] text-white p-5 rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-[#166fe5] transition-all transform hover:-translate-y-1 group"
+                    >
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            f
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg leading-tight">Join Community</h4>
+                            <p className="text-blue-100 text-xs mt-0.5">Get updates & free notes</p>
+                        </div>
+                        <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
-                    <a href="#" className="bg-[#FF0000] text-white p-4 rounded-2xl text-center hover:opacity-90 transition shadow-lg shadow-red-200">
-                        <div className="text-3xl mb-1">▶</div>
-                        <div className="text-xs font-bold">Subscribe</div>
+
+                    {/* YouTube Card */}
+                    <a 
+                        href="https://www.youtube.com/channel/UC... (Your Channel ID)" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 bg-[#FF0000] text-white p-5 rounded-2xl shadow-lg shadow-red-500/20 hover:bg-[#e60000] transition-all transform hover:-translate-y-1 group"
+                    >
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            ▶
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg leading-tight">Watch Classes</h4>
+                            <p className="text-red-100 text-xs mt-0.5">Subscribe for tutorials</p>
+                        </div>
+                        <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
                 </div>
 
-                {/* Teacher Promo */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden">
-                    <h4 className="font-black text-xl mb-2 relative z-10">Need 1-on-1 Help?</h4>
-                    <p className="text-indigo-100 text-xs mb-4 relative z-10">Book a private session with our expert teachers.</p>
-                    <button className="bg-white text-indigo-700 w-full py-3 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-md relative z-10">
+                {/* 3. Teacher Promo */}
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 text-white text-center shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
+                    
+                    <h4 className="font-black text-2xl mb-2 relative z-10">Need 1-on-1 Help?</h4>
+                    <p className="text-indigo-100 text-sm mb-6 relative z-10 leading-relaxed">
+                        Struggling with a topic? Book a private session with our expert teachers today.
+                    </p>
+                    <button className="bg-white text-indigo-700 w-full py-3.5 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-lg relative z-10 transform group-hover:scale-105 duration-300">
                         Find a Teacher
                     </button>
                 </div>
