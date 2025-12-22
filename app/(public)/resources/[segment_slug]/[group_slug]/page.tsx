@@ -5,18 +5,8 @@ import Sidebar from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-type Props = {
-  params: Promise<{ segment_slug: string; group_slug: string }>;
-  searchParams: Promise<{ page?: string; type?: string }>;
-};
-
-const ITEMS_PER_PAGE = 12;
-
-export default async function GroupPage({ params, searchParams }: Props) {
+export default async function GroupPage({ params }: { params: Promise<{ segment_slug: string; group_slug: string }> }) {
   const { segment_slug, group_slug } = await params;
-  const { page = "1", type = "all" } = await searchParams;
-
-  const currentPage = parseInt(page) || 1;
 
   // 1. Fetch Segment
   const { data: segmentData } = await supabase.from("segments").select("id, title").eq("slug", segment_slug).single();
@@ -29,26 +19,36 @@ export default async function GroupPage({ params, searchParams }: Props) {
   // 3. Fetch Subjects
   const { data: subjects } = await supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id");
 
-  // 4. FETCH RESOURCES WITH PAGINATION & FILTER
-  let query = supabase
+  // 4. FETCH CONTENT BY TYPE (Group Level)
+  
+  // A. Blogs (Latest 4)
+  const { data: blogs } = await supabase
     .from("resources")
-    .select("id, title, type, created_at, content_url, seo_description", { count: "exact" })
+    .select("id, title, type, created_at, content_url, seo_description")
     .eq("group_id", groupData.id)
-    .order("created_at", { ascending: false });
+    .eq("type", "blog")
+    .order("created_at", { ascending: false })
+    .limit(4);
 
-  // Apply Filter
-  if (type !== "all") {
-    query = query.eq("type", type);
-  }
+  // B. Materials (PDF/Video - Latest 6)
+  const { data: materials } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at, content_url")
+    .eq("group_id", groupData.id)
+    .in("type", ["pdf", "video"])
+    .order("created_at", { ascending: false })
+    .limit(6);
 
-  // Apply Pagination
-  const from = (currentPage - 1) * ITEMS_PER_PAGE;
-  const to = from + ITEMS_PER_PAGE - 1;
+  // C. Questions (Latest 6)
+  const { data: questions } = await supabase
+    .from("resources")
+    .select("id, title, type, created_at")
+    .eq("group_id", groupData.id)
+    .eq("type", "question")
+    .order("created_at", { ascending: false })
+    .limit(6);
 
-  const { data: resources, count } = await query.range(from, to);
-  const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
-
-  // Gradient Helper for consistent branding
+  // Gradient Helper
   const getGradient = (index: number) => {
     const gradients = [
       "from-blue-500 to-indigo-600",
@@ -59,35 +59,18 @@ export default async function GroupPage({ params, searchParams }: Props) {
     return gradients[index % gradients.length];
   };
 
-  // Helper icon
-  const getIcon = (type: string) => {
-    switch(type) {
-        case 'pdf': return '📄';
-        case 'video': return '▶️';
-        case 'blog': return '✍️';
-        case 'question': return '❓';
-        default: return '📁';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
       
-      {/* =========================================
-          1. HERO SECTION (Dark & Premium)
-         ========================================= */}
+      {/* HERO SECTION */}
       <section className="bg-slate-900 text-white pt-32 pb-20 px-6 relative overflow-hidden">
-        {/* Ambient Glow */}
         <div className="absolute top-[-50%] left-[20%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-        
         <div className="max-w-7xl mx-auto relative z-10">
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">
                 <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
                 <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> / 
                 <span className="text-blue-400">{groupData.title}</span>
             </div>
-
             <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-tight">
                 Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{groupData.title}</span> Subjects
             </h1>
@@ -97,131 +80,156 @@ export default async function GroupPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      {/* =========================================
-          2. CONTENT AREA
-         ========================================= */}
+      {/* CONTENT AREA */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            {/* LEFT COLUMN: Subjects Grid */}
-            <div className="lg:col-span-8">
+            {/* LEFT COLUMN */}
+            <div className="lg:col-span-8 space-y-12">
                 
                 {/* A. SUBJECTS GRID */}
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
-                    <h2 className="text-2xl font-bold text-slate-900">Available Subjects</h2>
-                </div>
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="h-8 w-1.5 bg-blue-600 rounded-full"></div>
+                        <h2 className="text-2xl font-bold text-slate-900">Available Subjects</h2>
+                    </div>
 
-                {subjects && subjects.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
-                        {subjects.map((sub, index) => (
-                            <Link 
-                                key={sub.id} 
-                                href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`} 
-                                className="group bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full relative"
-                            >
-                                {/* Top Accent Strip */}
-                                <div className={`h-1.5 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
-                                
-                                <div className="p-6 flex items-start gap-5">
-                                    {/* Icon Box */}
-                                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center font-black text-2xl shadow-md group-hover:scale-110 transition-transform duration-300 shrink-0`}>
-                                        {sub.title.charAt(0)}
-                                    </div>
-                                    
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-1 line-clamp-2">
-                                            {sub.title}
-                                        </h3>
-                                        <div className="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-wide group-hover:text-blue-400 transition-colors mt-2">
-                                            <span>View Materials</span>
-                                            <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    {subjects && subjects.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {subjects.map((sub, index) => (
+                                <Link 
+                                    key={sub.id} 
+                                    href={`/resources/${segment_slug}/${group_slug}/${sub.slug}`} 
+                                    className="group bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full relative"
+                                >
+                                    <div className={`h-1.5 w-full bg-gradient-to-r ${getGradient(index)}`}></div>
+                                    <div className="p-6 flex items-start gap-5">
+                                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center font-black text-2xl shadow-md group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                                            {sub.title.charAt(0)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-1 line-clamp-2">
+                                                {sub.title}
+                                            </h3>
+                                            <div className="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-wide group-hover:text-blue-400 transition-colors mt-2">
+                                                <span>View Materials</span>
+                                                <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center mb-16">
-                        <div className="text-4xl mb-4">📚</div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No subjects found</h3>
-                        <p className="text-slate-500">We are adding subjects for this group soon.</p>
-                    </div>
-                )}
-
-                {/* B. LATEST RESOURCES (PAGINATED) */}
-                <div className="mb-16">
-                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-1.5 bg-orange-500 rounded-full"></div>
-                            <h2 className="text-2xl font-bold text-slate-900">General Materials</h2>
-                        </div>
-                    </div>
-
-                    {/* Filter Tabs */}
-                    <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-4">
-                        {['all', 'pdf', 'video', 'question', 'blog'].map((t) => (
-                            <Link 
-                                key={t}
-                                href={`/resources/${segment_slug}/${group_slug}?type=${t}&page=1`}
-                                scroll={false}
-                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${type === t ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400'}`}
-                            >
-                                {t}
-                            </Link>
-                        ))}
-                    </div>
-                    
-                    {resources && resources.length > 0 ? (
-                        <div className="space-y-4">
-                             {resources.map((res) => (
-                                <Link key={res.id} href={res.type === 'blog' ? `/blog/${res.id}` : res.content_url || '#'} target={res.type === 'blog' ? '_self' : '_blank'} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-300 hover:shadow-md transition group">
-                                     <div className="h-12 w-12 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
-                                        {getIcon(res.type)}
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-800 group-hover:text-orange-600 transition-colors line-clamp-1">{res.title}</h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-0.5 rounded">{res.type}</span>
-                                            <span className="text-xs text-slate-400">• {new Date(res.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                     </div>
-                                     <div className="text-slate-300 group-hover:text-orange-500 transition-colors">
-                                        ➔
-                                     </div>
                                 </Link>
-                             ))}
+                            ))}
                         </div>
                     ) : (
-                        <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-500">
-                            No general materials found for this filter.
-                        </div>
-                    )}
-
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-4 mt-8">
-                            <Link 
-                                href={`/resources/${segment_slug}/${group_slug}?type=${type}&page=${currentPage - 1}`}
-                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage <= 1 ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
-                            >
-                                ← Prev
-                            </Link>
-                            <span className="text-sm font-bold text-slate-600">Page {currentPage} of {totalPages}</span>
-                            <Link 
-                                href={`/resources/${segment_slug}/${group_slug}?type=${type}&page=${currentPage + 1}`}
-                                className={`px-4 py-2 rounded-lg border text-sm font-bold flex items-center gap-2 ${currentPage >= totalPages ? 'opacity-50 pointer-events-none bg-slate-50' : 'bg-white hover:bg-slate-50'}`}
-                            >
-                                Next →
-                            </Link>
+                        <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center">
+                            <div className="text-4xl mb-4">📚</div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">No subjects found</h3>
+                            <p className="text-slate-500">We are adding subjects for this group soon.</p>
                         </div>
                     )}
                 </div>
+
+                {/* --- SEPARATE CONTENT SECTIONS --- */}
+
+                {/* 1. LATEST POSTS (BLOGS) */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-xl">✍️</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Latest Posts</h2>
+                        </div>
+                    </div>
+                    {blogs && blogs.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {blogs.map((blog) => (
+                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all flex flex-col h-full">
+                                    <div className="h-40 bg-gray-100 relative overflow-hidden">
+                                        {blog.content_url ? (
+                                            <img src={blog.content_url} alt={blog.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 font-bold">No Image</div>
+                                        )}
+                                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">BLOG</div>
+                                    </div>
+                                    <div className="p-5 flex-1 flex flex-col">
+                                        <h3 className="font-bold text-lg text-gray-800 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
+                                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-gray-400 font-medium border-t border-gray-50">
+                                            <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            <span className="text-purple-600 font-bold flex items-center gap-1 group-hover:gap-2 transition-all">Read More →</span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No blog posts available yet.</div>
+                    )}
+                </section>
+
+                {/* 2. STUDY MATERIALS */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-xl">📄</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Study Materials</h2>
+                        </div>
+                    </div>
+                    {materials && materials.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                            {materials.map((item) => (
+                                <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4 group">
+                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                        {item.type === 'pdf' ? '' : '▶'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors mb-1 truncate">
+                                            <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                        </h3>
+                                        <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
+                                            <span className="uppercase bg-gray-100 px-2 py-0.5 rounded">{item.type}</span>
+                                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg text-xs font-bold hover:bg-black hover:text-white transition whitespace-nowrap">
+                                        {item.type === 'pdf' ? 'Download' : 'Watch'}
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No materials uploaded yet.</div>
+                    )}
+                </section>
+
+                {/* 3. PREVIOUS YEAR QUESTIONS */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-yellow-100 text-yellow-600 rounded-lg text-xl">❓</span>
+                            <h2 className="text-2xl font-bold text-gray-900">Previous Year Questions</h2>
+                        </div>
+                    </div>
+                    {questions && questions.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                            {questions.map((q) => (
+                                <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-yellow-400 hover:shadow-md transition-all group">
+                                    <h3 className="font-bold text-gray-800 text-lg mb-2 group-hover:text-yellow-700 transition-colors">{q.title}</h3>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                                        <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Board Question</span>
+                                        <span>•</span>
+                                        <span>Click to View Solution</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-400 text-sm font-medium italic">No questions available yet.</div>
+                    )}
+                </section>
 
             </div>
 
-            {/* RIGHT COLUMN: Sidebar */}
+            {/* SIDEBAR */}
             <div className="lg:col-span-4 space-y-8">
                 <Sidebar />
             </div>
