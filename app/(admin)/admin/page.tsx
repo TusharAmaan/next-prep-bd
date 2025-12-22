@@ -16,19 +16,38 @@ const SunEditor = dynamic(() => import("suneditor-react"), {
   ssr: false,
 });
 
-// --- EDITOR CONFIG ---
-const editorOptions = {
-    minHeight: "300px",
+// --- PRO EDITOR CONFIG (FIXED TYPES) ---
+// We add ': any' here to stop TypeScript from complaining about "classic" vs string
+const editorOptions: any = {
+    minHeight: "400px", 
+    height: "auto",
+    placeholder: "Start writing your content here...",
+    
+    // 1. "Google Docs" Style Toolbar
     buttonList: [
         ['undo', 'redo'],
+        ['save', 'print', 'template'],
         ['font', 'fontSize', 'formatBlock'],
-        ['bold', 'underline', 'italic', 'list', 'align'],
-        ['table', 'link', 'image', 'video','math'],
-        ['codeView', 'fullScreen']
+        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+        ['removeFormat'],
+        ['fontColor', 'hiliteColor', 'textStyle'],
+        ['outdent', 'indent'],
+        ['align', 'horizontalRule', 'list', 'lineHeight'],
+        ['table', 'link', 'image', 'video', 'math'], 
+        ['fullScreen', 'showBlocks', 'codeView', 'preview']
     ],
-    defaultTag: "div",
-    showPathLabel: false,
-    katex: katex
+    
+    // 2. FIX STYLE STRIPPING
+    mode: "classic", 
+    attributesWhitelist: {
+        all: "style", // IMPORTANT: Allows inline CSS like <span style="color:red">
+    },
+    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6;",
+    
+    // 3. ADVANCED TABLE HANDLING
+    resizingBar: true,
+    showPathLabel: true,
+    katex: katex 
 };
 
 type ModalState = {
@@ -62,8 +81,6 @@ export default function AdminDashboard() {
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [ebooksList, setEbooksList] = useState<any[]>([]);
   const [coursesList, setCoursesList] = useState<any[]>([]);
-  
-  // NEW: Segment Updates List
   const [segmentUpdates, setSegmentUpdates] = useState<any[]>([]);
 
   // --- SELECTIONS ---
@@ -122,9 +139,9 @@ export default function AdminDashboard() {
   const [cImage, setCImage] = useState<File | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
-  // --- NEW: SEGMENT UPDATES FORM ---
+  // Update Form
   const [updateTitle, setUpdateTitle] = useState("");
-  const [updateType, setUpdateType] = useState("routine"); // routine, syllabus, exam_result
+  const [updateType, setUpdateType] = useState("routine");
   const [updateSegmentId, setUpdateSegmentId] = useState("");
   const [updateContent, setUpdateContent] = useState("");
   const [updateFile, setUpdateFile] = useState<File | null>(null);
@@ -146,7 +163,6 @@ export default function AdminDashboard() {
     fetchSegments(); fetchNews(); fetchCategories(); fetchEbooks(); fetchCourses(); fetchSegmentUpdates();
   }, []);
 
-  // --- HELPER: SHOW MODAL ---
   const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
   const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
   const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
@@ -157,24 +173,12 @@ export default function AdminDashboard() {
   const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
   const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
   
-  // --- UPDATED RESOURCE FETCHER: HANDLES HIERARCHY ---
   const fetchResources = async (segId: string | null, grpId: string | null, subId: string | null) => { 
       let query = supabase.from("resources").select("*").order('created_at',{ascending:false});
-      
-      // LOGIC: Only fetch resources for the EXACT level selected
-      if (subId) {
-          query = query.eq("subject_id", subId);
-      } else if (grpId) {
-          // Fetch items that belong to this group but NO subject (Group Global)
-          query = query.eq("group_id", grpId).is("subject_id", null);
-      } else if (segId) {
-          // Fetch items that belong to this segment but NO group/subject (Segment Global)
-          query = query.eq("segment_id", segId).is("group_id", null).is("subject_id", null);
-      } else {
-          setResources([]); 
-          return;
-      }
-      
+      if (subId) { query = query.eq("subject_id", subId); } 
+      else if (grpId) { query = query.eq("group_id", grpId).is("subject_id", null); } 
+      else if (segId) { query = query.eq("segment_id", segId).is("group_id", null).is("subject_id", null); } 
+      else { setResources([]); return; }
       const {data} = await query; 
       setResources(data||[]); 
   };
@@ -188,75 +192,26 @@ export default function AdminDashboard() {
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
   
   const deleteItem = (table: string, id: number, refresh: () => void) => {
-    confirmAction("Are you sure you want to delete this item? This cannot be undone.", async () => {
+    confirmAction("Are you sure you want to delete this item?", async () => {
         await supabase.from(table).delete().eq("id", id);
         refresh();
         showSuccess("Item deleted successfully.");
     });
   };
 
-  // --- HIERARCHY LOGIC (UPDATED) ---
-  const handleSegmentClick = (id: string) => { 
-      // 1. Set Selections
-      setSelectedSegment(id); 
-      setSelectedGroup(""); 
-      setSelectedSubject(""); 
-      
-      // 2. Clear Child Data
-      setGroups([]); 
-      setSubjects([]); 
-      
-      // 3. Fetch Data for this level
-      fetchGroups(id); 
-      fetchResources(id, null, null); // Fetch Segment-level resources
-  };
-
-  const handleGroupClick = (id: string) => { 
-      // 1. Set Selections
-      setSelectedGroup(id); 
-      setSelectedSubject(""); 
-      
-      // 2. Clear Child Data
-      setSubjects([]); 
-      
-      // 3. Fetch Data for this level
-      fetchSubjects(id); 
-      fetchResources(selectedSegment, id, null); // Fetch Group-level resources
-  };
-
-  const handleSubjectClick = (id: string) => { 
-      setSelectedSubject(id); 
-      fetchResources(selectedSegment, selectedGroup, id); // Fetch Subject-level resources
-  };
+  const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); fetchResources(id, null, null); };
+  const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); fetchSubjects(id); fetchResources(selectedSegment, id, null); };
+  const handleSubjectClick = (id: string) => { setSelectedSubject(id); fetchResources(selectedSegment, selectedGroup, id); };
 
   const handleSegmentSubmit = async () => { if(!newSegment) return; await supabase.from('segments').insert([{title:newSegment, slug:newSegment.toLowerCase().replace(/\s+/g,'-')}]); setNewSegment(""); fetchSegments(); };
   const handleGroupSubmit = async () => { if(!newGroup || !selectedSegment) return; await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); };
   const handleSubjectSubmit = async () => { if(!newSubject || !selectedGroup) return; await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); };
 
-  // --- RESOURCE & BLOG LOGIC ---
-  const resetResourceForm = () => { 
-      setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); 
-      setRichContent(""); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); 
-      setBlogImageFile(null); setBlogTags(""); setResType("pdf"); setIsBlogEditorOpen(false); 
-  };
-  
-  const loadResourceForEdit = (r: any) => {
-      setEditingResourceId(r.id); 
-      setResTitle(r.title); 
-      setResType(r.type);
-      setResLink(r.content_url||""); 
-      setRichContent(r.content_body || ""); 
-      setQuestionContent(r.content_body || ""); 
-      setSeoTitle(r.seo_title||""); 
-      setSeoDescription(r.seo_description||""); 
-      setBlogTags(r.tags?.join(", ")||"");
-      if(r.type==='blog') setIsBlogEditorOpen(true);
-  };
+  const resetResourceForm = () => { setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); setRichContent(""); setQuestionContent(""); setSeoTitle(""); setSeoDescription(""); setBlogImageFile(null); setBlogTags(""); setResType("pdf"); setIsBlogEditorOpen(false); };
+  const loadResourceForEdit = (r: any) => { setEditingResourceId(r.id); setResTitle(r.title); setResType(r.type); setResLink(r.content_url||""); setRichContent(r.content_body || ""); setQuestionContent(r.content_body || ""); setSeoTitle(r.seo_title||""); setSeoDescription(r.seo_description||""); setBlogTags(r.tags?.join(", ")||""); if(r.type==='blog') setIsBlogEditorOpen(true); };
   
   const uploadResource = async (typeOverride?: string) => {
       const type = typeOverride || resType;
-      
-      // Validation: Just ensure we are at least inside a Segment
       if(!resTitle) return showError("Title is required!");
       if(type !== 'blog' && !selectedSegment) return showError("Please select at least a Segment.");
       
@@ -267,52 +222,36 @@ export default function AdminDashboard() {
       if (type === 'blog' && (!finalContent || finalContent.trim() === '')) return showError("Blog content cannot be empty.");
 
       setSubmitting(true);
-      
       let url = resLink;
       let file = (type==='pdf') ? resFile : (type==='blog') ? blogImageFile : null;
-      
       if(file) {
           const name = `${type}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
           await supabase.storage.from('materials').upload(name, file);
           url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
       }
 
-      // --- PAYLOAD CONSTRUCTION (UPDATED FOR HIERARCHY) ---
       const payload: any = { title: resTitle, type };
-      
-      // Always attach the Segment ID if selected
       if(selectedSegment) payload.segment_id = Number(selectedSegment);
-      
-      // Attach Group ID only if selected
       if(selectedGroup) payload.group_id = Number(selectedGroup);
-      
-      // Attach Subject ID only if selected
       if(selectedSubject) payload.subject_id = Number(selectedSubject);
 
       if(type==='pdf' || type==='video') payload.content_url = url;
       else if(type==='question') { payload.content_body = finalContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
       else if(type==='blog') { payload.content_body = finalContent; if(url) payload.content_url = url; payload.tags = blogTags.split(',').map(t=>t.trim()); }
 
-      const { error } = editingResourceId 
-          ? await supabase.from('resources').update(payload).eq('id', editingResourceId)
-          : await supabase.from('resources').insert([payload]);
-
+      const { error } = editingResourceId ? await supabase.from('resources').update(payload).eq('id', editingResourceId) : await supabase.from('resources').insert([payload]);
       setSubmitting(false);
-
       if (error) { showError("Failed to save: " + error.message); } 
       else {
-          // Refresh the library for the current level
           fetchResources(selectedSegment, selectedGroup, selectedSubject);
-          if(type === 'blog') { setIsBlogEditorOpen(false); showSuccess("Blog post published successfully!"); } 
-          else { resetResourceForm(); showSuccess("Resource uploaded successfully!"); }
+          if(type === 'blog') { setIsBlogEditorOpen(false); showSuccess("Blog post published!"); } 
+          else { resetResourceForm(); showSuccess("Resource uploaded!"); }
       }
   };
 
-  // --- NEW: SEGMENT UPDATES LOGIC ---
   const handleUpdateSubmit = async () => {
     if(!updateTitle) return showError("Title is required");
     if(!updateSegmentId) return showError("Please select a segment");
-
     setSubmitting(true);
     let url = null;
     if(updateFile) {
@@ -320,62 +259,26 @@ export default function AdminDashboard() {
         await supabase.storage.from('materials').upload(name, updateFile);
         url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
     }
-
-    const payload: any = {
-        title: updateTitle,
-        type: updateType,
-        segment_id: Number(updateSegmentId),
-        content_body: updateContent,
-    };
+    const payload: any = { title: updateTitle, type: updateType, segment_id: Number(updateSegmentId), content_body: updateContent };
     if(url) payload.attachment_url = url;
-
-    const { error } = editingUpdateId
-        ? await supabase.from('segment_updates').update(payload).eq('id', editingUpdateId)
-        : await supabase.from('segment_updates').insert([payload]);
-
+    const { error } = editingUpdateId ? await supabase.from('segment_updates').update(payload).eq('id', editingUpdateId) : await supabase.from('segment_updates').insert([payload]);
     setSubmitting(false);
-    if(error) showError("Error: " + error.message);
-    else {
-        setEditingUpdateId(null);
-        setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null);
-        fetchSegmentUpdates();
-        showSuccess("Update published successfully!");
-    }
+    if(error) showError("Error: " + error.message); else { setEditingUpdateId(null); setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null); fetchSegmentUpdates(); showSuccess("Update published!"); }
   };
+  const loadUpdateForEdit = (u: any) => { setEditingUpdateId(u.id); setUpdateTitle(u.title); setUpdateType(u.type); setUpdateSegmentId(u.segment_id); setUpdateContent(u.content_body || ""); window.scrollTo({top:0, behavior:'smooth'}); };
+  const cancelUpdateEdit = () => { setEditingUpdateId(null); setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null); };
 
-  const loadUpdateForEdit = (u: any) => {
-      setEditingUpdateId(u.id);
-      setUpdateTitle(u.title);
-      setUpdateType(u.type);
-      setUpdateSegmentId(u.segment_id);
-      setUpdateContent(u.content_body || "");
-      window.scrollTo({top:0, behavior:'smooth'});
-  };
-
-  const cancelUpdateEdit = () => {
-      setEditingUpdateId(null);
-      setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null);
-  }
-
-  // --- EBOOK & COURSE & NEWS (Keeping existing logic) ---
   const handleEbookSubmit = async () => {
     if (!ebTitle) return showError("Title is required");
     setSubmitting(true);
     const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
     let cUrl = null;
-    if (cover) {
-        const n = `cover-${Date.now()}`;
-        await supabase.storage.from('covers').upload(n, cover);
-        cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl;
-    }
+    if (cover) { const n = `cover-${Date.now()}`; await supabase.storage.from('covers').upload(n, cover); cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl; }
     const payload: any = { title: ebTitle, author: ebAuthor, category: ebCategory, description: ebDescription, tags: ebTags.split(',').map(t => t.trim()), pdf_url: ebLink };
     if (cUrl) payload.cover_url = cUrl;
     const { error } = editingEbookId ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId) : await supabase.from('ebooks').insert([payload]);
-    setSubmitting(false);
-    if (error) showError("Error: " + error.message);
-    else { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); fetchEbooks(); showSuccess("eBook saved successfully!"); }
+    setSubmitting(false); if (error) showError("Error: " + error.message); else { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); setEbLink(""); fetchEbooks(); showSuccess("eBook saved!"); }
   };
-  
   const loadEbookForEdit = (b: any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description || ""); setEbTags(b.tags?.join(", ")); setEbLink(b.pdf_url || ""); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const cancelEbookEdit = () => { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbDescription(""); setEbTags(""); };
 
@@ -386,9 +289,8 @@ export default function AdminDashboard() {
       if(cImage) { const n = `course-${Date.now()}`; await supabase.storage.from('materials').upload(n, cImage); thumb = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
       const payload: any = { title: cTitle, instructor: cInstructor, price: cPrice, discount_price: cDiscountPrice, duration: cDuration, enrollment_link: cLink, description: cDesc };
       if(thumb) payload.thumbnail_url = thumb;
-      if(editingCourseId) await supabase.from('courses').update(payload).eq('id', editingCourseId);
-      else { if(!thumb) {showError("Thumbnail is required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
-      setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null); fetchCourses(); showSuccess("Course saved successfully!");
+      if(editingCourseId) await supabase.from('courses').update(payload).eq('id', editingCourseId); else { if(!thumb) {showError("Thumbnail is required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
+      setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCImage(null); fetchCourses(); showSuccess("Course saved!");
   };
   const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description || ""); window.scrollTo({top:0, behavior:'smooth'}); };
 
@@ -400,9 +302,8 @@ export default function AdminDashboard() {
       if(newsFile) { const n = `news-${Date.now()}`; await supabase.storage.from('materials').upload(n, newsFile); url = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
       const payload: any = { title: newsTitle, content: newsContent, category: selectedCategory, tags: newsTags.split(',').map(t=>t.trim()) };
       if(url) payload.image_url = url;
-      if(editingNewsId) await supabase.from('news').update(payload).eq('id', editingNewsId);
-      else await supabase.from('news').insert([payload]);
-      setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsFile(null); fetchNews(); showSuccess("News published successfully!");
+      if(editingNewsId) await supabase.from('news').update(payload).eq('id', editingNewsId); else await supabase.from('news').insert([payload]);
+      setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsFile(null); fetchNews(); showSuccess("News published!");
   };
   const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content || ""); setSelectedCategory(n.category); setNewsTags(n.tags?.join(", ")); window.scrollTo({top:0, behavior:'smooth'}); };
   const cancelNewsEdit = () => { setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsTags(""); };
@@ -524,7 +425,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                             
-                            {/* Current Context Display - Helps admin know where they are posting */}
+                            {/* Current Context Display */}
                             <div className="text-xs font-bold bg-slate-100 p-2 rounded text-slate-500">
                                 Posting to: <span className="text-blue-600">{segments.find(s=>s.id.toString()===selectedSegment)?.title}</span>
                                 {selectedGroup && <span> › <span className="text-green-600">{groups.find(g=>g.id.toString()===selectedGroup)?.title}</span></span>}
@@ -567,7 +468,6 @@ export default function AdminDashboard() {
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type==='pdf'?'bg-red-50 text-red-500':r.type==='video'?'bg-blue-50 text-blue-500':'bg-yellow-50 text-yellow-600'}`}>{r.type==='pdf'?'📄':r.type==='video'?'▶':'❓'}</div>
                                         <div className="min-w-0"><h5 className="text-xs font-bold text-slate-700 truncate w-32">{r.title}</h5><span className="text-[10px] text-slate-400 uppercase">{new Date(r.created_at).toLocaleDateString()}</span></div>
                                     </div>
-                                    {/* Delete now passes correct context to refresh list */}
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(r)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">✏️</button><button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSegment, selectedGroup, selectedSubject))} className="p-1.5 hover:bg-red-50 rounded text-red-600">🗑️</button></div>
                                 </div>
                             ))}
@@ -583,7 +483,6 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-800">Segment Updates (Admin)</h2>{editingUpdateId && <button onClick={cancelUpdateEdit} className="text-red-500 font-bold border px-3 py-1 rounded">Cancel Edit</button>}</div>
                 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    {/* LEFT: FORM */}
                     <div className="xl:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -607,7 +506,8 @@ export default function AdminDashboard() {
                             <input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none" placeholder="e.g. HSC 2026 Revised Routine" value={updateTitle} onChange={e=>setUpdateTitle(e.target.value)} />
                           </div>
                           <div className="border rounded-xl overflow-hidden">
-                            <SunEditor key={editingUpdateId || 'update-editor'} setContents={updateContent} onChange={(content) => setUpdateContent(content)} setOptions={editorOptions} />
+                            {/* Updated Editor with Callback */}
+                            <SunEditor key={editingUpdateId || 'update-editor'} setContents={updateContent} onChange={(content) => setUpdateContent(content)} setOptions={{...editorOptions, callBackSave: handleUpdateSubmit}} />
                           </div>
                           <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-50 relative">
                              <input type="file" onChange={e => setUpdateFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
@@ -616,7 +516,6 @@ export default function AdminDashboard() {
                           <button onClick={handleUpdateSubmit} disabled={submitting} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg">{submitting ? "Publishing..." : "Publish Update"}</button>
                     </div>
 
-                    {/* RIGHT: LIST */}
                     <div className="xl:col-span-4 space-y-4">
                         <div className="bg-white p-4 rounded-xl border border-slate-200">
                              <h4 className="font-bold text-slate-500 uppercase text-xs mb-4">Recent Updates</h4>
@@ -664,7 +563,7 @@ export default function AdminDashboard() {
                                 <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1.5">Cover Image</label><div className="relative group cursor-pointer"><input type="file" id="eb-cover" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*"/><div className="bg-white border-2 border-dashed border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 transition-all rounded-xl p-3 flex items-center gap-3"><div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl group-hover:bg-white transition">🖼️</div><div className="flex-1"><p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">Click to Upload Cover</p><p className="text-[10px] text-slate-400">JPG, PNG (Max 2MB)</p></div></div></div></div>
                             </div>
                         </div>
-                        <div className="lg:col-span-8 flex flex-col"><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label><div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner"><SunEditor key={editingEbookId || 'new-ebook'} setContents={ebDescription} onChange={(content) => setEbDescription(content)} setOptions={{...editorOptions, minHeight:"350px"}} /></div></div>
+                        <div className="lg:col-span-8 flex flex-col"><label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Description & Links</label><div className="border border-slate-200 rounded-xl overflow-hidden flex-1 shadow-inner"><SunEditor key={editingEbookId || 'new-ebook'} setContents={ebDescription} onChange={(content) => setEbDescription(content)} setOptions={{...editorOptions, minHeight:"350px", callBackSave: handleEbookSubmit}} /></div></div>
                     </div>
                     <div className="mt-8 flex justify-end"><button onClick={handleEbookSubmit} disabled={submitting} className="bg-slate-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-black transition shadow-lg transform active:scale-95">{submitting?"Saving...":"Save eBook to Library"}</button></div>
                 </div>
@@ -707,7 +606,16 @@ export default function AdminDashboard() {
                         </div>
                         <div className="p-8 max-w-5xl mx-auto w-full space-y-6">
                             <input className="text-5xl font-black w-full outline-none placeholder-slate-300 text-slate-900 bg-transparent" placeholder="Blog Title..." value={resTitle} onChange={e=>setResTitle(e.target.value)} />
-                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm"><SunEditor key={editingResourceId || 'new-blog'} getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={(content) => setRichContent(content)} setOptions={editorOptions} /></div>
+                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm">
+                                {/* Pro Editor with Save Callback */}
+                                <SunEditor 
+                                    key={editingResourceId || 'new-blog'} 
+                                    getSunEditorInstance={getSunEditorInstance} 
+                                    setContents={richContent} 
+                                    onChange={(content) => setRichContent(content)} 
+                                    setOptions={{...editorOptions, callBackSave: () => uploadResource('blog')}} 
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                                 <div className="border-2 border-dashed p-6 rounded-lg text-center relative hover:bg-slate-50"><input type="file" onChange={e=>setBlogImageFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/><span className="text-2xl">🖼️</span><p className="font-bold text-slate-400 text-xs mt-2">Cover Image</p>{blogImageFile && <p className="text-xs text-green-600 font-bold mt-1">{blogImageFile.name}</p>}</div>
                                 <textarea className="w-full bg-slate-50 border p-4 rounded-lg text-sm resize-none outline-none" placeholder="Tags (comma separated)..." value={blogTags} onChange={e=>setBlogTags(e.target.value)}></textarea>
@@ -739,7 +647,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="lg:col-span-8 flex flex-col">
                             <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Details & Visuals</label>
-                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner"><SunEditor key={editingCourseId || 'new-course'} setContents={cDesc} onChange={(content) => setCDesc(content)} setOptions={{...editorOptions, minHeight:"350px"}} /></div>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden flex-1 mb-4 shadow-inner"><SunEditor key={editingCourseId || 'new-course'} setContents={cDesc} onChange={(content) => setCDesc(content)} setOptions={{...editorOptions, minHeight:"350px", callBackSave: handleCourseSubmit}} /></div>
                             <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center cursor-pointer hover:bg-slate-50 relative"><span className="block text-xl">📸</span><span className="text-xs font-bold text-slate-400">Upload Thumbnail</span><input type="file" onChange={e=>setCImage(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*"/></div>
                         </div>
                     </div>
@@ -767,7 +675,7 @@ export default function AdminDashboard() {
                     <div className="xl:col-span-8 space-y-4">
                         <input className="text-4xl font-black w-full bg-transparent border-b border-slate-300 pb-2 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>setNewsTitle(e.target.value)} />
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <SunEditor key={editingNewsId || 'new-news'} setContents={newsContent} onChange={(content) => setNewsContent(content)} setOptions={editorOptions} />
+                            <SunEditor key={editingNewsId || 'new-news'} setContents={newsContent} onChange={(content) => setNewsContent(content)} setOptions={{...editorOptions, callBackSave: handleNewsSubmit}} />
                         </div>
                     </div>
                     <div className="xl:col-span-4 space-y-6">
