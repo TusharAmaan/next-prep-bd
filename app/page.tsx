@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import HomeMaterialsFilter from "@/components/HomeMaterialsFilter";
 import HomeAppSection from "@/components/HomeAppSection";
 import Image from "next/image";
-import AdBanner from "@/components/AdBanner"; // <--- 1. IMPORT ADDED
+import AdBanner from "@/components/AdBanner";
 
 // 1. CACHING CONFIG
 export const revalidate = 60;
@@ -160,7 +160,10 @@ export default async function HomePage() {
       {/* =========================================
           3. CATEGORIES
          ========================================= */}
-      <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
+      {/* CHANGED: Reduced padding-bottom (pb-12 -> pb-6) 
+          to reduce the gap before the next section
+      */}
+      <section className="pt-24 pb-6 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-4">
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
               Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Goal</span>
@@ -206,10 +209,16 @@ export default async function HomePage() {
       {/* =========================================
           4. MAIN CONTENT AREA (Filter)
          ========================================= */}
-      <section className="py-16 max-w-7xl mx-auto px-6 border-t border-slate-200">
+      {/* CHANGED: Reduced vertical padding (py-16 -> pt-8 pb-16) 
+         to pull this section up closer to categories 
+      */}
+      <section className="pt-8 pb-16 max-w-7xl mx-auto px-6 border-t border-slate-200">
         
-        {/* --- GOOGLE ADSENSE IN-FEED AD (Added Here) --- */}
-        <div className="mb-12">
+        {/* --- GOOGLE ADSENSE IN-FEED AD --- */}
+        {/* CHANGED: Reduced bottom margin (mb-12 -> mb-8). 
+            Also note: If the ad doesn't load, this div still takes space. 
+        */}
+        <div className="mb-8">
             <AdBanner 
                 dataAdSlot="8219606997" 
                 dataAdFormat="fluid" 
@@ -240,7 +249,7 @@ export default async function HomePage() {
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
                     </div>
                     <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto custom-scrollbar">
-                         {news.map((n: any) => (
+                          {news.map((n: any) => (
                              <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-blue-50 transition group">
                                  <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-1 inline-block group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
                                      {n.category || 'Update'}
@@ -253,7 +262,7 @@ export default async function HomePage() {
                                      {new Date(n.created_at).toLocaleDateString()}
                                  </p>
                              </Link>
-                         ))}
+                          ))}
                     </div>
                     <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">
                         View All Notices →
@@ -279,7 +288,7 @@ export default async function HomePage() {
                         <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
 
-                    {/* YouTube Card (UPDATED LINK) */}
+                    {/* YouTube Card */}
                     <a 
                         href="https://youtube.com/gmatclub" 
                         target="_blank" 
