@@ -38,10 +38,12 @@ export default function AdminDashboard() {
 
   // --- STATE ---
   const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'success', message: '' });
+  
+  // Hierarchy Data
   const [segments, setSegments] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]); // Global Categories State
+  const [categories, setCategories] = useState<any[]>([]); // Contains { id, name, type, segment_id, group_id, subject_id }
 
   // Lists
   const [resources, setResources] = useState<any[]>([]);
@@ -56,7 +58,7 @@ export default function AdminDashboard() {
   const [ebPage, setEbPage] = useState(0); const [ebSearch, setEbSearch] = useState("");
   const [updatePage, setUpdatePage] = useState(0); const [updateSearch, setUpdateSearch] = useState("");
 
-  // Hierarchy Selection
+  // Hierarchy Selection (Main Dashboard)
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -64,8 +66,18 @@ export default function AdminDashboard() {
   // Shared UI
   const [submitting, setSubmitting] = useState(false);
   const [isBlogEditorOpen, setIsBlogEditorOpen] = useState(false);
-  const [isManageCatsOpen, setIsManageCatsOpen] = useState(false); // New Category Modal
-  const [activeCatContext, setActiveCatContext] = useState("news"); // Track which category type we are editing
+  
+  // --- CATEGORY MODAL STATE ---
+  const [isManageCatsOpen, setIsManageCatsOpen] = useState(false); 
+  const [activeCatContext, setActiveCatContext] = useState("news"); 
+  // Independent Hierarchy State for the Category Modal (so you can add a category to a different segment than what's active)
+  const [catModalSegment, setCatModalSegment] = useState("");
+  const [catModalGroup, setCatModalGroup] = useState("");
+  const [catModalSubject, setCatModalSubject] = useState("");
+  // Helper to fetch hierarchy inside modal
+  const [catModalGroupsList, setCatModalGroupsList] = useState<any[]>([]);
+  const [catModalSubjectsList, setCatModalSubjectsList] = useState<any[]>([]);
+
 
   // SEO
   const [commonTags, setCommonTags] = useState(""); 
@@ -91,7 +103,7 @@ export default function AdminDashboard() {
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [blogImageLink, setBlogImageLink] = useState("");
   const [blogTags, setBlogTags] = useState("");
-  const [blogCategory, setBlogCategory] = useState(""); // NEW
+  const [blogCategory, setBlogCategory] = useState(""); // Stores Category NAME for now (or ID if you refactor posts table)
 
   // News Form
   const [newsTitle, setNewsTitle] = useState("");
@@ -117,13 +129,13 @@ export default function AdminDashboard() {
   const [cDuration, setCDuration] = useState("");
   const [cLink, setCLink] = useState("");
   const [cDesc, setCDesc] = useState("");
-  const [cCategory, setCCategory] = useState(""); // NEW
+  const [cCategory, setCCategory] = useState(""); 
   const [cImage, setCImage] = useState<File | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
   // Update Form
   const [updateTitle, setUpdateTitle] = useState("");
-  const [updateType, setUpdateType] = useState("routine"); // Now acts as Category
+  const [updateType, setUpdateType] = useState("routine"); 
   const [updateSegmentId, setUpdateSegmentId] = useState("");
   const [updateContent, setUpdateContent] = useState("");
   const [updateFile, setUpdateFile] = useState<File | null>(null);
@@ -156,11 +168,20 @@ export default function AdminDashboard() {
   const fetchSegments = async () => { const {data} = await supabase.from("segments").select("*").order('id'); setSegments(data||[]); };
   const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
   const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
-  const fetchCategories = async () => { const {data} = await supabase.from("categories").select("*").order('name'); setCategories(data||[]); };
+  
+  // Updated to select hierarchy columns
+  const fetchCategories = async () => { 
+      const {data} = await supabase.from("categories").select("id, name, type, segment_id, group_id, subject_id").order('name'); 
+      setCategories(data||[]); 
+  };
+
+  // Helper fetchers for the Modal
+  const fetchModalGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setCatModalGroupsList(data||[]); };
+  const fetchModalSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setCatModalSubjectsList(data||[]); };
 
   const fetchResources = async (segId: string | null, grpId: string | null, subId: string | null) => { 
       let query = supabase.from("resources").select("*").order('created_at',{ascending:false});
-      if (subId) query = query.eq("subject_id", subId); else if (grpId) query = query.eq("group_id", grpId); else if (segId) query = query.eq("segment_id", segId); else if (!resSearch) { setResources([]); return; }
+      if (subId) query = query.eq("subject_id", subId); else if (grpId) query = query.eq("group_id", grpId); else if (segId) query = query.eq("segment_id", segId); else if (!resSearch && activeTab === 'materials') { setResources([]); return; }
       if (resSearch) query = query.ilike('title', `%${resSearch}%`);
       query = query.range(resPage * PAGE_SIZE, (resPage + 1) * PAGE_SIZE - 1);
       const {data} = await query; setResources(data||[]); 
@@ -180,27 +201,99 @@ export default function AdminDashboard() {
   const deleteItem = (table: string, id: number, refresh: () => void) => { confirmAction("Delete this item?", async () => { await supabase.from(table).delete().eq("id", id); refresh(); showSuccess("Deleted."); }); };
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
 
-  // --- HIERARCHY ---
+  // --- HIERARCHY HANDLERS ---
   const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); fetchResources(id, null, null); };
   const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); fetchSubjects(id); fetchResources(selectedSegment, id, null); };
   const handleSubjectClick = (id: string) => { setSelectedSubject(id); fetchResources(selectedSegment, selectedGroup, id); };
+  
   const handleSegmentSubmit = async () => { if(newSegment) { await supabase.from('segments').insert([{title:newSegment, slug:newSegment.toLowerCase().replace(/\s+/g,'-')}]); setNewSegment(""); fetchSegments(); }};
   const handleGroupSubmit = async () => { if(newGroup && selectedSegment) { await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); }};
   const handleSubjectSubmit = async () => { if(newSubject && selectedGroup) { await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); }};
 
-  // --- NEW CATEGORY MANAGER ---
-  const CategoryManager = ({ label, value, onChange, context }: { label: string, value: string, onChange: (val: string) => void, context: string }) => {
-      // Filter categories by context type (or 'general' if mixed)
-      const contextCats = categories.filter(c => c.type === context || c.type === 'general' || !c.type);
+
+  // --- SMART CATEGORY MANAGER COMPONENT ---
+  // This component intelligently filters categories based on the current hierarchy context
+  const CategoryManager = ({ 
+      label, 
+      value, 
+      onChange, 
+      context,
+      // Optional context props for filtering
+      filterSegmentId,
+      filterGroupId,
+      filterSubjectId
+  }: { 
+      label: string, 
+      value: string, 
+      onChange: (val: string) => void, 
+      context: string,
+      filterSegmentId?: string,
+      filterGroupId?: string,
+      filterSubjectId?: string
+  }) => {
+      
+      // Filter Logic:
+      // 1. Must match Context (blog/news/etc) OR be General.
+      // 2. Hierarchy: 
+      //    - Include Global Categories (no IDs).
+      //    - Include Categories matching the passed Segment/Group/Subject.
+      
+      const filteredCats = categories.filter(c => {
+          // Type Check
+          const typeMatch = c.type === context || c.type === 'general' || !c.type;
+          if (!typeMatch) return false;
+
+          // If it's a "Global" category (no hierarchy attached), always show it
+          const isGlobal = !c.segment_id && !c.group_id && !c.subject_id;
+          if (isGlobal) return true;
+
+          // If hierarchy is attached, it must match the CURRENT selection in the form
+          let matchesHierarchy = false;
+
+          // Case A: Subject Specific (Strongest Link)
+          if (c.subject_id && filterSubjectId && c.subject_id === Number(filterSubjectId)) matchesHierarchy = true;
+          
+          // Case B: Group Specific (e.g., Science Categories)
+          else if (c.group_id && !c.subject_id && filterGroupId && c.group_id === Number(filterGroupId)) matchesHierarchy = true;
+          
+          // Case C: Segment Specific (e.g., SSC Categories)
+          else if (c.segment_id && !c.group_id && !c.subject_id && filterSegmentId && c.segment_id === Number(filterSegmentId)) matchesHierarchy = true;
+
+          return matchesHierarchy;
+      });
+
       return (
           <div>
               <label className="text-xs font-bold text-slate-400 uppercase block mb-1">{label}</label>
               <div className="flex gap-2">
-                  <select className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none" value={value} onChange={e=>onChange(e.target.value)}>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none" 
+                    value={value} 
+                    onChange={e=>onChange(e.target.value)}
+                  >
                       <option value="">Select Category</option>
-                      {contextCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      {filteredCats.map(c => (
+                          <option key={c.id} value={c.name}>
+                              {c.name} {c.subject_id ? '(Subject)' : c.group_id ? '(Group)' : c.segment_id ? '(Segment)' : ''}
+                          </option>
+                      ))}
                   </select>
-                  <button onClick={() => { setActiveCatContext(context); setIsManageCatsOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-xl text-lg" title="Manage Categories">⚙️</button>
+                  <button 
+                    onClick={() => { 
+                        setActiveCatContext(context); 
+                        // Pre-fill modal with current selections to save time
+                        setCatModalSegment(filterSegmentId || "");
+                        if(filterSegmentId) fetchModalGroups(filterSegmentId);
+                        setCatModalGroup(filterGroupId || "");
+                        if(filterGroupId) fetchModalSubjects(filterGroupId);
+                        setCatModalSubject(filterSubjectId || "");
+                        setIsManageCatsOpen(true); 
+                    }} 
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-xl text-lg" 
+                    title="Manage Categories"
+                  >
+                    ⚙️
+                  </button>
               </div>
           </div>
       );
@@ -220,6 +313,10 @@ export default function AdminDashboard() {
           setIsBlogEditorOpen(true);
           setBlogCategory(r.category || ""); // Load Category
           if(r.content_url) { setBlogImageLink(r.content_url); setBlogImageMethod('link'); } else { setBlogImageLink(""); setBlogImageMethod('upload'); }
+          // IMPORTANT: If editing, ensure we load the hierarchy selections too, so the category dropdown works
+          setSelectedSegment(String(r.segment_id || ""));
+          setSelectedGroup(String(r.group_id || ""));
+          setSelectedSubject(String(r.subject_id || ""));
       }
   };
   const uploadResource = async (typeOverride?: string) => {
@@ -357,28 +454,103 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* CATEGORY MANAGER MODAL */}
+      {/* 1. UPDATED CATEGORY MANAGER MODAL */}
       {isManageCatsOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 w-96 max-h-[80vh] flex flex-col">
-                  <div className="flex justify-between items-center mb-4 pb-4 border-b">
-                      <h3 className="font-bold text-lg">Manage {activeCatContext.toUpperCase()} Categories</h3>
-                      <button onClick={()=>setIsManageCatsOpen(false)} className="text-slate-400 hover:text-black">✕</button>
+              <div className="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[85vh] flex flex-col overflow-hidden">
+                  
+                  {/* Header */}
+                  <div className="p-5 border-b flex justify-between items-center bg-slate-50">
+                      <div>
+                          <h3 className="font-bold text-lg text-slate-900">Manage Categories</h3>
+                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Context: {activeCatContext}</p>
+                      </div>
+                      <button onClick={()=>setIsManageCatsOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition">✕</button>
                   </div>
-                  <div className="flex gap-2 mb-4">
-                      <input id="newCatInput" className="flex-1 bg-slate-50 border p-2 rounded text-sm outline-none" placeholder="New category name..." />
-                      <button onClick={async ()=>{
-                          const input = document.getElementById('newCatInput') as HTMLInputElement;
-                          if(input.value) { await supabase.from('categories').insert([{name: input.value, type: activeCatContext}]); input.value=""; fetchCategories(); }
-                      }} className="bg-black text-white px-4 rounded font-bold text-sm">+</button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
-                      {categories.filter(c => c.type === activeCatContext || c.type === 'general').map(c => (
-                          <div key={c.id} className="flex justify-between items-center p-2 hover:bg-slate-50 rounded group">
-                              <span className="text-sm font-medium">{c.name}</span>
-                              <button onClick={()=>deleteItem('categories', c.id, fetchCategories)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">🗑️</button>
+
+                  {/* Body */}
+                  <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                      
+                      {/* Add New Section */}
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 space-y-3">
+                          <label className="text-xs font-bold text-blue-700 uppercase">Create New Category</label>
+                          <input id="newCatInput" className="w-full bg-white border p-3 rounded-xl text-sm outline-none shadow-sm" placeholder="Category Name (e.g., Organic Chemistry)..." />
+                          
+                          {/* Scope Selectors */}
+                          <div className="grid grid-cols-3 gap-2">
+                              <select 
+                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none" 
+                                  value={catModalSegment} 
+                                  onChange={e => {
+                                      setCatModalSegment(e.target.value); 
+                                      setCatModalGroup(""); setCatModalSubject(""); 
+                                      fetchModalGroups(e.target.value);
+                                  }}
+                              >
+                                  <option value="">Global (All)</option>
+                                  {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                              </select>
+
+                              <select 
+                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none"
+                                  value={catModalGroup}
+                                  onChange={e => {
+                                      setCatModalGroup(e.target.value); 
+                                      setCatModalSubject(""); 
+                                      fetchModalSubjects(e.target.value);
+                                  }}
+                                  disabled={!catModalSegment}
+                              >
+                                  <option value="">All Groups</option>
+                                  {catModalGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                              </select>
+
+                              <select 
+                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none"
+                                  value={catModalSubject}
+                                  onChange={e => setCatModalSubject(e.target.value)}
+                                  disabled={!catModalGroup}
+                              >
+                                  <option value="">All Subjects</option>
+                                  {catModalSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                              </select>
                           </div>
-                      ))}
+
+                          <button onClick={async ()=>{
+                              const input = document.getElementById('newCatInput') as HTMLInputElement;
+                              if(input.value) { 
+                                  const payload: any = { name: input.value, type: activeCatContext };
+                                  if(catModalSegment) payload.segment_id = Number(catModalSegment);
+                                  if(catModalGroup) payload.group_id = Number(catModalGroup);
+                                  if(catModalSubject) payload.subject_id = Number(catModalSubject);
+                                  
+                                  await supabase.from('categories').insert([payload]); 
+                                  input.value=""; 
+                                  fetchCategories(); 
+                              }
+                          }} className="w-full bg-black text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition">
+                              + Add Category
+                          </button>
+                      </div>
+
+                      {/* List Existing */}
+                      <div className="space-y-1">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Existing {activeCatContext} Categories</h4>
+                          {categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (
+                              <div key={c.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-100 transition">
+                                  <div>
+                                      <span className="text-sm font-bold text-slate-800 block">{c.name}</span>
+                                      <div className="flex gap-1 mt-1">
+                                          {c.segment_id && <span className="text-[9px] bg-slate-200 px-1.5 rounded text-slate-600 font-bold">Segment Level</span>}
+                                          {c.group_id && <span className="text-[9px] bg-blue-100 px-1.5 rounded text-blue-600 font-bold">Group Level</span>}
+                                          {c.subject_id && <span className="text-[9px] bg-purple-100 px-1.5 rounded text-purple-600 font-bold">Subject Level</span>}
+                                          {!c.segment_id && !c.group_id && !c.subject_id && <span className="text-[9px] bg-green-100 px-1.5 rounded text-green-600 font-bold">Global</span>}
+                                      </div>
+                                  </div>
+                                  <button onClick={()=>deleteItem('categories', c.id, fetchCategories)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition px-2">🗑️</button>
+                              </div>
+                          ))}
+                      </div>
                   </div>
               </div>
           </div>
@@ -453,8 +625,6 @@ export default function AdminDashboard() {
                     <div className="xl:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
                           <div className="grid grid-cols-2 gap-4">
                             <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Segment</label><select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" value={updateSegmentId} onChange={e=>setUpdateSegmentId(e.target.value)}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
-                            
-                            {/* REVERTED TO FIXED SELECT */}
                             <div>
                                 <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Update Type</label>
                                 <select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none" value={updateType} onChange={e=>setUpdateType(e.target.value)}>
@@ -463,7 +633,6 @@ export default function AdminDashboard() {
                                     <option value="exam_result">🏆 Exam Result</option>
                                 </select>
                             </div>
-
                           </div>
                           <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Title</label><input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" placeholder="Title..." value={updateTitle} onChange={e=>setUpdateTitle(e.target.value)} /></div>
                           <div className="border rounded-xl overflow-hidden"><SunEditor key={editingUpdateId||'up'} setContents={updateContent} onChange={setUpdateContent} setOptions={{...editorOptions,callBackSave:handleUpdateSubmit}}/></div>
@@ -523,9 +692,19 @@ export default function AdminDashboard() {
                         <div className="p-8 max-w-5xl mx-auto w-full space-y-6">
                             <input className="text-5xl font-black w-full outline-none placeholder-slate-300 bg-transparent" placeholder="Title..." value={resTitle} onChange={e=>setResTitle(e.target.value)} />
                             
-                            {/* --- NEW CATEGORY FOR BLOG --- */}
+                            {/* --- SMART CATEGORY MANAGER FOR BLOGS --- */}
+                            {/* Passing current hierarchy context to filter the dropdown */}
                             <div className="max-w-xs">
-                                <CategoryManager label="Blog Category (Optional)" value={blogCategory} onChange={setBlogCategory} context="blog" />
+                                <CategoryManager 
+                                    label="Blog Topic/Category" 
+                                    value={blogCategory} 
+                                    onChange={setBlogCategory} 
+                                    context="blog" 
+                                    filterSegmentId={selectedSegment}
+                                    filterGroupId={selectedGroup}
+                                    filterSubjectId={selectedSubject}
+                                />
+                                {(!selectedSegment && !selectedGroup && !selectedSubject) && <p className="text-[10px] text-slate-400 mt-1 italic">Tip: Filter by Segment/Subject above to see specific categories.</p>}
                             </div>
 
                             <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm"><SunEditor key={editingResourceId||'nb'} getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={setRichContent} setOptions={{...editorOptions,callBackSave:()=>uploadResource('blog')}}/></div>

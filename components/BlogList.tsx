@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { debounce } from "lodash";
 
-const ITEMS_PER_PAGE = 9; // 9 is better for a 3-column grid layout
+const ITEMS_PER_PAGE = 9;
 
 type BlogListProps = {
   initialBlogs: any[];
@@ -24,11 +24,15 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("All");
+  
+  // New: Specific Category Filter (For the future logic)
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  
   const [page, setPage] = useState(1);
 
   // --- 1. STABLE FETCH FUNCTION ---
   const fetchData = useCallback(
-    async (pageNum: number, searchTerm: string, segment: string) => {
+    async (pageNum: number, searchTerm: string, segment: string, category: string) => {
       setLoading(true);
 
       try {
@@ -57,6 +61,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (segment !== "All") {
           query = query.eq("subjects.groups.segments.title", segment);
         }
+
+        // FUTURE: Context-Aware Category Filter
+        // if (category !== "All") {
+        //   query = query.contains('categories', [category]); // logic depends on your DB
+        // }
 
         // Pagination Range
         const from = (pageNum - 1) * ITEMS_PER_PAGE;
@@ -110,7 +119,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     )
       return;
 
-    fetchData(page, debouncedSearch, selectedSegment);
+    fetchData(page, debouncedSearch, selectedSegment, selectedCategory);
     
     // Auto-scroll to top of grid when page changes
     if (page > 1) {
@@ -118,13 +127,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (gridTop) gridTop.scrollIntoView({ behavior: "smooth" });
     }
 
-  }, [page, selectedSegment, debouncedSearch, fetchData]); 
+  }, [page, selectedSegment, selectedCategory, debouncedSearch, fetchData]); 
 
   // --- HANDLERS ---
   const handleSegmentChange = (seg: string) => {
     if (selectedSegment === seg) return;
     setSelectedSegment(seg);
-    setPage(1); // Reset page on category switch
+    setSelectedCategory("All"); // Reset sub-category when segment changes
+    setPage(1);
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -135,10 +145,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
       {/* --- PAGE HEADER --- */}
       <div className="mb-10 text-center lg:text-left">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-          Our Latest <span className="text-blue-600">Articles</span>
+          Latest <span className="text-blue-600">Updates</span>
         </h1>
         <p className="text-slate-500 max-w-2xl text-lg">
-          Explore insights, tutorials, and updates from our team.
+          Resources, exam tips, and news for every student.
         </p>
       </div>
 
@@ -147,14 +157,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         {/* --- LEFT COLUMN: CONTENT (8 Cols) --- */}
         <div className="flex-1 w-full lg:w-2/3 xl:w-3/4">
             
-          {/* Mobile Filter (Visible only on small screens) */}
-          <div className="lg:hidden mb-8">
+          {/* Mobile Filter */}
+          <div className="lg:hidden mb-8 space-y-3">
              <select 
                 value={selectedSegment} 
                 onChange={(e) => handleSegmentChange(e.target.value)}
                 className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
              >
-                <option value="All">All Categories</option>
+                <option value="All">All Segments</option>
                 {segments.map(seg => <option key={seg} value={seg}>{seg}</option>)}
              </select>
           </div>
@@ -185,8 +195,8 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                     href={`/blog/${blog.id}`}
                     className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
                   >
-                    {/* Image Area */}
-                    <div className="h-48 bg-slate-50 relative overflow-hidden border-b border-slate-100">
+                    {/* --- IMAGE / NO-IMAGE HEADER --- */}
+                    <div className="h-48 relative overflow-hidden border-b border-slate-100">
                       {blog.content_url ? (
                         <Image
                           src={blog.content_url}
@@ -195,9 +205,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
-                           <svg className="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                           <span className="text-xs font-bold uppercase tracking-wider">No Preview</span>
+                        // THE FIX: Title on colored background
+                        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 group-hover:from-blue-900 group-hover:to-slate-900 transition-all">
+                           <h3 className="text-white font-bold text-center line-clamp-3 leading-snug drop-shadow-md">
+                             {blog.title}
+                           </h3>
                         </div>
                       )}
                       
@@ -218,11 +230,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </span>
                       </div>
                       
-                      <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
-                        {blog.title}
-                      </h3>
+                      {/* Only show title here if we HAVE an image, otherwise it's redundant */}
+                      {blog.content_url && (
+                        <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+                            {blog.title}
+                        </h3>
+                      )}
                       
-                      <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-4 flex-1">
+                      <p className="text-slate-500 text-sm line-clamp-3 leading-relaxed mb-4 flex-1">
                         {blog.seo_description || blog.content_body?.replace(/<[^>]+>/g, "").substring(0, 120)}
                       </p>
 
@@ -241,7 +256,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
               <div className="text-5xl mb-4 opacity-50">🔍</div>
               <h3 className="text-xl font-bold text-slate-900">No matching posts found</h3>
               <p className="text-slate-500 mt-2 text-sm max-w-xs mx-auto">
-                 We couldn't find any articles matching "<strong>{search}</strong>" in the selected category.
+                 We couldn't find any articles matching "<strong>{search}</strong>" in {selectedSegment}.
               </p>
               <button
                 onClick={() => {
@@ -306,9 +321,9 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 </div>
             </div>
 
-            {/* Categories Widget */}
+            {/* 1. All Segments Widget */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hidden lg:block">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Popular Categories</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">All Segments</h3>
                 <div className="flex flex-col gap-2">
                     <button 
                         onClick={() => handleSegmentChange("All")}
@@ -318,7 +333,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                             : "hover:bg-slate-50 text-slate-600"
                         }`}
                     >
-                        All Stories
+                        All Updates
                         {selectedSegment === "All" && <span className="text-white">●</span>}
                     </button>
                     {segments.map((seg) => (
@@ -338,9 +353,30 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 </div>
             </div>
 
+            {/* 2. SPECIFIC TOPICS (Context-Aware Placeholder) */}
+            {selectedSegment !== "All" && (
+                 <div className="bg-white rounded-2xl border border-blue-100 p-6 shadow-sm hidden lg:block animate-in slide-in-from-right-4 fade-in duration-500">
+                    <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-4">
+                        {selectedSegment} Topics
+                    </h3>
+                    <p className="text-xs text-slate-500 italic mb-4">
+                        {/* This is where we will map the Dynamic Categories from the Admin fix */}
+                        Filter by subject or chapter...
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {/* TODO: Connect to new Category System */}
+                        {['Notices', 'Exam Schedule', 'Syllabus'].map(topic => (
+                            <button key={topic} className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full hover:bg-blue-100 transition-colors">
+                                {topic}
+                            </button>
+                        ))}
+                    </div>
+                 </div>
+            )}
+
             {/* Social Connect Widget */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Stay Connected</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Socials</h3>
                 <div className="space-y-3">
                     {/* Facebook */}
                     <a 
@@ -353,12 +389,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">Follow us on Facebook</p>
-                            <p className="text-xs text-slate-500">Updates & Community</p>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">Facebook</p>
                         </div>
                     </a>
 
-                    {/* YouTube (GMAT Club) */}
+                    {/* YouTube */}
                     <a 
                         href="https://youtube.com/gmatclub" 
                         target="_blank"
@@ -369,20 +404,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-red-700">Subscribe on YouTube</p>
-                            <p className="text-xs text-slate-500">Video Tutorials & Tips</p>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-red-700">YouTube</p>
                         </div>
                     </a>
                 </div>
-            </div>
-
-            {/* Newsletter / Sticky Promo Area (Optional) */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-lg">
-                 <h4 className="font-bold text-lg mb-2">Need Help?</h4>
-                 <p className="text-slate-300 text-sm mb-4">Check out our resources or contact support for personalized assistance.</p>
-                 <Link href="/contact" className="block w-full py-2 bg-white text-slate-900 text-center font-bold text-sm rounded-lg hover:bg-blue-50 transition-colors">
-                    Contact Us
-                 </Link>
             </div>
 
         </div>
