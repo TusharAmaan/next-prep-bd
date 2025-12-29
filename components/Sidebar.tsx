@@ -11,12 +11,12 @@ export default function Sidebar() {
 
   useEffect(() => {
     const fetchRecent = async () => {
-      // Fetch recent 4 items
+      // Fetch recent 5 items (Increased to 5 to fill space better)
       const { data } = await supabase
         .from("resources")
         .select("id, title, type, content_url, created_at")
         .order("created_at", { ascending: false })
-        .limit(4);
+        .limit(5);
       if (data) setRecentItems(data);
     };
     fetchRecent();
@@ -30,9 +30,8 @@ export default function Sidebar() {
     }
   };
 
-  // --- MISSING FUNCTIONS ADDED BELOW ---
+  // --- HELPERS ---
 
-  // Helper: Get Icon based on file type
   const getIcon = (type: string) => {
     switch(type) {
         case 'pdf': return '📄';
@@ -43,14 +42,27 @@ export default function Sidebar() {
     }
   };
 
-  // Helper: Get Color Style based on file type
   const getIconStyle = (type: string) => {
       switch(type) {
           case 'pdf': return 'bg-red-50 text-red-500 border-red-100';
           case 'video': return 'bg-blue-50 text-blue-500 border-blue-100';
           case 'blog': return 'bg-purple-50 text-purple-500 border-purple-100';
+          case 'question': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
           default: return 'bg-gray-50 text-gray-500 border-gray-100';
       }
+  };
+
+  // FIX 1: Smart Link Handler
+  const getLink = (item: any) => {
+      if (item.type === 'blog') return `/blog/${item.id}`;
+      if (item.type === 'question') return `/question/${item.id}`; // <--- FIX: Route questions to their page
+      return item.content_url || '#';
+  };
+
+  // FIX 2: Smart Target Handler (Open PDF/Video in new tab, keep others same tab)
+  const getTarget = (item: any) => {
+      if (item.type === 'blog' || item.type === 'question') return '_self';
+      return '_blank';
   };
 
   return (
@@ -94,7 +106,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* 3. RECENT UPLOADS */}
+      {/* 3. RECENT UPLOADS (FIXED LINKS) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Latest Materials</h3>
@@ -102,25 +114,33 @@ export default function Sidebar() {
         </div>
         <div className="p-2">
             {recentItems.length === 0 ? (
-                <p className="text-xs text-slate-400 italic p-4">No recent items.</p> 
+                <div className="p-8 text-center">
+                    <div className="animate-spin w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full mx-auto mb-2"></div>
+                    <p className="text-xs text-slate-400 italic">Loading...</p> 
+                </div>
             ) : (
                 recentItems.map(item => (
-                <a key={item.id} href={item.type === 'blog' ? `/blog/${item.id}` : item.content_url} target={item.type === 'blog' ? '_self' : '_blank'} className="flex gap-3 items-center p-3 rounded-xl hover:bg-slate-50 transition-all group mb-1 last:mb-0">
-                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border ${getIconStyle(item.type)} shadow-sm group-hover:scale-110 transition-transform`}>
-                        {getIcon(item.type)}
-                     </div>
-                     <div className="flex-1 min-w-0">
+                <Link 
+                    key={item.id} 
+                    href={getLink(item)} 
+                    target={getTarget(item)}
+                    className="flex gap-3 items-center p-3 rounded-xl hover:bg-slate-50 transition-all group mb-1 last:mb-0"
+                >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border ${getIconStyle(item.type)} shadow-sm group-hover:scale-110 transition-transform flex-shrink-0`}>
+                         {getIcon(item.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-slate-700 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">{item.title}</p>
                         <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-wide">{item.type} • {new Date(item.created_at).toLocaleDateString()}</p>
-                     </div>
-                </a>
+                      </div>
+                </Link>
             )))}
         </div>
       </div>
 
       {/* 4. SOCIAL MEDIA */}
       <div className="space-y-3">
-        <a href="https://www.facebook.com/proyashcoaching" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-5 py-4 bg-[#1877F2] text-white rounded-2xl shadow-lg hover:shadow-blue-500/40 hover:-translate-y-1 transition-all group">
+        <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-5 py-4 bg-[#1877F2] text-white rounded-2xl shadow-lg hover:shadow-blue-500/40 hover:-translate-y-1 transition-all group">
             <div className="flex items-center gap-3">
                 <span className="bg-white/20 p-2 rounded-full"><svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
                 <div><h4 className="font-bold text-sm">Join Community</h4><p className="text-[10px] text-blue-100">Facebook Page</p></div>
