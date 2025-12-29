@@ -25,25 +25,71 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("All");
   
-  // New: Specific Category Filter (For the future logic)
+  // Dynamic Category State
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   
   const [page, setPage] = useState(1);
 
-  // --- 1. STABLE FETCH FUNCTION ---
+  // --- 1. FETCH CATEGORIES (DYNAMIC) ---
+  // When segment changes, find its ID and get relevant categories
+  useEffect(() => {
+    const fetchDynamicCategories = async () => {
+        if (selectedSegment === "All") {
+            setAvailableCategories([]);
+            return;
+        }
+
+        setLoadingCategories(true);
+        try {
+            // 1. Get Segment ID from Title
+            const { data: segData } = await supabase
+                .from('segments')
+                .select('id')
+                .eq('title', selectedSegment)
+                .single();
+
+            if (segData) {
+                // 2. Fetch Categories linked to this Segment OR Global ones compatible with blogs
+                const { data: catData } = await supabase
+                    .from('categories')
+                    .select('name')
+                    .eq('type', 'blog') // Only blog categories
+                    .or(`segment_id.eq.${segData.id},segment_id.is.null`); // Linked to this segment OR Global
+
+                if (catData) {
+                    // Extract unique names
+                    const names = Array.from(new Set(catData.map(c => c.name)));
+                    setAvailableCategories(names);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching categories:", err);
+        } finally {
+            setLoadingCategories(false);
+        }
+    };
+
+    fetchDynamicCategories();
+  }, [selectedSegment]);
+
+  // --- 2. STABLE FETCH FUNCTION (BLOGS) ---
   const fetchData = useCallback(
     async (pageNum: number, searchTerm: string, segment: string, category: string) => {
       setLoading(true);
 
       try {
         // Start Query
+        // NOTICE: Added 'title' to subjects selection for the Badge logic
         let query = supabase
           .from("resources")
           .select(
             `
-          id, title, content_body, created_at, content_url, type, seo_description,
+          id, title, content_body, created_at, content_url, type, seo_description, category,
           segment_id,
-          subjects!inner (
+          subjects!left ( 
+            title,
             groups!inner (
               segments!inner ( id, title )
             )
@@ -62,10 +108,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
           query = query.eq("subjects.groups.segments.title", segment);
         }
 
-        // FUTURE: Context-Aware Category Filter
-        // if (category !== "All") {
-        //   query = query.contains('categories', [category]); // logic depends on your DB
-        // }
+        // Category Filter (Exact Match on the 'category' text column)
+        if (category !== "All") {
+           query = query.eq("category", category);
+        }
 
         // Pagination Range
         const from = (pageNum - 1) * ITEMS_PER_PAGE;
@@ -78,7 +124,9 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (data) {
           const formatted = data.map((item: any) => ({
             ...item,
-            segmentTitle: item.subjects?.groups?.segments?.title || "General",
+            // LOGIC: Subject Title exists? Use it. Else Segment Title. Else "General".
+            badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
+            segmentTitle: item.subjects?.groups?.segments?.title // Keep specific segment for filtering/logic if needed
           }));
           setBlogs(formatted);
         }
@@ -93,7 +141,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     []
   );
 
-  // --- 2. HANDLE SEARCH DEBOUNCE ---
+  // --- 3. HANDLE SEARCH DEBOUNCE ---
   const handleSearchUpdate = useCallback(
     debounce((value: string) => {
       setDebouncedSearch(value);
@@ -108,13 +156,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     handleSearchUpdate(val);
   };
 
-  // --- 3. THE MAIN EFFECT ---
+  // --- 4. THE MAIN EFFECT ---
   useEffect(() => {
-    // Skip initial load fetch if data matches server props
+    // Skip initial load fetch if data matches server props AND no filters active
     if (
       page === 1 &&
       debouncedSearch === "" &&
       selectedSegment === "All" &&
+      selectedCategory === "All" &&
       blogs === initialBlogs
     )
       return;
@@ -134,6 +183,12 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     if (selectedSegment === seg) return;
     setSelectedSegment(seg);
     setSelectedCategory("All"); // Reset sub-category when segment changes
+    setPage(1);
+  };
+
+  const handleCategoryChange = (cat: string) => {
+    if (selectedCategory === cat) return;
+    setSelectedCategory(cat);
     setPage(1);
   };
 
@@ -167,6 +222,17 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 <option value="All">All Segments</option>
                 {segments.map(seg => <option key={seg} value={seg}>{seg}</option>)}
              </select>
+             {/* Mobile Category Filter (Only if segment selected) */}
+             {selectedSegment !== "All" && availableCategories.length > 0 && (
+                <select 
+                    value={selectedCategory} 
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none animate-in fade-in"
+                >
+                    <option value="All">All Topics</option>
+                    {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+             )}
           </div>
 
           <div id="blog-grid-top"></div>
@@ -187,7 +253,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
             // GRID STATE
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
               {blogs.map((blog: any) => {
-                const segmentTitle = blog.segmentTitle || "General";
+                const badgeTitle = blog.badgeTitle || "General";
                 
                 return (
                   <Link
@@ -205,7 +271,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
-                        // THE FIX: Title on colored background
+                        // NO IMAGE FALLBACK
                         <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 group-hover:from-blue-900 group-hover:to-slate-900 transition-all">
                            <h3 className="text-white font-bold text-center line-clamp-3 leading-snug drop-shadow-md">
                              {blog.title}
@@ -213,10 +279,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </div>
                       )}
                       
-                      {/* Floating Badge */}
+                      {/* Floating Badge (SUBJECT prioritized) */}
                       <div className="absolute top-3 left-3">
                         <span className="bg-white/95 backdrop-blur shadow-sm text-slate-800 text-[10px] font-extrabold px-3 py-1 rounded-full border border-slate-100 tracking-wide uppercase">
-                          {segmentTitle}
+                          {badgeTitle}
                         </span>
                       </div>
                     </div>
@@ -230,7 +296,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </span>
                       </div>
                       
-                      {/* Only show title here if we HAVE an image, otherwise it's redundant */}
+                      {/* Show Title if Image Exists (otherwise it's in the header) */}
                       {blog.content_url && (
                         <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
                             {blog.title}
@@ -256,13 +322,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
               <div className="text-5xl mb-4 opacity-50">🔍</div>
               <h3 className="text-xl font-bold text-slate-900">No matching posts found</h3>
               <p className="text-slate-500 mt-2 text-sm max-w-xs mx-auto">
-                 We couldn't find any articles matching "<strong>{search}</strong>" in {selectedSegment}.
+                 We couldn't find any articles matching "<strong>{search}</strong>" in {selectedSegment} {selectedCategory !== 'All' ? `> ${selectedCategory}` : ''}.
               </p>
               <button
                 onClick={() => {
                   setSearch("");
                   setDebouncedSearch("");
                   setSelectedSegment("All");
+                  setSelectedCategory("All");
                 }}
                 className="mt-6 px-6 py-2 bg-white border border-slate-200 shadow-sm rounded-full text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
               >
@@ -353,24 +420,51 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 </div>
             </div>
 
-            {/* 2. SPECIFIC TOPICS (Context-Aware Placeholder) */}
+            {/* 2. DYNAMIC TOPICS WIDGET (Context-Aware) */}
             {selectedSegment !== "All" && (
                  <div className="bg-white rounded-2xl border border-blue-100 p-6 shadow-sm hidden lg:block animate-in slide-in-from-right-4 fade-in duration-500">
                     <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-4">
                         {selectedSegment} Topics
                     </h3>
-                    <p className="text-xs text-slate-500 italic mb-4">
-                        {/* This is where we will map the Dynamic Categories from the Admin fix */}
-                        Filter by subject or chapter...
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                        {/* TODO: Connect to new Category System */}
-                        {['Notices', 'Exam Schedule', 'Syllabus'].map(topic => (
-                            <button key={topic} className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full hover:bg-blue-100 transition-colors">
-                                {topic}
+                    
+                    {loadingCategories ? (
+                        <div className="flex gap-2 animate-pulse">
+                            <div className="h-6 w-16 bg-blue-50 rounded-full"></div>
+                            <div className="h-6 w-24 bg-blue-50 rounded-full"></div>
+                            <div className="h-6 w-12 bg-blue-50 rounded-full"></div>
+                        </div>
+                    ) : availableCategories.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {/* "All" Button for Sub-Categories */}
+                            <button 
+                                onClick={() => handleCategoryChange("All")}
+                                className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${
+                                    selectedCategory === "All"
+                                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                    : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"
+                                }`}
+                            >
+                                All
                             </button>
-                        ))}
-                    </div>
+                            
+                            {/* Map Fetched Categories */}
+                            {availableCategories.map(cat => (
+                                <button 
+                                    key={cat} 
+                                    onClick={() => handleCategoryChange(cat)}
+                                    className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${
+                                        selectedCategory === cat
+                                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                        : "bg-blue-50 text-blue-700 border-transparent hover:bg-blue-100"
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 italic">No specific topics found for this segment.</p>
+                    )}
                  </div>
             )}
 
