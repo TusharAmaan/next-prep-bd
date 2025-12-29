@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
-import { debounce } from "lodash"; // Optional, but good for search. If not installed, I wrote a manual debounce below.
+import { debounce } from "lodash"; //
 
 const ITEMS_PER_PAGE = 15;
 
@@ -49,14 +49,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
     // Segment Filter
     if (segment !== "All") {
-      // We filter by the joined segment title
-      // Note: Supabase complex filtering on joins can be tricky. 
-      // Ideally, filter by segment_id if you have it mapped, but this works for text match on the join.
-      // For performance, getting the ID from the segment list is better:
-      // (Assuming 'segments' prop is just strings, we might need IDs. 
-      // For now, let's rely on the text filter provided in your previous code or fetch IDs.)
-      // *Correction*: Your previous code fetched IDs server side. Let's keep it simple:
-      // We will filter by the joined table value.
       query = query.eq("subjects.groups.segments.title", segment);
     }
 
@@ -70,7 +62,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
        // Clean up the nested structure for display
        const formatted = data.map((item: any) => ({
          ...item,
-         // Handle the case where the join might return array or single object depending on your DB setup
          segmentTitle: item.subjects?.groups?.segments?.title || "General"
        }));
        setBlogs(formatted);
@@ -80,16 +71,31 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     setLoading(false);
   };
 
-  // Debounced Search Handler
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      // Trigger fetch only if parameters changed from initial
-      if (page === 1 && search === "" && selectedSegment === "All" && blogs === initialBlogs) return;
-      fetchData(page, search, selectedSegment);
-    }, 500);
+  // --- LODASH DEBOUNCE IMPLEMENTATION ---
+  
+  // Create a debounced version of the fetch function
+  // This will wait 500ms after the user stops typing to trigger the API call
+  const debouncedFetch = useCallback(
+    debounce((p, s, seg) => {
+      fetchData(p, s, seg);
+    }, 500),
+    []
+  );
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [search, selectedSegment, page]);
+  // Trigger fetch when filters change
+  useEffect(() => {
+    // If it's the initial load (no search, page 1, all segments), don't refetch because server already did it
+    if (page === 1 && search === "" && selectedSegment === "All" && blogs === initialBlogs) return;
+
+    // Use the debounced function
+    debouncedFetch(page, search, selectedSegment);
+
+    // Cancel any pending debounced calls if component unmounts
+    return () => {
+      debouncedFetch.cancel();
+    };
+  }, [search, selectedSegment, page, debouncedFetch]);
+
 
   // Handlers
   const handleSegmentChange = (seg: string) => {
@@ -111,7 +117,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 placeholder={`Search ${selectedSegment === 'All' ? '' : selectedSegment} blogs...`} 
                 className="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-full pl-6 pr-12 py-4 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1); // Reset page on search
+                }}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-100 p-2 rounded-full text-slate-400">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
