@@ -24,26 +24,30 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("All");
+  // We store the ID of the selected segment to make filtering 100% accurate
+  const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null);
   
-  // Dynamic Category State
+  // Category State
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   
   const [page, setPage] = useState(1);
 
-  // --- 1. FETCH CATEGORIES (DYNAMIC) ---
-  // When segment changes, find its ID and get relevant categories
+  // --- 1. SEGMENT CHANGE LOGIC (Get ID & Categories) ---
   useEffect(() => {
-    const fetchDynamicCategories = async () => {
+    const handleSegmentSwitch = async () => {
+        // CASE A: User selected "All"
         if (selectedSegment === "All") {
+            setSelectedSegmentId(null);
             setAvailableCategories([]);
+            setPage(1);
             return;
         }
 
         setLoadingCategories(true);
         try {
-            // 1. Get Segment ID from Title
+            // 1. Get the accurate ID for this Segment Title
             const { data: segData } = await supabase
                 .from('segments')
                 .select('id')
@@ -51,37 +55,39 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 .single();
 
             if (segData) {
-                // 2. Fetch Categories linked to this Segment OR Global ones compatible with blogs
+                setSelectedSegmentId(segData.id); // Save ID for reliable filtering
+
+                // 2. Fetch Categories linked to this Segment ID OR Global
                 const { data: catData } = await supabase
                     .from('categories')
                     .select('name')
-                    .eq('type', 'blog') // Only blog categories
-                    .or(`segment_id.eq.${segData.id},segment_id.is.null`); // Linked to this segment OR Global
+                    .eq('type', 'blog')
+                    .or(`segment_id.eq.${segData.id},segment_id.is.null`);
 
                 if (catData) {
-                    // Extract unique names
-                    const names = Array.from(new Set(catData.map(c => c.name)));
-                    setAvailableCategories(names);
+                    const uniqueNames = Array.from(new Set(catData.map(c => c.name)));
+                    setAvailableCategories(uniqueNames);
                 }
             }
         } catch (err) {
-            console.error("Error fetching categories:", err);
+            console.error("Error resolving segment:", err);
         } finally {
             setLoadingCategories(false);
+            setPage(1); // Reset page only after we have the new ID
         }
     };
 
-    fetchDynamicCategories();
+    handleSegmentSwitch();
   }, [selectedSegment]);
 
-  // --- 2. STABLE FETCH FUNCTION (BLOGS) ---
+
+  // --- 2. MAIN FETCH FUNCTION ---
   const fetchData = useCallback(
-    async (pageNum: number, searchTerm: string, segment: string, category: string) => {
+    async (pageNum: number, searchTerm: string, segmentId: number | null, category: string) => {
       setLoading(true);
 
       try {
-        // Start Query
-        // NOTICE: Added 'title' to subjects selection for the Badge logic
+        // Query Setup
         let query = supabase
           .from("resources")
           .select(
@@ -103,17 +109,17 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         // Search
         if (searchTerm) query = query.ilike("title", `%${searchTerm}%`);
 
-        // Segment Filter
-        if (segment !== "All") {
-          query = query.eq("subjects.groups.segments.title", segment);
+        // FILTER FIX: Use the ID directly if we have it (Reliable)
+        if (segmentId) {
+          query = query.eq("segment_id", segmentId);
         }
 
-        // Category Filter (Exact Match on the 'category' text column)
+        // Category Filter
         if (category !== "All") {
            query = query.eq("category", category);
         }
 
-        // Pagination Range
+        // Pagination
         const from = (pageNum - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
 
@@ -124,9 +130,8 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (data) {
           const formatted = data.map((item: any) => ({
             ...item,
-            // LOGIC: Subject Title exists? Use it. Else Segment Title. Else "General".
+            // Logic: Prefer Subject Title -> Segment Title -> "General"
             badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
-            segmentTitle: item.subjects?.groups?.segments?.title // Keep specific segment for filtering/logic if needed
           }));
           setBlogs(formatted);
         }
@@ -145,7 +150,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const handleSearchUpdate = useCallback(
     debounce((value: string) => {
       setDebouncedSearch(value);
-      setPage(1); // Reset to page 1 on new search
+      setPage(1);
     }, 500),
     []
   );
@@ -156,40 +161,25 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     handleSearchUpdate(val);
   };
 
-  // --- 4. THE MAIN EFFECT ---
+  // --- 4. TRIGGER FETCH ---
   useEffect(() => {
-    // Skip initial load fetch if data matches server props AND no filters active
-    if (
-      page === 1 &&
-      debouncedSearch === "" &&
-      selectedSegment === "All" &&
-      selectedCategory === "All" &&
-      blogs === initialBlogs
-    )
-      return;
+    // If a segment name is selected but we haven't resolved its ID yet, don't fetch (wait for useEffect #1)
+    if (selectedSegment !== "All" && selectedSegmentId === null) return;
 
-    fetchData(page, debouncedSearch, selectedSegment, selectedCategory);
+    fetchData(page, debouncedSearch, selectedSegmentId, selectedCategory);
     
-    // Auto-scroll to top of grid when page changes
     if (page > 1) {
-        const gridTop = document.getElementById("blog-grid-top");
-        if (gridTop) gridTop.scrollIntoView({ behavior: "smooth" });
+        document.getElementById("blog-grid-top")?.scrollIntoView({ behavior: "smooth" });
     }
 
-  }, [page, selectedSegment, selectedCategory, debouncedSearch, fetchData]); 
+  }, [page, selectedSegmentId, selectedSegment, selectedCategory, debouncedSearch, fetchData]); 
 
   // --- HANDLERS ---
   const handleSegmentChange = (seg: string) => {
     if (selectedSegment === seg) return;
     setSelectedSegment(seg);
-    setSelectedCategory("All"); // Reset sub-category when segment changes
-    setPage(1);
-  };
-
-  const handleCategoryChange = (cat: string) => {
-    if (selectedCategory === cat) return;
-    setSelectedCategory(cat);
-    setPage(1);
+    setSelectedCategory("All");
+    // Note: ID resolution happens in the useEffect
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -197,7 +187,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       
-      {/* --- PAGE HEADER --- */}
       <div className="mb-10 text-center lg:text-left">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
           Latest <span className="text-blue-600">Updates</span>
@@ -209,7 +198,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
       <div className="flex flex-col lg:flex-row gap-12 relative">
         
-        {/* --- LEFT COLUMN: CONTENT (8 Cols) --- */}
+        {/* --- LEFT COLUMN: CONTENT --- */}
         <div className="flex-1 w-full lg:w-2/3 xl:w-3/4">
             
           {/* Mobile Filter */}
@@ -222,11 +211,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 <option value="All">All Segments</option>
                 {segments.map(seg => <option key={seg} value={seg}>{seg}</option>)}
              </select>
-             {/* Mobile Category Filter (Only if segment selected) */}
+             {/* Mobile Category */}
              {selectedSegment !== "All" && availableCategories.length > 0 && (
                 <select 
                     value={selectedCategory} 
-                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none animate-in fade-in"
                 >
                     <option value="All">All Topics</option>
@@ -237,7 +226,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
           <div id="blog-grid-top"></div>
 
-          {/* LOADING STATE */}
+          {/* CONTENT GRID */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -245,23 +234,17 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                   <div className="h-48 bg-slate-100 rounded-xl mb-4 animate-pulse"></div>
                   <div className="h-4 bg-slate-100 rounded w-1/3 mb-2 animate-pulse"></div>
                   <div className="h-6 bg-slate-100 rounded w-3/4 mb-4 animate-pulse"></div>
-                  <div className="h-3 bg-slate-100 rounded w-full mb-2 animate-pulse"></div>
                 </div>
               ))}
             </div>
           ) : blogs.length > 0 ? (
-            // GRID STATE
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-              {blogs.map((blog: any) => {
-                const badgeTitle = blog.badgeTitle || "General";
-                
-                return (
+              {blogs.map((blog: any) => (
                   <Link
                     key={blog.id}
                     href={`/blog/${blog.id}`}
                     className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
                   >
-                    {/* --- IMAGE / NO-IMAGE HEADER --- */}
                     <div className="h-48 relative overflow-hidden border-b border-slate-100">
                       {blog.content_url ? (
                         <Image
@@ -271,7 +254,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
-                        // NO IMAGE FALLBACK
                         <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 group-hover:from-blue-900 group-hover:to-slate-900 transition-all">
                            <h3 className="text-white font-bold text-center line-clamp-3 leading-snug drop-shadow-md">
                              {blog.title}
@@ -279,15 +261,13 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </div>
                       )}
                       
-                      {/* Floating Badge (SUBJECT prioritized) */}
                       <div className="absolute top-3 left-3">
                         <span className="bg-white/95 backdrop-blur shadow-sm text-slate-800 text-[10px] font-extrabold px-3 py-1 rounded-full border border-slate-100 tracking-wide uppercase">
-                          {badgeTitle}
+                          {blog.badgeTitle}
                         </span>
                       </div>
                     </div>
 
-                    {/* Content Area */}
                     <div className="p-5 flex-1 flex flex-col">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
@@ -296,7 +276,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </span>
                       </div>
                       
-                      {/* Show Title if Image Exists (otherwise it's in the header) */}
                       {blog.content_url && (
                         <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
                             {blog.title}
@@ -313,16 +292,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                       </div>
                     </div>
                   </Link>
-                );
-              })}
+              ))}
             </div>
           ) : (
-            // EMPTY STATE
             <div className="text-center py-24 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
               <div className="text-5xl mb-4 opacity-50">🔍</div>
               <h3 className="text-xl font-bold text-slate-900">No matching posts found</h3>
               <p className="text-slate-500 mt-2 text-sm max-w-xs mx-auto">
-                 We couldn't find any articles matching "<strong>{search}</strong>" in {selectedSegment} {selectedCategory !== 'All' ? `> ${selectedCategory}` : ''}.
+                 Try adjusting your filters.
               </p>
               <button
                 onClick={() => {
@@ -333,65 +310,46 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 }}
                 className="mt-6 px-6 py-2 bg-white border border-slate-200 shadow-sm rounded-full text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
               >
-                Reset Filters
+                Clear All Filters
               </button>
             </div>
           )}
 
-          {/* --- PAGINATION --- */}
+          {/* PAGINATION */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-4 mt-12 py-4 border-t border-slate-100">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1 || loading}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-                Previous
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg> Previous
               </button>
-              
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-500">Page</span>
-                <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-sm font-bold">
-                    {page}
-                </span>
+                <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-sm font-bold">{page}</span>
                 <span className="text-sm font-medium text-slate-500">of {totalPages}</span>
               </div>
-
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages || loading}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-              >
-                Next
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50">
+                Next <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
               </button>
             </div>
           )}
         </div>
 
-        {/* --- RIGHT COLUMN: SIDEBAR (4 Cols) --- */}
+        {/* --- RIGHT COLUMN: SIDEBAR --- */}
         <div className="w-full lg:w-1/3 xl:w-1/4 space-y-8">
             
-            {/* Search Widget */}
+            {/* Search */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Search</h3>
                 <div className="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search articles..." 
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg pl-4 pr-10 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                        value={search}
-                        onChange={onSearchChange}
-                    />
+                    <input type="text" placeholder="Search..." className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg pl-4 pr-10 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={search} onChange={onSearchChange} />
                     <svg className="w-5 h-5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
 
-            {/* 1. All Segments Widget */}
+            {/* Segments List (Fixed Redundancy) */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hidden lg:block">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">All Segments</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Segments</h3>
                 <div className="flex flex-col gap-2">
+                    {/* Only render "All Updates" button once */}
                     <button 
                         onClick={() => handleSegmentChange("All")}
                         className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex justify-between items-center group ${
@@ -403,7 +361,9 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         All Updates
                         {selectedSegment === "All" && <span className="text-white">●</span>}
                     </button>
-                    {segments.map((seg) => (
+                    
+                    {/* Render segments (filtering out 'All' just in case it exists in the data) */}
+                    {segments.filter(s => s !== 'All').map((seg) => (
                         <button 
                             key={seg}
                             onClick={() => handleSegmentChange(seg)}
@@ -420,7 +380,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 </div>
             </div>
 
-            {/* 2. DYNAMIC TOPICS WIDGET (Context-Aware) */}
+            {/* Dynamic Topics */}
             {selectedSegment !== "All" && (
                  <div className="bg-white rounded-2xl border border-blue-100 p-6 shadow-sm hidden lg:block animate-in slide-in-from-right-4 fade-in duration-500">
                     <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-4">
@@ -428,78 +388,31 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                     </h3>
                     
                     {loadingCategories ? (
-                        <div className="flex gap-2 animate-pulse">
-                            <div className="h-6 w-16 bg-blue-50 rounded-full"></div>
-                            <div className="h-6 w-24 bg-blue-50 rounded-full"></div>
-                            <div className="h-6 w-12 bg-blue-50 rounded-full"></div>
-                        </div>
+                        <div className="flex gap-2 animate-pulse"><div className="h-6 w-16 bg-blue-50 rounded-full"></div><div className="h-6 w-12 bg-blue-50 rounded-full"></div></div>
                     ) : availableCategories.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                            {/* "All" Button for Sub-Categories */}
-                            <button 
-                                onClick={() => handleCategoryChange("All")}
-                                className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${
-                                    selectedCategory === "All"
-                                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                    : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"
-                                }`}
-                            >
-                                All
-                            </button>
-                            
-                            {/* Map Fetched Categories */}
+                            <button onClick={() => setSelectedCategory("All")} className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${selectedCategory === "All" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"}`}>All</button>
                             {availableCategories.map(cat => (
-                                <button 
-                                    key={cat} 
-                                    onClick={() => handleCategoryChange(cat)}
-                                    className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${
-                                        selectedCategory === cat
-                                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                        : "bg-blue-50 text-blue-700 border-transparent hover:bg-blue-100"
-                                    }`}
-                                >
-                                    {cat}
-                                </button>
+                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 text-xs font-bold rounded-full transition-colors border ${selectedCategory === cat ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 text-blue-700 border-transparent hover:bg-blue-100"}`}>{cat}</button>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-400 italic">No specific topics found for this segment.</p>
+                        <p className="text-xs text-slate-400 italic">No topics found.</p>
                     )}
                  </div>
             )}
 
-            {/* Social Connect Widget */}
+            {/* Socials */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Socials</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Connect</h3>
                 <div className="space-y-3">
-                    {/* Facebook */}
-                    <a 
-                        href="https://www.facebook.com/profile.php?id=61584943876571" 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group"
-                    >
-                        <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center text-white shrink-0">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">Facebook</p>
-                        </div>
+                    <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group">
+                        <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center text-white shrink-0"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+                        <div><p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">Facebook</p></div>
                     </a>
-
-                    {/* YouTube */}
-                    <a 
-                        href="https://youtube.com/gmatclub" 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-red-200 hover:bg-red-50/50 transition-all group"
-                    >
-                        <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center text-white shrink-0">
-                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-red-700">YouTube</p>
-                        </div>
+                    <a href="https://youtube.com/gmatclub" target="_blank" className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-red-200 hover:bg-red-50/50 transition-all group">
+                        <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center text-white shrink-0"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></div>
+                        <div><p className="text-sm font-bold text-slate-900 group-hover:text-red-700">YouTube</p></div>
                     </a>
                 </div>
             </div>
