@@ -28,7 +28,7 @@ const PAGE_SIZE = 20;
 
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
 
-// --- FIXED: SEO COMPONENT DEFINED OUTSIDE TO PREVENT GLITCHES ---
+// --- EXTERNAL COMPONENT (Prevents focus loss bug) ---
 const SeoInputSection = ({ 
   title, setTitle, 
   tags, setTags, 
@@ -38,21 +38,39 @@ const SeoInputSection = ({
   tags: string, setTags: (v: string) => void,
   desc: string, setDesc: (v: string) => void
 }) => (
-  <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 mt-4">
-      <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><span>🚀</span> SEO & Search</h4>
-      <div className="grid grid-cols-2 gap-4">
+  <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 mt-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><span>🚀</span> SEO & Search Settings</h4>
+          <span className="text-[10px] text-slate-400 bg-white px-2 py-1 rounded border">Optional</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">SEO Title</label>
-            <input className="w-full bg-white border p-2 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={title} onChange={e=>setTitle(e.target.value)} />
+            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Meta Title</label>
+            <input 
+                className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" 
+                placeholder="Custom title for Google..."
+                value={title} 
+                onChange={e=>setTitle(e.target.value)} 
+            />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Tags</label>
-            <input className="w-full bg-white border p-2 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={tags} onChange={e=>setTags(e.target.value)} />
+            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Tags (Comma Separated)</label>
+            <input 
+                className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" 
+                placeholder="math, geometry, solution..."
+                value={tags} 
+                onChange={e=>setTags(e.target.value)} 
+            />
           </div>
       </div>
       <div>
-        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Description</label>
-        <textarea className="w-full bg-white border p-2 rounded text-sm outline-none h-16 resize-none focus:ring-2 focus:ring-blue-500 transition-all" value={desc} onChange={e=>setDesc(e.target.value)} />
+        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Meta Description</label>
+        <textarea 
+            className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-sm outline-none h-20 resize-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" 
+            placeholder="Brief summary for search engines..."
+            value={desc} 
+            onChange={e=>setDesc(e.target.value)} 
+        />
       </div>
   </div>
 );
@@ -105,7 +123,7 @@ export default function AdminDashboard() {
   const [catModalGroupsList, setCatModalGroupsList] = useState<any[]>([]);
   const [catModalSubjectsList, setCatModalSubjectsList] = useState<any[]>([]);
 
-  // SEO
+  // SEO - Common for all
   const [commonTags, setCommonTags] = useState(""); 
   const [commonSeoTitle, setCommonSeoTitle] = useState("");
   const [commonSeoDesc, setCommonSeoDesc] = useState("");
@@ -122,13 +140,10 @@ export default function AdminDashboard() {
   const [resType, setResType] = useState("pdf");
   const [richContent, setRichContent] = useState(""); 
   const [questionContent, setQuestionContent] = useState(""); 
-  const [seoTitle, setSeoTitle] = useState(""); 
-  const [seoDescription, setSeoDescription] = useState(""); 
   const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
   const [blogImageMethod, setBlogImageMethod] = useState<'upload' | 'link'>('upload');
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [blogImageLink, setBlogImageLink] = useState("");
-  const [blogTags, setBlogTags] = useState("");
   const [blogCategory, setBlogCategory] = useState("");
 
   // News Form
@@ -143,7 +158,6 @@ export default function AdminDashboard() {
   const [ebAuthor, setEbAuthor] = useState("");
   const [ebCategory, setEbCategory] = useState("");
   const [ebDescription, setEbDescription] = useState(""); 
-  const [ebTags, setEbTags] = useState("");
   const [ebLink, setEbLink] = useState(""); 
   const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
 
@@ -177,6 +191,20 @@ export default function AdminDashboard() {
     init();
   }, [router]);
 
+  // Cleanup on tab switch
+  useEffect(() => {
+      clearAllForms();
+  }, [activeTab]);
+
+  const clearAllForms = () => {
+      resetResourceForm();
+      setNewsTitle(""); setNewsContent(""); setNewsCategory(""); setNewsFile(null); setEditingNewsId(null);
+      setEbTitle(""); setEbAuthor(""); setEbCategory(""); setEbDescription(""); setEbLink(""); setEditingEbookId(null);
+      setCTitle(""); setCInstructor(""); setCPrice(""); setCDesc(""); setCCategory(""); setEditingCourseId(null);
+      setUpdateTitle(""); setUpdateContent(""); setEditingUpdateId(null);
+      clearSeoFields();
+  };
+
   const loadInitialData = () => {
     fetchSegments(); fetchCategories(); 
     fetchResources(selectedSegment, selectedGroup, selectedSubject);
@@ -188,7 +216,12 @@ export default function AdminDashboard() {
   const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
   const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
   const closeModal = () => setModal({ ...modal, isOpen: false });
-  const clearSeoFields = () => { setCommonTags(""); setCommonSeoTitle(""); setCommonSeoDesc(""); };
+  
+  const clearSeoFields = () => { 
+      setCommonTags(""); 
+      setCommonSeoTitle(""); 
+      setCommonSeoDesc(""); 
+  };
 
   // --- FETCHERS ---
   const fetchSegments = async () => { const {data} = await supabase.from("segments").select("*").order('id'); setSegments(data||[]); };
@@ -235,7 +268,7 @@ export default function AdminDashboard() {
   const handleSubjectSubmit = async () => { if(newSubject && selectedGroup) { await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); }};
 
 
-  // --- SMART CATEGORY MANAGER COMPONENT ---
+  // --- SMART CATEGORY MANAGER ---
   const CategoryManager = ({ 
       label, value, onChange, context, filterSegmentId, filterGroupId, filterSubjectId
   }: { 
@@ -244,12 +277,15 @@ export default function AdminDashboard() {
       const filteredCats = categories.filter(c => {
           const typeMatch = c.type === context || c.type === 'general' || !c.type;
           if (!typeMatch) return false;
+          
           const isGlobal = !c.segment_id && !c.group_id && !c.subject_id;
           if (isGlobal) return true;
+          
           let matchesHierarchy = false;
           if (c.subject_id && filterSubjectId && c.subject_id === Number(filterSubjectId)) matchesHierarchy = true;
           else if (c.group_id && !c.subject_id && filterGroupId && c.group_id === Number(filterGroupId)) matchesHierarchy = true;
           else if (c.segment_id && !c.group_id && !c.subject_id && filterSegmentId && c.segment_id === Number(filterSegmentId)) matchesHierarchy = true;
+          
           return matchesHierarchy;
       });
 
@@ -257,9 +293,13 @@ export default function AdminDashboard() {
           <div>
               <label className="text-xs font-bold text-slate-400 uppercase block mb-1">{label}</label>
               <div className="flex gap-2">
-                  <select className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none" value={value} onChange={e=>onChange(e.target.value)}>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none cursor-pointer hover:border-slate-300 transition-colors" 
+                    value={value} 
+                    onChange={e=>onChange(e.target.value)}
+                  >
                       <option value="">Select Category</option>
-                      {filteredCats.map(c => <option key={c.id} value={c.name}>{c.name} {c.subject_id ? '(Subject)' : c.group_id ? '(Group)' : c.segment_id ? '(Segment)' : ''}</option>)}
+                      {filteredCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
                   <button onClick={() => { 
                         setActiveCatContext(context); 
@@ -270,7 +310,7 @@ export default function AdminDashboard() {
                         setCatModalSubject(filterSubjectId || "");
                         setIsManageCatsOpen(true); 
                     }} 
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-xl text-lg" title="Manage Categories">⚙️</button>
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-xl text-lg transition-colors" title="Manage Categories">⚙️</button>
               </div>
           </div>
       );
@@ -279,15 +319,24 @@ export default function AdminDashboard() {
   // --- RESOURCE LOGIC ---
   const resetResourceForm = () => { 
       setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); setRichContent(""); setQuestionContent(""); 
-      setSeoTitle(""); setSeoDescription(""); setBlogImageFile(null); setBlogImageLink(""); setBlogImageMethod('upload'); 
-      setBlogTags(""); setBlogCategory(""); setResType("pdf"); setIsBlogEditorOpen(false); clearSeoFields();
+      setBlogImageFile(null); setBlogImageLink(""); setBlogImageMethod('upload'); 
+      setBlogCategory(""); setResType("pdf"); setIsBlogEditorOpen(false); 
+      clearSeoFields();
   };
+  
   const loadResourceForEdit = (r: any) => {
-      setEditingResourceId(r.id); setResTitle(r.title); setResType(r.type); setResLink(r.content_url||""); 
-      setRichContent(r.content_body || ""); setQuestionContent(r.content_body || "");
-      // FIX: Load tags correctly
+      clearSeoFields();
+      setEditingResourceId(r.id); 
+      setResTitle(r.title); 
+      setResType(r.type); 
+      setResLink(r.content_url||""); 
+      setRichContent(r.content_body || ""); 
+      setQuestionContent(r.content_body || "");
+      
       setCommonTags(r.tags ? r.tags.join(", ") : ""); 
-      setCommonSeoTitle(r.seo_title || ""); setCommonSeoDesc(r.seo_description || "");
+      setCommonSeoTitle(r.seo_title || ""); 
+      setCommonSeoDesc(r.seo_description || "");
+      
       if(r.type==='blog') {
           setIsBlogEditorOpen(true);
           setBlogCategory(r.category || ""); 
@@ -297,6 +346,7 @@ export default function AdminDashboard() {
           setSelectedSubject(String(r.subject_id || ""));
       }
   };
+
   const uploadResource = async (typeOverride?: string) => {
       const type = typeOverride || resType;
       if(!resTitle) return showError("Title is required!");
@@ -324,17 +374,29 @@ export default function AdminDashboard() {
       }
 
       const payload: any = { 
-          title: resTitle, type, seo_title: commonSeoTitle || resTitle, seo_description: commonSeoDesc,
-          // FIX: Save tags array
+          title: resTitle, type, 
+          seo_title: commonSeoTitle || resTitle, 
+          seo_description: commonSeoDesc,
           tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t.length > 0), 
       };
+      
       if(selectedSegment) payload.segment_id = Number(selectedSegment);
       if(selectedGroup) payload.group_id = Number(selectedGroup);
       if(selectedSubject) payload.subject_id = Number(selectedSubject);
 
       if(type==='pdf' || type==='video') payload.content_url = url;
-      else if(type==='question') { payload.content_body = finalContent; payload.seo_title = seoTitle || resTitle; payload.seo_description = seoDescription; }
-      else if(type==='blog') { payload.content_body = finalContent; payload.content_url = url; payload.tags = blogTags.split(',').map(t=>t.trim()); payload.category = blogCategory; }
+      // FIX: Use Correct Variables
+      else if(type==='question') { 
+          payload.content_body = finalContent; 
+          payload.seo_title = commonSeoTitle || resTitle; 
+          payload.seo_description = commonSeoDesc; 
+      }
+      else if(type==='blog') { 
+          payload.content_body = finalContent; 
+          payload.content_url = url; 
+          payload.tags = commonTags.split(',').map(t=>t.trim()); 
+          payload.category = blogCategory; 
+      }
 
       const { error } = editingResourceId 
           ? await supabase.from('resources').update(payload).eq('id', editingResourceId)
@@ -360,14 +422,17 @@ export default function AdminDashboard() {
     }
     const payload: any = {
         title: updateTitle, type: updateType, segment_id: Number(updateSegmentId), content_body: updateContent,
-        seo_title: commonSeoTitle || updateTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t)
+        seo_title: commonSeoTitle || updateTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t.length > 0)
     };
     if(url) payload.attachment_url = url;
     const { error } = editingUpdateId ? await supabase.from('segment_updates').update(payload).eq('id', editingUpdateId) : await supabase.from('segment_updates').insert([payload]);
     setSubmitting(false);
     if(error) showError(error.message); else { setEditingUpdateId(null); setUpdateTitle(""); setUpdateContent(""); setUpdateFile(null); clearSeoFields(); fetchSegmentUpdates(); showSuccess("Update published!"); }
   };
-  const loadUpdateForEdit = (u: any) => { setEditingUpdateId(u.id); setUpdateTitle(u.title); setUpdateType(u.type); setUpdateSegmentId(u.segment_id); setUpdateContent(u.content_body||""); setCommonTags(u.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); };
+  const loadUpdateForEdit = (u: any) => { 
+      clearSeoFields();
+      setEditingUpdateId(u.id); setUpdateTitle(u.title); setUpdateType(u.type); setUpdateSegmentId(u.segment_id); setUpdateContent(u.content_body||""); setCommonTags(u.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); 
+  };
 
   // --- EBOOK LOGIC ---
   const handleEbookSubmit = async () => {
@@ -376,13 +441,26 @@ export default function AdminDashboard() {
     const cover = (document.getElementById('eb-cover') as HTMLInputElement)?.files?.[0];
     let cUrl = null;
     if (cover) { const n = `cover-${Date.now()}`; await supabase.storage.from('covers').upload(n, cover); cUrl = supabase.storage.from('covers').getPublicUrl(n).data.publicUrl; }
-    const payload: any = { title: ebTitle, author: ebAuthor, category: ebCategory, description: ebDescription, pdf_url: ebLink, seo_title: commonSeoTitle||ebTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t) };
+    
+    // Check if category is selected
+    const payload: any = { 
+        title: ebTitle, author: ebAuthor, 
+        category: ebCategory, 
+        description: ebDescription, pdf_url: ebLink, 
+        seo_title: commonSeoTitle||ebTitle, seo_description: commonSeoDesc, 
+        tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t.length > 0) 
+    };
     if (cUrl) payload.cover_url = cUrl;
     const { error } = editingEbookId ? await supabase.from('ebooks').update(payload).eq('id', editingEbookId) : await supabase.from('ebooks').insert([payload]);
     setSubmitting(false);
     if (error) showError(error.message); else { setEditingEbookId(null); setEbTitle(""); setEbAuthor(""); setEbCategory(""); setEbDescription(""); setEbLink(""); clearSeoFields(); fetchEbooks(); showSuccess("eBook saved!"); }
   };
-  const loadEbookForEdit = (b: any) => { setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); setEbCategory(b.category); setEbDescription(b.description||""); setEbLink(b.pdf_url||""); setCommonTags(b.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); };
+  const loadEbookForEdit = (b: any) => { 
+      clearSeoFields();
+      setEditingEbookId(b.id); setEbTitle(b.title); setEbAuthor(b.author); 
+      setEbCategory(b.category); 
+      setEbDescription(b.description||""); setEbLink(b.pdf_url||""); setCommonTags(b.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); 
+  };
 
   // --- COURSE LOGIC ---
   const handleCourseSubmit = async () => {
@@ -390,13 +468,16 @@ export default function AdminDashboard() {
       setSubmitting(true);
       let thumb = null;
       if(cImage) { const n = `course-${Date.now()}`; await supabase.storage.from('materials').upload(n, cImage); thumb = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
-      const payload: any = { title: cTitle, instructor: cInstructor, price: cPrice, discount_price: cDiscountPrice, duration: cDuration, enrollment_link: cLink, description: cDesc, category: cCategory, seo_title: commonSeoTitle||cTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t) };
+      const payload: any = { title: cTitle, instructor: cInstructor, price: cPrice, discount_price: cDiscountPrice, duration: cDuration, enrollment_link: cLink, description: cDesc, category: cCategory, seo_title: commonSeoTitle||cTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t.length > 0) };
       if(thumb) payload.thumbnail_url = thumb;
       if(editingCourseId) await supabase.from('courses').update(payload).eq('id', editingCourseId);
       else { if(!thumb) {showError("Thumbnail required"); setSubmitting(false); return;} payload.thumbnail_url = thumb; await supabase.from('courses').insert([payload]); }
       setSubmitting(false); setEditingCourseId(null); setCTitle(""); setCInstructor(""); setCPrice(""); setCDiscountPrice(""); setCDuration(""); setCLink(""); setCDesc(""); setCCategory(""); setCImage(null); clearSeoFields(); fetchCourses(); showSuccess("Course launched!");
   };
-  const loadCourseForEdit = (c:any) => { setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description||""); setCCategory(c.category||""); setCommonTags(c.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); };
+  const loadCourseForEdit = (c:any) => { 
+      clearSeoFields();
+      setEditingCourseId(c.id); setCTitle(c.title); setCInstructor(c.instructor); setCPrice(c.price); setCDiscountPrice(c.discount_price); setCDuration(c.duration); setCLink(c.enrollment_link); setCDesc(c.description||""); setCCategory(c.category||""); setCommonTags(c.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); 
+  };
 
   // --- NEWS LOGIC ---
   const handleNewsSubmit = async () => {
@@ -404,12 +485,15 @@ export default function AdminDashboard() {
       setSubmitting(true);
       let url = null;
       if(newsFile) { const n = `news-${Date.now()}`; await supabase.storage.from('materials').upload(n, newsFile); url = supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
-      const payload: any = { title: newsTitle, content: newsContent, category: newsCategory, seo_title: commonSeoTitle||newsTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t) };
+      const payload: any = { title: newsTitle, content: newsContent, category: newsCategory, seo_title: commonSeoTitle||newsTitle, seo_description: commonSeoDesc, tags: commonTags.split(',').map(t=>t.trim()).filter(t=>t.length > 0) };
       if(url) payload.image_url = url;
       if(editingNewsId) await supabase.from('news').update(payload).eq('id', editingNewsId); else await supabase.from('news').insert([payload]);
       setSubmitting(false); setEditingNewsId(null); setNewsTitle(""); setNewsContent(""); setNewsCategory(""); setNewsFile(null); clearSeoFields(); fetchNews(); showSuccess("News published!");
   };
-  const loadNewsForEdit = (n:any) => { setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content||""); setNewsCategory(n.category); setCommonTags(n.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); };
+  const loadNewsForEdit = (n:any) => { 
+      clearSeoFields();
+      setEditingNewsId(n.id); setNewsTitle(n.title); setNewsContent(n.content||""); setNewsCategory(n.category); setCommonTags(n.tags?.join(", ")||""); window.scrollTo({top:0,behavior:'smooth'}); 
+  };
 
   // --- HELPER COMPONENT (Pagination) ---
   const PaginationControls = ({ page, setPage, hasMore }: any) => (
@@ -426,10 +510,8 @@ export default function AdminDashboard() {
       
       {/* 1. UPDATED CATEGORY MANAGER MODAL */}
       {isManageCatsOpen && (
-          // Increased Z-Index to 1000, but lower than confirmation modal (which is now 2000)
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
-                  
                   {/* Header */}
                   <div className="p-5 border-b flex justify-between items-center bg-slate-50">
                       <div>
@@ -438,89 +520,36 @@ export default function AdminDashboard() {
                       </div>
                       <button onClick={()=>setIsManageCatsOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition">✕</button>
                   </div>
-
                   {/* Body */}
                   <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-                      
                       {/* Add New Section */}
                       <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 space-y-3">
                           <label className="text-xs font-bold text-blue-700 uppercase">Create New Category</label>
                           <input id="newCatInput" className="w-full bg-white border p-3 rounded-xl text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Category Name (e.g., Organic Chemistry)..." />
-                          
                           {/* Scope Selectors */}
                           <div className="grid grid-cols-3 gap-2">
-                              <select 
-                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none" 
-                                  value={catModalSegment} 
-                                  onChange={e => {
-                                      setCatModalSegment(e.target.value); 
-                                      setCatModalGroup(""); setCatModalSubject(""); 
-                                      fetchModalGroups(e.target.value);
-                                  }}
-                              >
+                              <select className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none" value={catModalSegment} onChange={e => { setCatModalSegment(e.target.value); setCatModalGroup(""); setCatModalSubject(""); fetchModalGroups(e.target.value); }}>
                                   <option value="">Global (All)</option>
                                   {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                               </select>
-
-                              <select 
-                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none"
-                                  value={catModalGroup}
-                                  onChange={e => {
-                                      setCatModalGroup(e.target.value); 
-                                      setCatModalSubject(""); 
-                                      fetchModalSubjects(e.target.value);
-                                  }}
-                                  disabled={!catModalSegment}
-                              >
+                              <select className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none" value={catModalGroup} onChange={e => { setCatModalGroup(e.target.value); setCatModalSubject(""); fetchModalSubjects(e.target.value); }} disabled={!catModalSegment}>
                                   <option value="">All Groups</option>
                                   {catModalGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
                               </select>
-
-                              <select 
-                                  className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none"
-                                  value={catModalSubject}
-                                  onChange={e => setCatModalSubject(e.target.value)}
-                                  disabled={!catModalGroup}
-                              >
+                              <select className="bg-white border p-2 rounded-lg text-xs font-bold text-slate-600 outline-none" value={catModalSubject} onChange={e => setCatModalSubject(e.target.value)} disabled={!catModalGroup}>
                                   <option value="">All Subjects</option>
                                   {catModalSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                               </select>
                           </div>
-
-                          <button onClick={async ()=>{
-                              const input = document.getElementById('newCatInput') as HTMLInputElement;
-                              if(input.value) { 
-                                  const payload: any = { name: input.value, type: activeCatContext };
-                                  if(catModalSegment) payload.segment_id = Number(catModalSegment);
-                                  if(catModalGroup) payload.group_id = Number(catModalGroup);
-                                  if(catModalSubject) payload.subject_id = Number(catModalSubject);
-                                  
-                                  await supabase.from('categories').insert([payload]); 
-                                  input.value=""; 
-                                  fetchCategories(); 
-                              }
-                          }} className="w-full bg-black text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition shadow-lg shadow-blue-900/20">
-                              + Add Category
-                          </button>
+                          <button onClick={async ()=>{ const input = document.getElementById('newCatInput') as HTMLInputElement; if(input.value) { const payload: any = { name: input.value, type: activeCatContext }; if(catModalSegment) payload.segment_id = Number(catModalSegment); if(catModalGroup) payload.group_id = Number(catModalGroup); if(catModalSubject) payload.subject_id = Number(catModalSubject); await supabase.from('categories').insert([payload]); input.value=""; fetchCategories(); } }} className="w-full bg-black text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition shadow-lg shadow-blue-900/20">+ Add Category</button>
                       </div>
-
                       {/* List Existing */}
                       <div className="space-y-2">
                           <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Existing {activeCatContext} Categories</h4>
                           {categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (
                               <div key={c.id} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl hover:border-blue-300 transition group shadow-sm">
-                                  <div>
-                                      <span className="text-sm font-bold text-slate-800 block">{c.name}</span>
-                                      <div className="flex gap-1 mt-1">
-                                          {c.segment_id && <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-bold border border-slate-200">Segment</span>}
-                                          {c.group_id && <span className="text-[9px] bg-blue-50 px-2 py-0.5 rounded text-blue-600 font-bold border border-blue-100">Group</span>}
-                                          {c.subject_id && <span className="text-[9px] bg-purple-50 px-2 py-0.5 rounded text-purple-600 font-bold border border-purple-100">Subject</span>}
-                                          {!c.segment_id && !c.group_id && !c.subject_id && <span className="text-[9px] bg-green-50 px-2 py-0.5 rounded text-green-600 font-bold border border-green-100">Global</span>}
-                                      </div>
-                                  </div>
-                                  <button onClick={()=>deleteItem('categories', c.id, fetchCategories)} className="bg-red-50 p-2 rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                  </button>
+                                  <div><span className="text-sm font-bold text-slate-800 block">{c.name}</span><div className="flex gap-1 mt-1">{c.segment_id && <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-bold border border-slate-200">Segment</span>}{c.group_id && <span className="text-[9px] bg-blue-50 px-2 py-0.5 rounded text-blue-600 font-bold border border-blue-100">Group</span>}{c.subject_id && <span className="text-[9px] bg-purple-50 px-2 py-0.5 rounded text-purple-600 font-bold border border-purple-100">Subject</span>}{!c.segment_id && !c.group_id && !c.subject_id && <span className="text-[9px] bg-green-50 px-2 py-0.5 rounded text-green-600 font-bold border border-green-100">Global</span>}</div></div>
+                                  <button onClick={()=>deleteItem('categories', c.id, fetchCategories)} className="bg-red-50 p-2 rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                               </div>
                           ))}
                       </div>
@@ -529,30 +558,19 @@ export default function AdminDashboard() {
           </div>
       )}
 
-      {/* 2. CONFIRMATION / ALERT MODAL (FIXED Z-INDEX & UI) */}
+      {/* 2. CONFIRMATION MODAL */}
       {modal.isOpen && (
-        // Z-Index set to 2000 to ensure it sits ON TOP of everything
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full transform transition-all scale-100 animate-pop-in relative overflow-hidden">
-                
-                {/* Decorative Background Blob */}
                 <div className={`absolute top-0 left-0 w-full h-2 ${modal.type === 'error' ? 'bg-red-500' : modal.type === 'confirm' ? 'bg-orange-500' : 'bg-green-500'}`}></div>
-
                 <div className="text-center">
-                    {/* Icon */}
-                    <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 ${
-                        modal.type === 'error' ? 'bg-red-100 text-red-500' : 
-                        modal.type === 'confirm' ? 'bg-orange-100 text-orange-500' : 
-                        'bg-green-100 text-green-500'
-                    }`}>
+                    <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 ${modal.type === 'error' ? 'bg-red-100 text-red-500' : modal.type === 'confirm' ? 'bg-orange-100 text-orange-500' : 'bg-green-100 text-green-500'}`}>
                         {modal.type === 'success' && <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
                         {modal.type === 'error' && <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>}
                         {modal.type === 'confirm' && <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>}
                     </div>
-
                     <h3 className="text-xl font-black text-slate-900 mb-2 capitalize">{modal.type === 'confirm' ? 'Are you sure?' : modal.type === 'success' ? 'Success!' : 'Error!'}</h3>
                     <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{modal.message}</p>
-                    
                     <div className="flex gap-3 justify-center">
                         {modal.type === 'confirm' ? (
                             <>
@@ -603,7 +621,7 @@ export default function AdminDashboard() {
                             </div>
                             {resType==='pdf' && <div className="border-2 border-dashed p-8 text-center rounded-xl relative hover:bg-blue-50"><input type="file" onChange={e=>setResFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl">📂</span><p className="text-sm font-bold text-slate-500">{resFile?resFile.name:"Upload PDF"}</p></div>}
                             {resType==='video' && <input className="w-full bg-slate-50 border p-3 rounded-xl text-sm" value={resLink} onChange={e=>setResLink(e.target.value)} placeholder="YouTube Embed Link..." />}
-                            {resType==='question' && <div className="space-y-3"><div className="border rounded-xl overflow-hidden"><SunEditor key={editingResourceId||'nq'} setContents={questionContent} onChange={setQuestionContent} setOptions={{...editorOptions,katex:katex}}/></div><input className="w-full bg-slate-50 border p-3 rounded-xl text-xs" value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="SEO Title"/></div>}
+                            {resType==='question' && <div className="space-y-3"><div className="border rounded-xl overflow-hidden"><SunEditor key={editingResourceId||'nq'} setContents={questionContent} onChange={setQuestionContent} setOptions={{...editorOptions,katex:katex}}/></div><input className="w-full bg-slate-50 border p-3 rounded-xl text-xs" value={commonSeoTitle} onChange={e=>setCommonSeoTitle(e.target.value)} placeholder="SEO Title"/></div>}
                             {resType==='blog' && <div className="p-6 bg-blue-50 text-blue-700 text-sm rounded-xl border border-blue-100 flex items-center gap-4"><span>✍️</span><p>Go to <strong>"Class Blogs"</strong> tab to write articles.</p></div>}
                             {resType!=='blog' && (
                                 <SeoInputSection 
@@ -735,6 +753,54 @@ export default function AdminDashboard() {
                         <div className="bg-white rounded-xl shadow-sm border h-[600px] flex flex-col"><SearchHeader title="News" value={newsSearch} onChange={(val:string)=>{setNewsSearch(val);setNewsPage(0)}}/><div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">{newsList.map(n=><div key={n.id} className="p-3 border-b hover:bg-gray-50 flex justify-between items-center group"><span className="font-bold text-xs truncate w-2/3">{n.title}</span><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-blue-600 text-xs font-bold">Edit</button><button onClick={()=>deleteItem('news',n.id,fetchNews)} className="text-red-600 text-xs font-bold">Del</button></div></div>)}</div><PaginationControls page={newsPage} setPage={setNewsPage} hasMore={newsList.length===PAGE_SIZE}/></div>
                     </div>
                  </div>
+              </div>
+            )}
+
+            {/* TAB: CLASS BLOGS (FIXED) */}
+            {activeTab === 'class-blogs' && (
+              <div className="animate-fade-in">
+                {!isBlogEditorOpen ? (
+                    <div>
+                        <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold">Class Blogs</h2><button onClick={()=>{resetResourceForm();setIsBlogEditorOpen(true);setResType('blog')}} className="bg-black text-white px-6 py-2 rounded-lg font-bold shadow-lg">+ New Post</button></div>
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 mb-6">
+                            <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm" value={selectedSegment} onChange={e=>handleSegmentClick(e.target.value)}><option value="">Filter Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                            <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm" value={selectedGroup} onChange={e=>handleGroupClick(e.target.value)} disabled={!selectedSegment}><option value="">Filter Group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                            <select className="w-full bg-slate-50 border p-3 rounded-lg font-bold text-sm" value={selectedSubject} onChange={e=>handleSubjectClick(e.target.value)} disabled={!selectedGroup}><option value="">Filter Subject</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{resources.filter(r=>r.type==='blog').map(b=><div key={b.id} className="bg-white rounded-xl border overflow-hidden shadow-sm hover:shadow-lg group relative"><div className="h-40 bg-slate-100 relative">{b.content_url?<img src={b.content_url} className="w-full h-full object-cover"/>:<div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-500 p-4 flex items-center justify-center text-center"><h4 className="text-white font-bold text-xs">{b.title}</h4></div>}<div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={()=>loadResourceForEdit(b)} className="bg-white p-1.5 rounded shadow text-xs">✏️</button><button onClick={()=>deleteItem('resources',b.id,()=>fetchResources(selectedSegment,selectedGroup,selectedSubject))} className="bg-white p-1.5 rounded shadow text-xs">🗑️</button></div></div><div className="p-4"><span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-2 inline-block">{b.category || 'General'}</span><h3 className="font-bold text-sm line-clamp-2">{b.title}</h3></div></div>)}</div>
+                        <PaginationControls page={resPage} setPage={setResPage} hasMore={resources.length===PAGE_SIZE}/>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-lg border min-h-screen flex flex-col relative">
+                        <div className="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl sticky top-0 z-10"><button onClick={()=>setIsBlogEditorOpen(false)} className="font-bold text-slate-500">← Cancel</button><button onClick={()=>uploadResource('blog')} disabled={submitting} className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold shadow-lg">{submitting?"Publishing...":"Publish"}</button></div>
+                        <div className="p-8 max-w-5xl mx-auto w-full space-y-6">
+                            <input className="text-5xl font-black w-full outline-none placeholder-slate-300 bg-transparent" placeholder="Title..." value={resTitle} onChange={e=>setResTitle(e.target.value)} />
+                            
+                            <div className="max-w-xs">
+                                <CategoryManager 
+                                    label="Blog Topic/Category" 
+                                    value={blogCategory} 
+                                    onChange={setBlogCategory} 
+                                    context="blog" 
+                                    filterSegmentId={selectedSegment}
+                                    filterGroupId={selectedGroup}
+                                    filterSubjectId={selectedSubject}
+                                />
+                                {(!selectedSegment && !selectedGroup && !selectedSubject) && <p className="text-[10px] text-slate-400 mt-1 italic">Tip: Filter by Segment/Subject above to see specific categories.</p>}
+                            </div>
+
+                            <div className="min-h-[500px] border rounded-lg overflow-hidden shadow-sm"><SunEditor key={editingResourceId||'nb'} getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={setRichContent} setOptions={{...editorOptions,callBackSave:()=>uploadResource('blog')}}/></div>
+                            <div className="grid grid-cols-2 gap-6 pt-6 border-t">
+                                <div className="space-y-4"><h4 className="text-xs font-bold text-slate-500 uppercase">Cover Image</h4><div className="bg-slate-50 p-1 rounded-lg inline-flex border"><button onClick={()=>setBlogImageMethod('upload')} className={`px-4 py-1.5 text-xs font-bold rounded-md ${blogImageMethod==='upload'?'bg-white shadow-sm':'text-slate-500'}`}>Upload</button><button onClick={()=>setBlogImageMethod('link')} className={`px-4 py-1.5 text-xs font-bold rounded-md ${blogImageMethod==='link'?'bg-white shadow-sm':'text-slate-500'}`}>Link</button></div>{blogImageMethod==='upload'?<div className="border-2 border-dashed p-6 rounded-lg text-center relative hover:bg-slate-50"><input type="file" onChange={e=>setBlogImageFile(e.target.files?.[0]||null)} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl">📤</span><p className="text-xs font-bold text-slate-400 mt-2">{blogImageFile?blogImageFile.name:"Click to Upload"}</p></div>:<input className="w-full bg-white border p-3 rounded-lg text-sm" placeholder="Paste link..." value={blogImageLink} onChange={e=>setBlogImageLink(e.target.value)} />}</div>
+                                <SeoInputSection 
+                                    title={commonSeoTitle} setTitle={setCommonSeoTitle}
+                                    tags={commonTags} setTags={setCommonTags}
+                                    desc={commonSeoDesc} setDesc={setCommonSeoDesc}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
               </div>
             )}
 
