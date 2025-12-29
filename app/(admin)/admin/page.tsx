@@ -20,7 +20,7 @@ const editorOptions: any = {
         ['fullScreen', 'showBlocks', 'codeView', 'preview']
     ],
     mode: "classic", attributesWhitelist: { all: "style" },
-    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px;",
+    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6;",
     resizingBar: true, showPathLabel: true, katex: katex 
 };
 
@@ -453,7 +453,17 @@ export default function AdminDashboard() {
                     <div className="xl:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
                           <div className="grid grid-cols-2 gap-4">
                             <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Segment</label><select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" value={updateSegmentId} onChange={e=>setUpdateSegmentId(e.target.value)}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
-                            <CategoryManager label="Update Type" value={updateType} onChange={setUpdateType} context="update" />
+                            
+                            {/* REVERTED TO FIXED SELECT */}
+                            <div>
+                                <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Update Type</label>
+                                <select className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none" value={updateType} onChange={e=>setUpdateType(e.target.value)}>
+                                    <option value="routine">📅 Routine</option>
+                                    <option value="syllabus">📝 Syllabus</option>
+                                    <option value="exam_result">🏆 Exam Result</option>
+                                </select>
+                            </div>
+
                           </div>
                           <div><label className="text-xs font-bold text-slate-400 uppercase block mb-1">Title</label><input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold" placeholder="Title..." value={updateTitle} onChange={e=>setUpdateTitle(e.target.value)} /></div>
                           <div className="border rounded-xl overflow-hidden"><SunEditor key={editingUpdateId||'up'} setContents={updateContent} onChange={setUpdateContent} setOptions={{...editorOptions,callBackSave:handleUpdateSubmit}}/></div>
@@ -574,7 +584,7 @@ export default function AdminDashboard() {
 
         </div>
       </main>
-      <style jsx global>{` .custom-scrollbar::-webkit-scrollbar { width: 5px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } .animate-fade-in { animation: fadeIn 0.3s ease-out; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } `}</style>
+      <style jsx global>{` .custom-scrollbar::-webkit-scrollbar { width: 5px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } .animate-fade-in { animation: fadeIn 0.3s ease-out; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } `}</style>
     </div>
   );
 }
