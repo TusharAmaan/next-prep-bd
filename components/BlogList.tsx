@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
-import { debounce } from "lodash"; //
+import { debounce } from "lodash";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -15,18 +15,20 @@ type BlogListProps = {
 };
 
 export default function BlogList({ initialBlogs, initialCount, segments }: BlogListProps) {
-  // State
+  // --- STATE ---
   const [blogs, setBlogs] = useState(initialBlogs);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(initialCount);
   
   // Filter State
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""); // Immediate state for Input UI
+  const [debouncedSearch, setDebouncedSearch] = useState(""); // Delayed state for API
   const [selectedSegment, setSelectedSegment] = useState("All");
   const [page, setPage] = useState(1);
 
-  // FETCH DATA FUNCTION
-  const fetchData = async (pageNum: number, searchTerm: string, segment: string) => {
+  // --- 1. STABLE FETCH FUNCTION ---
+  // Wrapped in useCallback so it doesn't get recreated on every render
+  const fetchData = useCallback(async (pageNum: number, searchTerm: string, segment: string) => {
     setLoading(true);
     
     // Start Query
@@ -59,7 +61,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     const { data, count } = await query.range(from, to);
 
     if (data) {
-       // Clean up the nested structure for display
        const formatted = data.map((item: any) => ({
          ...item,
          segmentTitle: item.subjects?.groups?.segments?.title || "General"
@@ -69,38 +70,42 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     if (count !== null) setTotalCount(count);
     
     setLoading(false);
-  };
+  }, []); // Dependencies are empty as Supabase client is stable
 
-  // --- LODASH DEBOUNCE IMPLEMENTATION ---
-  
-  // Create a debounced version of the fetch function
-  // This will wait 500ms after the user stops typing to trigger the API call
-  const debouncedFetch = useCallback(
-    debounce((p, s, seg) => {
-      fetchData(p, s, seg);
+
+  // --- 2. HANDLE SEARCH DEBOUNCE ---
+  // This updates 'debouncedSearch' 500ms AFTER you stop typing
+  const handleSearchUpdate = useCallback(
+    debounce((value: string) => {
+      setDebouncedSearch(value);
+      setPage(1); // Reset to page 1 when search actually executes
     }, 500),
     []
   );
 
-  // Trigger fetch when filters change
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearch(val); // Update Input UI instantly
+    handleSearchUpdate(val); // Queue the API update
+  };
+
+
+  // --- 3. THE MAIN EFFECT ---
+  // Triggers ONLY when: Page changes, Segment changes, or the Debounced Search settles.
   useEffect(() => {
-    // If it's the initial load (no search, page 1, all segments), don't refetch because server already did it
-    if (page === 1 && search === "" && selectedSegment === "All" && blogs === initialBlogs) return;
+    // Skip initial load fetch (Server already did it)
+    if (page === 1 && debouncedSearch === "" && selectedSegment === "All" && blogs === initialBlogs) return;
 
-    // Use the debounced function
-    debouncedFetch(page, search, selectedSegment);
-
-    // Cancel any pending debounced calls if component unmounts
-    return () => {
-      debouncedFetch.cancel();
-    };
-  }, [search, selectedSegment, page, debouncedFetch]);
+    // This runs IMMEDIATELY for pagination/segments, but waits for search
+    fetchData(page, debouncedSearch, selectedSegment);
+    
+  }, [page, selectedSegment, debouncedSearch, fetchData]); // Removed 'blogs' dependency to avoid loops
 
 
-  // Handlers
+  // --- HANDLERS ---
   const handleSegmentChange = (seg: string) => {
     setSelectedSegment(seg);
-    setPage(1); // Reset to page 1
+    setPage(1);
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -116,11 +121,8 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 type="text" 
                 placeholder={`Search ${selectedSegment === 'All' ? '' : selectedSegment} blogs...`} 
                 className="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-full pl-6 pr-12 py-4 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1); // Reset page on search
-                }}
+                value={search} // Bind to immediate state
+                onChange={onSearchChange} // Use the new handler
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-100 p-2 rounded-full text-slate-400">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -146,10 +148,9 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
       </div>
 
       {/* --- CONTENT GRID --- */}
-      <div className="min-h-[600px]"> {/* Min height prevents layout jump */}
-        
+      <div className="min-h-[600px]">
         {loading ? (
-            // SKELETON LOADING UI
+            // SKELETON
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
@@ -157,12 +158,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         <div className="h-4 bg-slate-100 rounded w-1/3 mb-2 animate-pulse"></div>
                         <div className="h-6 bg-slate-100 rounded w-3/4 mb-4 animate-pulse"></div>
                         <div className="h-3 bg-slate-100 rounded w-full mb-2 animate-pulse"></div>
-                        <div className="h-3 bg-slate-100 rounded w-2/3 animate-pulse"></div>
                     </div>
                 ))}
             </div>
         ) : blogs.length > 0 ? (
-            // ACTUAL CONTENT
+            // CONTENT
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
                 {blogs.map((blog: any) => {
                     const segmentTitle = blog.segmentTitle || blog.subjects?.groups?.segments?.title || "General";
@@ -203,7 +203,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 <div className="text-4xl mb-4">✍️</div>
                 <h3 className="text-xl font-bold text-slate-900">No blogs found</h3>
                 <p className="text-slate-500 mt-2">Try adjusting your search filters.</p>
-                <button onClick={() => {setSearch(""); setSelectedSegment("All");}} className="mt-4 text-blue-600 font-bold text-sm hover:underline">Clear Filters</button>
+                <button onClick={() => {setSearch(""); setDebouncedSearch(""); setSelectedSegment("All");}} className="mt-4 text-blue-600 font-bold text-sm hover:underline">Clear Filters</button>
             </div>
         )}
       </div>
