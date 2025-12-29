@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import HomeMaterialsFilter from "@/components/HomeMaterialsFilter";
 import HomeAppSection from "@/components/HomeAppSection";
 import Image from "next/image";
+import AdBanner from "@/components/AdBanner"; // <--- 1. IMPORT ADDED
 
 // 1. CACHING CONFIG
 export const revalidate = 60;
@@ -84,7 +85,6 @@ export default async function HomePage() {
           1. HERO SECTION
          ========================================= */}
       <section className="relative bg-slate-900 text-white pt-36 pb-32 px-6 overflow-hidden">
-        {/* Background Gradients */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/30 rounded-full blur-[120px]"></div>
             <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
@@ -104,7 +104,6 @@ export default async function HomePage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">NextPrepBD</span>
             </h1>
             
-            {/* SEARCH FORM */}
             <form 
                 action="/search" 
                 method="GET" 
@@ -135,7 +134,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 <div className="flex flex-col items-center text-center p-2 group">
                     <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <h3 className="text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Study Notes</p>
@@ -208,6 +207,16 @@ export default async function HomePage() {
           4. MAIN CONTENT AREA (Filter)
          ========================================= */}
       <section className="py-16 max-w-7xl mx-auto px-6 border-t border-slate-200">
+        
+        {/* --- GOOGLE ADSENSE IN-FEED AD (Added Here) --- */}
+        <div className="mb-12">
+            <AdBanner 
+                dataAdSlot="8219606997" 
+                dataAdFormat="fluid" 
+                dataAdLayoutKey="-f9+a+14-5p+64" 
+            />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
             {/* LEFT COLUMN: FILTER & LIST */}
@@ -270,9 +279,9 @@ export default async function HomePage() {
                         <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
 
-                    {/* YouTube Card */}
+                    {/* YouTube Card (UPDATED LINK) */}
                     <a 
-                        href="https://www.youtube.com/channel/UC... (Your Channel ID)" 
+                        href="https://youtube.com/gmatclub" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="flex items-center gap-4 bg-[#FF0000] text-white p-5 rounded-2xl shadow-lg shadow-red-500/20 hover:bg-[#e60000] transition-all transform hover:-translate-y-1 group"
