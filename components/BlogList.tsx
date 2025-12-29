@@ -6,8 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { debounce } from "lodash";
 
-const ITEMS_PER_PAGE = 9;
-
 type BlogListProps = {
   initialBlogs: any[];
   initialCount: number;
@@ -24,7 +22,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("All");
-  // We store the ID of the selected segment to make filtering 100% accurate
   const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null);
   
   // Category State
@@ -32,12 +29,13 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   
+  // Pagination & View State
   const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9); // Default to 9 for nice 3-col grid
 
-  // --- 1. SEGMENT CHANGE LOGIC (Get ID & Categories) ---
+  // --- 1. SEGMENT RESOLUTION ---
   useEffect(() => {
     const handleSegmentSwitch = async () => {
-        // CASE A: User selected "All"
         if (selectedSegment === "All") {
             setSelectedSegmentId(null);
             setAvailableCategories([]);
@@ -47,7 +45,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
         setLoadingCategories(true);
         try {
-            // 1. Get the accurate ID for this Segment Title
             const { data: segData } = await supabase
                 .from('segments')
                 .select('id')
@@ -55,9 +52,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 .single();
 
             if (segData) {
-                setSelectedSegmentId(segData.id); // Save ID for reliable filtering
-
-                // 2. Fetch Categories linked to this Segment ID OR Global
+                setSelectedSegmentId(segData.id);
                 const { data: catData } = await supabase
                     .from('categories')
                     .select('name')
@@ -73,21 +68,19 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
             console.error("Error resolving segment:", err);
         } finally {
             setLoadingCategories(false);
-            setPage(1); // Reset page only after we have the new ID
+            setPage(1); 
         }
     };
-
     handleSegmentSwitch();
   }, [selectedSegment]);
 
 
   // --- 2. MAIN FETCH FUNCTION ---
   const fetchData = useCallback(
-    async (pageNum: number, searchTerm: string, segmentId: number | null, category: string) => {
+    async (pageNum: number, searchTerm: string, segmentId: number | null, category: string, limit: number) => {
       setLoading(true);
 
       try {
-        // Query Setup
         let query = supabase
           .from("resources")
           .select(
@@ -106,22 +99,13 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
           .eq("type", "blog")
           .order("created_at", { ascending: false });
 
-        // Search
         if (searchTerm) query = query.ilike("title", `%${searchTerm}%`);
+        if (segmentId) query = query.eq("segment_id", segmentId);
+        if (category !== "All") query = query.eq("category", category);
 
-        // FILTER FIX: Use the ID directly if we have it (Reliable)
-        if (segmentId) {
-          query = query.eq("segment_id", segmentId);
-        }
-
-        // Category Filter
-        if (category !== "All") {
-           query = query.eq("category", category);
-        }
-
-        // Pagination
-        const from = (pageNum - 1) * ITEMS_PER_PAGE;
-        const to = from + ITEMS_PER_PAGE - 1;
+        // Dynamic Pagination Range
+        const from = (pageNum - 1) * limit;
+        const to = from + limit - 1;
 
         const { data, count, error } = await query.range(from, to);
 
@@ -130,7 +114,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (data) {
           const formatted = data.map((item: any) => ({
             ...item,
-            // Logic: Prefer Subject Title -> Segment Title -> "General"
             badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
           }));
           setBlogs(formatted);
@@ -146,7 +129,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     []
   );
 
-  // --- 3. HANDLE SEARCH DEBOUNCE ---
+  // --- 3. SEARCH DEBOUNCE ---
   const handleSearchUpdate = useCallback(
     debounce((value: string) => {
       setDebouncedSearch(value);
@@ -156,33 +139,35 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   );
 
   const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearch(val);
-    handleSearchUpdate(val);
+    setSearch(e.target.value);
+    handleSearchUpdate(e.target.value);
   };
 
   // --- 4. TRIGGER FETCH ---
+  // Added itemsPerPage to dependencies
   useEffect(() => {
-    // If a segment name is selected but we haven't resolved its ID yet, don't fetch (wait for useEffect #1)
     if (selectedSegment !== "All" && selectedSegmentId === null) return;
-
-    fetchData(page, debouncedSearch, selectedSegmentId, selectedCategory);
+    
+    fetchData(page, debouncedSearch, selectedSegmentId, selectedCategory, itemsPerPage);
     
     if (page > 1) {
         document.getElementById("blog-grid-top")?.scrollIntoView({ behavior: "smooth" });
     }
-
-  }, [page, selectedSegmentId, selectedSegment, selectedCategory, debouncedSearch, fetchData]); 
+  }, [page, selectedSegmentId, selectedSegment, selectedCategory, debouncedSearch, itemsPerPage, fetchData]); 
 
   // --- HANDLERS ---
   const handleSegmentChange = (seg: string) => {
     if (selectedSegment === seg) return;
     setSelectedSegment(seg);
     setSelectedCategory("All");
-    // Note: ID resolution happens in the useEffect
+  };
+  
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setItemsPerPage(Number(e.target.value));
+      setPage(1); // Reset to page 1 when changing view limit
   };
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -211,7 +196,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 <option value="All">All Segments</option>
                 {segments.map(seg => <option key={seg} value={seg}>{seg}</option>)}
              </select>
-             {/* Mobile Category */}
              {selectedSegment !== "All" && availableCategories.length > 0 && (
                 <select 
                     value={selectedCategory} 
@@ -226,10 +210,32 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
           <div id="blog-grid-top"></div>
 
+          {/* --- CONTROL BAR (Result Count + View Selector) --- */}
+          <div className="flex justify-between items-center mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">
+                Showing {blogs.length} of {totalCount} Posts
+             </span>
+             
+             <div className="flex items-center gap-2">
+                 <label className="text-xs font-bold text-slate-500 hidden sm:block">View:</label>
+                 <select 
+                    value={itemsPerPage}
+                    onChange={handleItemsPerPageChange}
+                    className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                 >
+                     <option value={9}>9 (Grid)</option>
+                     <option value={10}>10</option>
+                     <option value={20}>20</option>
+                     <option value={50}>50</option>
+                     <option value={100}>100</option>
+                 </select>
+             </div>
+          </div>
+
           {/* CONTENT GRID */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {Array.from({ length: Math.min(6, itemsPerPage) }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm h-96 flex flex-col">
                   <div className="h-48 bg-slate-100 rounded-xl mb-4 animate-pulse"></div>
                   <div className="h-4 bg-slate-100 rounded w-1/3 mb-2 animate-pulse"></div>
@@ -345,11 +351,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                 </div>
             </div>
 
-            {/* Segments List (Fixed Redundancy) */}
+            {/* Segments List */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hidden lg:block">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Segments</h3>
                 <div className="flex flex-col gap-2">
-                    {/* Only render "All Updates" button once */}
                     <button 
                         onClick={() => handleSegmentChange("All")}
                         className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex justify-between items-center group ${
@@ -361,8 +366,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         All Updates
                         {selectedSegment === "All" && <span className="text-white">●</span>}
                     </button>
-                    
-                    {/* Render segments (filtering out 'All' just in case it exists in the data) */}
                     {segments.filter(s => s !== 'All').map((seg) => (
                         <button 
                             key={seg}
