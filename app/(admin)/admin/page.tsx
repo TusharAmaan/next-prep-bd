@@ -23,7 +23,7 @@ const editorOptions: any = {
         ['fullScreen', 'showBlocks', 'codeView', 'preview']
     ],
     mode: "classic", attributesWhitelist: { all: "style" },
-    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #334155;",
+    defaultStyle: "font-family: Arial, 'Inter', sans-serif; font-size: 16px;color: #334155;",
     resizingBar: true, showPathLabel: true, katex: katex 
 };
 
