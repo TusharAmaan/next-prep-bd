@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import MaterialList from "@/components/MaterialList"; 
 import Image from "next/image";
 
-// 1. CACHING CONFIG (Dynamic to show latest updates)
+// 1. CACHING CONFIG
 export const dynamic = "force-dynamic";
 
 export default async function SegmentPage({ 
@@ -22,7 +22,7 @@ export default async function SegmentPage({
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segmentData) return notFound();
 
-  // === A. LIST VIEW MODE (If user clicks "View All" or a Quick Action) ===
+  // === A. LIST VIEW MODE ===
   if (type) {
       return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans">
@@ -39,7 +39,6 @@ export default async function SegmentPage({
             
             <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8">
-                    {/* Pass filters to MaterialList */}
                     <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
                 </div>
                 <div className="lg:col-span-4 space-y-8">
@@ -50,37 +49,29 @@ export default async function SegmentPage({
       );
   }
 
-  // === B. DASHBOARD VIEW MODE (Default) ===
+  // === B. DASHBOARD VIEW MODE ===
 
-  // 2. Fetch Groups
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
-  // 3. Fetch Updates (Routine, Syllabus, Result)
-  // We fetch ALL updates for this segment to filter them manually below
   const { data: updates } = await supabase
     .from("segment_updates")
     .select("id, type, title, created_at, attachment_url")
     .eq("segment_id", segmentData.id)
     .order("created_at", { ascending: false });
 
-  // 4. Preview Content (Blogs, PDFs, Questions)
+  // Preview Content
   const { data: blogs } = await supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4);
   const { data: materials } = await supabase.from("resources").select("*").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5);
   const { data: questions } = await supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5);
 
-  // --- FILTERS FOR BOXES ---
-  // Find the VERY FIRST match for each type (since we ordered by created_at desc)
   const routine = updates?.find(u => u.type === 'routine');
   const syllabus = updates?.find(u => u.type === 'syllabus');
   const result = updates?.find(u => u.type === 'exam_result');
 
-  // Helper to check if "New" (last 7 days)
   const isNew = (dateString: string) => {
       const date = new Date(dateString);
       const now = new Date();
-      const diffTime = Math.abs(now.getTime() - date.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= 7;
+      return Math.ceil(Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)) <= 7;
   };
 
   const getGradient = (index: number) => {
@@ -112,8 +103,6 @@ export default async function SegmentPage({
 
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
-            {/* MAIN COLUMN */}
             <div className="lg:col-span-8 space-y-16">
                 
                 {/* 1. GROUPS */}
@@ -140,56 +129,28 @@ export default async function SegmentPage({
                     )}
                 </div>
 
-                {/* 2. QUICK UPDATES (FIXED & CONNECTED) */}
+                {/* 2. QUICK UPDATES */}
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="text-xl">⚡</span> Quick Actions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        
-                        {/* ROUTINE BOX */}
+                        {/* Routine */}
                         <Link href={`/resources/${segment_slug}?type=update&category=routine`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition group relative overflow-hidden">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-2xl">📅</span>
-                                <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase">Routine</span>
-                            </div>
+                            <div className="flex justify-between items-start mb-2"><span className="text-2xl">📅</span><span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase">Routine</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Exam Routine</h4>
-                            {routine ? (
-                                <>
-                                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p>
-                                    {isNew(routine.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
-                                </>
-                            ) : <p className="text-xs text-slate-400 mt-1 italic">No active routine</p>}
+                            {routine ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p>{isNew(routine.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No active routine</p>}
                         </Link>
-
-                        {/* SYLLABUS BOX */}
+                        {/* Syllabus */}
                         <Link href={`/resources/${segment_slug}?type=update&category=syllabus`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group relative overflow-hidden">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-2xl">📝</span>
-                                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold uppercase">Syllabus</span>
-                            </div>
+                            <div className="flex justify-between items-start mb-2"><span className="text-2xl">📝</span><span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold uppercase">Syllabus</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Full Syllabus</h4>
-                            {syllabus ? (
-                                <>
-                                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p>
-                                    {isNew(syllabus.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
-                                </>
-                            ) : <p className="text-xs text-slate-400 mt-1 italic">No syllabus found</p>}
+                            {syllabus ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p>{isNew(syllabus.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No syllabus found</p>}
                         </Link>
-
-                        {/* RESULT BOX */}
+                        {/* Result */}
                         <Link href={`/resources/${segment_slug}?type=update&category=exam_result`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition group relative overflow-hidden">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-2xl">🏆</span>
-                                <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold uppercase">Result</span>
-                            </div>
+                            <div className="flex justify-between items-start mb-2"><span className="text-2xl">🏆</span><span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold uppercase">Result</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Exam Results</h4>
-                            {result ? (
-                                <>
-                                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p>
-                                    {isNew(result.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
-                                </>
-                            ) : <p className="text-xs text-slate-400 mt-1 italic">No results yet</p>}
+                            {result ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p>{isNew(result.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No results yet</p>}
                         </Link>
-
                     </div>
                 </div>
 
@@ -197,7 +158,8 @@ export default async function SegmentPage({
                 <section>
                     <div className="flex items-center justify-between mb-6 border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-3"><span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span><h2 className="text-xl font-bold text-slate-900">Latest Articles</h2></div>
-                        <Link href={`/resources/${segment_slug}?type=blog`} className="text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">View All →</Link>
+                        {/* FIX 1: Point to /blog page */}
+                        <Link href={`/blog?segment=${encodeURIComponent(segmentData.title)}`} className="text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">View All →</Link>
                     </div>
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -231,7 +193,7 @@ export default async function SegmentPage({
                                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>{item.type === 'pdf' ? '📄' : '▶'}</div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors mb-1 truncate"><a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a></h3>
-                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-bold"><span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{item.type}</span><span>•</span><span>{new Date(item.created_at).toLocaleDateString()}</span></div>
+                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-bold"><span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{Array.isArray(item.subjects) ? item.subjects[0]?.title : 'General'}</span><span>•</span><span>{new Date(item.created_at).toLocaleDateString()}</span></div>
                                     </div>
                                     <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">{item.type === 'pdf' ? 'Download' : 'Watch'}</a>
                                 </div>
