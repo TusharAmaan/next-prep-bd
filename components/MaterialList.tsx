@@ -7,24 +7,28 @@ import Link from "next/link";
 
 const ITEMS_PER_PAGE = 10;
 
-// UPGRADED PROPS: Supports all hierarchy levels
+// UPGRADED PROPS: Now accepts Category for filtering (e.g. Routine, Chapter 1)
 type MaterialListProps = {
   segmentId?: number;
   groupId?: number;
   subjectId?: number;
-  initialType: string; // 'pdf' (includes video) or 'question'
+  initialType: string; // 'pdf', 'question', 'update', 'blog'
+  initialCategory?: string;
 };
 
-export default function MaterialList({ segmentId, groupId, subjectId, initialType }: MaterialListProps) {
+export default function MaterialList({ segmentId, groupId, subjectId, initialType, initialCategory }: MaterialListProps) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [type, setType] = useState(initialType);
   
-  // Pagination & View State
+  // State for Filters
+  const [type, setType] = useState(initialType);
+  const [category, setCategory] = useState(initialCategory || "all");
+  
+  // Pagination
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10); 
 
@@ -32,28 +36,57 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // 1. Determine Table & Columns
+      let tableName = "resources";
+      let selectColumns = `id, title, type, created_at, content_url, category, subjects ( title )`;
+
+      // If viewing Updates (Routine/Syllabus), switch table
+      if (type === 'update') {
+          tableName = "segment_updates";
+          // We alias attachment_url to content_url for UI consistency
+          selectColumns = `id, title, type, created_at, content_url:attachment_url`; 
+      }
+
       let query = supabase
-        .from("resources")
-        .select(`
-          id, title, type, created_at, content_url, category,
-          subjects ( title )
-        `, { count: "exact" })
+        .from(tableName)
+        .select(selectColumns, { count: "exact" })
         .order("created_at", { ascending: false });
 
       // --- SMART FILTERING LOGIC ---
-      if (subjectId) query = query.eq("subject_id", subjectId);
-      else if (groupId) query = query.eq("group_id", groupId);
-      else if (segmentId) query = query.eq("segment_id", segmentId);
-
-      // Type Logic
-      if (type === 'pdf') {
-          query = query.in('type', ['pdf', 'video']);
-      } else {
-          query = query.eq('type', type);
+      
+      // A. Hierarchy Filters (Only apply if columns exist in that table)
+      // Resources have all 3 IDs. Updates usually only have segment_id.
+      if (segmentId) query = query.eq("segment_id", segmentId);
+      
+      if (tableName === 'resources') {
+          if (subjectId) query = query.eq("subject_id", subjectId);
+          else if (groupId) query = query.eq("group_id", groupId);
       }
 
+      // B. Type & Category Logic
+      if (type === 'update') {
+          // For Updates table, the 'category' (routine/syllabus) is actually stored in the 'type' column
+          if (category && category !== 'all') {
+             query = query.eq('type', category); 
+          }
+      } else {
+          // For Resources table
+          if (type === 'pdf') {
+             query = query.in('type', ['pdf', 'video']);
+          } else if (type !== 'all') {
+             query = query.eq('type', type);
+          }
+          
+          // Resource Category (e.g. Chapter Name)
+          if (category && category !== 'all') {
+             query = query.eq('category', category);
+          }
+      }
+
+      // C. Search
       if (debouncedSearch) query = query.ilike("title", `%${debouncedSearch}%`);
 
+      // D. Pagination
       const from = (page - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       const { data, count, error } = await query.range(from, to);
@@ -63,10 +96,12 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       if (data) {
           const formatted = data.map((item: any) => ({
               ...item,
-              // If inside a subject, show Category (e.g. "Chapter 1"). Else show Subject Name.
-              badgeTitle: subjectId 
-                  ? (item.category || "General") 
-                  : (Array.isArray(item.subjects) ? item.subjects[0]?.title : "General")
+              // Normalize badge title
+              badgeTitle: item.type === 'routine' || item.type === 'syllabus' || item.type === 'exam_result'
+                  ? (item.type.replace('_', ' ').toUpperCase()) // Show "ROUTINE" for updates
+                  : subjectId 
+                      ? (item.category || "General") 
+                      : (Array.isArray(item.subjects) ? item.subjects[0]?.title : "General")
           }));
           setItems(formatted);
       }
@@ -77,11 +112,10 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
     } finally {
       setLoading(false);
     }
-  }, [segmentId, groupId, subjectId, type, debouncedSearch, page, itemsPerPage]);
+  }, [segmentId, groupId, subjectId, type, category, debouncedSearch, page, itemsPerPage]);
 
   useEffect(() => {
     fetchData();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [fetchData]);
 
   const handleSearch = (val: string) => {
@@ -104,26 +138,42 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       <div className="flex flex-col gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Toggle Buttons */}
-            <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
-                <button 
-                    onClick={() => { setType('pdf'); setPage(1); }}
-                    className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    📚 Study Materials
-                </button>
-                <button 
-                    onClick={() => { setType('question'); setPage(1); }}
-                    className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'question' ? 'bg-white shadow-sm text-yellow-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    ❓ Previous Questions
-                </button>
-            </div>
+            {type !== 'update' && (
+                <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+                    <button 
+                        onClick={() => { setType('pdf'); setPage(1); }}
+                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        📚 Materials
+                    </button>
+                    <button 
+                        onClick={() => { setType('question'); setPage(1); }}
+                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'question' ? 'bg-white shadow-sm text-yellow-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        ❓ Questions
+                    </button>
+                     <button 
+                        onClick={() => { setType('blog'); setPage(1); }}
+                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'blog' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        ✍️ Articles
+                    </button>
+                </div>
+            )}
+            
+            {type === 'update' && (
+                 <div className="flex bg-red-50 p-2 rounded-xl text-red-600 text-xs font-bold w-full md:w-auto items-center gap-2">
+                     <span className="bg-white px-2 py-1 rounded shadow-sm">📢 Updates Mode</span>
+                     {category !== 'all' && <span>Filtering by: {category.toUpperCase()}</span>}
+                     {category !== 'all' && <button onClick={()=>setCategory('all')} className="hover:text-red-800">✕ Clear</button>}
+                 </div>
+            )}
 
             {/* Search Bar */}
             <div className="relative w-full md:w-72">
                 <input 
                     type="text" 
-                    placeholder={`Search ${type === 'pdf' ? 'materials' : 'questions'}...`}
+                    placeholder="Search..."
                     value={search}
                     onChange={(e) => handleSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
@@ -147,7 +197,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
                      <option value={10}>10</option>
                      <option value={20}>20</option>
                      <option value={50}>50</option>
-                     <option value={100}>100</option>
                  </select>
              </div>
           </div>
@@ -163,8 +212,8 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
             {items.map((item) => (
                <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group flex items-start gap-5">
                    
-                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${item.type === 'question' ? 'bg-yellow-50 text-yellow-600' : 'bg-blue-50 text-blue-600'}`}>
-                       {item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : '❓'}
+                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${item.type === 'question' ? 'bg-yellow-50 text-yellow-600' : item.type === 'routine' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                       {item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : item.type === 'question' ? '❓' : item.type === 'blog' ? '✍️' : '📢'}
                    </div>
                    
                    <div className="flex-1 min-w-0 py-1">
@@ -172,11 +221,10 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
                            {item.content_url ? (
                                <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
                            ) : (
-                               <Link href={`/${item.type}/${item.id}`}>{item.title}</Link>
+                               <Link href={item.type === 'blog' ? `/blog/${item.id}` : `/question/${item.id}`}>{item.title}</Link>
                            )}
                        </h3>
                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-wide">
-                           {/* Shows Subject if on Group Page, Category if on Subject Page */}
                            <span className="bg-slate-100 px-2 py-1 rounded text-slate-500">{item.badgeTitle}</span>
                            <span>•</span>
                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
@@ -189,8 +237,8 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
                                {item.type === 'video' ? 'Watch Now' : 'Download'}
                            </a>
                        ) : (
-                           <Link href={`/${item.type}/${item.id}`} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">
-                               View Solution
+                           <Link href={item.type === 'blog' ? `/blog/${item.id}` : `/question/${item.id}`} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">
+                               Read More
                            </Link>
                        )}
                    </div>
