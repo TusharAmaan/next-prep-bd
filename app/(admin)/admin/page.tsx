@@ -24,8 +24,6 @@ const editorOptions: any = {
     resizingBar: true, showPathLabel: true, katex: katex 
 };
 
-const PAGE_SIZE = 15;
-
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
 
 // --- 1. EXTERNAL COMPONENTS ---
@@ -109,7 +107,6 @@ const FilterBar = memo(({
 ));
 FilterBar.displayName = "FilterBar";
 
-// C. Reusable Image/Link Input
 const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLink, markDirty, optional = false }: any) => (
     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex justify-between items-center">
@@ -160,18 +157,25 @@ export default function AdminDashboard() {
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [segmentUpdates, setSegmentUpdates] = useState<any[]>([]);
 
-  // Search & Pagination
-  const [resPage, setResPage] = useState(0); const [resSearch, setResSearch] = useState("");
-  const [newsPage, setNewsPage] = useState(0); const [newsSearch, setNewsSearch] = useState("");
-  const [ebPage, setEbPage] = useState(0); const [ebSearch, setEbSearch] = useState("");
-  const [updatePage, setUpdatePage] = useState(0); const [updateSearch, setUpdateSearch] = useState("");
+  // Search & Pagination (Restored Specific Page States to avoid conflict)
+  const [resSearch, setResSearch] = useState("");
+  const [newsSearch, setNewsSearch] = useState("");
+  const [ebSearch, setEbSearch] = useState("");
+  const [updateSearch, setUpdateSearch] = useState("");
+  
+  // Using generic 'page' for the active tab to simplify pagination logic, 
+  // BUT we will reset it on tab switch.
+  const [page, setPage] = useState(0); 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Filtering
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [resTypeFilter, setResTypeFilter] = useState("all");
 
-  // Hierarchy Inputs
+  // Hierarchy Inputs (RESTORED MISSING STATES)
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -208,18 +212,11 @@ export default function AdminDashboard() {
 
   // Specific Forms
   const [newsTitle, setNewsTitle] = useState(""); const [newsContent, setNewsContent] = useState(""); const [newsCategory, setNewsCategory] = useState(""); const [newsFile, setNewsFile] = useState<File | null>(null); const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
-  
-  // Ebook Form
-  const [ebTitle, setEbTitle] = useState(""); const [ebAuthor, setEbAuthor] = useState(""); const [ebCategory, setEbCategory] = useState(""); const [ebDescription, setEbDescription] = useState(""); const [ebLink, setEbLink] = useState(""); const [editingEbookId, setEditingEbookId] = useState<number | null>(null);
-  const [ebCoverMethod, setEbCoverMethod] = useState<'upload'|'link'>('upload'); const [ebCoverFile, setEbCoverFile] = useState<File|null>(null); const [ebCoverLink, setEbCoverLink] = useState("");
-
-  // Course Form
-  const [cTitle, setCTitle] = useState(""); const [cInstructor, setCInstructor] = useState(""); const [cPrice, setCPrice] = useState(""); const [cDiscountPrice, setCDiscountPrice] = useState(""); const [cDuration, setCDuration] = useState(""); const [cLink, setCLink] = useState(""); const [cDesc, setCDesc] = useState(""); const [cCategory, setCCategory] = useState(""); const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
-  const [cImageMethod, setCImageMethod] = useState<'upload'|'link'>('upload'); const [cImageFile, setCImageFile] = useState<File|null>(null); const [cImageLink, setCImageLink] = useState("");
-
+  const [ebTitle, setEbTitle] = useState(""); const [ebAuthor, setEbAuthor] = useState(""); const [ebCategory, setEbCategory] = useState(""); const [ebDescription, setEbDescription] = useState(""); const [ebLink, setEbLink] = useState(""); const [editingEbookId, setEditingEbookId] = useState<number | null>(null); const [ebCoverMethod, setEbCoverMethod] = useState<'upload'|'link'>('upload'); const [ebCoverFile, setEbCoverFile] = useState<File|null>(null); const [ebCoverLink, setEbCoverLink] = useState("");
+  const [cTitle, setCTitle] = useState(""); const [cInstructor, setCInstructor] = useState(""); const [cPrice, setCPrice] = useState(""); const [cDiscountPrice, setCDiscountPrice] = useState(""); const [cDuration, setCDuration] = useState(""); const [cLink, setCLink] = useState(""); const [cDesc, setCDesc] = useState(""); const [cCategory, setCCategory] = useState(""); const [editingCourseId, setEditingCourseId] = useState<number | null>(null); const [cImageMethod, setCImageMethod] = useState<'upload'|'link'>('upload'); const [cImageFile, setCImageFile] = useState<File|null>(null); const [cImageLink, setCImageLink] = useState("");
   const [updateTitle, setUpdateTitle] = useState(""); const [updateType, setUpdateType] = useState("routine"); const [updateSegmentId, setUpdateSegmentId] = useState(""); const [updateContent, setUpdateContent] = useState(""); const [updateFile, setUpdateFile] = useState<File | null>(null); const [editingUpdateId, setEditingUpdateId] = useState<number | null>(null);
 
-  // --- HELPERS (Defined First) ---
+  // --- 1. HELPERS & STATE MANAGEMENT FUNCTIONS (Defined First) ---
   const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
   const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
   const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
@@ -227,6 +224,26 @@ export default function AdminDashboard() {
   const markDirty = () => setIsDirty(true);
   const clearSeoFields = () => { setCommonTags(""); setCommonSeoTitle(""); setCommonSeoDesc(""); };
 
+  // Helper to find hierarchy names
+  const getHierarchyLabel = (r: any) => {
+    const seg = segments.find((s:any) => s.id === r.segment_id)?.title;
+    const grp = groups.find((g:any) => g.id === r.group_id)?.title;
+    const sub = subjects.find((s:any) => s.id === r.subject_id)?.title;
+    if (sub) return `${seg || ''} > ${grp || ''} > ${sub}`;
+    if (grp) return `${seg || ''} > ${grp}`;
+    if (seg) return seg;
+    return "Global / Unassigned";
+  };
+
+  // --- HIERARCHY HANDLERS (Moved Up) ---
+  const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
+  const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
+  
+  const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); };
+  const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); fetchSubjects(id); };
+  const handleSubjectClick = (id: string) => { setSelectedSubject(id); };
+
+  // --- FORM RESETTERS ---
   const resetResourceForm = () => { 
       setEditingResourceId(null); setResTitle(""); setResLink(""); setResFile(null); setRichContent(""); setQuestionContent(""); 
       setBlogImageFile(null); setBlogImageLink(""); setBlogImageMethod('upload'); setBlogCategory(""); setResType("pdf"); 
@@ -243,25 +260,49 @@ export default function AdminDashboard() {
       setIsDirty(false); // CRITICAL: Reset dirty state after clear
   };
 
+  // --- REUSABLE EDIT LOADERS (Moved Up to be visible) ---
+  const openEditor = (item: any, context: string) => {
+      clearAllForms();
+      setCommonTags(item?.tags?.join(", ") || ""); setCommonSeoTitle(item?.seo_title || ""); setCommonSeoDesc(item?.seo_description || "");
+      if(context === 'resource' || context === 'blog') {
+          setEditingResourceId(item.id); setResTitle(item.title); setResType(item.type); setResLink(item.content_url||""); 
+          setRichContent(item.content_body||""); setQuestionContent(item.content_body||""); setBlogCategory(item.category||"");
+          if(item.content_url) { setBlogImageLink(item.content_url); setBlogImageMethod('link'); }
+          if(item.segment_id) { setSelectedSegment(String(item.segment_id)); fetchGroups(String(item.segment_id)); }
+          if(item.group_id) { setSelectedGroup(String(item.group_id)); fetchSubjects(String(item.group_id)); }
+          if(item.subject_id) setSelectedSubject(String(item.subject_id));
+      } 
+      else if (context === 'update') { setEditingUpdateId(item.id); setUpdateTitle(item.title); setUpdateType(item.type); setUpdateSegmentId(String(item.segment_id)); setUpdateContent(item.content_body||""); }
+      else if (context === 'ebook') { setEditingEbookId(item.id); setEbTitle(item.title); setEbAuthor(item.author); setEbCategory(item.category); setEbDescription(item.description||""); setEbLink(item.pdf_url||""); if(item.cover_url){setEbCoverLink(item.cover_url); setEbCoverMethod('link');} }
+      else if (context === 'news') { setEditingNewsId(item.id); setNewsTitle(item.title); setNewsContent(item.content||""); setNewsCategory(item.category); }
+      else if (context === 'course') { setEditingCourseId(item.id); setCTitle(item.title); setCInstructor(item.instructor); setCPrice(item.price); setCDiscountPrice(item.discount_price); setCDuration(item.duration); setCLink(item.enrollment_link); setCDesc(item.description||""); setCCategory(item.category); if(item.thumbnail_url){setCImageLink(item.thumbnail_url); setCImageMethod('link');} }
+      
+      setEditorMode(true); 
+      setTimeout(() => setIsDirty(false), 100); 
+  };
+
+  const loadUpdateForEdit = (u: any) => openEditor(u, 'update');
+  const loadNewsForEdit = (n: any) => openEditor(n, 'news');
+  const loadEbookForEdit = (b: any) => openEditor(b, 'ebook');
+  const loadCourseForEdit = (c: any) => openEditor(c, 'course');
+
   // --- NAVIGATION ---
   const handleTabSwitch = (newTab: string) => {
-      if(isDirty) {
-          confirmAction("You have unsaved changes. Discard them?", () => {
-              setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab);
-          });
-      } else {
-          setEditorMode(false); clearAllForms(); setActiveTab(newTab);
-      }
+      if(isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab); setPage(0); });
+      else { setEditorMode(false); clearAllForms(); setActiveTab(newTab); setPage(0); }
   };
 
   const handleBackToList = () => {
-      if(isDirty) {
-          confirmAction("Discard unsaved changes?", () => {
-              setIsDirty(false); setEditorMode(false); clearAllForms();
-          });
-      } else {
-          setEditorMode(false); clearAllForms();
-      }
+      if(isDirty) confirmAction("Discard unsaved changes?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); });
+      else { setEditorMode(false); clearAllForms(); }
+  };
+
+  const handleAddNew = (type: string) => {
+      clearAllForms();
+      if(type === 'resource') { setResType('pdf'); } 
+      else if(type === 'blog') { setResType('blog'); }
+      setEditorMode(true);
+      setTimeout(() => setIsDirty(false), 100); 
   };
 
   // --- INIT & FETCHERS ---
@@ -280,8 +321,6 @@ export default function AdminDashboard() {
     init();
   }, [router, loadInitialData]);
 
-  const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
-  const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
   const fetchCategories = async () => { const {data} = await supabase.from("categories").select("*").order('name'); setCategories(data||[]); };
   const fetchModalGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setCatModalGroupsList(data||[]); };
   const fetchModalSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setCatModalSubjectsList(data||[]); };
@@ -294,7 +333,7 @@ export default function AdminDashboard() {
       else if(activeTab === 'materials') query = query.neq("type", "blog"); 
 
       if (resSearch) query = query.ilike('title', `%${resSearch}%`);
-      query = query.range(resPage * PAGE_SIZE, (resPage + 1) * PAGE_SIZE - 1);
+      query = query.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1);
       const {data} = await query; setResources(data||[]); 
   };
 
@@ -302,37 +341,71 @@ export default function AdminDashboard() {
       let q=supabase.from("segment_updates").select("*, segments(title)").order('created_at',{ascending:false});
       if(selectedSegment) q = q.eq('segment_id', selectedSegment);
       if(updateSearch) q=q.ilike('title',`%${updateSearch}%`); 
-      q=q.range(updatePage*PAGE_SIZE,(updatePage+1)*PAGE_SIZE-1); 
+      q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); 
       const {data}=await q; setSegmentUpdates(data||[]); 
   };
 
-  const fetchNews = async () => { let q = supabase.from("news").select("*").order('created_at',{ascending:false}); if(newsSearch) q = q.ilike('title', `%${newsSearch}%`); q=q.range(newsPage*PAGE_SIZE,(newsPage+1)*PAGE_SIZE-1); const {data}=await q; setNewsList(data||[]); };
-  const fetchEbooks = async () => { let q = supabase.from("ebooks").select("*").order('created_at',{ascending:false}); if(ebSearch) q=q.ilike('title',`%${ebSearch}%`); q=q.range(ebPage*PAGE_SIZE,(ebPage+1)*PAGE_SIZE-1); const {data}=await q; setEbooksList(data||[]); };
+  const fetchNews = async () => { let q = supabase.from("news").select("*").order('created_at',{ascending:false}); if(newsSearch) q = q.ilike('title', `%${newsSearch}%`); q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); const {data}=await q; setNewsList(data||[]); };
+  const fetchEbooks = async () => { let q = supabase.from("ebooks").select("*").order('created_at',{ascending:false}); if(ebSearch) q=q.ilike('title',`%${ebSearch}%`); q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); const {data}=await q; setEbooksList(data||[]); };
   const fetchCourses = async () => { const {data} = await supabase.from("courses").select("*").order('created_at',{ascending:false}); setCoursesList(data||[]); };
 
-  useEffect(() => {
-      if(!editorMode && !isLoading) {
-          if(activeTab === 'materials' || activeTab === 'class-blogs') fetchResources(selectedSegment, selectedGroup, selectedSubject);
-          if(activeTab === 'news') fetchNews();
-          if(activeTab === 'ebooks') fetchEbooks();
-          if(activeTab === 'courses') fetchCourses();
-          if(activeTab === 'updates') fetchSegmentUpdates();
-      }
-  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resPage, newsPage, ebPage, updatePage, editorMode, isLoading]);
+  // UNIFIED FETCHING LOGIC
+  const fetchAllData = useCallback(async () => {
+      if (editorMode || isLoading) return;
+      
+      let table = "";
+      let query: any = null;
 
-  const deleteItem = (table: string, id: number, refresh: () => void) => { confirmAction("Permanently delete this item?", async () => { await supabase.from(table).delete().eq("id", id); refresh(); showSuccess("Deleted!"); }); };
+      if (activeTab === 'materials' || activeTab === 'class-blogs') table = "resources";
+      else if (activeTab === 'news') table = "news";
+      else if (activeTab === 'ebooks') table = "ebooks";
+      else if (activeTab === 'courses') table = "courses";
+      else if (activeTab === 'updates') table = "segment_updates";
+
+      query = supabase.from(table).select("*", { count: 'exact' });
+
+      // Filters
+      if (activeTab === 'materials' || activeTab === 'updates' || activeTab === 'class-blogs') {
+          if (selectedSubject) query = query.eq("subject_id", selectedSubject);
+          else if (selectedGroup) query = query.eq("group_id", selectedGroup);
+          else if (selectedSegment) query = query.eq("segment_id", selectedSegment);
+      }
+
+      if (activeTab === 'class-blogs') query = query.eq("type", "blog");
+      else if (activeTab === 'materials') {
+          query = query.neq("type", "blog");
+          if (resTypeFilter !== 'all') query = query.eq("type", resTypeFilter);
+      }
+
+      const s = activeTab==='materials' || activeTab==='class-blogs' ? resSearch : activeTab==='news' ? newsSearch : activeTab==='ebooks' ? ebSearch : activeTab==='updates' ? updateSearch : "";
+      if (s) query = query.ilike("title", `%${s}%`);
+
+      const from = page * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false });
+      
+      if (!error && data) {
+          if(activeTab === 'materials' || activeTab === 'class-blogs') setResources(data);
+          else if(activeTab === 'news') setNewsList(data);
+          else if(activeTab === 'ebooks') setEbooksList(data);
+          else if(activeTab === 'courses') setCoursesList(data);
+          else if(activeTab === 'updates') setSegmentUpdates(data);
+          if(count !== null) setTotalCount(count);
+      }
+  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, resTypeFilter, page, itemsPerPage, editorMode, isLoading]);
+
+  useEffect(() => { fetchAllData(); }, [fetchAllData]);
+
+  const deleteItem = (table: string, id: number) => { confirmAction("Permanently delete?", async () => { await supabase.from(table).delete().eq("id", id); fetchAllData(); showSuccess("Deleted!"); }); };
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
 
-  // --- HIERARCHY HANDLERS ---
-  const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); fetchResources(id, null, null); };
-  const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); fetchSubjects(id); fetchResources(selectedSegment, id, null); };
-  const handleSubjectClick = (id: string) => { setSelectedSubject(id); fetchResources(selectedSegment, selectedGroup, id); };
-  
+  // --- HIERARCHY SUBMIT HANDLERS ---
   const handleSegmentSubmit = async () => { if(newSegment) { await supabase.from('segments').insert([{title:newSegment, slug:newSegment.toLowerCase().replace(/\s+/g,'-')}]); setNewSegment(""); const {data}=await supabase.from('segments').select('*'); setSegments(data||[]); }};
   const handleGroupSubmit = async () => { if(newGroup && selectedSegment) { await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); }};
   const handleSubjectSubmit = async () => { if(newSubject && selectedGroup) { await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); }};
 
-  // --- INTERNAL COMPONENT: Category Manager ---
+  // --- CATEGORY MANAGER ---
   const CategoryManager = ({ label, value, onChange, context }: any) => {
       const filteredCats = categories.filter(c => c.type === context || c.type === 'general' || !c.type);
       return (
@@ -343,7 +416,7 @@ export default function AdminDashboard() {
                       <option value="">Select Category</option>
                       {filteredCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
-                  <button onClick={() => { setActiveCatContext(context); setIsManageCatsOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-lg text-lg transition-colors">⚙️</button>
+                  <button onClick={() => { setActiveCatContext(context); setIsManageCatsOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-lg text-lg">⚙️</button>
               </div>
           </div>
       );
@@ -352,7 +425,6 @@ export default function AdminDashboard() {
   // --- SUBMIT HANDLERS ---
   const uploadResource = async () => {
       if(!resTitle) return showError("Title is required!");
-      if(resType !== 'blog' && !selectedSegment) return showError("Select a Segment.");
       setSubmitting(true);
       
       let finalContent = richContent;
@@ -381,11 +453,9 @@ export default function AdminDashboard() {
       else if(resType==='blog') { payload.content_body = finalContent; payload.content_url = url; payload.category = blogCategory; }
 
       const { error } = editingResourceId ? await supabase.from('resources').update(payload).eq('id', editingResourceId) : await supabase.from('resources').insert([payload]);
+      
       setSubmitting(false);
-      if (error) showError(error.message); else { 
-          setIsDirty(false); // Fix: Reset dirty before closing
-          fetchResources(selectedSegment,selectedGroup,selectedSubject); setEditorMode(false); resetResourceForm(); showSuccess("Saved!"); 
-      }
+      if (error) showError(error.message); else { setIsDirty(false); setEditorMode(false); fetchAllData(); showSuccess("Saved!"); }
   };
 
   const handleEbookSubmit = async () => {
@@ -401,11 +471,7 @@ export default function AdminDashboard() {
      
      const {error} = editingEbookId ? await supabase.from('ebooks').update(p).eq('id', editingEbookId) : await supabase.from('ebooks').insert([p]);
      setSubmitting(false); 
-     if(error) showError(error.message); 
-     else { 
-         setIsDirty(false); // Fix
-         setEditorMode(false); resetResourceForm(); fetchEbooks(); showSuccess("eBook Saved"); 
-     }
+     if(error) showError(error.message); else { setIsDirty(false); setEditorMode(false); fetchAllData(); showSuccess("eBook Saved"); }
   };
 
   const handleUpdateSubmit = async () => {
@@ -416,33 +482,27 @@ export default function AdminDashboard() {
       const p={title:updateTitle, type:updateType, segment_id:Number(updateSegmentId), content_body:finalContent, seo_title:commonSeoTitle, seo_description:commonSeoDesc, tags:commonTags.split(',').filter(Boolean)};
       if(url) (p as any).attachment_url = url;
       const {error}=editingUpdateId?await supabase.from('segment_updates').update(p).eq('id',editingUpdateId):await supabase.from('segment_updates').insert([p]);
-      setSubmitting(false); if(error) showError(error.message); else { setIsDirty(false); setEditorMode(false); resetResourceForm(); fetchSegmentUpdates(); showSuccess("Update Posted"); }
+      setSubmitting(false); 
+      if(error) showError(error.message); else { setIsDirty(false); setEditorMode(false); fetchAllData(); showSuccess("Update Posted"); }
   };
 
   const handleNewsSubmit = async () => { 
-     if(!newsTitle) return showError("Headline required"); 
-     setSubmitting(true);
+     if(!newsTitle) return showError("Headline required"); setSubmitting(true);
      let url=null; if(newsFile){ const n=`news-${Date.now()}`; await supabase.storage.from('materials').upload(n,newsFile); url=supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
      let finalContent = newsContent; if(editorRef.current) finalContent = editorRef.current.getContents();
      const p={title:newsTitle, content:finalContent, category:newsCategory, seo_title:commonSeoTitle, seo_description:commonSeoDesc, tags:commonTags.split(',').filter(Boolean)};
      if(url) (p as any).image_url=url;
      
      let error;
-     if(editingNewsId) {
-         const res = await supabase.from('news').update(p).eq('id', editingNewsId);
-         error = res.error;
-     } else {
-         const res = await supabase.from('news').insert([p]);
-         error = res.error;
-     }
+     if(editingNewsId) { const res = await supabase.from('news').update(p).eq('id', editingNewsId); error = res.error; } 
+     else { const res = await supabase.from('news').insert([p]); error = res.error; }
      
      setSubmitting(false); 
-     if(error) showError(error.message); else { setIsDirty(false); setEditorMode(false); resetResourceForm(); fetchNews(); showSuccess("News Saved"); }
+     if(error) showError(error.message); else { setIsDirty(false); setEditorMode(false); fetchAllData(); showSuccess("News Saved"); }
   };
 
   const handleCourseSubmit = async () => { 
-     if(!cTitle) return showError("Title required"); 
-     setSubmitting(true);
+     if(!cTitle) return showError("Title required"); setSubmitting(true);
      let thumb=null; 
      if(cImageMethod==='upload' && cImageFile){ const n=`course-${Date.now()}`; await supabase.storage.from('materials').upload(n,cImageFile); thumb=supabase.storage.from('materials').getPublicUrl(n).data.publicUrl; }
      else if(cImageMethod==='link') { thumb = cImageLink; }
@@ -452,52 +512,13 @@ export default function AdminDashboard() {
      if(thumb) (p as any).thumbnail_url=thumb; // Optional now
      
      let error;
-     if(editingCourseId) {
-         const res = await supabase.from('courses').update(p).eq('id', editingCourseId);
-         error = res.error;
-     } else {
-         const res = await supabase.from('courses').insert([p]);
-         error = res.error;
-     }
+     if(editingCourseId) { const res = await supabase.from('courses').update(p).eq('id', editingCourseId); error = res.error; } 
+     else { const res = await supabase.from('courses').insert([p]); error = res.error; }
      
      setSubmitting(false); 
      if(error) showError(error.message);
-     else { setIsDirty(false); setEditorMode(false); resetResourceForm(); fetchCourses(); showSuccess("Course Saved"); }
+     else { setIsDirty(false); setEditorMode(false); fetchAllData(); showSuccess("Course Saved"); }
   };
-
-  // --- REUSABLE EDIT LOADERS ---
-  const handleAddNew = (type: string) => {
-      clearAllForms();
-      if(type === 'resource') { setResType('pdf'); } 
-      else if(type === 'blog') { setResType('blog'); }
-      // Reset isDirty to false initially when opening new form
-      setTimeout(() => setIsDirty(false), 100); 
-      setEditorMode(true);
-  };
-
-  const openEditor = (item: any, context: string) => {
-      clearAllForms();
-      setCommonTags(item?.tags?.join(", ") || ""); setCommonSeoTitle(item?.seo_title || ""); setCommonSeoDesc(item?.seo_description || "");
-      if(context === 'resource' || context === 'blog') {
-          setEditingResourceId(item.id); setResTitle(item.title); setResType(item.type); setResLink(item.content_url||""); 
-          setRichContent(item.content_body||""); setQuestionContent(item.content_body||""); setBlogCategory(item.category||"");
-          if(item.content_url) { setBlogImageLink(item.content_url); setBlogImageMethod('link'); }
-          if(item.segment_id) { setSelectedSegment(String(item.segment_id)); fetchGroups(String(item.segment_id)); }
-          if(item.group_id) { setSelectedGroup(String(item.group_id)); fetchSubjects(String(item.group_id)); }
-          if(item.subject_id) setSelectedSubject(String(item.subject_id));
-      } 
-      else if (context === 'update') { setEditingUpdateId(item.id); setUpdateTitle(item.title); setUpdateType(item.type); setUpdateSegmentId(String(item.segment_id)); setUpdateContent(item.content_body||""); }
-      else if (context === 'ebook') { setEditingEbookId(item.id); setEbTitle(item.title); setEbAuthor(item.author); setEbCategory(item.category); setEbDescription(item.description||""); setEbLink(item.pdf_url||""); if(item.cover_url){setEbCoverLink(item.cover_url); setEbCoverMethod('link');} }
-      else if (context === 'news') { setEditingNewsId(item.id); setNewsTitle(item.title); setNewsContent(item.content||""); setNewsCategory(item.category); }
-      else if (context === 'course') { setEditingCourseId(item.id); setCTitle(item.title); setCInstructor(item.instructor); setCPrice(item.price); setCDiscountPrice(item.discount_price); setCDuration(item.duration); setCLink(item.enrollment_link); setCDesc(item.description||""); setCCategory(item.category); if(item.thumbnail_url){setCImageLink(item.thumbnail_url); setCImageMethod('link');} }
-      
-      setEditorMode(true); 
-      setTimeout(() => setIsDirty(false), 100); 
-  };
-  const loadUpdateForEdit = (u: any) => openEditor(u, 'update');
-  const loadNewsForEdit = (n: any) => openEditor(n, 'news');
-  const loadEbookForEdit = (b: any) => openEditor(b, 'ebook');
-  const loadCourseForEdit = (c: any) => openEditor(c, 'course');
 
   // --- UI COMPONENTS ---
   const ListHeader = ({ title, onAdd, onSearch, searchVal }: any) => (
@@ -531,20 +552,21 @@ export default function AdminDashboard() {
       </div>
   );
 
-  const PaginationControls = ({ page, setPage, hasMore }: any) => (
-      <div className="flex justify-between px-4 py-3 bg-white border-t border-slate-100"><button onClick={()=>setPage(Math.max(0,page-1))} disabled={page===0} className="text-xs font-bold text-slate-500 disabled:opacity-30">← Prev</button><span className="text-xs font-bold text-slate-400">Page {page+1}</span><button onClick={()=>setPage(page+1)} disabled={!hasMore} className="text-xs font-bold text-slate-500 disabled:opacity-30">Next →</button></div>
+  const PaginationControls = () => (
+      <div className="flex justify-between items-center px-4 py-3 bg-white border-t border-slate-100">
+          <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400">Rows:</span>
+              <select className="border rounded text-xs p-1" value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setPage(0);}}>
+                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option><option value={100}>100</option>
+              </select>
+          </div>
+          <div className="flex gap-2">
+              <button onClick={()=>setPage(Math.max(0,page-1))} disabled={page===0} className="text-xs font-bold text-slate-500 disabled:opacity-30">← Prev</button>
+              <span className="text-xs font-bold text-slate-400">Page {page+1}</span>
+              <button onClick={()=>setPage(page+1)} disabled={(page+1)*itemsPerPage >= totalCount} className="text-xs font-bold text-slate-500 disabled:opacity-30">Next →</button>
+          </div>
+      </div>
   );
-
-  // Helper to find hierarchy names
-  const getHierarchyLabel = (r: any) => {
-      const seg = segments.find((s:any) => s.id === r.segment_id)?.title;
-      const grp = groups.find((g:any) => g.id === r.group_id)?.title;
-      const sub = subjects.find((s:any) => s.id === r.subject_id)?.title;
-      if (sub) return `${seg || ''} > ${grp || ''} > ${sub}`;
-      if (grp) return `${seg || ''} > ${grp}`;
-      if (seg) return seg;
-      return "Global / Unassigned";
-  };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-gray-500 font-bold">Loading Panel...</div>;
   if (!isAuthenticated) return null;
@@ -552,7 +574,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32">
       
-      {/* --- CATEGORY MODAL --- */}
+      {/* CATEGORY MODAL */}
       {isManageCatsOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div className="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
@@ -565,13 +587,13 @@ export default function AdminDashboard() {
                           <input id="newCatInput" className="w-full bg-white border p-3 rounded-xl text-sm outline-none" placeholder="New Category Name..." />
                           <button onClick={async ()=>{ const input = document.getElementById('newCatInput') as HTMLInputElement; if(input.value) { const payload: any = { name: input.value, type: activeCatContext }; if(catModalSegment) payload.segment_id = Number(catModalSegment); if(catModalGroup) payload.group_id = Number(catModalGroup); if(catModalSubject) payload.subject_id = Number(catModalSubject); await supabase.from('categories').insert([payload]); input.value=""; fetchCategories(); } }} className="w-full bg-black text-white py-2 rounded-lg font-bold text-sm">+ Add</button>
                       </div>
-                      <div className="space-y-2">{categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (<div key={c.id} className="flex justify-between items-center p-3 bg-white border rounded-xl"><span className="text-sm font-bold">{c.name}</span><button onClick={()=>deleteItem('categories', c.id, fetchCategories)} className="text-red-400 hover:text-red-600">🗑️</button></div>))}</div>
+                      <div className="space-y-2">{categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (<div key={c.id} className="flex justify-between items-center p-3 bg-white border rounded-xl"><span className="text-sm font-bold">{c.name}</span><button onClick={()=>deleteItem('categories', c.id)} className="text-red-400 hover:text-red-600">🗑️</button></div>))}</div>
                   </div>
               </div>
           </div>
       )}
       
-      {/* --- CONFIRMATION MODAL --- */}
+      {/* CONFIRM MODAL */}
       {modal.isOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center">
@@ -582,34 +604,33 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* --- SIDEBAR --- */}
-      <aside className="w-64 bg-white border-r border-slate-200 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-sm pt-20">
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-white border-r border-slate-200 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-sm pt-28">
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {[{ id: 'materials', label: 'Study Materials', icon: '📂' }, { id: 'updates', label: 'Updates & Notices', icon: '📢' }, { id: 'class-blogs', label: 'Class Blogs', icon: '✍️' }, { id: 'ebooks', label: 'eBook Library', icon: '📚' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }].map((tab) => (
-                <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-500 hover:bg-slate-50'}`}><span className="text-lg">{tab.icon}</span> {tab.label}</button>
+            {[{ id: 'materials', label: 'Study Materials & Blogs', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }].map((tab) => (
+                <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}><span className="text-lg">{tab.icon}</span> {tab.label}</button>
             ))}
         </nav>
         <div className="p-4 border-t"><button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl">Sign Out</button></div>
       </aside>
 
-      {/* --- MAIN CONTENT --- */}
       <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
         <div className="max-w-[1600px] mx-auto w-full">
             
             {/* MOBILE NAV */}
-            <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-2">{['materials','updates','class-blogs','ebooks','courses','news'].map(t => <button key={t} onClick={() => handleTabSwitch(t)} className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap ${activeTab===t?'bg-black text-white':'bg-white'}`}>{t}</button>)}</div>
+            <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-2">{['materials','updates','ebooks','courses','news'].map(t => <button key={t} onClick={() => handleTabSwitch(t)} className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap ${activeTab===t?'bg-black text-white':'bg-white'}`}>{t}</button>)}</div>
 
             {/* HEADER FOR LIST VIEW */}
             {!editorMode && (
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                     <div>
                         <h2 className="text-2xl font-black text-slate-800 capitalize">{activeTab.replace('-', ' ')}</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase mt-1">Management Console</p>
+                        <p className="text-xs text-slate-400 font-bold uppercase mt-1">Console</p>
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
-                        <input className="w-full md:w-64 bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-4 py-2.5 text-sm outline-none" placeholder="Search..." onChange={e=>setResSearch(e.target.value)} />
+                        <input className="w-full md:w-64 bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2.5 text-sm outline-none" placeholder="Search..." onChange={e=>setResSearch(e.target.value)} />
                         <button onClick={() => {
-                            if(activeTab === 'materials' || activeTab === 'class-blogs') handleAddNew(activeTab === 'class-blogs' ? 'blog' : 'resource');
+                            if(activeTab === 'materials') handleAddNew('resource');
                             else if(activeTab === 'updates') handleAddNew('update');
                             else if(activeTab === 'ebooks') handleAddNew('ebook');
                             else if(activeTab === 'courses') handleAddNew('course');
@@ -619,183 +640,179 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* --- 1. STUDY MATERIALS & BLOGS --- */}
-            {(activeTab === 'materials' || activeTab === 'class-blogs') && (
+            {/* --- 1. MATERIALS (Merged) --- */}
+            {activeTab === 'materials' && (
               !editorMode ? (
                   <div className="animate-fade-in space-y-6">
-                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
+                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} showTypeFilter={true} resTypeFilter={resTypeFilter} setResTypeFilter={setResTypeFilter} />
                       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                           <table className="w-full text-left text-sm text-slate-600">
-                              <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Hierarchy (Context)</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
+                              <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Context</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
                               <tbody className="divide-y divide-slate-100">
-                                  {resources.map(r=>(<tr key={r.id} className="hover:bg-slate-50 transition"><td className="px-6 py-4 font-bold text-slate-800">{r.title}</td><td className="px-6 py-4 text-xs text-slate-500 font-mono">{getHierarchyLabel(r)}</td><td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${r.type==='pdf'?'bg-red-100 text-red-600':r.type==='video'?'bg-blue-100 text-blue-600':'bg-yellow-100 text-yellow-600'}`}>{r.type}</span></td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>openEditor(r, activeTab === 'class-blogs' ? 'blog' : 'resource')} className="text-blue-600 font-bold text-xs">Edit</button><button onClick={()=>deleteItem('resources',r.id,()=>fetchResources(selectedSegment,selectedGroup,selectedSubject))} className="text-red-600 font-bold text-xs">Del</button></td></tr>))}
+                                  {resources.map(r=>(<tr key={r.id} className="hover:bg-slate-50 transition"><td className="px-6 py-4 font-bold text-slate-800">{r.title}</td><td className="px-6 py-4 text-xs text-slate-500 font-mono">{getHierarchyLabel(r)}</td><td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-100`}>{r.type}</span></td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>openEditor(r, r.type==='blog'?'blog':'resource')} className="text-blue-600 font-bold text-xs">Edit</button><button onClick={()=>deleteItem('resources',r.id)} className="text-red-600 font-bold text-xs">Del</button></td></tr>))}
                               </tbody>
                           </table>
+                          <PaginationControls />
                       </div>
                   </div>
               ) : (
-                  // EDITOR LAYOUT (75% / 25%)
-                  <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                      <div className="lg:w-3/4 space-y-6">
-                          <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Post Title..." value={resTitle} onChange={e=>{setResTitle(e.target.value); markDirty();}} />
-                          {resType === 'question' ? <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={questionContent} onChange={(c:string)=>{setQuestionContent(c); markDirty();}} setOptions={editorOptions}/></div> 
-                          : resType === 'blog' ? <div className="min-h-[600px] border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={(c:string)=>{setRichContent(c); markDirty();}} setOptions={editorOptions}/></div>
-                          : null}
-                          
-                          {(resType === 'pdf' || resType === 'video') && (
-                              <div className="bg-white p-6 rounded-xl border border-slate-200">
-                                  <h4 className="text-sm font-bold mb-4">Content Source</h4>
-                                  {resType === 'pdf' && <div className="border-2 border-dashed p-8 text-center rounded-xl relative hover:bg-slate-50"><input type="file" onChange={e=>{setResFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl">📂</span><p className="text-sm font-bold text-slate-500 mt-2">{resFile?resFile.name:"Upload PDF File"}</p></div>}
-                                  {resType === 'video' && <input className="w-full border p-3 rounded-xl text-sm" value={resLink} onChange={e=>{setResLink(e.target.value); markDirty();}} placeholder="YouTube Embed Link..." />}
-                              </div>
-                          )}
-                      </div>
-                      <div className="lg:w-1/4 space-y-6">
-                          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                              <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                              <div className="flex gap-2">
-                                  <button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button>
-                                  <button onClick={uploadResource} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"Saving...":"Publish"}</button>
-                              </div>
+                  <EditorLayout title={editingResourceId ? "Edit Content" : "Create Content"} onSave={uploadResource}>
+                      <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
+                          <div className="lg:w-3/4 space-y-6">
+                              <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Title..." value={resTitle} onChange={e=>{setResTitle(e.target.value); markDirty();}} />
+                              {resType === 'question' ? <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={questionContent} onChange={(c:string)=>{setQuestionContent(c); markDirty();}} setOptions={editorOptions}/></div> 
+                              : resType === 'blog' ? <div className="min-h-[600px] border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={(c:string)=>{setRichContent(c); markDirty();}} setOptions={editorOptions}/></div>
+                              : null}
+                              {(resType === 'pdf' || resType === 'video') && (
+                                  <div className="bg-white p-6 rounded-xl border border-slate-200">
+                                      <h4 className="text-sm font-bold mb-4">Content Source</h4>
+                                      {resType === 'pdf' && <div className="border-2 border-dashed p-8 text-center rounded-xl relative hover:bg-slate-50"><input type="file" onChange={e=>{setResFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl">📂</span><p className="text-sm font-bold text-slate-500 mt-2">{resFile?resFile.name:"Upload PDF File"}</p></div>}
+                                      {resType === 'video' && <input className="w-full border p-3 rounded-xl text-sm" value={resLink} onChange={e=>{setResLink(e.target.value); markDirty();}} placeholder="YouTube Embed Link..." />}
+                                  </div>
+                              )}
                           </div>
-                          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                              <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                              <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={resType} onChange={e=>{setResType(e.target.value); markDirty();}}><option value="pdf">📄 PDF</option><option value="video">🎬 Video</option><option value="question">❓ Question</option><option value="blog">✍️ Blog</option></select></div>
-                              <div><label className="text-xs font-bold block mb-1">Hierarchy</label><div className="space-y-2"><select className="w-full border p-2 rounded text-xs" value={selectedSegment} onChange={e=>{handleSegmentClick(e.target.value); markDirty();}}><option value="">Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedGroup} onChange={e=>{handleGroupClick(e.target.value); markDirty();}} disabled={!selectedSegment}><option value="">Group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedSubject} onChange={e=>{handleSubjectClick(e.target.value); markDirty();}} disabled={!selectedGroup}><option value="">Subject</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div></div>
-                              {resType === 'blog' && <CategoryManager label="Category" value={blogCategory} onChange={setBlogCategory} context="blog" />}
-                          </div>
-                          {resType === 'blog' && (
+                          <div className="lg:w-1/4 space-y-6">
                               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                  <h4 className="text-xs font-bold uppercase text-slate-400">Featured Image</h4>
-                                  <div className="flex gap-2 mb-2"><button onClick={()=>setBlogImageMethod('upload')} className={`flex-1 text-xs py-1 rounded border ${blogImageMethod==='upload'?'bg-slate-100 font-bold':''}`}>Upload</button><button onClick={()=>setBlogImageMethod('link')} className={`flex-1 text-xs py-1 rounded border ${blogImageMethod==='link'?'bg-slate-100 font-bold':''}`}>Link</button></div>{blogImageMethod==='upload'?<input type="file" onChange={e=>{setBlogImageFile(e.target.files?.[0]||null); markDirty();}} className="text-xs w-full"/>:<input className="w-full border p-1 rounded text-xs" placeholder="URL..." value={blogImageLink} onChange={e=>{setBlogImageLink(e.target.value); markDirty();}}/>}
+                                  <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
+                                  <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={resType} onChange={e=>{setResType(e.target.value); markDirty();}}><option value="pdf">📄 PDF</option><option value="video">🎬 Video</option><option value="question">❓ Question</option><option value="blog">✍️ Blog</option></select></div>
+                                  <div><label className="text-xs font-bold block mb-1">Hierarchy</label><div className="space-y-2"><select className="w-full border p-2 rounded text-xs" value={selectedSegment} onChange={e=>{handleSegmentClick(e.target.value); markDirty();}}><option value="">Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedGroup} onChange={e=>{handleGroupClick(e.target.value); markDirty();}} disabled={!selectedSegment}><option value="">Group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedSubject} onChange={e=>{handleSubjectClick(e.target.value); markDirty();}} disabled={!selectedGroup}><option value="">Subject</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div></div>
+                                  {resType === 'blog' && <CategoryManager label="Category" value={blogCategory} onChange={setBlogCategory} context="blog" />}
                               </div>
-                          )}
-                          <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
+                              {resType === 'blog' && <ImageInput label="Cover Image" method={blogImageMethod} setMethod={setBlogImageMethod} file={blogImageFile} setFile={setBlogImageFile} link={blogImageLink} setLink={setBlogImageLink} markDirty={markDirty} />}
+                              <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
+                          </div>
                       </div>
-                  </div>
+                  </EditorLayout>
               )
             )}
 
-            {/* --- 2. UPDATES TAB --- */}
+            {/* --- 2. UPDATES --- */}
             {activeTab === 'updates' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="space-y-2">{segmentUpdates.map(u=><div key={u.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><div className="flex items-center gap-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-100`}>{u.type}</span><span className="font-bold text-slate-700">{u.title}</span></div><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>{loadUpdateForEdit(u); setEditorMode(true)}} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id,fetchSegmentUpdates)} className="text-xs font-bold text-red-600">Del</button></div></div>)}</div>
+                        <div className="space-y-2">{segmentUpdates.map(u=><div key={u.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><div className="flex items-center gap-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-100`}>{u.type}</span><span className="font-bold text-slate-700">{u.title}</span></div><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>{loadUpdateForEdit(u); setEditorMode(true)}} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id)} className="text-xs font-bold text-red-600">Del</button></div></div>)}</div>
+                        <PaginationControls />
                     </div>
                 ) : (
-                    <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                        <div className="lg:w-3/4 space-y-6">
-                            <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Update Title..." value={updateTitle} onChange={e=>{setUpdateTitle(e.target.value); markDirty();}} />
-                            <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={updateContent} onChange={(c:string)=>{setUpdateContent(c); markDirty();}} setOptions={editorOptions}/></div>
-                            <div className="border-2 border-dashed p-4 text-center rounded-xl relative hover:bg-blue-50"><input type="file" onChange={e=>{setUpdateFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-lg">📎</span> <span className="text-sm font-bold text-slate-500">{updateFile?updateFile.name:"Attach File"}</span></div>
-                        </div>
-                        <div className="lg:w-1/4 space-y-6">
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleUpdateSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Publish"}</button></div>
+                    <EditorLayout title="Update Editor" onSave={handleUpdateSubmit}>
+                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
+                            <div className="lg:w-3/4 space-y-6">
+                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Title..." value={updateTitle} onChange={e=>{setUpdateTitle(e.target.value); markDirty();}} />
+                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={updateContent} onChange={(c:string)=>{setUpdateContent(c); markDirty();}} setOptions={editorOptions}/></div>
+                                <div className="border-2 border-dashed p-4 text-center rounded-xl relative hover:bg-blue-50"><input type="file" onChange={e=>{setUpdateFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-lg">📎</span> <span className="text-sm font-bold text-slate-500">{updateFile?updateFile.name:"Attach File"}</span></div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                                <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={updateType} onChange={e=>{setUpdateType(e.target.value); markDirty();}}><option value="routine">📅 Routine</option><option value="syllabus">📝 Syllabus</option><option value="exam_result">🏆 Result</option></select></div>
-                                <div><label className="text-xs font-bold block mb-1">Segment</label><select className="w-full border p-2 rounded-lg text-xs" value={updateSegmentId} onChange={e=>{setUpdateSegmentId(e.target.value); markDirty();}}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+                            <div className="lg:w-1/4 space-y-6">
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
+                                    <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={updateType} onChange={e=>{setUpdateType(e.target.value); markDirty();}}><option value="routine">📅 Routine</option><option value="syllabus">📝 Syllabus</option><option value="exam_result">🏆 Result</option></select></div>
+                                    <div><label className="text-xs font-bold block mb-1">Segment</label><select className="w-full border p-2 rounded-lg text-xs" value={updateSegmentId} onChange={e=>{setUpdateSegmentId(e.target.value); markDirty();}}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+                                </div>
+                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                             </div>
-                            <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                         </div>
-                    </div>
+                    </EditorLayout>
                 )
             )}
 
-            {/* --- 3. EBOOKS TAB --- */}
+            {/* --- 3. EBOOKS --- */}
             {activeTab === 'ebooks' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{ebooksList.map(b=>(<div key={b.id} className="bg-white p-4 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="flex gap-4"><div className="w-12 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">{b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-2">{b.title}</h4><p className="text-xs text-slate-500">{b.author}</p></div></div><div className="mt-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadEbookForEdit(b)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('ebooks',b.id,fetchEbooks)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{ebooksList.map(b=>(<div key={b.id} className="bg-white p-4 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="flex gap-4"><div className="w-12 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">{b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-2">{b.title}</h4><p className="text-xs text-slate-500">{b.author}</p></div></div><div className="mt-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadEbookForEdit(b)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('ebooks',b.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <PaginationControls />
                     </div>
                 ) : (
-                    <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                        <div className="lg:w-3/4 space-y-6">
-                            <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="eBook Title..." value={ebTitle} onChange={e=>{setEbTitle(e.target.value); markDirty();}} />
-                            <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={ebDescription} onChange={(c:string)=>{setEbDescription(c); markDirty();}} setOptions={editorOptions}/></div>
-                        </div>
-                        <div className="lg:w-1/4 space-y-6">
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleEbookSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Save"}</button></div>
+                    <EditorLayout title="eBook Editor" onSave={handleEbookSubmit}>
+                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
+                            <div className="lg:w-3/4 space-y-6">
+                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="eBook Title..." value={ebTitle} onChange={e=>{setEbTitle(e.target.value); markDirty();}} />
+                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={ebDescription} onChange={(c:string)=>{setEbDescription(c); markDirty();}} setOptions={editorOptions}/></div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Meta</h4>
-                                <div><label className="text-xs font-bold block mb-1">Author</label><input className="w-full border p-2 rounded-lg" value={ebAuthor} onChange={e=>{setEbAuthor(e.target.value); markDirty();}} /></div>
-                                {/* FIXED: Ebook Context */}
-                                <CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" />
-                                <div><label className="text-xs font-bold block mb-1">PDF URL</label><input className="w-full border p-2 rounded-lg" value={ebLink} onChange={e=>{setEbLink(e.target.value); markDirty();}} /></div>
-                                <ImageInput label="Cover Image" method={ebCoverMethod} setMethod={setEbCoverMethod} file={ebCoverFile} setFile={setEbCoverFile} link={ebCoverLink} setLink={setEbCoverLink} markDirty={markDirty} />
+                            <div className="lg:w-1/4 space-y-6">
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
+                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleEbookSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Save"}</button></div>
+                                </div>
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Meta</h4>
+                                    <div><label className="text-xs font-bold block mb-1">Author</label><input className="w-full border p-2 rounded-lg" value={ebAuthor} onChange={e=>{setEbAuthor(e.target.value); markDirty();}} /></div>
+                                    <CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" />
+                                    <div><label className="text-xs font-bold block mb-1">PDF URL</label><input className="w-full border p-2 rounded-lg" value={ebLink} onChange={e=>{setEbLink(e.target.value); markDirty();}} /></div>
+                                    <ImageInput label="Cover Image" method={ebCoverMethod} setMethod={setEbCoverMethod} file={ebCoverFile} setFile={setEbCoverFile} link={ebCoverLink} setLink={setEbCoverLink} markDirty={markDirty} />
+                                </div>
+                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                             </div>
-                            <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                         </div>
-                    </div>
+                    </EditorLayout>
                 )
             )}
 
-            {/* --- 4. NEWS TAB --- */}
+            {/* --- 4. NEWS --- */}
             {activeTab === 'news' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="space-y-2">{newsList.map(n=>(<div key={n.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><span className="font-bold text-slate-700">{n.title}</span><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('news',n.id,fetchNews)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <div className="space-y-2">{newsList.map(n=>(<div key={n.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><span className="font-bold text-slate-700">{n.title}</span><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('news',n.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <PaginationControls />
                     </div>
                 ) : (
-                    <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                        <div className="lg:w-3/4 space-y-6">
-                            <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="News Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} />
-                            <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={newsContent} onChange={(c:string)=>{setNewsContent(c); markDirty();}} setOptions={editorOptions}/></div>
-                        </div>
-                        <div className="lg:w-1/4 space-y-6">
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleNewsSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Publish"}</button></div>
+                    <EditorLayout title="News Editor" onSave={handleNewsSubmit}>
+                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
+                            <div className="lg:w-3/4 space-y-6">
+                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="News Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} />
+                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={newsContent} onChange={(c:string)=>{setNewsContent(c); markDirty();}} setOptions={editorOptions}/></div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                                <CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" />
-                                <div className="p-4 border-2 border-dashed rounded-lg text-center relative hover:bg-slate-50"><span className="text-xl">📸</span> <span className="text-xs font-bold text-slate-400">Cover</span><input type="file" onChange={e=>{setNewsFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/></div>
+                            <div className="lg:w-1/4 space-y-6">
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
+                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleNewsSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Publish"}</button></div>
+                                </div>
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
+                                    <CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" />
+                                    <div className="p-4 border-2 border-dashed rounded-lg text-center relative hover:bg-slate-50"><span className="text-xl">📸</span> <span className="text-xs font-bold text-slate-400">Cover</span><input type="file" onChange={e=>{setNewsFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/></div>
+                                </div>
+                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                             </div>
-                            <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                         </div>
-                    </div>
+                    </EditorLayout>
                 )
             )}
 
-            {/* --- 5. COURSES TAB --- */}
+            {/* --- 5. COURSES --- */}
             {activeTab === 'courses' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{coursesList.map(c=>(<div key={c.id} className="bg-white p-4 rounded-xl border group hover:shadow-md transition"><div className="flex gap-4 items-center mb-3"><div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-1">{c.title}</h4><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{c.category}</span></div></div><div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadCourseForEdit(c)} className="text-xs text-blue-600 font-bold">Edit</button><button onClick={()=>deleteItem('courses',c.id,fetchCourses)} className="text-xs text-red-600 font-bold">Del</button></div></div>))}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{coursesList.map(c=>(<div key={c.id} className="bg-white p-4 rounded-xl border group hover:shadow-md transition"><div className="flex gap-4 items-center mb-3"><div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-1">{c.title}</h4><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{c.category}</span></div></div><div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadCourseForEdit(c)} className="text-xs text-blue-600 font-bold">Edit</button><button onClick={()=>deleteItem('courses',c.id)} className="text-xs text-red-600 font-bold">Del</button></div></div>))}</div>
+                        <PaginationControls />
                     </div>
                 ) : (
-                    <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                        <div className="lg:w-3/4 space-y-6">
-                            <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Course Title..." value={cTitle} onChange={e=>{setCTitle(e.target.value); markDirty();}} />
-                            <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={cDesc} onChange={(c:string)=>{setCDesc(c); markDirty();}} setOptions={editorOptions}/></div>
-                        </div>
-                        <div className="lg:w-1/4 space-y-6">
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleCourseSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Launch"}</button></div>
+                    <EditorLayout title="Course Editor" onSave={handleCourseSubmit}>
+                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
+                            <div className="lg:w-3/4 space-y-6">
+                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Course Title..." value={cTitle} onChange={e=>{setCTitle(e.target.value); markDirty();}} />
+                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={cDesc} onChange={(c:string)=>{setCDesc(c); markDirty();}} setOptions={editorOptions}/></div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-slate-400">Course Data</h4>
-                                <div><label className="text-xs font-bold block mb-1">Instructor</label><input className="w-full border p-2 rounded-lg" value={cInstructor} onChange={e=>{setCInstructor(e.target.value); markDirty();}} /></div>
-                                <div className="grid grid-cols-2 gap-2"><div><label className="text-xs font-bold block mb-1">Price</label><input className="w-full border p-2 rounded-lg" value={cPrice} onChange={e=>{setCPrice(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Discount</label><input className="w-full border p-2 rounded-lg" value={cDiscountPrice} onChange={e=>{setCDiscountPrice(e.target.value); markDirty();}} /></div></div>
-                                <div><label className="text-xs font-bold block mb-1">Duration</label><input className="w-full border p-2 rounded-lg" value={cDuration} onChange={e=>{setCDuration(e.target.value); markDirty();}} /></div>
-                                <div><label className="text-xs font-bold block mb-1">Enroll Link</label><input className="w-full border p-2 rounded-lg" value={cLink} onChange={e=>{setCLink(e.target.value); markDirty();}} /></div>
-                                <CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" />
-                                <ImageInput label="Thumbnail" method={cImageMethod} setMethod={setCImageMethod} file={cImageFile} setFile={setCImageFile} link={cImageLink} setLink={setCImageLink} markDirty={markDirty} optional={true} />
+                            <div className="lg:w-1/4 space-y-6">
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
+                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleCourseSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Launch"}</button></div>
+                                </div>
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                    <h4 className="text-xs font-bold uppercase text-slate-400">Course Data</h4>
+                                    <div><label className="text-xs font-bold block mb-1">Instructor</label><input className="w-full border p-2 rounded-lg" value={cInstructor} onChange={e=>{setCInstructor(e.target.value); markDirty();}} /></div>
+                                    <div className="grid grid-cols-2 gap-2"><div><label className="text-xs font-bold block mb-1">Price</label><input className="w-full border p-2 rounded-lg" value={cPrice} onChange={e=>{setCPrice(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Discount</label><input className="w-full border p-2 rounded-lg" value={cDiscountPrice} onChange={e=>{setCDiscountPrice(e.target.value); markDirty();}} /></div></div>
+                                    <div><label className="text-xs font-bold block mb-1">Duration</label><input className="w-full border p-2 rounded-lg" value={cDuration} onChange={e=>{setCDuration(e.target.value); markDirty();}} /></div>
+                                    <div><label className="text-xs font-bold block mb-1">Enroll Link</label><input className="w-full border p-2 rounded-lg" value={cLink} onChange={e=>{setCLink(e.target.value); markDirty();}} /></div>
+                                    <CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" />
+                                    <ImageInput label="Thumbnail" method={cImageMethod} setMethod={setCImageMethod} file={cImageFile} setFile={setCImageFile} link={cImageLink} setLink={setCImageLink} markDirty={markDirty} optional={true} />
+                                </div>
+                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                             </div>
-                            <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
                         </div>
-                    </div>
+                    </EditorLayout>
                 )
             )}
 
