@@ -26,7 +26,7 @@ const editorOptions: any = {
 
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
 
-// --- 1. EXTERNAL COMPONENTS (Prevents Re-render/Focus Loss) ---
+// --- 1. EXTERNAL COMPONENTS ---
 
 const SeoInputSection = memo(({ 
   title, setTitle, tags, setTags, desc, setDesc, markDirty 
@@ -67,40 +67,68 @@ const FilterBar = memo(({
     newSeg, setNewSeg,
     newGrp, setNewGrp,
     newSub, setNewSub,
-    onAddSegment, onAddGroup, onAddSubject
+    onAddSegment, onAddGroup, onAddSubject,
+    showTypeFilter = false,
+    resTypeFilter, setResTypeFilter,
+    // Add missing props for Updates
+    showUpdateTypeFilter = false,
+    updateTypeFilter, setUpdateTypeFilter
 }: any) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Filter Segment</label>
-            <select className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selSeg} onChange={e=>{setSelSeg(e.target.value); onFetchGroups(e.target.value);}}>
-                <option value="">All Segments</option>
-                {segments.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
-            </select>
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-4">
+        <div className="flex justify-between items-center">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filters & Hierarchy</h3>
+            
             <div className="flex gap-2">
-                <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Segment" value={newSeg} onChange={e=>setNewSeg(e.target.value)} />
-                <button onClick={onAddSegment} className="bg-black text-white px-2 rounded text-xs font-bold">+</button>
+                {showTypeFilter && (
+                    <select className="bg-slate-100 border-none text-xs font-bold rounded-lg px-3 py-1 text-slate-700 outline-none cursor-pointer" value={resTypeFilter} onChange={e=>setResTypeFilter(e.target.value)}>
+                        <option value="all">All Content Types</option>
+                        <option value="blog">✍️ Blogs</option>
+                        <option value="pdf">📄 PDFs</option>
+                        <option value="video">🎬 Videos</option>
+                        <option value="question">❓ Questions</option>
+                    </select>
+                )}
+                {showUpdateTypeFilter && (
+                    <select className="bg-slate-100 border-none text-xs font-bold rounded-lg px-3 py-1 text-slate-700 outline-none cursor-pointer" value={updateTypeFilter} onChange={e=>setUpdateTypeFilter(e.target.value)}>
+                        <option value="all">All Update Types</option>
+                        <option value="routine">📅 Routine</option>
+                        <option value="syllabus">📝 Syllabus</option>
+                        <option value="exam_result">🏆 Result</option>
+                    </select>
+                )}
             </div>
         </div>
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Filter Group</label>
-            <select className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selGrp} onChange={e=>{setSelGrp(e.target.value); onFetchSubjects(e.target.value);}} disabled={!selSeg}>
-                <option value="">All Groups</option>
-                {groups.map((g:any)=><option key={g.id} value={g.id}>{g.title}</option>)}
-            </select>
-            <div className="flex gap-2">
-                <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Group" value={newGrp} onChange={e=>setNewGrp(e.target.value)} disabled={!selSeg} />
-                <button onClick={onAddGroup} disabled={!selSeg} className="bg-black text-white px-2 rounded text-xs font-bold disabled:opacity-50">+</button>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selSeg} onChange={e=>{setSelSeg(e.target.value); onFetchGroups(e.target.value);}}>
+                    <option value="">All Segments</option>
+                    {segments.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
+                </select>
+                <div className="flex gap-2">
+                    <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Segment" value={newSeg} onChange={e=>setNewSeg(e.target.value)} />
+                    <button onClick={onAddSegment} className="bg-black text-white px-2 rounded text-xs font-bold">+</button>
+                </div>
             </div>
-        </div>
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Filter Subject</label>
-            <select className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selSub} onChange={e=>setSelSub(e.target.value)} disabled={!selGrp}>
-                <option value="">All Subjects</option>
-                {subjects.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
-            </select>
-            <div className="flex gap-2">
-                <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Subject" value={newSub} onChange={e=>setNewSub(e.target.value)} disabled={!selGrp} />
-                <button onClick={onAddSubject} disabled={!selGrp} className="bg-black text-white px-2 rounded text-xs font-bold disabled:opacity-50">+</button>
+            <div className="space-y-2">
+                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selGrp} onChange={e=>{setSelGrp(e.target.value); onFetchSubjects(e.target.value);}} disabled={!selSeg}>
+                    <option value="">All Groups</option>
+                    {groups.map((g:any)=><option key={g.id} value={g.id}>{g.title}</option>)}
+                </select>
+                <div className="flex gap-2">
+                    <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Group" value={newGrp} onChange={e=>setNewGrp(e.target.value)} disabled={!selSeg} />
+                    <button onClick={onAddGroup} disabled={!selSeg} className="bg-black text-white px-2 rounded text-xs font-bold disabled:opacity-50">+</button>
+                </div>
+            </div>
+            <div className="space-y-2">
+                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" value={selSub} onChange={e=>setSelSub(e.target.value)} disabled={!selGrp}>
+                    <option value="">All Subjects</option>
+                    {subjects.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
+                </select>
+                <div className="flex gap-2">
+                    <input className="w-full border p-1.5 rounded text-xs outline-none" placeholder="+ New Subject" value={newSub} onChange={e=>setNewSub(e.target.value)} disabled={!selGrp} />
+                    <button onClick={onAddSubject} disabled={!selGrp} className="bg-black text-white px-2 rounded text-xs font-bold disabled:opacity-50">+</button>
+                </div>
             </div>
         </div>
     </div>
@@ -130,7 +158,6 @@ const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLin
 ImageInput.displayName = "ImageInput";
 
 const CategoryManager = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
-    // Filter logic inside render to ensure latest categories
     const filtered = categories.filter((c:any) => c.type === context || c.type === 'general' || !c.type);
     return (
         <div className="space-y-1.5">
@@ -147,8 +174,22 @@ const CategoryManager = memo(({ label, value, onChange, context, categories, ope
 });
 CategoryManager.displayName = "CategoryManager";
 
+const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
+    <th 
+        className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group"
+        onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}
+    >
+        <div className="flex items-center gap-1">
+            {label}
+            <span className={`text-[10px] text-slate-400 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
+                <span className={currentSort.key===sortKey && currentSort.direction==='asc' ? 'text-blue-600' : ''}>▲</span>
+                <span className={currentSort.key===sortKey && currentSort.direction==='desc' ? 'text-blue-600' : ''}>▼</span>
+            </span>
+        </div>
+    </th>
+);
 
-// --- MAIN COMPONENT ---
+// --- MAIN PAGE COMPONENT ---
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -182,20 +223,25 @@ export default function AdminDashboard() {
   const [ebSearch, setEbSearch] = useState("");
   const [updateSearch, setUpdateSearch] = useState("");
   
-  // Specific Pages (Fixed Error 1)
   const [resPage, setResPage] = useState(0);
   const [newsPage, setNewsPage] = useState(0);
   const [ebPage, setEbPage] = useState(0);
   const [updatePage, setUpdatePage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Sorting
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
 
   // Filtering
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [resTypeFilter, setResTypeFilter] = useState("all");
+  const [updateTypeFilter, setUpdateTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
-  // Hierarchy Inputs (Fixed Error 2)
+  // Hierarchy Inputs
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -236,7 +282,7 @@ export default function AdminDashboard() {
   const [cTitle, setCTitle] = useState(""); const [cInstructor, setCInstructor] = useState(""); const [cPrice, setCPrice] = useState(""); const [cDiscountPrice, setCDiscountPrice] = useState(""); const [cDuration, setCDuration] = useState(""); const [cLink, setCLink] = useState(""); const [cDesc, setCDesc] = useState(""); const [cCategory, setCCategory] = useState(""); const [editingCourseId, setEditingCourseId] = useState<number | null>(null); const [cImageMethod, setCImageMethod] = useState<'upload'|'link'>('upload'); const [cImageFile, setCImageFile] = useState<File|null>(null); const [cImageLink, setCImageLink] = useState("");
   const [updateTitle, setUpdateTitle] = useState(""); const [updateType, setUpdateType] = useState("routine"); const [updateSegmentId, setUpdateSegmentId] = useState(""); const [updateContent, setUpdateContent] = useState(""); const [updateFile, setUpdateFile] = useState<File | null>(null); const [editingUpdateId, setEditingUpdateId] = useState<number | null>(null);
 
-  // --- 1. HELPERS & STATE MANAGEMENT (Defined First) ---
+  // --- 1. HELPERS & STATE MANAGEMENT ---
   const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
   const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
   const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
@@ -244,7 +290,6 @@ export default function AdminDashboard() {
   const markDirty = () => setIsDirty(true);
   const clearSeoFields = () => { setCommonTags(""); setCommonSeoTitle(""); setCommonSeoDesc(""); };
 
-  // Helper to find hierarchy names (Fixed Error 3)
   const getHierarchyLabel = (r: any) => {
     const seg = segments.find((s:any) => s.id === r.segment_id)?.title;
     const grp = groups.find((g:any) => g.id === r.group_id)?.title;
@@ -255,7 +300,7 @@ export default function AdminDashboard() {
     return "Global";
   };
 
-  // --- HIERARCHY HANDLERS (Moved Up) ---
+  // --- HIERARCHY HANDLERS ---
   const fetchGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data||[]); };
   const fetchSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data||[]); };
   
@@ -280,7 +325,7 @@ export default function AdminDashboard() {
       setIsDirty(false); 
   };
 
-  // --- REUSABLE EDIT LOADERS (Moved Up) ---
+  // --- REUSABLE EDIT LOADERS ---
   const openEditor = (item: any, context: string) => {
       clearAllForms();
       setCommonTags(item?.tags?.join(", ") || ""); setCommonSeoTitle(item?.seo_title || ""); setCommonSeoDesc(item?.seo_description || "");
@@ -308,15 +353,13 @@ export default function AdminDashboard() {
 
   // --- NAVIGATION ---
   const handleTabSwitch = (newTab: string) => {
-      if(isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); });
-      else { setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); }
+      if(isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); });
+      else { setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); }
   };
-
   const handleBackToList = () => {
       if(isDirty) confirmAction("Discard unsaved changes?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); });
       else { setEditorMode(false); clearAllForms(); }
   };
-
   const handleAddNew = (type: string) => {
       clearAllForms();
       if(type === 'resource') { setResType('pdf'); } 
@@ -325,7 +368,7 @@ export default function AdminDashboard() {
       setTimeout(() => setIsDirty(false), 100); 
   };
 
-  // --- INIT & FETCHERS ---
+  // --- INIT ---
   const loadInitialData = useCallback(() => {
     const fSeg = async () => { const {data} = await supabase.from("segments").select("*").order('id'); setSegments(data||[]); };
     const fCat = async () => { const {data} = await supabase.from("categories").select("*").order('name'); setCategories(data||[]); };
@@ -355,7 +398,7 @@ export default function AdminDashboard() {
       if (activeTab === 'materials') { table = "resources"; currentPage = resPage; }
       else if (activeTab === 'news') { table = "news"; currentPage = newsPage; }
       else if (activeTab === 'ebooks') { table = "ebooks"; currentPage = ebPage; }
-      else if (activeTab === 'courses') { table = "courses"; currentPage = 0; } // Courses often small list
+      else if (activeTab === 'courses') { table = "courses"; currentPage = 0; }
       else if (activeTab === 'updates') { table = "segment_updates"; currentPage = updatePage; }
 
       query = supabase.from(table).select("*", { count: 'exact' });
@@ -367,16 +410,31 @@ export default function AdminDashboard() {
           else if (selectedSegment) query = query.eq("segment_id", selectedSegment);
       }
 
-      // Merge Logic: Materials tab shows ALL types (including blogs)
-      // No filter needed for 'materials' tab unless user filters explicitly if you add that later.
+      if (activeTab === 'materials') {
+          query = query.neq("type", "blog"); // Materials is everything except blogs? Wait, user merged them.
+          // Correct Logic: Materials tab includes EVERYTHING. 
+          // If filter is 'all', we show everything. If 'blog', show blogs.
+          if (resTypeFilter !== 'all') query = query.eq("type", resTypeFilter);
+      }
+      
+      if (activeTab === 'updates' && updateTypeFilter !== 'all') query = query.eq("type", updateTypeFilter);
 
       const s = activeTab==='materials' ? resSearch : activeTab==='news' ? newsSearch : activeTab==='ebooks' ? ebSearch : activeTab==='updates' ? updateSearch : "";
       if (s) query = query.ilike("title", `%${s}%`);
 
+      // Date Filtering
+      const now = new Date();
+      if (dateFilter !== 'all') {
+          let startDate;
+          if(dateFilter === 'this_month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          else if(dateFilter === 'last_6_months') startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+          else if(dateFilter === 'this_year') startDate = new Date(now.getFullYear(), 0, 1);
+          if(startDate) query = query.gte('created_at', startDate.toISOString());
+      }
+
       const from = currentPage * itemsPerPage;
       const to = from + itemsPerPage - 1;
-      
-      const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false });
+      const { data, count, error } = await query.range(from, to).order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
       
       if (!error && data) {
           if(activeTab === 'materials') setResources(data);
@@ -386,29 +444,23 @@ export default function AdminDashboard() {
           else if(activeTab === 'updates') setSegmentUpdates(data);
           if(count !== null) setTotalCount(count);
       }
-  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, resPage, newsPage, ebPage, updatePage, itemsPerPage, editorMode, isLoading]);
+  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, resTypeFilter, updateTypeFilter, dateFilter, sortConfig, resPage, newsPage, ebPage, updatePage, itemsPerPage, editorMode, isLoading]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
   const deleteItem = (table: string, id: number) => { confirmAction("Permanently delete?", async () => { await supabase.from(table).delete().eq("id", id); fetchAllData(); showSuccess("Deleted!"); }); };
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
 
-  // --- HIERARCHY SUBMIT HANDLERS ---
+  // --- SUBMIT HANDLERS ---
   const handleSegmentSubmit = async () => { if(newSegment) { await supabase.from('segments').insert([{title:newSegment, slug:newSegment.toLowerCase().replace(/\s+/g,'-')}]); setNewSegment(""); const {data}=await supabase.from('segments').select('*'); setSegments(data||[]); }};
   const handleGroupSubmit = async () => { if(newGroup && selectedSegment) { await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); }};
   const handleSubjectSubmit = async () => { if(newSubject && selectedGroup) { await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); }};
 
-  // --- CATEGORY MANAGER MODAL TRIGGER ---
-  const openCategoryModal = (context: string) => {
-      setActiveCatContext(context);
-      setIsManageCatsOpen(true);
-  };
+  const openCategoryModal = (context: string) => { setActiveCatContext(context); setIsManageCatsOpen(true); };
 
-  // --- SUBMIT HANDLERS ---
   const uploadResource = async () => {
       if(!resTitle) return showError("Title is required!");
       setSubmitting(true);
-      
       let finalContent = richContent;
       if(resType === 'blog' && editorRef.current) finalContent = editorRef.current.getContents();
       else if (resType === 'question') finalContent = questionContent; 
@@ -421,7 +473,6 @@ export default function AdminDashboard() {
           const name = `file-${Date.now()}`; await supabase.storage.from('materials').upload(name, resFile);
           url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
       }
-
       const payload: any = { 
           title: resTitle, type: resType, seo_title: commonSeoTitle||resTitle, seo_description: commonSeoDesc,
           tags: commonTags.split(',').map(t=>t.trim()).filter(Boolean)
@@ -527,7 +578,7 @@ export default function AdminDashboard() {
                   </button>
               </div>
           </div>
-          <div className="p-8 max-w-7xl mx-auto space-y-8">
+          <div className="p-8 max-w-[1800px] w-full mx-auto space-y-8">
               <h2 className="text-3xl font-black text-slate-900">{title}</h2>
               {children}
           </div>
@@ -602,7 +653,7 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="max-w-[1800px] mx-auto w-full">
             
             {/* MOBILE NAV */}
             <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-2">{['materials','updates','ebooks','courses','news'].map(t => <button key={t} onClick={() => handleTabSwitch(t)} className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap ${activeTab===t?'bg-black text-white':'bg-white'}`}>{t}</button>)}</div>
@@ -631,7 +682,7 @@ export default function AdminDashboard() {
             {activeTab === 'materials' && (
               !editorMode ? (
                   <div className="animate-fade-in space-y-6">
-                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
+                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} showTypeFilter={true} resTypeFilter={resTypeFilter} setResTypeFilter={setResTypeFilter} />
                       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                           <table className="w-full text-left text-sm text-slate-600">
                               <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Context</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
@@ -644,8 +695,8 @@ export default function AdminDashboard() {
                   </div>
               ) : (
                   <EditorLayout title={editingResourceId ? "Edit Content" : "Create Content"} onSave={uploadResource}>
-                      <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                          <div className="lg:w-3/4 space-y-6">
+                      <div className="flex flex-col lg:flex-row gap-8 animate-slide-up w-full">
+                          <div className="w-full lg:w-[75%] space-y-6">
                               <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Title..." value={resTitle} onChange={e=>{setResTitle(e.target.value); markDirty();}} />
                               {resType === 'question' ? <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={questionContent} onChange={(c:string)=>{setQuestionContent(c); markDirty();}} setOptions={editorOptions}/></div> 
                               : resType === 'blog' ? <div className="min-h-[600px] border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={richContent} onChange={(c:string)=>{setRichContent(c); markDirty();}} setOptions={editorOptions}/></div>
@@ -658,7 +709,7 @@ export default function AdminDashboard() {
                                   </div>
                               )}
                           </div>
-                          <div className="lg:w-1/4 space-y-6">
+                          <div className="w-full lg:w-[25%] space-y-6">
                               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                                   <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
                                   <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={resType} onChange={e=>{setResType(e.target.value); markDirty();}}><option value="pdf">📄 PDF</option><option value="video">🎬 Video</option><option value="question">❓ Question</option><option value="blog">✍️ Blog</option></select></div>
@@ -677,32 +728,20 @@ export default function AdminDashboard() {
             {activeTab === 'updates' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
-                        <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
+                         {/* UPDATES FILTERS: Segment + Type */}
+                        <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} showUpdateTypeFilter={true} updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter} />
+                        
                         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                             <table className="w-full text-left text-sm text-slate-600">
-                                <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
-                                <tbody className="divide-y divide-slate-100">{segmentUpdates.map(u=>(<tr key={u.id} className="hover:bg-slate-50 transition"><td className="px-6 py-4 font-bold text-slate-800">{u.title}</td><td className="px-6 py-4"><span className="text-xs bg-slate-100 px-2 py-1 rounded uppercase font-bold">{u.type}</span></td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>loadUpdateForEdit(u)} className="text-blue-600 font-bold text-xs">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id)} className="text-red-600 font-bold text-xs">Del</button></td></tr>))}</tbody>
+                                <thead className="bg-slate-50 text-xs uppercase font-extrabold text-slate-500 border-b tracking-wider"><tr><SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} /><SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} /><SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} /><th className="px-6 py-4 text-right">ACTIONS</th></tr></thead>
+                                <tbody className="divide-y divide-slate-100">{segmentUpdates.map(u=>(<tr key={u.id} className="hover:bg-slate-50 transition group"><td className="px-6 py-4"><p className="font-bold text-slate-800">{u.title}</p><p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wide">{getHierarchyLabel(u)}</p></td><td className="px-6 py-4"><span className="text-xs bg-slate-100 px-2 py-1 rounded uppercase font-bold">{u.type}</span></td><td className="px-6 py-4 text-xs font-mono text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>{loadUpdateForEdit(u); setEditorMode(true)}} className="text-blue-600 font-bold text-xs opacity-0 group-hover:opacity-100">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id)} className="text-red-600 font-bold text-xs opacity-0 group-hover:opacity-100">Del</button></td></tr>))}</tbody>
                             </table>
                             <PaginationControls currentPage={updatePage} setPageFunc={setUpdatePage} />
                         </div>
                     </div>
                 ) : (
                     <EditorLayout title="Update Editor" onSave={handleUpdateSubmit}>
-                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                            <div className="lg:w-3/4 space-y-6">
-                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Title..." value={updateTitle} onChange={e=>{setUpdateTitle(e.target.value); markDirty();}} />
-                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={updateContent} onChange={(c:string)=>{setUpdateContent(c); markDirty();}} setOptions={editorOptions}/></div>
-                                <div className="border-2 border-dashed p-4 text-center rounded-xl relative hover:bg-blue-50"><input type="file" onChange={e=>{setUpdateFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-lg">📎</span> <span className="text-sm font-bold text-slate-500">{updateFile?updateFile.name:"Attach File"}</span></div>
-                            </div>
-                            <div className="lg:w-1/4 space-y-6">
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                                    <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={updateType} onChange={e=>{setUpdateType(e.target.value); markDirty();}}><option value="routine">📅 Routine</option><option value="syllabus">📝 Syllabus</option><option value="exam_result">🏆 Result</option></select></div>
-                                    <div><label className="text-xs font-bold block mb-1">Segment</label><select className="w-full border p-2 rounded-lg text-xs" value={updateSegmentId} onChange={e=>{setUpdateSegmentId(e.target.value); markDirty();}}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
-                                </div>
-                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
-                            </div>
-                        </div>
+                        <div className="flex flex-col lg:flex-row gap-8 w-full"><div className="w-full lg:w-[75%] space-y-6"><input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Title..." value={updateTitle} onChange={e=>{setUpdateTitle(e.target.value); markDirty();}} /><div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={updateContent} onChange={(c:string)=>{setUpdateContent(c); markDirty();}} setOptions={editorOptions}/></div><div className="border-2 border-dashed p-4 text-center rounded-xl relative hover:bg-blue-50"><input type="file" onChange={e=>{setUpdateFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-lg">📎</span> <span className="text-sm font-bold text-slate-500">{updateFile?updateFile.name:"Attach File"}</span></div></div><div className="w-full lg:w-[25%] space-y-6"><div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4"><h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4><div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={updateType} onChange={e=>{setUpdateType(e.target.value); markDirty();}}><option value="routine">📅 Routine</option><option value="syllabus">📝 Syllabus</option><option value="exam_result">🏆 Result</option></select></div><div><label className="text-xs font-bold block mb-1">Segment</label><select className="w-full border p-2 rounded-lg text-xs" value={updateSegmentId} onChange={e=>{setUpdateSegmentId(e.target.value); markDirty();}}><option value="">Select Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div></div><SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} /></div></div>
                     </EditorLayout>
                 )
             )}
@@ -712,31 +751,12 @@ export default function AdminDashboard() {
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{ebooksList.map(b=>(<div key={b.id} className="bg-white p-4 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="flex gap-4"><div className="w-12 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">{b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-2">{b.title}</h4><p className="text-xs text-slate-500">{b.author}</p></div></div><div className="mt-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadEbookForEdit(b)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('ebooks',b.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{ebooksList.map(b=>(<div key={b.id} className="bg-white p-4 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="flex gap-4"><div className="w-12 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">{b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-2">{b.title}</h4><p className="text-xs text-slate-500">{b.author}</p><p className="text-[10px] text-slate-400 mt-1">Posted on {new Date(b.created_at).toLocaleDateString()}</p></div></div><div className="mt-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadEbookForEdit(b)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('ebooks',b.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
                         <PaginationControls currentPage={ebPage} setPageFunc={setEbPage} />
                     </div>
                 ) : (
                     <EditorLayout title="eBook Editor" onSave={handleEbookSubmit}>
-                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                            <div className="lg:w-3/4 space-y-6">
-                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="eBook Title..." value={ebTitle} onChange={e=>{setEbTitle(e.target.value); markDirty();}} />
-                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={ebDescription} onChange={(c:string)=>{setEbDescription(c); markDirty();}} setOptions={editorOptions}/></div>
-                            </div>
-                            <div className="lg:w-1/4 space-y-6">
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleEbookSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Save"}</button></div>
-                                </div>
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Meta</h4>
-                                    <div><label className="text-xs font-bold block mb-1">Author</label><input className="w-full border p-2 rounded-lg" value={ebAuthor} onChange={e=>{setEbAuthor(e.target.value); markDirty();}} /></div>
-                                    <CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
-                                    <div><label className="text-xs font-bold block mb-1">PDF URL</label><input className="w-full border p-2 rounded-lg" value={ebLink} onChange={e=>{setEbLink(e.target.value); markDirty();}} /></div>
-                                    <ImageInput label="Cover Image" method={ebCoverMethod} setMethod={setEbCoverMethod} file={ebCoverFile} setFile={setEbCoverFile} link={ebCoverLink} setLink={setEbCoverLink} markDirty={markDirty} />
-                                </div>
-                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
-                            </div>
-                        </div>
+                         <div className="flex flex-col lg:flex-row gap-8 w-full"><div className="w-full lg:w-[75%] space-y-6"><input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="eBook Title..." value={ebTitle} onChange={e=>{setEbTitle(e.target.value); markDirty();}} /><div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={ebDescription} onChange={(c:string)=>{setEbDescription(c); markDirty();}} setOptions={editorOptions}/></div></div><div className="w-full lg:w-[25%] space-y-6"><div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4"><h4 className="text-xs font-bold uppercase text-slate-400">Meta</h4><div><label className="text-xs font-bold block mb-1">Author</label><input className="w-full border p-2 rounded-lg" value={ebAuthor} onChange={e=>{setEbAuthor(e.target.value); markDirty();}} /></div><CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" categories={categories} openModal={openCategoryModal} markDirty={markDirty} /><div><label className="text-xs font-bold block mb-1">PDF URL</label><input className="w-full border p-2 rounded-lg" value={ebLink} onChange={e=>{setEbLink(e.target.value); markDirty();}} /></div><ImageInput label="Cover Image" method={ebCoverMethod} setMethod={setEbCoverMethod} file={ebCoverFile} setFile={setEbCoverFile} link={ebCoverLink} setLink={setEbCoverLink} markDirty={markDirty} /></div><SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} /></div></div>
                     </EditorLayout>
                 )
             )}
@@ -746,29 +766,12 @@ export default function AdminDashboard() {
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="space-y-2">{newsList.map(n=>(<div key={n.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><span className="font-bold text-slate-700">{n.title}</span><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('news',n.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{newsList.map(n=>(<div key={n.id} className="bg-white p-5 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="h-40 bg-slate-100 rounded-lg mb-4 overflow-hidden relative">{n.image_url ? <img src={n.image_url} className="w-full h-full object-cover"/> : <div className="flex items-center justify-center h-full text-slate-400 text-xs">No Image</div>}<span className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">{n.category || 'News'}</span></div><h3 className="font-bold text-slate-800 line-clamp-2">{n.title}</h3><p className="text-[10px] text-slate-400 mt-2">Posted on {new Date(n.created_at).toLocaleDateString()}</p><div className="mt-4 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('news',n.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
                         <PaginationControls currentPage={newsPage} setPageFunc={setNewsPage} />
                     </div>
                 ) : (
                     <EditorLayout title="News Editor" onSave={handleNewsSubmit}>
-                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                            <div className="lg:w-3/4 space-y-6">
-                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} />
-                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={newsContent} onChange={(c:string)=>{setNewsContent(c); markDirty();}} setOptions={editorOptions}/></div>
-                            </div>
-                            <div className="lg:w-1/4 space-y-6">
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleNewsSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Publish"}</button></div>
-                                </div>
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                                    <CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
-                                    <div className="p-4 border-2 border-dashed rounded-lg text-center relative hover:bg-slate-50"><span className="text-xl">📸</span> <span className="text-xs font-bold text-slate-400">Cover</span><input type="file" onChange={e=>{setNewsFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/></div>
-                                </div>
-                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
-                            </div>
-                        </div>
+                         <div className="flex flex-col lg:flex-row gap-8 w-full"><div className="w-full lg:w-[75%] space-y-6"><input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} /><div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={newsContent} onChange={(c:string)=>{setNewsContent(c); markDirty();}} setOptions={editorOptions}/></div></div><div className="w-full lg:w-[25%] space-y-6"><div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4"><h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4><CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" categories={categories} openModal={openCategoryModal} markDirty={markDirty} /><ImageInput label="Cover" method={blogImageMethod} setMethod={setBlogImageMethod} file={newsFile} setFile={setNewsFile} link={blogImageLink} setLink={setBlogImageLink} markDirty={markDirty} /></div><SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} /></div></div>
                     </EditorLayout>
                 )
             )}
@@ -777,32 +780,13 @@ export default function AdminDashboard() {
             {activeTab === 'courses' && (
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{coursesList.map(c=>(<div key={c.id} className="bg-white p-4 rounded-xl border group hover:shadow-md transition"><div className="flex gap-4 items-center mb-3"><div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-1">{c.title}</h4><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{c.category}</span></div></div><div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadCourseForEdit(c)} className="text-xs text-blue-600 font-bold">Edit</button><button onClick={()=>deleteItem('courses',c.id)} className="text-xs text-red-600 font-bold">Del</button></div></div>))}</div>
+                        <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{coursesList.map(c=>(<div key={c.id} className="bg-white p-4 rounded-xl border group hover:shadow-md transition"><div className="flex gap-4 items-center mb-3"><div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-1">{c.title}</h4><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{c.category}</span></div></div><p className="text-[10px] text-slate-400 mb-2">Updated: {new Date(c.created_at).toLocaleDateString()}</p><div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadCourseForEdit(c)} className="text-xs text-blue-600 font-bold">Edit</button><button onClick={()=>deleteItem('courses',c.id)} className="text-xs text-red-600 font-bold">Del</button></div></div>))}</div>
+                        <PaginationControls currentPage={0} setPageFunc={()=>{}} />
                     </div>
                 ) : (
                     <EditorLayout title="Course Editor" onSave={handleCourseSubmit}>
-                        <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
-                            <div className="lg:w-3/4 space-y-6">
-                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Course Title..." value={cTitle} onChange={e=>{setCTitle(e.target.value); markDirty();}} />
-                                <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={cDesc} onChange={(c:string)=>{setCDesc(c); markDirty();}} setOptions={editorOptions}/></div>
-                            </div>
-                            <div className="lg:w-1/4 space-y-6">
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Publishing</h4>
-                                    <div className="flex gap-2"><button onClick={handleBackToList} className="flex-1 py-2 border rounded-lg text-xs font-bold text-slate-600">Cancel</button><button onClick={handleCourseSubmit} disabled={submitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">{submitting?"...":"Launch"}</button></div>
-                                </div>
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                    <h4 className="text-xs font-bold uppercase text-slate-400">Course Data</h4>
-                                    <div><label className="text-xs font-bold block mb-1">Instructor</label><input className="w-full border p-2 rounded-lg" value={cInstructor} onChange={e=>{setCInstructor(e.target.value); markDirty();}} /></div>
-                                    <div className="grid grid-cols-2 gap-2"><div><label className="text-xs font-bold block mb-1">Price</label><input className="w-full border p-2 rounded-lg" value={cPrice} onChange={e=>{setCPrice(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Discount</label><input className="w-full border p-2 rounded-lg" value={cDiscountPrice} onChange={e=>{setCDiscountPrice(e.target.value); markDirty();}} /></div></div>
-                                    <div><label className="text-xs font-bold block mb-1">Duration</label><input className="w-full border p-2 rounded-lg" value={cDuration} onChange={e=>{setCDuration(e.target.value); markDirty();}} /></div>
-                                    <div><label className="text-xs font-bold block mb-1">Enroll Link</label><input className="w-full border p-2 rounded-lg" value={cLink} onChange={e=>{setCLink(e.target.value); markDirty();}} /></div>
-                                    <CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
-                                    <ImageInput label="Thumbnail" method={cImageMethod} setMethod={setCImageMethod} file={cImageFile} setFile={setCImageFile} link={cImageLink} setLink={setCImageLink} markDirty={markDirty} optional={true} />
-                                </div>
-                                <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
-                            </div>
-                        </div>
+                        <div className="flex flex-col lg:flex-row gap-8 w-full"><div className="w-full lg:w-[75%] space-y-6"><input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Course Title..." value={cTitle} onChange={e=>{setCTitle(e.target.value); markDirty();}} /><div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={cDesc} onChange={(c:string)=>{setCDesc(c); markDirty();}} setOptions={editorOptions}/></div></div><div className="w-full lg:w-[25%] space-y-6"><div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4"><h4 className="text-xs font-bold uppercase text-slate-400">Course Data</h4><div><label className="text-xs font-bold block mb-1">Instructor</label><input className="w-full border p-2 rounded-lg" value={cInstructor} onChange={e=>{setCInstructor(e.target.value); markDirty();}} /></div><div className="grid grid-cols-2 gap-2"><div><label className="text-xs font-bold block mb-1">Price</label><input className="w-full border p-2 rounded-lg" value={cPrice} onChange={e=>{setCPrice(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Discount</label><input className="w-full border p-2 rounded-lg" value={cDiscountPrice} onChange={e=>{setCDiscountPrice(e.target.value); markDirty();}} /></div></div><div><label className="text-xs font-bold block mb-1">Duration</label><input className="w-full border p-2 rounded-lg" value={cDuration} onChange={e=>{setCDuration(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Enroll Link</label><input className="w-full border p-2 rounded-lg" value={cLink} onChange={e=>{setCLink(e.target.value); markDirty();}} /></div><CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" categories={categories} openModal={openCategoryModal} markDirty={markDirty} /><ImageInput label="Thumbnail" method={cImageMethod} setMethod={setCImageMethod} file={cImageFile} setFile={setCImageFile} link={cImageLink} setLink={setCImageLink} markDirty={markDirty} optional={true} /></div><SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} /></div></div>
                     </EditorLayout>
                 )
             )}
