@@ -31,11 +31,13 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
     setLoading(true);
     try {
       let tableName = "resources";
+      // Basic selection for resources
       let selectColumns = `id, title, type, created_at, content_url, category, subjects ( title )`;
 
       if (type === 'update') {
           tableName = "segment_updates";
-          selectColumns = `id, title, type, created_at, content_url:attachment_url`; 
+          // IMPORTANT: We fetch 'segments (slug)' here so we can build the link!
+          selectColumns = `id, title, type, created_at, content_url:attachment_url, segments ( slug )`; 
       }
 
       let query = supabase
@@ -43,6 +45,7 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
         .select(selectColumns, { count: "exact" })
         .order("created_at", { ascending: false });
 
+      // Hierarchy Filters
       if (segmentId) query = query.eq("segment_id", segmentId);
       
       if (tableName === 'resources') {
@@ -50,11 +53,15 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
           else if (groupId) query = query.eq("group_id", groupId);
       }
 
+      // Type & Category Logic
       if (type === 'update') {
-          if (category && category !== 'all') query = query.eq('type', category); 
+          if (category && category !== 'all') {
+             query = query.eq('type', category); 
+          }
       } else {
           if (type === 'pdf') query = query.in('type', ['pdf', 'video']);
           else if (type !== 'all') query = query.eq('type', type);
+          
           if (category && category !== 'all') query = query.eq('category', category);
       }
 
@@ -69,7 +76,7 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       if (data) {
           const formatted = data.map((item: any) => ({
               ...item,
-              badgeTitle: item.type === 'routine' || item.type === 'syllabus' || item.type === 'exam_result'
+              badgeTitle: ['routine', 'syllabus', 'exam_result'].includes(item.type)
                   ? (item.type.replace('_', ' ').toUpperCase())
                   : subjectId 
                       ? (item.category || "General") 
@@ -99,12 +106,18 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       setPage(1);
   };
 
-  // ✅ FIXED LINK LOGIC: Now points to /updates/ (plural)
+  // ✅ FIXED LINK LOGIC for Updates
   const getLink = (item: any) => {
       if (item.content_url) return item.content_url;
       if (item.type === 'blog') return `/blog/${item.id}`;
-      // FIX: Matches your folder structure "updates/[id]"
-      if (['routine', 'syllabus', 'exam_result'].includes(item.type)) return `/updates/${item.id}`; 
+      
+      // FIX: Use the fetched segment slug to build the correct nested URL
+      if (['routine', 'syllabus', 'exam_result'].includes(item.type)) {
+          // If for some reason slug is missing (rare), fallback to home
+          const slug = item.segments?.slug || 'general'; 
+          return `/resources/${slug}/updates/${item.id}`;
+      }
+      
       return `/question/${item.id}`;
   };
 
@@ -113,35 +126,39 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
+      {/* FILTER HEADER */}
       <div className="flex flex-col gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            {type !== 'update' && (
+            
+            {/* TABS */}
+            {type !== 'update' ? (
                 <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
                     <button onClick={() => { setType('pdf'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>📚 Materials</button>
                     <button onClick={() => { setType('question'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'question' ? 'bg-white shadow-sm text-yellow-600' : 'text-slate-500 hover:text-slate-700'}`}>❓ Questions</button>
                     <button onClick={() => { setType('blog'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'blog' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>✍️ Articles</button>
                 </div>
-            )}
-            
-            {type === 'update' && (
+            ) : (
                  <div className="flex bg-red-50 p-2 rounded-xl text-red-600 text-xs font-bold w-full md:w-auto items-center gap-2">
                      <span className="bg-white px-2 py-1 rounded shadow-sm">📢 Updates Mode</span>
-                     {category !== 'all' && <span>Filtering: {category.toUpperCase()}</span>}
-                     {category !== 'all' && <button onClick={()=>setCategory('all')} className="hover:text-red-800">✕ Clear</button>}
+                     {category !== 'all' && <span>Filtering: {category.replace('_', ' ').toUpperCase()}</span>}
+                     {category !== 'all' && <button onClick={()=>setCategory('all')} className="hover:text-red-800 ml-2">✕ Clear</button>}
                  </div>
             )}
 
+            {/* SEARCH */}
             <div className="relative w-full md:w-72">
                 <input type="text" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
                 <svg className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
           </div>
+
           <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Found {totalCount} items</span>
              <div className="flex items-center gap-2"><label className="text-xs font-bold text-slate-500 hidden sm:block">Show:</label><select value={itemsPerPage} onChange={handleItemsPerPageChange} className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></div>
           </div>
       </div>
 
+      {/* LIST ITEMS */}
       {loading ? (
          <div className="space-y-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-white border border-slate-100 rounded-2xl animate-pulse"></div>)}</div>
       ) : items.length > 0 ? (
@@ -149,7 +166,7 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
             {items.map((item) => (
                <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group flex items-start gap-5">
                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${item.type === 'question' ? 'bg-yellow-50 text-yellow-600' : ['routine','syllabus','exam_result'].includes(item.type) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                       {item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : item.type === 'question' ? '❓' : item.type === 'blog' ? '✍️' : '📢'}
+                       {['routine','syllabus','exam_result'].includes(item.type) ? '📢' : item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : item.type === 'question' ? '❓' : '✍️'}
                    </div>
                    
                    <div className="flex-1 min-w-0 py-1">
