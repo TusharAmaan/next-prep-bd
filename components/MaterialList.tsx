@@ -99,12 +99,12 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       setPage(1);
   };
 
-  // FIX 2: Dynamic Link Generator
+  // ✅ FIXED LINK LOGIC: Now points to /updates/ (plural)
   const getLink = (item: any) => {
       if (item.content_url) return item.content_url;
       if (item.type === 'blog') return `/blog/${item.id}`;
-      // Map updates to /update/ if no URL exists, otherwise fallback to item.id
-      if (['routine', 'syllabus', 'exam_result'].includes(item.type)) return `/update/${item.id}`; 
+      // FIX: Matches your folder structure "updates/[id]"
+      if (['routine', 'syllabus', 'exam_result'].includes(item.type)) return `/updates/${item.id}`; 
       return `/question/${item.id}`;
   };
 
@@ -154,7 +154,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
                    
                    <div className="flex-1 min-w-0 py-1">
                        <h3 className="font-bold text-slate-800 text-lg mb-1.5 truncate group-hover:text-blue-600 transition-colors">
-                           {/* SMART LINKING */}
                            {item.content_url ? (
                                <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
                            ) : (
