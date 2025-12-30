@@ -5,14 +5,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { debounce } from "lodash";
 import Link from "next/link";
 
-const ITEMS_PER_PAGE = 10;
-
-// UPGRADED PROPS: Now accepts Category for filtering (e.g. Routine, Chapter 1)
 type MaterialListProps = {
   segmentId?: number;
   groupId?: number;
   subjectId?: number;
-  initialType: string; // 'pdf', 'question', 'update', 'blog'
+  initialType: string;
   initialCategory?: string;
 };
 
@@ -24,26 +21,20 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
-  // State for Filters
   const [type, setType] = useState(initialType);
   const [category, setCategory] = useState(initialCategory || "all");
   
-  // Pagination
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10); 
 
-  // --- FETCH DATA ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Determine Table & Columns
       let tableName = "resources";
       let selectColumns = `id, title, type, created_at, content_url, category, subjects ( title )`;
 
-      // If viewing Updates (Routine/Syllabus), switch table
       if (type === 'update') {
           tableName = "segment_updates";
-          // We alias attachment_url to content_url for UI consistency
           selectColumns = `id, title, type, created_at, content_url:attachment_url`; 
       }
 
@@ -52,10 +43,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
         .select(selectColumns, { count: "exact" })
         .order("created_at", { ascending: false });
 
-      // --- SMART FILTERING LOGIC ---
-      
-      // A. Hierarchy Filters (Only apply if columns exist in that table)
-      // Resources have all 3 IDs. Updates usually only have segment_id.
       if (segmentId) query = query.eq("segment_id", segmentId);
       
       if (tableName === 'resources') {
@@ -63,30 +50,16 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
           else if (groupId) query = query.eq("group_id", groupId);
       }
 
-      // B. Type & Category Logic
       if (type === 'update') {
-          // For Updates table, the 'category' (routine/syllabus) is actually stored in the 'type' column
-          if (category && category !== 'all') {
-             query = query.eq('type', category); 
-          }
+          if (category && category !== 'all') query = query.eq('type', category); 
       } else {
-          // For Resources table
-          if (type === 'pdf') {
-             query = query.in('type', ['pdf', 'video']);
-          } else if (type !== 'all') {
-             query = query.eq('type', type);
-          }
-          
-          // Resource Category (e.g. Chapter Name)
-          if (category && category !== 'all') {
-             query = query.eq('category', category);
-          }
+          if (type === 'pdf') query = query.in('type', ['pdf', 'video']);
+          else if (type !== 'all') query = query.eq('type', type);
+          if (category && category !== 'all') query = query.eq('category', category);
       }
 
-      // C. Search
       if (debouncedSearch) query = query.ilike("title", `%${debouncedSearch}%`);
 
-      // D. Pagination
       const from = (page - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       const { data, count, error } = await query.range(from, to);
@@ -96,9 +69,8 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       if (data) {
           const formatted = data.map((item: any) => ({
               ...item,
-              // Normalize badge title
               badgeTitle: item.type === 'routine' || item.type === 'syllabus' || item.type === 'exam_result'
-                  ? (item.type.replace('_', ' ').toUpperCase()) // Show "ROUTINE" for updates
+                  ? (item.type.replace('_', ' ').toUpperCase())
                   : subjectId 
                       ? (item.category || "General") 
                       : (Array.isArray(item.subjects) ? item.subjects[0]?.title : "General")
@@ -114,9 +86,7 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
     }
   }, [segmentId, groupId, subjectId, type, category, debouncedSearch, page, itemsPerPage]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -129,99 +99,66 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       setPage(1);
   };
 
+  // FIX 2: Dynamic Link Generator
+  const getLink = (item: any) => {
+      if (item.content_url) return item.content_url;
+      if (item.type === 'blog') return `/blog/${item.id}`;
+      // Map updates to /update/ if no URL exists, otherwise fallback to item.id
+      if (['routine', 'syllabus', 'exam_result'].includes(item.type)) return `/update/${item.id}`; 
+      return `/question/${item.id}`;
+  };
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
-      {/* --- HEADER --- */}
       <div className="flex flex-col gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            {/* Toggle Buttons */}
             {type !== 'update' && (
                 <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
-                    <button 
-                        onClick={() => { setType('pdf'); setPage(1); }}
-                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        📚 Materials
-                    </button>
-                    <button 
-                        onClick={() => { setType('question'); setPage(1); }}
-                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'question' ? 'bg-white shadow-sm text-yellow-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        ❓ Questions
-                    </button>
-                     <button 
-                        onClick={() => { setType('blog'); setPage(1); }}
-                        className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'blog' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        ✍️ Articles
-                    </button>
+                    <button onClick={() => { setType('pdf'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>📚 Materials</button>
+                    <button onClick={() => { setType('question'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'question' ? 'bg-white shadow-sm text-yellow-600' : 'text-slate-500 hover:text-slate-700'}`}>❓ Questions</button>
+                    <button onClick={() => { setType('blog'); setPage(1); }} className={`flex-1 md:flex-none px-6 py-2.5 text-xs font-extrabold rounded-lg transition-all ${type === 'blog' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>✍️ Articles</button>
                 </div>
             )}
             
             {type === 'update' && (
                  <div className="flex bg-red-50 p-2 rounded-xl text-red-600 text-xs font-bold w-full md:w-auto items-center gap-2">
                      <span className="bg-white px-2 py-1 rounded shadow-sm">📢 Updates Mode</span>
-                     {category !== 'all' && <span>Filtering by: {category.toUpperCase()}</span>}
+                     {category !== 'all' && <span>Filtering: {category.toUpperCase()}</span>}
                      {category !== 'all' && <button onClick={()=>setCategory('all')} className="hover:text-red-800">✕ Clear</button>}
                  </div>
             )}
 
-            {/* Search Bar */}
             <div className="relative w-full md:w-72">
-                <input 
-                    type="text" 
-                    placeholder="Search..."
-                    value={search}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                />
+                <input type="text" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
                 <svg className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
           </div>
-
-          {/* View Selector */}
           <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Found {totalCount} items
-             </span>
-             <div className="flex items-center gap-2">
-                 <label className="text-xs font-bold text-slate-500 hidden sm:block">Show:</label>
-                 <select 
-                    value={itemsPerPage}
-                    onChange={handleItemsPerPageChange}
-                    className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                 >
-                     <option value={10}>10</option>
-                     <option value={20}>20</option>
-                     <option value={50}>50</option>
-                 </select>
-             </div>
+             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Found {totalCount} items</span>
+             <div className="flex items-center gap-2"><label className="text-xs font-bold text-slate-500 hidden sm:block">Show:</label><select value={itemsPerPage} onChange={handleItemsPerPageChange} className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></div>
           </div>
       </div>
 
-      {/* --- CONTENT LIST --- */}
       {loading ? (
-         <div className="space-y-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-24 bg-white border border-slate-100 rounded-2xl animate-pulse"></div>)}
-         </div>
+         <div className="space-y-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-white border border-slate-100 rounded-2xl animate-pulse"></div>)}</div>
       ) : items.length > 0 ? (
          <div className="space-y-3">
             {items.map((item) => (
                <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group flex items-start gap-5">
-                   
-                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${item.type === 'question' ? 'bg-yellow-50 text-yellow-600' : item.type === 'routine' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${item.type === 'question' ? 'bg-yellow-50 text-yellow-600' : ['routine','syllabus','exam_result'].includes(item.type) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                        {item.type === 'pdf' ? '📄' : item.type === 'video' ? '▶' : item.type === 'question' ? '❓' : item.type === 'blog' ? '✍️' : '📢'}
                    </div>
                    
                    <div className="flex-1 min-w-0 py-1">
                        <h3 className="font-bold text-slate-800 text-lg mb-1.5 truncate group-hover:text-blue-600 transition-colors">
+                           {/* SMART LINKING */}
                            {item.content_url ? (
                                <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
                            ) : (
-                               <Link href={item.type === 'blog' ? `/blog/${item.id}` : `/question/${item.id}`}>{item.title}</Link>
+                               <Link href={getLink(item)}>{item.title}</Link>
                            )}
                        </h3>
                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-wide">
@@ -233,13 +170,9 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
 
                    <div className="hidden sm:block self-center">
                        {item.content_url ? (
-                           <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition shadow-lg">
-                               {item.type === 'video' ? 'Watch Now' : 'Download'}
-                           </a>
+                           <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition shadow-lg">{item.type === 'video' ? 'Watch Now' : 'Download'}</a>
                        ) : (
-                           <Link href={item.type === 'blog' ? `/blog/${item.id}` : `/question/${item.id}`} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">
-                               Read More
-                           </Link>
+                           <Link href={getLink(item)} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">Read More</Link>
                        )}
                    </div>
                </div>
@@ -253,7 +186,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
          </div>
       )}
 
-      {/* --- PAGINATION --- */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 pt-8 border-t border-slate-200">
             <button disabled={page===1} onClick={()=>setPage(p=>Math.max(1, p-1))} className="px-5 py-2 border bg-white rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">← Previous</button>
