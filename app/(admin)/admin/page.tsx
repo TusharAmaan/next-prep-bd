@@ -26,7 +26,7 @@ const editorOptions: any = {
 
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
 
-// --- 1. EXTERNAL COMPONENTS ---
+// --- 1. EXTERNAL COMPONENTS (Prevents Re-render/Focus Loss) ---
 
 const SeoInputSection = memo(({ 
   title, setTitle, tags, setTags, desc, setDesc, markDirty 
@@ -129,6 +129,25 @@ const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLin
 ));
 ImageInput.displayName = "ImageInput";
 
+const CategoryManager = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
+    // Filter logic inside render to ensure latest categories
+    const filtered = categories.filter((c:any) => c.type === context || c.type === 'general' || !c.type);
+    return (
+        <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-600 block uppercase">{label}</label>
+            <div className="flex gap-2">
+                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e=>{onChange(e.target.value); markDirty();}}>
+                    <option value="">Select Category</option>
+                    {filtered.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+                <button onClick={() => openModal(context)} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-lg text-lg">⚙️</button>
+            </div>
+        </div>
+    );
+});
+CategoryManager.displayName = "CategoryManager";
+
+
 // --- MAIN COMPONENT ---
 
 export default function AdminDashboard() {
@@ -157,15 +176,17 @@ export default function AdminDashboard() {
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [segmentUpdates, setSegmentUpdates] = useState<any[]>([]);
 
-  // Search & Pagination (Restored Specific Page States to avoid conflict)
+  // Search & Pagination
   const [resSearch, setResSearch] = useState("");
   const [newsSearch, setNewsSearch] = useState("");
   const [ebSearch, setEbSearch] = useState("");
   const [updateSearch, setUpdateSearch] = useState("");
   
-  // Using generic 'page' for the active tab to simplify pagination logic, 
-  // BUT we will reset it on tab switch.
-  const [page, setPage] = useState(0); 
+  // Specific Pages (Fixed Error 1)
+  const [resPage, setResPage] = useState(0);
+  const [newsPage, setNewsPage] = useState(0);
+  const [ebPage, setEbPage] = useState(0);
+  const [updatePage, setUpdatePage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -173,9 +194,8 @@ export default function AdminDashboard() {
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [resTypeFilter, setResTypeFilter] = useState("all");
 
-  // Hierarchy Inputs (RESTORED MISSING STATES)
+  // Hierarchy Inputs (Fixed Error 2)
   const [newSegment, setNewSegment] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -216,7 +236,7 @@ export default function AdminDashboard() {
   const [cTitle, setCTitle] = useState(""); const [cInstructor, setCInstructor] = useState(""); const [cPrice, setCPrice] = useState(""); const [cDiscountPrice, setCDiscountPrice] = useState(""); const [cDuration, setCDuration] = useState(""); const [cLink, setCLink] = useState(""); const [cDesc, setCDesc] = useState(""); const [cCategory, setCCategory] = useState(""); const [editingCourseId, setEditingCourseId] = useState<number | null>(null); const [cImageMethod, setCImageMethod] = useState<'upload'|'link'>('upload'); const [cImageFile, setCImageFile] = useState<File|null>(null); const [cImageLink, setCImageLink] = useState("");
   const [updateTitle, setUpdateTitle] = useState(""); const [updateType, setUpdateType] = useState("routine"); const [updateSegmentId, setUpdateSegmentId] = useState(""); const [updateContent, setUpdateContent] = useState(""); const [updateFile, setUpdateFile] = useState<File | null>(null); const [editingUpdateId, setEditingUpdateId] = useState<number | null>(null);
 
-  // --- 1. HELPERS & STATE MANAGEMENT FUNCTIONS (Defined First) ---
+  // --- 1. HELPERS & STATE MANAGEMENT (Defined First) ---
   const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
   const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
   const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
@@ -224,7 +244,7 @@ export default function AdminDashboard() {
   const markDirty = () => setIsDirty(true);
   const clearSeoFields = () => { setCommonTags(""); setCommonSeoTitle(""); setCommonSeoDesc(""); };
 
-  // Helper to find hierarchy names
+  // Helper to find hierarchy names (Fixed Error 3)
   const getHierarchyLabel = (r: any) => {
     const seg = segments.find((s:any) => s.id === r.segment_id)?.title;
     const grp = groups.find((g:any) => g.id === r.group_id)?.title;
@@ -232,7 +252,7 @@ export default function AdminDashboard() {
     if (sub) return `${seg || ''} > ${grp || ''} > ${sub}`;
     if (grp) return `${seg || ''} > ${grp}`;
     if (seg) return seg;
-    return "Global / Unassigned";
+    return "Global";
   };
 
   // --- HIERARCHY HANDLERS (Moved Up) ---
@@ -257,10 +277,10 @@ export default function AdminDashboard() {
       setCTitle(""); setCInstructor(""); setCPrice(""); setCDesc(""); setCCategory(""); setEditingCourseId(null); setCImageFile(null); setCImageLink("");
       setUpdateTitle(""); setUpdateContent(""); setEditingUpdateId(null);
       setCommonTags(""); setCommonSeoTitle(""); setCommonSeoDesc("");
-      setIsDirty(false); // CRITICAL: Reset dirty state after clear
+      setIsDirty(false); 
   };
 
-  // --- REUSABLE EDIT LOADERS (Moved Up to be visible) ---
+  // --- REUSABLE EDIT LOADERS (Moved Up) ---
   const openEditor = (item: any, context: string) => {
       clearAllForms();
       setCommonTags(item?.tags?.join(", ") || ""); setCommonSeoTitle(item?.seo_title || ""); setCommonSeoDesc(item?.seo_description || "");
@@ -288,8 +308,8 @@ export default function AdminDashboard() {
 
   // --- NAVIGATION ---
   const handleTabSwitch = (newTab: string) => {
-      if(isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab); setPage(0); });
-      else { setEditorMode(false); clearAllForms(); setActiveTab(newTab); setPage(0); }
+      if(isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); });
+      else { setEditorMode(false); clearAllForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); }
   };
 
   const handleBackToList = () => {
@@ -325,75 +345,48 @@ export default function AdminDashboard() {
   const fetchModalGroups = async (segId: string) => { const {data} = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setCatModalGroupsList(data||[]); };
   const fetchModalSubjects = async (grpId: string) => { const {data} = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setCatModalSubjectsList(data||[]); };
 
-  const fetchResources = async (segId: string | null, grpId: string | null, subId: string | null) => { 
-      let query = supabase.from("resources").select("*").order('created_at',{ascending:false});
-      if (subId) query = query.eq("subject_id", subId); else if (grpId) query = query.eq("group_id", grpId); else if (segId) query = query.eq("segment_id", segId);
-      
-      if(activeTab === 'class-blogs') query = query.eq("type", "blog");
-      else if(activeTab === 'materials') query = query.neq("type", "blog"); 
-
-      if (resSearch) query = query.ilike('title', `%${resSearch}%`);
-      query = query.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1);
-      const {data} = await query; setResources(data||[]); 
-  };
-
-  const fetchSegmentUpdates = async () => { 
-      let q=supabase.from("segment_updates").select("*, segments(title)").order('created_at',{ascending:false});
-      if(selectedSegment) q = q.eq('segment_id', selectedSegment);
-      if(updateSearch) q=q.ilike('title',`%${updateSearch}%`); 
-      q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); 
-      const {data}=await q; setSegmentUpdates(data||[]); 
-  };
-
-  const fetchNews = async () => { let q = supabase.from("news").select("*").order('created_at',{ascending:false}); if(newsSearch) q = q.ilike('title', `%${newsSearch}%`); q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); const {data}=await q; setNewsList(data||[]); };
-  const fetchEbooks = async () => { let q = supabase.from("ebooks").select("*").order('created_at',{ascending:false}); if(ebSearch) q=q.ilike('title',`%${ebSearch}%`); q=q.range(page * itemsPerPage, (page + 1) * itemsPerPage - 1); const {data}=await q; setEbooksList(data||[]); };
-  const fetchCourses = async () => { const {data} = await supabase.from("courses").select("*").order('created_at',{ascending:false}); setCoursesList(data||[]); };
-
-  // UNIFIED FETCHING LOGIC
   const fetchAllData = useCallback(async () => {
       if (editorMode || isLoading) return;
       
       let table = "";
       let query: any = null;
+      let currentPage = 0;
 
-      if (activeTab === 'materials' || activeTab === 'class-blogs') table = "resources";
-      else if (activeTab === 'news') table = "news";
-      else if (activeTab === 'ebooks') table = "ebooks";
-      else if (activeTab === 'courses') table = "courses";
-      else if (activeTab === 'updates') table = "segment_updates";
+      if (activeTab === 'materials') { table = "resources"; currentPage = resPage; }
+      else if (activeTab === 'news') { table = "news"; currentPage = newsPage; }
+      else if (activeTab === 'ebooks') { table = "ebooks"; currentPage = ebPage; }
+      else if (activeTab === 'courses') { table = "courses"; currentPage = 0; } // Courses often small list
+      else if (activeTab === 'updates') { table = "segment_updates"; currentPage = updatePage; }
 
       query = supabase.from(table).select("*", { count: 'exact' });
 
       // Filters
-      if (activeTab === 'materials' || activeTab === 'updates' || activeTab === 'class-blogs') {
+      if (activeTab === 'materials' || activeTab === 'updates') {
           if (selectedSubject) query = query.eq("subject_id", selectedSubject);
           else if (selectedGroup) query = query.eq("group_id", selectedGroup);
           else if (selectedSegment) query = query.eq("segment_id", selectedSegment);
       }
 
-      if (activeTab === 'class-blogs') query = query.eq("type", "blog");
-      else if (activeTab === 'materials') {
-          query = query.neq("type", "blog");
-          if (resTypeFilter !== 'all') query = query.eq("type", resTypeFilter);
-      }
+      // Merge Logic: Materials tab shows ALL types (including blogs)
+      // No filter needed for 'materials' tab unless user filters explicitly if you add that later.
 
-      const s = activeTab==='materials' || activeTab==='class-blogs' ? resSearch : activeTab==='news' ? newsSearch : activeTab==='ebooks' ? ebSearch : activeTab==='updates' ? updateSearch : "";
+      const s = activeTab==='materials' ? resSearch : activeTab==='news' ? newsSearch : activeTab==='ebooks' ? ebSearch : activeTab==='updates' ? updateSearch : "";
       if (s) query = query.ilike("title", `%${s}%`);
 
-      const from = page * itemsPerPage;
+      const from = currentPage * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
       const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false });
       
       if (!error && data) {
-          if(activeTab === 'materials' || activeTab === 'class-blogs') setResources(data);
+          if(activeTab === 'materials') setResources(data);
           else if(activeTab === 'news') setNewsList(data);
           else if(activeTab === 'ebooks') setEbooksList(data);
           else if(activeTab === 'courses') setCoursesList(data);
           else if(activeTab === 'updates') setSegmentUpdates(data);
           if(count !== null) setTotalCount(count);
       }
-  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, resTypeFilter, page, itemsPerPage, editorMode, isLoading]);
+  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, resPage, newsPage, ebPage, updatePage, itemsPerPage, editorMode, isLoading]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
@@ -405,21 +398,10 @@ export default function AdminDashboard() {
   const handleGroupSubmit = async () => { if(newGroup && selectedSegment) { await supabase.from('groups').insert([{title:newGroup, slug:newGroup.toLowerCase().replace(/\s+/g,'-'), segment_id: Number(selectedSegment)}]); setNewGroup(""); fetchGroups(selectedSegment); }};
   const handleSubjectSubmit = async () => { if(newSubject && selectedGroup) { await supabase.from('subjects').insert([{title:newSubject, slug:newSubject.toLowerCase().replace(/\s+/g,'-'), group_id: Number(selectedGroup), segment_id: Number(selectedSegment)}]); setNewSubject(""); fetchSubjects(selectedGroup); }};
 
-  // --- CATEGORY MANAGER ---
-  const CategoryManager = ({ label, value, onChange, context }: any) => {
-      const filteredCats = categories.filter(c => c.type === context || c.type === 'general' || !c.type);
-      return (
-          <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 block uppercase">{label}</label>
-              <div className="flex gap-2">
-                  <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e=>{onChange(e.target.value); markDirty();}}>
-                      <option value="">Select Category</option>
-                      {filteredCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  </select>
-                  <button onClick={() => { setActiveCatContext(context); setIsManageCatsOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 rounded-lg text-lg">⚙️</button>
-              </div>
-          </div>
-      );
+  // --- CATEGORY MANAGER MODAL TRIGGER ---
+  const openCategoryModal = (context: string) => {
+      setActiveCatContext(context);
+      setIsManageCatsOpen(true);
   };
 
   // --- SUBMIT HANDLERS ---
@@ -552,18 +534,18 @@ export default function AdminDashboard() {
       </div>
   );
 
-  const PaginationControls = () => (
+  const PaginationControls = ({ currentPage, setPageFunc }: { currentPage: number, setPageFunc: (p: number) => void }) => (
       <div className="flex justify-between items-center px-4 py-3 bg-white border-t border-slate-100">
           <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-400">Rows:</span>
-              <select className="border rounded text-xs p-1" value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setPage(0);}}>
+              <select className="border rounded text-xs p-1" value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setPageFunc(0);}}>
                   <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option><option value={100}>100</option>
               </select>
           </div>
           <div className="flex gap-2">
-              <button onClick={()=>setPage(Math.max(0,page-1))} disabled={page===0} className="text-xs font-bold text-slate-500 disabled:opacity-30">← Prev</button>
-              <span className="text-xs font-bold text-slate-400">Page {page+1}</span>
-              <button onClick={()=>setPage(page+1)} disabled={(page+1)*itemsPerPage >= totalCount} className="text-xs font-bold text-slate-500 disabled:opacity-30">Next →</button>
+              <button onClick={()=>setPageFunc(Math.max(0,currentPage-1))} disabled={currentPage===0} className="text-xs font-bold text-slate-500 disabled:opacity-30">← Prev</button>
+              <span className="text-xs font-bold text-slate-400">Page {currentPage+1}</span>
+              <button onClick={()=>setPageFunc(currentPage+1)} disabled={(currentPage+1)*itemsPerPage >= totalCount} className="text-xs font-bold text-slate-500 disabled:opacity-30">Next →</button>
           </div>
       </div>
   );
@@ -585,6 +567,11 @@ export default function AdminDashboard() {
                   <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                       <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6 space-y-3">
                           <input id="newCatInput" className="w-full bg-white border p-3 rounded-xl text-sm outline-none" placeholder="New Category Name..." />
+                          <div className="grid grid-cols-3 gap-2">
+                              <select className="bg-white border p-2 rounded-lg text-xs" value={catModalSegment} onChange={e => { setCatModalSegment(e.target.value); fetchModalGroups(e.target.value); }}><option value="">Global</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                              <select className="bg-white border p-2 rounded-lg text-xs" value={catModalGroup} onChange={e => { setCatModalGroup(e.target.value); fetchModalSubjects(e.target.value); }} disabled={!catModalSegment}><option value="">All Groups</option>{catModalGroupsList.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                              <select className="bg-white border p-2 rounded-lg text-xs" value={catModalSubject} onChange={e => setCatModalSubject(e.target.value)} disabled={!catModalGroup}><option value="">All Subjects</option>{catModalSubjectsList.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                          </div>
                           <button onClick={async ()=>{ const input = document.getElementById('newCatInput') as HTMLInputElement; if(input.value) { const payload: any = { name: input.value, type: activeCatContext }; if(catModalSegment) payload.segment_id = Number(catModalSegment); if(catModalGroup) payload.group_id = Number(catModalGroup); if(catModalSubject) payload.subject_id = Number(catModalSubject); await supabase.from('categories').insert([payload]); input.value=""; fetchCategories(); } }} className="w-full bg-black text-white py-2 rounded-lg font-bold text-sm">+ Add</button>
                       </div>
                       <div className="space-y-2">{categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (<div key={c.id} className="flex justify-between items-center p-3 bg-white border rounded-xl"><span className="text-sm font-bold">{c.name}</span><button onClick={()=>deleteItem('categories', c.id)} className="text-red-400 hover:text-red-600">🗑️</button></div>))}</div>
@@ -607,7 +594,7 @@ export default function AdminDashboard() {
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-slate-200 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-sm pt-28">
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {[{ id: 'materials', label: 'Study Materials & Blogs', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }].map((tab) => (
+            {[{ id: 'materials', label: 'Study Materials', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }].map((tab) => (
                 <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}><span className="text-lg">{tab.icon}</span> {tab.label}</button>
             ))}
         </nav>
@@ -644,7 +631,7 @@ export default function AdminDashboard() {
             {activeTab === 'materials' && (
               !editorMode ? (
                   <div className="animate-fade-in space-y-6">
-                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} showTypeFilter={true} resTypeFilter={resTypeFilter} setResTypeFilter={setResTypeFilter} />
+                      <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
                       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                           <table className="w-full text-left text-sm text-slate-600">
                               <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Context</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
@@ -652,7 +639,7 @@ export default function AdminDashboard() {
                                   {resources.map(r=>(<tr key={r.id} className="hover:bg-slate-50 transition"><td className="px-6 py-4 font-bold text-slate-800">{r.title}</td><td className="px-6 py-4 text-xs text-slate-500 font-mono">{getHierarchyLabel(r)}</td><td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-100`}>{r.type}</span></td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>openEditor(r, r.type==='blog'?'blog':'resource')} className="text-blue-600 font-bold text-xs">Edit</button><button onClick={()=>deleteItem('resources',r.id)} className="text-red-600 font-bold text-xs">Del</button></td></tr>))}
                               </tbody>
                           </table>
-                          <PaginationControls />
+                          <PaginationControls currentPage={resPage} setPageFunc={setResPage} />
                       </div>
                   </div>
               ) : (
@@ -676,7 +663,7 @@ export default function AdminDashboard() {
                                   <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
                                   <div><label className="text-xs font-bold block mb-1">Type</label><select className="w-full border p-2 rounded-lg text-xs font-bold" value={resType} onChange={e=>{setResType(e.target.value); markDirty();}}><option value="pdf">📄 PDF</option><option value="video">🎬 Video</option><option value="question">❓ Question</option><option value="blog">✍️ Blog</option></select></div>
                                   <div><label className="text-xs font-bold block mb-1">Hierarchy</label><div className="space-y-2"><select className="w-full border p-2 rounded text-xs" value={selectedSegment} onChange={e=>{handleSegmentClick(e.target.value); markDirty();}}><option value="">Segment</option>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedGroup} onChange={e=>{handleGroupClick(e.target.value); markDirty();}} disabled={!selectedSegment}><option value="">Group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select><select className="w-full border p-2 rounded text-xs" value={selectedSubject} onChange={e=>{handleSubjectClick(e.target.value); markDirty();}} disabled={!selectedGroup}><option value="">Subject</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div></div>
-                                  {resType === 'blog' && <CategoryManager label="Category" value={blogCategory} onChange={setBlogCategory} context="blog" />}
+                                  {resType === 'blog' && <CategoryManager label="Category" value={blogCategory} onChange={setBlogCategory} context="blog" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />}
                               </div>
                               {resType === 'blog' && <ImageInput label="Cover Image" method={blogImageMethod} setMethod={setBlogImageMethod} file={blogImageFile} setFile={setBlogImageFile} link={blogImageLink} setLink={setBlogImageLink} markDirty={markDirty} />}
                               <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
@@ -691,8 +678,13 @@ export default function AdminDashboard() {
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
-                        <div className="space-y-2">{segmentUpdates.map(u=><div key={u.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><div className="flex items-center gap-4"><span className={`text-[10px] font-bold px-2 py-1 rounded uppercase bg-slate-100`}>{u.type}</span><span className="font-bold text-slate-700">{u.title}</span></div><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>{loadUpdateForEdit(u); setEditorMode(true)}} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id)} className="text-xs font-bold text-red-600">Del</button></div></div>)}</div>
-                        <PaginationControls />
+                        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left text-sm text-slate-600">
+                                <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 border-b"><tr><th className="px-6 py-4">Title</th><th className="px-6 py-4">Type</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
+                                <tbody className="divide-y divide-slate-100">{segmentUpdates.map(u=>(<tr key={u.id} className="hover:bg-slate-50 transition"><td className="px-6 py-4 font-bold text-slate-800">{u.title}</td><td className="px-6 py-4"><span className="text-xs bg-slate-100 px-2 py-1 rounded uppercase font-bold">{u.type}</span></td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={()=>loadUpdateForEdit(u)} className="text-blue-600 font-bold text-xs">Edit</button><button onClick={()=>deleteItem('segment_updates',u.id)} className="text-red-600 font-bold text-xs">Del</button></td></tr>))}</tbody>
+                            </table>
+                            <PaginationControls currentPage={updatePage} setPageFunc={setUpdatePage} />
+                        </div>
                     </div>
                 ) : (
                     <EditorLayout title="Update Editor" onSave={handleUpdateSubmit}>
@@ -721,7 +713,7 @@ export default function AdminDashboard() {
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{ebooksList.map(b=>(<div key={b.id} className="bg-white p-4 rounded-xl border shadow-sm group hover:shadow-md transition"><div className="flex gap-4"><div className="w-12 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">{b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-2">{b.title}</h4><p className="text-xs text-slate-500">{b.author}</p></div></div><div className="mt-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadEbookForEdit(b)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('ebooks',b.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
-                        <PaginationControls />
+                        <PaginationControls currentPage={ebPage} setPageFunc={setEbPage} />
                     </div>
                 ) : (
                     <EditorLayout title="eBook Editor" onSave={handleEbookSubmit}>
@@ -738,7 +730,7 @@ export default function AdminDashboard() {
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                                     <h4 className="text-xs font-bold uppercase text-slate-400">Meta</h4>
                                     <div><label className="text-xs font-bold block mb-1">Author</label><input className="w-full border p-2 rounded-lg" value={ebAuthor} onChange={e=>{setEbAuthor(e.target.value); markDirty();}} /></div>
-                                    <CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" />
+                                    <CategoryManager label="Category" value={ebCategory} onChange={setEbCategory} context="ebook" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
                                     <div><label className="text-xs font-bold block mb-1">PDF URL</label><input className="w-full border p-2 rounded-lg" value={ebLink} onChange={e=>{setEbLink(e.target.value); markDirty();}} /></div>
                                     <ImageInput label="Cover Image" method={ebCoverMethod} setMethod={setEbCoverMethod} file={ebCoverFile} setFile={setEbCoverFile} link={ebCoverLink} setLink={setEbCoverLink} markDirty={markDirty} />
                                 </div>
@@ -755,13 +747,13 @@ export default function AdminDashboard() {
                     <div className="animate-fade-in space-y-6">
                         <FilterBar segments={segments} groups={groups} subjects={subjects} selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} newSeg={newSegment} setNewSeg={setNewSegment} newGrp={newGroup} setNewGrp={setNewGroup} newSub={newSubject} setNewSub={setNewSubject} onAddSegment={handleSegmentSubmit} onAddGroup={handleGroupSubmit} onAddSubject={handleSubjectSubmit} />
                         <div className="space-y-2">{newsList.map(n=>(<div key={n.id} className="bg-white p-4 rounded-xl border flex justify-between items-center group hover:shadow-md transition"><span className="font-bold text-slate-700">{n.title}</span><div className="flex gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadNewsForEdit(n)} className="text-xs font-bold text-blue-600">Edit</button><button onClick={()=>deleteItem('news',n.id)} className="text-xs font-bold text-red-600">Del</button></div></div>))}</div>
-                        <PaginationControls />
+                        <PaginationControls currentPage={newsPage} setPageFunc={setNewsPage} />
                     </div>
                 ) : (
                     <EditorLayout title="News Editor" onSave={handleNewsSubmit}>
                         <div className="flex flex-col lg:flex-row gap-8 animate-slide-up">
                             <div className="lg:w-3/4 space-y-6">
-                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="News Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} />
+                                <input className="text-4xl font-black w-full bg-transparent border-b pb-4 outline-none placeholder-slate-300" placeholder="Headline..." value={newsTitle} onChange={e=>{setNewsTitle(e.target.value); markDirty();}} />
                                 <div className="border rounded-xl overflow-hidden"><SunEditor getSunEditorInstance={getSunEditorInstance} setContents={newsContent} onChange={(c:string)=>{setNewsContent(c); markDirty();}} setOptions={editorOptions}/></div>
                             </div>
                             <div className="lg:w-1/4 space-y-6">
@@ -771,7 +763,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                                     <h4 className="text-xs font-bold uppercase text-slate-400">Settings</h4>
-                                    <CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" />
+                                    <CategoryManager label="Category" value={newsCategory} onChange={setNewsCategory} context="news" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
                                     <div className="p-4 border-2 border-dashed rounded-lg text-center relative hover:bg-slate-50"><span className="text-xl">📸</span> <span className="text-xs font-bold text-slate-400">Cover</span><input type="file" onChange={e=>{setNewsFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/></div>
                                 </div>
                                 <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
@@ -786,7 +778,6 @@ export default function AdminDashboard() {
                 !editorMode ? (
                     <div className="animate-fade-in space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{coursesList.map(c=>(<div key={c.id} className="bg-white p-4 rounded-xl border group hover:shadow-md transition"><div className="flex gap-4 items-center mb-3"><div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">{c.thumbnail_url && <img src={c.thumbnail_url} className="w-full h-full object-cover"/>}</div><div><h4 className="font-bold text-sm line-clamp-1">{c.title}</h4><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{c.category}</span></div></div><div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100"><button onClick={()=>loadCourseForEdit(c)} className="text-xs text-blue-600 font-bold">Edit</button><button onClick={()=>deleteItem('courses',c.id)} className="text-xs text-red-600 font-bold">Del</button></div></div>))}</div>
-                        <PaginationControls />
                     </div>
                 ) : (
                     <EditorLayout title="Course Editor" onSave={handleCourseSubmit}>
@@ -806,7 +797,7 @@ export default function AdminDashboard() {
                                     <div className="grid grid-cols-2 gap-2"><div><label className="text-xs font-bold block mb-1">Price</label><input className="w-full border p-2 rounded-lg" value={cPrice} onChange={e=>{setCPrice(e.target.value); markDirty();}} /></div><div><label className="text-xs font-bold block mb-1">Discount</label><input className="w-full border p-2 rounded-lg" value={cDiscountPrice} onChange={e=>{setCDiscountPrice(e.target.value); markDirty();}} /></div></div>
                                     <div><label className="text-xs font-bold block mb-1">Duration</label><input className="w-full border p-2 rounded-lg" value={cDuration} onChange={e=>{setCDuration(e.target.value); markDirty();}} /></div>
                                     <div><label className="text-xs font-bold block mb-1">Enroll Link</label><input className="w-full border p-2 rounded-lg" value={cLink} onChange={e=>{setCLink(e.target.value); markDirty();}} /></div>
-                                    <CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" />
+                                    <CategoryManager label="Category" value={cCategory} onChange={setCCategory} context="course" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
                                     <ImageInput label="Thumbnail" method={cImageMethod} setMethod={setCImageMethod} file={cImageFile} setFile={setCImageFile} link={cImageLink} setLink={setCImageLink} markDirty={markDirty} optional={true} />
                                 </div>
                                 <SeoInputSection title={commonSeoTitle} setTitle={setCommonSeoTitle} tags={commonTags} setTags={setCommonTags} desc={commonSeoDesc} setDesc={setCommonSeoDesc} markDirty={markDirty} />
