@@ -81,7 +81,7 @@ export default function ContactPage() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-1">WhatsApp</h4>
-                                <p className="text-lg font-medium text-white hover:text-green-400 transition cursor-pointer">+880 1234-567890</p>
+                                <p className="text-lg font-medium text-white hover:text-green-400 transition cursor-pointer">+880 1619663933</p>
                             </div>
                         </div>
 
@@ -146,7 +146,7 @@ export default function ContactPage() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
-                                placeholder="e.g. Abdullah Masum"
+                                placeholder="e.g. Jane Doe"
                             />
                         </div>
                         <div className="space-y-1.5">
