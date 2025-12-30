@@ -5,12 +5,17 @@ import { supabase } from "@/lib/supabaseClient";
 import { debounce } from "lodash";
 import Link from "next/link";
 
+const ITEMS_PER_PAGE = 10;
+
+// UPGRADED PROPS: Supports all hierarchy levels
 type MaterialListProps = {
-  segmentId: number;
+  segmentId?: number;
+  groupId?: number;
+  subjectId?: number;
   initialType: string; // 'pdf' (includes video) or 'question'
 };
 
-export default function MaterialList({ segmentId, initialType }: MaterialListProps) {
+export default function MaterialList({ segmentId, groupId, subjectId, initialType }: MaterialListProps) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -21,7 +26,7 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
   
   // Pagination & View State
   const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10); // Default to 10
+  const [itemsPerPage, setItemsPerPage] = useState(10); 
 
   // --- FETCH DATA ---
   const fetchData = useCallback(async () => {
@@ -30,11 +35,15 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
       let query = supabase
         .from("resources")
         .select(`
-          id, title, type, created_at, content_url,
+          id, title, type, created_at, content_url, category,
           subjects ( title )
         `, { count: "exact" })
-        .eq("segment_id", segmentId)
         .order("created_at", { ascending: false });
+
+      // --- SMART FILTERING LOGIC ---
+      if (subjectId) query = query.eq("subject_id", subjectId);
+      else if (groupId) query = query.eq("group_id", groupId);
+      else if (segmentId) query = query.eq("segment_id", segmentId);
 
       // Type Logic
       if (type === 'pdf') {
@@ -45,7 +54,6 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
 
       if (debouncedSearch) query = query.ilike("title", `%${debouncedSearch}%`);
 
-      // Dynamic Range based on itemsPerPage
       const from = (page - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       const { data, count, error } = await query.range(from, to);
@@ -55,7 +63,10 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
       if (data) {
           const formatted = data.map((item: any) => ({
               ...item,
-              subjectTitle: Array.isArray(item.subjects) ? item.subjects[0]?.title : "General"
+              // If inside a subject, show Category (e.g. "Chapter 1"). Else show Subject Name.
+              badgeTitle: subjectId 
+                  ? (item.category || "General") 
+                  : (Array.isArray(item.subjects) ? item.subjects[0]?.title : "General")
           }));
           setItems(formatted);
       }
@@ -66,7 +77,7 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
     } finally {
       setLoading(false);
     }
-  }, [segmentId, type, debouncedSearch, page, itemsPerPage]);
+  }, [segmentId, groupId, subjectId, type, debouncedSearch, page, itemsPerPage]);
 
   useEffect(() => {
     fetchData();
@@ -81,7 +92,7 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
 
   const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       setItemsPerPage(Number(e.target.value));
-      setPage(1); // Reset to page 1
+      setPage(1);
   };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -89,9 +100,8 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
-      {/* --- HEADER: TABS, SEARCH & VIEW SELECTOR --- */}
+      {/* --- HEADER --- */}
       <div className="flex flex-col gap-4">
-          
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Toggle Buttons */}
             <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
@@ -122,7 +132,7 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
             </div>
           </div>
 
-          {/* View Selector & Count */}
+          {/* View Selector */}
           <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Found {totalCount} items
@@ -166,7 +176,8 @@ export default function MaterialList({ segmentId, initialType }: MaterialListPro
                            )}
                        </h3>
                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-wide">
-                           <span className="bg-slate-100 px-2 py-1 rounded text-slate-500">{item.subjectTitle}</span>
+                           {/* Shows Subject if on Group Page, Category if on Subject Page */}
+                           <span className="bg-slate-100 px-2 py-1 rounded text-slate-500">{item.badgeTitle}</span>
                            <span>•</span>
                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
                        </div>
