@@ -7,183 +7,108 @@ import 'suneditor/dist/css/suneditor.min.css';
 import katex from 'katex'; 
 import 'katex/dist/katex.min.css'; 
 
+// --- TYPES ---
+type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
+
 // Load SunEditor dynamically
 const SunEditor = dynamic(() => import("suneditor-react"), { ssr: false });
 
-// 1. FULLY FEATURED EDITOR OPTIONS
 const editorOptions: any = {
-    minHeight: "600px", height: "auto", placeholder: "Start crafting your content...",
+    minHeight: "500px", height: "auto", placeholder: "Start content creation...",
     buttonList: [
-        ['undo', 'redo'],
-        ['font', 'fontSize', 'formatBlock'],
-        ['paragraphStyle', 'blockquote'],
-        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
-        ['fontColor', 'hiliteColor', 'textStyle'],
-        ['removeFormat'],
-        ['outdent', 'indent'],
-        ['align', 'horizontalRule', 'list', 'lineHeight'],
-        ['table', 'link', 'image', 'video', 'audio', 'math'], 
-        ['fullScreen', 'showBlocks', 'codeView'],
-        ['preview', 'print', 'save', 'template']
+        ['undo', 'redo'], ['save', 'template'], ['font', 'fontSize', 'formatBlock'],
+        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'],
+        ['fontColor', 'hiliteColor', 'textStyle'], ['outdent', 'indent'],
+        ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video', 'math'], 
+        ['fullScreen', 'showBlocks', 'codeView', 'preview']
     ],
-    mode: "classic",
+    mode: "classic", attributesWhitelist: { all: "style" },
     defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #334155;",
     resizingBar: true, showPathLabel: true, katex: katex 
 };
 
-type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
-
 // --- MEMOIZED UI COMPONENTS ---
 
 const SeoInputSection = memo(({ title, setTitle, tags, setTags, desc, setDesc, markDirty }: any) => (
-  <div className="bg-white/80 backdrop-blur-sm border border-indigo-50 p-6 rounded-2xl shadow-lg shadow-indigo-100/50 mt-8">
-      <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
-              <span className="text-xl">🚀</span> SEO Metadata
-          </h4>
-      </div>
+  <div className="bg-white border border-slate-200 p-5 rounded-xl space-y-4 shadow-sm mt-6">
+      <div className="flex items-center justify-between"><h4 className="text-xs font-extrabold text-slate-500 uppercase flex items-center gap-2"><span>🔍</span> SEO Settings</h4></div>
       <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Meta Title</label><input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={title} onChange={e=>{setTitle(e.target.value); markDirty();}} /></div>
-            <div><label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tags</label><input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={tags} onChange={e=>{setTags(e.target.value); markDirty();}} placeholder="comma, separated" /></div>
-          </div>
-          <div><label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Description</label><textarea className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-none transition-all" value={desc} onChange={e=>{setDesc(e.target.value); markDirty();}} /></div>
+          <div><label className="text-xs font-bold text-slate-600 block mb-1.5">Meta Title</label><input className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" value={title} onChange={e=>{setTitle(e.target.value); markDirty();}} /></div>
+          <div><label className="text-xs font-bold text-slate-600 block mb-1.5">Tags</label><input className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" value={tags} onChange={e=>{setTags(e.target.value); markDirty();}} placeholder="comma, separated" /></div>
+          <div><label className="text-xs font-bold text-slate-600 block mb-1.5">Description</label><textarea className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" value={desc} onChange={e=>{setDesc(e.target.value); markDirty();}} /></div>
       </div>
   </div>
 ));
 SeoInputSection.displayName = "SeoInputSection";
 
-const ListHeader = memo(({ title, onAdd, onSearch, searchVal }: any) => (
-    <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-white shadow-lg shadow-slate-200/50">
-        <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight capitalize bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">{title}</h2>
-            <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mt-1">Management Console</p>
-        </div>
-        <div className="flex gap-3 w-full md:w-auto items-center">
-            <div className="relative group w-full md:w-72">
-                <input 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm group-hover:shadow-md" 
-                    placeholder="Type to search..." 
-                    value={searchVal} 
-                    onChange={e => onSearch(e.target.value)} 
-                />
-                <span className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors">🔍</span>
-            </div>
-            <button onClick={onAdd} className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 whitespace-nowrap">
-                <span>✨</span> Add New
-            </button>
-        </div>
-    </div>
-));
-ListHeader.displayName = "ListHeader";
-
-const UniversalFilterBar = memo(({ 
+const FilterBar = memo(({ 
     segments, groups, subjects, 
     selSeg, setSelSeg, 
     selGrp, setSelGrp, 
     selSub, setSelSub,
     onFetchGroups, onFetchSubjects,
-    categories, catFilter, setCatFilter,
-    dateFilter, setDateFilter, // restored
+    dateFilter, setDateFilter,
     startDate, setStartDate, endDate, setEndDate,
-    typeFilter, setTypeFilter, typeOptions = [],
-    showHierarchy = false,
-    showSegmentOnly = false,
-    showCategory = false,
-    showType = false
+    typeFilter, setTypeFilter, 
+    updateTypeFilter, setUpdateTypeFilter,
+    catFilter, setCatFilter, categories,
+    showHierarchy = false, showSegmentOnly = false, showType = false, showUpdateType = false, showCategory = false,
+    typeOptions = []
 }: any) => (
-    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm mb-8 space-y-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-violet-600"></div>
-        
-        <div className="flex flex-col xl:flex-row gap-6 justify-between">
-            {/* LEFT: CONTENT FILTERS */}
-            <div className="flex-1 space-y-4">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">🔍 Refine Content</h3>
-                <div className="flex flex-wrap gap-3">
-                    {/* Date Dropdown */}
-                    <div className="min-w-[140px]">
-                        <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={dateFilter} onChange={e=>setDateFilter(e.target.value)}>
-                            <option value="all">📅 Any Time</option>
-                            <option value="this_month">This Month</option>
-                            <option value="last_6_months">Last 6 Months</option>
-                            <option value="this_year">This Year</option>
-                        </select>
-                    </div>
-
-                    {/* HIERARCHY: SEGMENT */}
-                    {(showHierarchy || showSegmentOnly) && (
-                        <div className="min-w-[140px] flex-1">
-                            <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selSeg} onChange={e=>{setSelSeg(e.target.value); onFetchGroups(e.target.value);}}>
-                                <option value="">All Segments</option>
-                                {segments.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
-                            </select>
-                        </div>
-                    )}
-
-                    {/* HIERARCHY: GROUP & SUBJECT */}
-                    {showHierarchy && (
-                        <>
-                            <div className="min-w-[140px] flex-1">
-                                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selGrp} onChange={e=>{setSelGrp(e.target.value); onFetchSubjects(e.target.value);}} disabled={!selSeg}>
-                                    <option value="">All Groups</option>
-                                    {groups.map((g:any)=><option key={g.id} value={g.id}>{g.title}</option>)}
-                                </select>
-                            </div>
-                            <div className="min-w-[140px] flex-1">
-                                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selSub} onChange={e=>setSelSub(e.target.value)} disabled={!selGrp}>
-                                    <option value="">All Subjects</option>
-                                    {subjects.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}
-                                </select>
-                            </div>
-                        </>
-                    )}
-
-                    {/* CATEGORY */}
-                    {showCategory && (
-                        <div className="min-w-[180px] flex-1">
-                            <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={catFilter} onChange={e=>setCatFilter(e.target.value)}>
-                                <option value="all">All Categories</option>
-                                {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                            </select>
-                        </div>
-                    )}
-
-                    {/* CONTENT TYPE */}
-                    {showType && (
-                        <div className="min-w-[160px] flex-1">
-                            <select className="w-full bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500" value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
-                                <option value="all">All Content Types</option>
-                                {typeOptions.map((opt: any) => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
-                            </select>
-                        </div>
-                    )}
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter Content</h3>
+            <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <input type="date" className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700" value={startDate} onChange={e=>setStartDate(e.target.value)} />
+                    <span className="text-xs text-slate-400">to</span>
+                    <input type="date" className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700" value={endDate} onChange={e=>setEndDate(e.target.value)} />
                 </div>
-            </div>
-
-            {/* RIGHT: DATE RANGE FILTER */}
-            <div className="w-full xl:w-auto space-y-4 border-t xl:border-t-0 xl:border-l border-slate-100 pt-4 xl:pt-0 xl:pl-6">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">📅 Custom Range</h3>
-                <div className="flex gap-2 items-center">
-                    <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">From</p>
-                        <input type="date" className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={startDate} onChange={e=>setStartDate(e.target.value)} />
-                    </div>
-                    <span className="text-slate-300 mt-4">—</span>
-                    <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">To</p>
-                        <input type="date" className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={endDate} onChange={e=>setEndDate(e.target.value)} />
-                    </div>
-                </div>
+                <select className="bg-slate-50 border border-slate-200 text-xs font-bold rounded-lg px-3 py-2 text-slate-700 outline-none" value={dateFilter} onChange={e=>setDateFilter(e.target.value)}>
+                    <option value="all">📅 Any Time</option>
+                    <option value="this_month">This Month</option>
+                    <option value="last_6_months">Last 6 Months</option>
+                    <option value="this_year">This Year</option>
+                </select>
+                {showType && (
+                    <select className="bg-blue-50 border border-blue-100 text-xs font-bold rounded-lg px-3 py-2 text-blue-700 outline-none" value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
+                        <option value="all">All Content Types</option>
+                        {typeOptions.map((opt: any) => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
+                    </select>
+                )}
+                {showUpdateType && (
+                    <select className="bg-red-50 border border-red-100 text-xs font-bold rounded-lg px-3 py-2 text-red-700 outline-none" value={updateTypeFilter} onChange={e=>setUpdateTypeFilter(e.target.value)}>
+                        <option value="all">All Updates</option>
+                        {typeOptions.map((opt: any) => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
+                    </select>
+                )}
+                 {showCategory && (
+                    <select className="bg-purple-50 border border-purple-100 text-xs font-bold rounded-lg px-3 py-2 text-purple-700 outline-none" value={catFilter} onChange={e=>setCatFilter(e.target.value)}>
+                        <option value="all">All Categories</option>
+                        {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                )}
             </div>
         </div>
+        {(showHierarchy || showSegmentOnly) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none" value={selSeg} onChange={e=>{setSelSeg(e.target.value); onFetchGroups(e.target.value);}}><option value="">All Segments</option>{segments.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+                {showHierarchy && (
+                    <>
+                        <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400 uppercase">Group</label><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none" value={selGrp} onChange={e=>{setSelGrp(e.target.value); onFetchSubjects(e.target.value);}} disabled={!selSeg}><option value="">All Groups</option>{groups.map((g:any)=><option key={g.id} value={g.id}>{g.title}</option>)}</select></div>
+                        <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none" value={selSub} onChange={e=>setSelSub(e.target.value)} disabled={!selGrp}><option value="">All Subjects</option>{subjects.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+                    </>
+                )}
+            </div>
+        )}
     </div>
 ));
-UniversalFilterBar.displayName = "UniversalFilterBar";
+FilterBar.displayName = "FilterBar";
 
 const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLink, markDirty, optional = false }: any) => (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 hover:shadow-md transition-all">
-        <div className="flex justify-between items-center"><h4 className="text-xs font-bold uppercase text-slate-500">{label} {optional && <span className="text-slate-300 font-normal">(Optional)</span>}</h4><div className="flex bg-slate-100 rounded-lg p-0.5"><button onClick={()=>{setMethod('upload'); markDirty();}} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${method==='upload'?'bg-white shadow text-indigo-600':'text-slate-400'}`}>Upload</button><button onClick={()=>{setMethod('link'); markDirty();}} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${method==='link'?'bg-white shadow text-indigo-600':'text-slate-400'}`}>Link</button></div></div>
-        {method === 'upload' ? (<div className="border-2 border-dashed border-slate-200 p-6 rounded-xl text-center relative hover:bg-indigo-50/50 hover:border-indigo-300 transition-all cursor-pointer group"><input type="file" accept="image/*" onChange={e=>{setFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl block mb-2 group-hover:scale-110 transition-transform">📸</span><p className="text-xs font-bold text-slate-400 group-hover:text-indigo-600">{file ? file.name : "Click to Upload"}</p></div>) : (<input className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://..." value={link} onChange={e=>{setLink(e.target.value); markDirty();}} />)}
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex justify-between items-center"><h4 className="text-xs font-bold uppercase text-slate-400">{label} {optional && <span className="text-slate-300">(Optional)</span>}</h4><div className="flex bg-slate-100 rounded-lg p-0.5"><button onClick={()=>{setMethod('upload'); markDirty();}} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${method==='upload'?'bg-white shadow text-black':'text-slate-400'}`}>Upload</button><button onClick={()=>{setMethod('link'); markDirty();}} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${method==='link'?'bg-white shadow text-black':'text-slate-400'}`}>Link</button></div></div>
+        {method === 'upload' ? (<div className="border-2 border-dashed p-6 rounded-lg text-center relative hover:bg-slate-50 transition cursor-pointer"><input type="file" accept="image/*" onChange={e=>{setFile(e.target.files?.[0]||null); markDirty();}} className="absolute inset-0 opacity-0 cursor-pointer"/><span className="text-2xl block mb-2">📸</span><p className="text-xs font-bold text-slate-400">{file ? file.name : "Click to Upload"}</p></div>) : (<input className="w-full border p-2.5 rounded-lg text-xs font-medium" placeholder="https://..." value={link} onChange={e=>{setLink(e.target.value); markDirty();}} />)}
     </div>
 ));
 ImageInput.displayName = "ImageInput";
@@ -191,14 +116,14 @@ ImageInput.displayName = "ImageInput";
 const CategoryManager = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
     const filtered = categories.filter((c:any) => c.type === context || c.type === 'general' || !c.type);
     return (
-        <div className="space-y-1.5"><label className="text-xs font-bold text-slate-500 block uppercase ml-1">{label}</label><div className="flex gap-2"><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none cursor-pointer hover:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all" value={value} onChange={e=>{onChange(e.target.value); markDirty();}}><option value="">Select Category</option>{filtered.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}</select><button onClick={() => openModal(context)} className="bg-white border border-slate-200 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 px-3 rounded-xl text-lg shadow-sm transition-all">⚙️</button></div></div>
+        <div className="space-y-1.5"><label className="text-xs font-bold text-slate-600 block uppercase">{label}</label><div className="flex gap-2"><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e=>{onChange(e.target.value); markDirty();}}><option value="">Select Category</option>{filtered.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div></div>
     );
 });
 CategoryManager.displayName = "CategoryManager";
 
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
-    <th className="px-6 py-4 cursor-pointer hover:bg-indigo-50/50 transition-colors select-none group border-b border-slate-100" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
-        <div className="flex items-center gap-1.5"><span className="text-xs font-extrabold text-slate-500 tracking-wider group-hover:text-indigo-600 transition-colors">{label}</span><span className={`text-[8px] flex flex-col leading-[3px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-20 group-hover:opacity-100'}`}><span className={currentSort.key===sortKey && currentSort.direction==='asc' ? 'text-indigo-600' : 'text-slate-400'}>▲</span><span className={currentSort.key===sortKey && currentSort.direction==='desc' ? 'text-indigo-600' : 'text-slate-400'}>▼</span></span></div>
+    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
+        <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key===sortKey && currentSort.direction==='asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key===sortKey && currentSort.direction==='desc' ? 'text-blue-600' : ''}>▼</span></span></div>
     </th>
 );
 
@@ -207,7 +132,19 @@ const MemoizedSunEditor = memo(({ content, onChange }: { content: string, onChan
 });
 MemoizedSunEditor.displayName = "MemoizedSunEditor";
 
-// --- MAIN PAGE ---
+const ListHeader = memo(({ title, onAdd, onSearch, searchVal, showAdd = true }: any) => (
+    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-800 uppercase">{title}</h2>
+        <div className="flex gap-3 w-full md:w-auto">
+            <input className="w-full md:w-64 bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search..." value={searchVal} onChange={e=>onSearch(e.target.value)} />
+            {showAdd && <button onClick={onAdd} className="bg-black hover:bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg transition-all">+ Add New</button>}
+        </div>
+    </div>
+));
+ListHeader.displayName = "ListHeader";
+
+
+// --- MAIN COMPONENT ---
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -216,9 +153,8 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [editorMode, setEditorMode] = useState(false);
   const [isDirty, setIsDirty] = useState(false); 
-  const editorRef = useRef<any>(null);
   
-  // State
+  // --- UNIFIED STATE (Solved "Cannot find name" errors) ---
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(15);
@@ -226,56 +162,58 @@ export default function AdminDashboard() {
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   
   // Filters
-  const [dateFilter, setDateFilter] = useState("all"); // RE-ADDED
+  const [dateFilter, setDateFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [typeFilter, setTypeFilter] = useState("all"); 
   const [updateTypeFilter, setUpdateTypeFilter] = useState("all"); 
-  const [catFilter, setCatFilter] = useState("all"); 
+  const [catFilter, setCatFilter] = useState("all");
+  const [catManagerTypeFilter, setCatManagerTypeFilter] = useState("all"); // New filter for category manager 
   
-  // Hierarchy
+  // Hierarchy Selection
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
 
-  // Data
+  // Data Arrays
   const [dataList, setDataList] = useState<any[]>([]); 
   const [segments, setSegments] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<any>({}); 
 
   // Modal
   const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'success', message: '' });
-  const [isManageCatsOpen, setIsManageCatsOpen] = useState(false);
-  const [activeCatContext, setActiveCatContext] = useState("news");
-  const [catModalSegment, setCatModalSegment] = useState("");
-  const [catModalGroup, setCatModalGroup] = useState("");
-  const [catModalSubject, setCatModalSubject] = useState("");
-  const [catModalGroupsList, setCatModalGroupsList] = useState<any[]>([]);
-  const [catModalSubjectsList, setCatModalSubjectsList] = useState<any[]>([]);
+  const [isAddCatOpen, setIsAddCatOpen] = useState(false); 
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatType, setNewCatType] = useState("news");
 
-  // Inputs
+  // --- FORM INPUTS ---
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  
+  // Content Inputs
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(""); 
-  const [extraContent, setExtraContent] = useState(""); 
   const [link, setLink] = useState("");
   const [type, setType] = useState("pdf"); 
   const [category, setCategory] = useState("");
   
+  // Media
   const [imageMethod, setImageMethod] = useState<'upload' | 'link'>('upload');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageLink, setImageLink] = useState("");
   const [file, setFile] = useState<File | null>(null); 
 
+  // Extra Fields
   const [author, setAuthor] = useState("");
   const [instructor, setInstructor] = useState("");
   const [price, setPrice] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
   const [duration, setDuration] = useState("");
   
+  // SEO
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDesc, setSeoDesc] = useState("");
   const [tags, setTags] = useState("");
@@ -288,7 +226,7 @@ export default function AdminDashboard() {
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
   const resetForms = () => {
-      setEditingId(null); setTitle(""); setContent(""); setExtraContent(""); setLink(""); setType("pdf"); setCategory("");
+      setEditingId(null); setTitle(""); setContent(""); setLink(""); setType("pdf"); setCategory("");
       setImageMethod('upload'); setImageFile(null); setImageLink(""); setFile(null);
       setAuthor(""); setInstructor(""); setPrice(""); setDiscountPrice(""); setDuration("");
       setSeoTitle(""); setSeoDesc(""); setTags("");
@@ -305,7 +243,7 @@ export default function AdminDashboard() {
       return "Global";
   };
 
-  // --- API ---
+  // --- API FETCHERS ---
   const fetchDropdowns = useCallback(async () => {
       const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
       const { data: c } = await supabase.from("categories").select("*").order('name'); setCategories(c || []);
@@ -313,12 +251,34 @@ export default function AdminDashboard() {
 
   const fetchGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data || []); };
   const fetchSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data || []); };
-  const fetchModalGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setCatModalGroupsList(data || []); };
-  const fetchModalSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setCatModalSubjectsList(data || []); };
 
   const fetchContent = useCallback(async () => {
       if (editorMode || isLoading) return;
       
+      if (activeTab === 'categories') {
+          // Special Fetch for Categories Manager
+          let query = supabase.from("categories").select("*", { count: 'exact' });
+          if (catManagerTypeFilter !== 'all') query = query.eq("type", catManagerTypeFilter);
+          if (searchTerm) query = query.ilike("name", `%${searchTerm}%`);
+          
+          const { data, count } = await query.order('name', { ascending: true });
+          
+          if (data) {
+              const counts: any = {};
+              // Note: Fetching counts for each category can be heavy if many categories. 
+              // For a small admin panel, this loop is acceptable. Optimized approach would use a SQL View.
+              for (const cat of data) {
+                  let table = cat.type === 'ebook' ? 'ebooks' : cat.type === 'news' ? 'news' : cat.type === 'course' ? 'courses' : 'resources';
+                  const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('category', cat.name);
+                  counts[cat.id] = count || 0;
+              }
+              setCategoryCounts(counts);
+              setDataList(data);
+              if (count !== null) setTotalCount(count);
+          }
+          return;
+      }
+
       let tableName = "";
       if (activeTab === 'materials') tableName = "resources";
       else if (activeTab === 'news') tableName = "news";
@@ -328,30 +288,23 @@ export default function AdminDashboard() {
 
       let query = supabase.from(tableName).select("*", { count: 'exact' });
 
-      // 1. Hierarchy Filters (Materials & Courses)
-      if (['materials', 'courses'].includes(activeTab)) {
+      // Filters
+      if (['materials', 'updates', 'courses'].includes(activeTab)) {
           if (selectedSubject) query = query.eq("subject_id", selectedSubject);
           else if (selectedGroup) query = query.eq("group_id", selectedGroup);
           else if (selectedSegment) query = query.eq("segment_id", selectedSegment);
       }
       
-      // 2. Segment Only (Updates)
-      if (activeTab === 'updates' && selectedSegment) {
-          query = query.eq("segment_id", selectedSegment);
-      }
+      if (activeTab === 'updates' && selectedSegment) { query = query.eq("segment_id", selectedSegment); }
 
-      // 3. Type/Category Filters
       if (activeTab === 'materials' && typeFilter !== 'all') query = query.eq("type", typeFilter);
       if (activeTab === 'updates' && updateTypeFilter !== 'all') query = query.eq("type", updateTypeFilter);
       if ((activeTab === 'ebooks' || activeTab === 'news') && catFilter !== 'all') query = query.eq("category", catFilter);
 
-      // 4. Search
       if (searchTerm) query = query.ilike("title", `%${searchTerm}%`);
 
-      // 5. Date Filter (Dropdown OR Custom Range)
       const now = new Date();
       if (startDate && endDate) {
-         // Custom Range takes priority
          query = query.gte('created_at', new Date(startDate).toISOString());
          query = query.lte('created_at', new Date(endDate).toISOString());
       } else if (dateFilter !== 'all') {
@@ -362,7 +315,6 @@ export default function AdminDashboard() {
           if(d) query = query.gte('created_at', d.toISOString());
       }
 
-      // 6. Pagination & Sort
       const from = currentPage * itemsPerPage;
       const to = from + itemsPerPage - 1;
       const { data, count, error } = await query.range(from, to).order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
@@ -371,7 +323,7 @@ export default function AdminDashboard() {
           setDataList(data);
           if (count !== null) setTotalCount(count);
       }
-  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, searchTerm, typeFilter, updateTypeFilter, catFilter, dateFilter, startDate, endDate, sortConfig, currentPage, itemsPerPage, editorMode, isLoading]);
+  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, searchTerm, typeFilter, updateTypeFilter, catFilter, catManagerTypeFilter, dateFilter, startDate, endDate, sortConfig, currentPage, itemsPerPage, editorMode, isLoading]);
 
   useEffect(() => { fetchContent(); }, [fetchContent]);
 
@@ -389,10 +341,10 @@ export default function AdminDashboard() {
   const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); };
   const handleGroupClick = (id: string) => { setSelectedGroup(id); setSelectedSubject(""); setSubjects([]); fetchSubjects(id); };
   const handleSubjectClick = (id: string) => { setSelectedSubject(id); };
-
+  
   const handleTabSwitch = (newTab: string) => {
       if (isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); resetForms(); setActiveTab(newTab); setCurrentPage(0); });
-      else { setEditorMode(false); resetForms(); setActiveTab(newTab); setCurrentPage(0); }
+      else { setEditorMode(false); resetForms(); setActiveTab(newTab); setCurrentPage(0); setSearchTerm(""); }
   };
 
   const handleAddNew = () => {
@@ -402,7 +354,7 @@ export default function AdminDashboard() {
       setEditorMode(true);
       setTimeout(() => setIsDirty(false), 100);
   };
-
+  
   const handleEdit = (item: any) => {
       resetForms();
       setEditingId(item.id); setTitle(item.title);
@@ -444,7 +396,7 @@ export default function AdminDashboard() {
   };
   
   const handleDelete = (id: number) => {
-      let table = activeTab === 'materials' ? 'resources' : activeTab === 'updates' ? 'segment_updates' : activeTab;
+      let table = activeTab === 'materials' ? 'resources' : activeTab === 'updates' ? 'segment_updates' : activeTab === 'categories' ? 'categories' : activeTab;
       deleteItem(table, id);
   };
 
@@ -511,7 +463,17 @@ export default function AdminDashboard() {
       }
   };
 
-  const openCategoryModal = (context: string) => { setActiveCatContext(context); setIsManageCatsOpen(true); };
+  const openCategoryModal = (context: string) => { setIsAddCatOpen(true); setNewCatType(context); };
+
+  const handleAddCategory = async () => {
+      if(!newCatName) return showError("Category name required");
+      await supabase.from('categories').insert([{ name: newCatName, type: newCatType }]);
+      setNewCatName("");
+      setIsAddCatOpen(false);
+      fetchDropdowns();
+      if(activeTab === 'categories') fetchContent();
+      showSuccess("Category Added");
+  };
 
   const Pagination = () => (
       <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
@@ -537,13 +499,13 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32">
         {/* Modals */}
-        {isManageCatsOpen && (<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"><div className="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[85vh] flex flex-col overflow-hidden animate-slide-up"><div className="p-5 border-b flex justify-between items-center bg-gray-50"><div><h3 className="font-bold text-lg text-slate-900">Manage Categories</h3><p className="text-xs text-slate-500 font-bold uppercase">Context: {activeCatContext}</p></div><button onClick={()=>setIsManageCatsOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">✕</button></div><div className="flex-1 overflow-y-auto p-5 custom-scrollbar"><div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 mb-6 space-y-3"><input id="newCatInput" className="w-full bg-white border border-indigo-100 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" placeholder="New Category Name..." /><button onClick={async ()=>{ const input = document.getElementById('newCatInput') as HTMLInputElement; if(input.value) { await supabase.from('categories').insert([{name:input.value, type: activeCatContext}]); input.value=""; fetchDropdowns(); } }} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold text-sm shadow-md transition-all">+ Add Category</button></div><div className="space-y-2">{categories.filter(c => c.type === activeCatContext || c.type === 'general' || !c.type).map(c => (<div key={c.id} className="flex justify-between items-center p-3 bg-white border border-gray-100 rounded-xl hover:border-indigo-200 transition-colors"><span className="text-sm font-bold text-slate-700">{c.name}</span><button onClick={()=>deleteItem('categories', c.id)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-all">🗑️</button></div>))}</div></div></div></div>)}
+        {isAddCatOpen && (<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"><div className="bg-white rounded-2xl shadow-2xl w-[400px] animate-slide-up overflow-hidden"><div className="p-5 border-b flex justify-between items-center bg-gray-50"><div><h3 className="font-bold text-lg text-slate-900">New Category</h3><p className="text-xs text-slate-500 font-bold uppercase">For: {newCatType}</p></div><button onClick={()=>setIsAddCatOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">✕</button></div><div className="p-6 space-y-4"><input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Category Name..." value={newCatName} onChange={e=>setNewCatName(e.target.value)} /><button onClick={handleAddCategory} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all">Create Category</button></div></div></div>)}
         
         {modal.isOpen && <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={()=>{modal.onConfirm?.();closeModal()}} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
 
         <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-2xl pt-28">
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                {[{ id: 'materials', label: 'Study Materials', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }].map((tab) => (
+                {[{ id: 'materials', label: 'Study Materials', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }, { id: 'categories', label: 'Categories', icon: '🏷️' }].map((tab) => (
                     <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}><span className="text-lg opacity-80">{tab.icon}</span> {tab.label}</button>
                 ))}
             </nav>
@@ -552,21 +514,51 @@ export default function AdminDashboard() {
 
         <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
             <div className="max-w-[1800px] mx-auto w-full">
-                {!editorMode && <ListHeader title={activeTab.replace('-', ' ').toUpperCase()} onAdd={handleAddNew} onSearch={(v:string)=>setSearchTerm(v)} searchVal={searchTerm} />}
+                {!editorMode && <ListHeader title={activeTab.replace('-', ' ').toUpperCase()} onAdd={() => { if(activeTab==='categories') openCategoryModal('general'); else handleAddNew(); }} onSearch={(v:string)=>setSearchTerm(v)} searchVal={searchTerm} />}
 
-                {/* LIST VIEW */}
-                {!editorMode && (
+                {/* CATEGORIES MANAGEMENT VIEW */}
+                {activeTab === 'categories' && !editorMode && (
                     <div className="animate-fade-in space-y-6">
-                        <UniversalFilterBar 
+                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Filter By Type:</span>
+                            <div className="flex gap-2">
+                                {['all', 'blog', 'news', 'ebook', 'course', 'general'].map(t => (
+                                    <button key={t} onClick={() => setCatManagerTypeFilter(t)} className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${catManagerTypeFilter === t ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{t}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {dataList.map((cat:any) => (
+                                <div key={cat.id} className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-all group flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800">{cat.name}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${cat.type === 'news' ? 'bg-blue-50 text-blue-600' : cat.type === 'ebook' ? 'bg-orange-50 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>{cat.type || 'General'}</span>
+                                            <span className="text-[10px] font-bold text-slate-400">{categoryCounts[cat.id] || 0} Posts</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={()=>handleDelete(cat.id)} className="text-slate-300 hover:text-red-500 p-2"><span className="text-xl">🗑️</span></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* OTHER LIST VIEWS */}
+                {activeTab !== 'categories' && !editorMode && (
+                    <div className="animate-fade-in space-y-6">
+                        <FilterBar 
                             segments={segments} groups={groups} subjects={subjects} 
                             selSeg={selectedSegment} setSelSeg={setSelectedSegment} selGrp={selectedGroup} setSelGrp={setSelectedGroup} selSub={selectedSubject} setSelSub={setSelectedSubject} 
                             onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects} 
-                            dateFilter={dateFilter} setDateFilter={setDateFilter} // Correctly passed now
+                            dateFilter={dateFilter} setDateFilter={setDateFilter} 
                             startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
                             showHierarchy={['materials','courses'].includes(activeTab)} 
                             showSegmentOnly={activeTab==='updates'}
-                            showType={activeTab==='materials' || activeTab==='updates'}
-                            typeFilter={activeTab==='materials'?typeFilter:updateTypeFilter} setTypeFilter={activeTab==='materials'?setTypeFilter:setUpdateTypeFilter} 
+                            showType={activeTab==='materials'} 
+                            showUpdateType={activeTab==='updates'}
+                            typeFilter={typeFilter} setTypeFilter={setTypeFilter} 
+                            updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
                             typeOptions={activeTab==='materials'?[{val:'blog',label:'✍️ Blogs'},{val:'pdf',label:'📄 PDFs'},{val:'video',label:'🎬 Videos'},{val:'question',label:'❓ Questions'}]:[{val:'routine',label:'📅 Routine'},{val:'syllabus',label:'📝 Syllabus'},{val:'exam_result',label:'🏆 Result'}]} 
                             showCategory={activeTab==='ebooks'||activeTab==='news'} 
                             catFilter={catFilter} setCatFilter={setCatFilter} categories={categories} 
