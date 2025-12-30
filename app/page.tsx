@@ -24,56 +24,53 @@ export default async function HomePage() {
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
 
-  // --- HELPER: Get Dynamic Styles based on DB Slug ---
+  // --- HELPER: Get Dynamic Styles ---
   const getSegmentTheme = (slug: string) => {
     switch (slug) {
       case "ssc":
         return {
           gradient: "from-blue-500 to-cyan-400",
-          shadow: "shadow-blue-200",
-          text: "text-blue-600",
-          bg: "bg-blue-50",
-          icon: (
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-          )
+          border: "border-b-blue-500",
+          bgTint: "bg-blue-50/50",
+          iconColor: "text-blue-600",
+          iconBg: "bg-white",
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
         };
       case "hsc":
         return {
           gradient: "from-purple-500 to-fuchsia-400",
-          shadow: "shadow-purple-200",
-          text: "text-purple-600",
-          bg: "bg-purple-50",
-          icon: (
-             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-          )
+          border: "border-b-purple-500",
+          bgTint: "bg-purple-50/50",
+          iconColor: "text-purple-600",
+          iconBg: "bg-white",
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
         };
       case "job-prep":
         return {
           gradient: "from-emerald-500 to-teal-400",
-          shadow: "shadow-emerald-200",
-          text: "text-emerald-600",
-          bg: "bg-emerald-50",
-          icon: (
-             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          )
+          border: "border-b-emerald-500",
+          bgTint: "bg-emerald-50/50",
+          iconColor: "text-emerald-600",
+          iconBg: "bg-white",
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
         };
       case "university-admission":
         return {
           gradient: "from-rose-500 to-orange-400",
-          shadow: "shadow-rose-200",
-          text: "text-rose-600",
-          bg: "bg-rose-50",
-          icon: (
-             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-          )
+          border: "border-b-rose-500",
+          bgTint: "bg-rose-50/50",
+          iconColor: "text-rose-600",
+          iconBg: "bg-white",
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
         };
       default:
         return {
           gradient: "from-slate-700 to-slate-500",
-          shadow: "shadow-slate-200",
-          text: "text-slate-600",
-          bg: "bg-slate-50",
-          icon: "🚀" // Default fallback
+          border: "border-b-slate-500",
+          bgTint: "bg-slate-50",
+          iconColor: "text-slate-600",
+          iconBg: "bg-white",
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         };
     }
   };
@@ -158,12 +155,9 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          3. CATEGORIES
+          3. CATEGORIES (REDESIGNED)
          ========================================= */}
-      {/* CHANGED: Reduced padding-bottom (pb-12 -> pb-6) 
-          to reduce the gap before the next section
-      */}
-      <section className="pt-24 pb-6 max-w-7xl mx-auto px-6">
+      <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-4">
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
               Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Goal</span>
@@ -179,27 +173,36 @@ export default async function HomePage() {
                         href={`/resources/${seg.slug}`} 
                         key={seg.id} 
                         className={`
-                          group relative overflow-hidden bg-white p-8 rounded-[2rem] border border-slate-100 
-                          shadow-sm hover:shadow-2xl ${theme.shadow} 
-                          transition-all duration-300 hover:-translate-y-2
+                          group relative flex flex-col items-start p-6 rounded-3xl 
+                          bg-white border-2 border-slate-50 border-b-4 ${theme.border}
+                          shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2
                         `}
                     >
-                        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br ${theme.gradient} -z-10`}></div>
+                        {/* Background Tint */}
+                        <div className={`absolute inset-0 rounded-3xl opacity-30 ${theme.bgTint} group-hover:opacity-100 transition-opacity duration-300`}></div>
                         
-                        <div className={`
-                          w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm
-                          transition-colors duration-300
-                          ${theme.bg} ${theme.text} group-hover:text-white group-hover:bg-white/20 group-hover:backdrop-blur-sm
-                        `}>
-                            {typeof theme.icon === 'string' ? theme.icon : theme.icon}
-                        </div>
+                        <div className="relative z-10 w-full">
+                            <div className={`
+                              w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-4 
+                              shadow-sm border border-slate-100 ${theme.iconBg} ${theme.iconColor}
+                            `}>
+                                {theme.icon}
+                            </div>
 
-                        <h3 className={`font-bold text-xl text-slate-800 group-hover:text-white transition-colors`}>
-                          {seg.title}
-                        </h3>
-                        <p className="text-sm text-slate-400 group-hover:text-white/80 mt-1 transition-colors">
-                          View Materials &rarr;
-                        </p>
+                            <h3 className="font-extrabold text-xl text-slate-800 mb-1 group-hover:text-slate-900">
+                              {seg.title}
+                            </h3>
+                            
+                            <div className="flex items-center justify-between w-full mt-4">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">Explore</span>
+                                <div className={`
+                                  w-8 h-8 rounded-full flex items-center justify-center 
+                                  bg-white text-slate-400 shadow-sm group-hover:scale-110 group-hover:bg-slate-900 group-hover:text-white transition-all
+                                `}>
+                                  ➔
+                                </div>
+                            </div>
+                        </div>
                     </Link>
                 );
             })}
@@ -207,18 +210,47 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. MAIN CONTENT AREA (Filter)
+          4. PREVIOUS YEAR QUESTIONS (NEW)
          ========================================= */}
-      {/* CHANGED: Reduced vertical padding (py-16 -> pt-8 pb-16) 
-         to pull this section up closer to categories 
-      */}
-      <section className="pt-8 pb-16 max-w-7xl mx-auto px-6 border-t border-slate-200">
+      <section className="py-12 bg-slate-50 border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2">
+                        <span>🗂️</span> Question Bank
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">Previous year board questions sorted by level.</p>
+                </div>
+                <Link href="/resources" className="text-sm font-bold text-blue-600 hover:text-blue-800 underline">Browse All Archives</Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {segments.map((seg: any) => (
+                    <Link 
+                        href={`/resources/${seg.slug}?category=Previous%20Year%20Questions`} 
+                        key={seg.id}
+                        className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex items-center gap-3"
+                    >
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-sm text-slate-700 group-hover:text-blue-700">{seg.title}</h4>
+                            <p className="text-[10px] text-slate-400">View Questions</p>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </div>
+      </section>
+
+      {/* =========================================
+          5. MAIN CONTENT AREA (Filter)
+         ========================================= */}
+      <section className="pt-12 pb-24 max-w-7xl mx-auto px-6">
         
-        {/* --- GOOGLE ADSENSE IN-FEED AD --- */}
-        {/* CHANGED: Reduced bottom margin (mb-12 -> mb-8). 
-            Also note: If the ad doesn't load, this div still takes space. 
-        */}
-        <div className="mb-8">
+        {/* AD BANNER */}
+        <div className="mb-12">
             <AdBanner 
                 dataAdSlot="8219606997" 
                 dataAdFormat="fluid" 
@@ -230,9 +262,13 @@ export default async function HomePage() {
             
             {/* LEFT COLUMN: FILTER & LIST */}
             <div className="lg:col-span-8">
-                <div className="mb-8">
-                    <h2 className="text-2xl font-extrabold text-slate-900">Latest Materials</h2>
-                    <p className="text-slate-500 text-sm mt-1">Pick a category to filter the list instantly.</p>
+                <div className="mb-8 flex items-center gap-3">
+                    <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                    <div>
+                        {/* CHANGED: Smaller text size for mobile compatibility */}
+                        <h2 className="text-xl md:text-3xl font-extrabold text-slate-900">Latest Materials</h2>
+                        <p className="text-slate-500 text-xs md:text-sm mt-0.5">Recently added notes, suggestions, and videos.</p>
+                    </div>
                 </div>
                 <HomeMaterialsFilter segments={segments} resources={resources} />
             </div>
@@ -269,39 +305,16 @@ export default async function HomePage() {
                     </Link>
                 </div>
                 
-                {/* 2. PROFESSIONAL SOCIAL WIDGETS */}
+                {/* 2. SOCIAL WIDGETS */}
                 <div className="space-y-4">
-                    {/* Facebook Card */}
-                    <a 
-                        href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 bg-[#1877F2] text-white p-5 rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-[#166fe5] transition-all transform hover:-translate-y-1 group"
-                    >
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                            f
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg leading-tight">Join Community</h4>
-                            <p className="text-blue-100 text-xs mt-0.5">Get updates & free notes</p>
-                        </div>
+                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-[#1877F2] text-white p-5 rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-[#166fe5] transition-all transform hover:-translate-y-1 group">
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">f</div>
+                        <div><h4 className="font-bold text-lg leading-tight">Join Community</h4><p className="text-blue-100 text-xs mt-0.5">Get updates & free notes</p></div>
                         <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
-
-                    {/* YouTube Card */}
-                    <a 
-                        href="https://youtube.com/gmatclub" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 bg-[#FF0000] text-white p-5 rounded-2xl shadow-lg shadow-red-500/20 hover:bg-[#e60000] transition-all transform hover:-translate-y-1 group"
-                    >
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                            ▶
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg leading-tight">Watch Classes</h4>
-                            <p className="text-red-100 text-xs mt-0.5">Subscribe for tutorials</p>
-                        </div>
+                    <a href="https://youtube.com/gmatclub" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-[#FF0000] text-white p-5 rounded-2xl shadow-lg shadow-red-500/20 hover:bg-[#e60000] transition-all transform hover:-translate-y-1 group">
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl group-hover:scale-110 transition-transform">▶</div>
+                        <div><h4 className="font-bold text-lg leading-tight">Watch Classes</h4><p className="text-red-100 text-xs mt-0.5">Subscribe for tutorials</p></div>
                         <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity">➔</div>
                     </a>
                 </div>
@@ -310,14 +323,9 @@ export default async function HomePage() {
                 <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 text-white text-center shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
-                    
                     <h4 className="font-black text-2xl mb-2 relative z-10">Need 1-on-1 Help?</h4>
-                    <p className="text-indigo-100 text-sm mb-6 relative z-10 leading-relaxed">
-                        Struggling with a topic? Book a private session with our expert teachers today.
-                    </p>
-                    <button className="bg-white text-indigo-700 w-full py-3.5 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-lg relative z-10 transform group-hover:scale-105 duration-300">
-                        Find a Teacher
-                    </button>
+                    <p className="text-indigo-100 text-sm mb-6 relative z-10 leading-relaxed">Struggling with a topic? Book a private session with our expert teachers today.</p>
+                    <button className="bg-white text-indigo-700 w-full py-3.5 rounded-xl text-sm font-black hover:bg-indigo-50 transition shadow-lg relative z-10 transform group-hover:scale-105 duration-300">Find a Teacher</button>
                 </div>
             </div>
         </div>
