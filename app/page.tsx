@@ -24,53 +24,43 @@ export default async function HomePage() {
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
 
-  // --- HELPER: Get Dynamic Styles ---
+  // --- HELPER: New "Vivid" Theme ---
   const getSegmentTheme = (slug: string) => {
     switch (slug) {
       case "ssc":
         return {
-          gradient: "from-blue-500 to-cyan-400",
-          border: "border-b-blue-500",
-          bgTint: "bg-blue-50/50",
-          iconColor: "text-blue-600",
-          iconBg: "bg-white",
-          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          bg: "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600",
+          shadow: "shadow-blue-200",
+          ring: "group-hover:ring-blue-300",
+          icon: <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
         };
       case "hsc":
         return {
-          gradient: "from-purple-500 to-fuchsia-400",
-          border: "border-b-purple-500",
-          bgTint: "bg-purple-50/50",
-          iconColor: "text-purple-600",
-          iconBg: "bg-white",
-          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+          bg: "bg-gradient-to-br from-violet-500 via-purple-600 to-fuchsia-600",
+          shadow: "shadow-purple-200",
+          ring: "group-hover:ring-purple-300",
+          icon: <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
         };
       case "job-prep":
         return {
-          gradient: "from-emerald-500 to-teal-400",
-          border: "border-b-emerald-500",
-          bgTint: "bg-emerald-50/50",
-          iconColor: "text-emerald-600",
-          iconBg: "bg-white",
-          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          bg: "bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600",
+          shadow: "shadow-emerald-200",
+          ring: "group-hover:ring-emerald-300",
+          icon: <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
         };
       case "university-admission":
         return {
-          gradient: "from-rose-500 to-orange-400",
-          border: "border-b-rose-500",
-          bgTint: "bg-rose-50/50",
-          iconColor: "text-rose-600",
-          iconBg: "bg-white",
-          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          bg: "bg-gradient-to-br from-rose-500 via-red-600 to-orange-600",
+          shadow: "shadow-rose-200",
+          ring: "group-hover:ring-rose-300",
+          icon: <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
         };
       default:
         return {
-          gradient: "from-slate-700 to-slate-500",
-          border: "border-b-slate-500",
-          bgTint: "bg-slate-50",
-          iconColor: "text-slate-600",
-          iconBg: "bg-white",
-          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          bg: "bg-gradient-to-br from-slate-700 via-slate-800 to-black",
+          shadow: "shadow-slate-200",
+          ring: "group-hover:ring-slate-300",
+          icon: <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         };
     }
   };
@@ -155,7 +145,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          3. CATEGORIES (REDESIGNED)
+          3. CATEGORIES (VIVID GRADIENT CARDS)
          ========================================= */}
       <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-4">
@@ -173,35 +163,29 @@ export default async function HomePage() {
                         href={`/resources/${seg.slug}`} 
                         key={seg.id} 
                         className={`
-                          group relative flex flex-col items-start p-6 rounded-3xl 
-                          bg-white border-2 border-slate-50 border-b-4 ${theme.border}
-                          shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2
+                          group relative flex flex-col justify-between p-8 rounded-[2rem] 
+                          ${theme.bg} shadow-lg hover:shadow-2xl hover:shadow-blue-500/20
+                          transition-all duration-300 hover:-translate-y-2 overflow-hidden
+                          border-2 border-white/10 hover:ring-4 ${theme.ring} ring-opacity-50
                         `}
                     >
-                        {/* Background Tint */}
-                        <div className={`absolute inset-0 rounded-3xl opacity-30 ${theme.bgTint} group-hover:opacity-100 transition-opacity duration-300`}></div>
-                        
-                        <div className="relative z-10 w-full">
-                            <div className={`
-                              w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-4 
-                              shadow-sm border border-slate-100 ${theme.iconBg} ${theme.iconColor}
-                            `}>
+                        {/* Decorative Background Circles */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-white/20 transition-all duration-500"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl -ml-8 -mb-8"></div>
+
+                        <div className="relative z-10 w-full mb-8">
+                            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-white/20">
                                 {theme.icon}
                             </div>
-
-                            <h3 className="font-extrabold text-xl text-slate-800 mb-1 group-hover:text-slate-900">
+                            <h3 className="font-black text-2xl text-white tracking-wide leading-tight">
                               {seg.title}
                             </h3>
-                            
-                            <div className="flex items-center justify-between w-full mt-4">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">Explore</span>
-                                <div className={`
-                                  w-8 h-8 rounded-full flex items-center justify-center 
-                                  bg-white text-slate-400 shadow-sm group-hover:scale-110 group-hover:bg-slate-900 group-hover:text-white transition-all
-                                `}>
-                                  ➔
-                                </div>
-                            </div>
+                            <div className="h-1 w-12 bg-white/30 rounded-full mt-3 group-hover:w-full transition-all duration-500"></div>
+                        </div>
+
+                        <div className="relative z-10 flex items-center justify-between text-white/90 group-hover:text-white mt-auto">
+                            <span className="text-xs font-bold uppercase tracking-widest">Explore Materials</span>
+                            <span className="text-xl transform group-hover:translate-x-1 transition-transform">→</span>
                         </div>
                     </Link>
                 );
@@ -210,18 +194,19 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. PREVIOUS YEAR QUESTIONS (NEW)
+          4. PREVIOUS YEAR QUESTIONS
          ========================================= */}
-      <section className="py-12 bg-slate-50 border-y border-slate-200">
+      <section className="py-16 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
                 <div>
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2">
-                        <span>🗂️</span> Question Bank
-                    </h2>
-                    <p className="text-slate-500 text-sm mt-1">Previous year board questions sorted by level.</p>
+                    <span className="text-orange-500 font-bold tracking-widest uppercase text-xs">Repository</span>
+                    <h2 className="text-3xl font-black text-slate-900 mt-2">Previous Year Questions</h2>
+                    <p className="text-slate-500 mt-2 max-w-lg">Access our extensive archive of past board questions to prepare better.</p>
                 </div>
-                <Link href="/resources" className="text-sm font-bold text-blue-600 hover:text-blue-800 underline">Browse All Archives</Link>
+                <Link href="/resources" className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors">
+                    Browse Archive →
+                </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -229,15 +214,13 @@ export default async function HomePage() {
                     <Link 
                         href={`/resources/${seg.slug}?category=Previous%20Year%20Questions`} 
                         key={seg.id}
-                        className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex items-center gap-3"
+                        className="bg-slate-50 hover:bg-orange-50 p-5 rounded-2xl border border-slate-200 hover:border-orange-200 transition-all group text-center"
                     >
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
+                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            🗂️
                         </div>
-                        <div>
-                            <h4 className="font-bold text-sm text-slate-700 group-hover:text-blue-700">{seg.title}</h4>
-                            <p className="text-[10px] text-slate-400">View Questions</p>
-                        </div>
+                        <h4 className="font-bold text-sm text-slate-700 group-hover:text-orange-700">{seg.title}</h4>
+                        <p className="text-[10px] text-slate-400 mt-1 group-hover:text-orange-400">View Collection</p>
                     </Link>
                 ))}
             </div>
@@ -263,11 +246,10 @@ export default async function HomePage() {
             {/* LEFT COLUMN: FILTER & LIST */}
             <div className="lg:col-span-8">
                 <div className="mb-8 flex items-center gap-3">
-                    <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                    <div className="w-1.5 h-10 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
                     <div>
-                        {/* CHANGED: Smaller text size for mobile compatibility */}
-                        <h2 className="text-xl md:text-3xl font-extrabold text-slate-900">Latest Materials</h2>
-                        <p className="text-slate-500 text-xs md:text-sm mt-0.5">Recently added notes, suggestions, and videos.</p>
+                        <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Latest Materials</h2>
+                        <p className="text-slate-500 text-xs md:text-sm mt-0.5 font-medium">Recently added notes, suggestions, and videos.</p>
                     </div>
                 </div>
                 <HomeMaterialsFilter segments={segments} resources={resources} />
