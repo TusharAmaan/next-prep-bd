@@ -41,7 +41,6 @@ export default function Header() {
     { name: "Courses", href: "/courses" },
     { name: "News", href: "/news" },
     { name: "Contact", href: "/contact" },
-    { name: "Donate", href: "/donate" },
   ];
 
   // --- EFFECTS ---
