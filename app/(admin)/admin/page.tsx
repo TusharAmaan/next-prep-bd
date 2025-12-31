@@ -14,7 +14,7 @@ type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; mess
 const SunEditor = dynamic(() => import("suneditor-react"), { ssr: false });
 
 const editorOptions: any = {
-    minHeight: "500px", height: "auto", placeholder: "Start content creation...",
+    minHeight: "600px", height: "auto", placeholder: "Start content creation...",
     buttonList: [
         ['undo', 'redo'], ['save', 'template'], ['font', 'fontSize', 'formatBlock'],
         ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'],
@@ -23,7 +23,7 @@ const editorOptions: any = {
         ['fullScreen', 'showBlocks', 'codeView', 'preview']
     ],
     mode: "classic", attributesWhitelist: { all: "style" },
-    defaultStyle: "font-family: Arial, 'Inter', sans-serif; font-size: 16px;color: #334155;",
+    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #334155;",
     resizingBar: true, showPathLabel: true, katex: katex 
 };
 
@@ -113,13 +113,14 @@ const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLin
 ));
 ImageInput.displayName = "ImageInput";
 
-const CategoryManager = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
+const CategoryManagerSelector = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
+    // Filter categories based on context (e.g. only show 'news' categories for News)
     const filtered = categories.filter((c:any) => c.type === context || c.type === 'general' || !c.type);
     return (
         <div className="space-y-1.5"><label className="text-xs font-bold text-slate-600 block uppercase">{label}</label><div className="flex gap-2"><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e=>{onChange(e.target.value); markDirty();}}><option value="">Select Category</option>{filtered.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div></div>
     );
 });
-CategoryManager.displayName = "CategoryManager";
+CategoryManagerSelector.displayName = "CategoryManagerSelector";
 
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
     <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
@@ -144,7 +145,7 @@ const ListHeader = memo(({ title, onAdd, onSearch, searchVal, showAdd = true }: 
 ListHeader.displayName = "ListHeader";
 
 
-// --- MAIN COMPONENT ---
+// --- MAIN PAGE ---
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -154,9 +155,18 @@ export default function AdminDashboard() {
   const [editorMode, setEditorMode] = useState(false);
   const [isDirty, setIsDirty] = useState(false); 
   
-  // --- UNIFIED STATE (Solved "Cannot find name" errors) ---
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
+  // --- STATE ---
+  const [resSearch, setResSearch] = useState("");
+  const [newsSearch, setNewsSearch] = useState("");
+  const [ebSearch, setEbSearch] = useState("");
+  const [updateSearch, setUpdateSearch] = useState("");
+  const [catSearch, setCatSearch] = useState(""); 
+
+  const [resPage, setResPage] = useState(0);
+  const [newsPage, setNewsPage] = useState(0);
+  const [ebPage, setEbPage] = useState(0);
+  const [updatePage, setUpdatePage] = useState(0);
+  
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
@@ -168,7 +178,7 @@ export default function AdminDashboard() {
   const [typeFilter, setTypeFilter] = useState("all"); 
   const [updateTypeFilter, setUpdateTypeFilter] = useState("all"); 
   const [catFilter, setCatFilter] = useState("all");
-  const [catManagerTypeFilter, setCatManagerTypeFilter] = useState("all"); // New filter for category manager 
+  const [catManagerTypeFilter, setCatManagerTypeFilter] = useState("all");
   
   // Hierarchy Selection
   const [selectedSegment, setSelectedSegment] = useState("");
@@ -189,6 +199,10 @@ export default function AdminDashboard() {
   const [newCatName, setNewCatName] = useState("");
   const [newCatType, setNewCatType] = useState("news");
 
+  // HIERARCHY MANAGER STATE
+  const [newHierarchyName, setNewHierarchyName] = useState("");
+  const [activeHierarchyLevel, setActiveHierarchyLevel] = useState<'segment'|'group'|'subject'>('segment');
+
   // --- FORM INPUTS ---
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -196,15 +210,15 @@ export default function AdminDashboard() {
   // Content Inputs
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(""); 
-  const [link, setLink] = useState("");
+  const [link, setLink] = useState(""); // Content URL (PDF, Video Link)
   const [type, setType] = useState("pdf"); 
   const [category, setCategory] = useState("");
   
-  // Media
+  // Media Inputs
   const [imageMethod, setImageMethod] = useState<'upload' | 'link'>('upload');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageLink, setImageLink] = useState("");
-  const [file, setFile] = useState<File | null>(null); 
+  const [file, setFile] = useState<File | null>(null); // Actual PDF File
 
   // Extra Fields
   const [author, setAuthor] = useState("");
@@ -255,18 +269,19 @@ export default function AdminDashboard() {
   const fetchContent = useCallback(async () => {
       if (editorMode || isLoading) return;
       
+      // HIERARCHY MANAGER DOES NOT USE THIS FETCH
+      if (activeTab === 'hierarchy') return;
+
       if (activeTab === 'categories') {
           // Special Fetch for Categories Manager
           let query = supabase.from("categories").select("*", { count: 'exact' });
           if (catManagerTypeFilter !== 'all') query = query.eq("type", catManagerTypeFilter);
-          if (searchTerm) query = query.ilike("name", `%${searchTerm}%`);
+          if (catSearch) query = query.ilike("name", `%${catSearch}%`);
           
           const { data, count } = await query.order('name', { ascending: true });
           
           if (data) {
               const counts: any = {};
-              // Note: Fetching counts for each category can be heavy if many categories. 
-              // For a small admin panel, this loop is acceptable. Optimized approach would use a SQL View.
               for (const cat of data) {
                   let table = cat.type === 'ebook' ? 'ebooks' : cat.type === 'news' ? 'news' : cat.type === 'course' ? 'courses' : 'resources';
                   const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('category', cat.name);
@@ -280,11 +295,14 @@ export default function AdminDashboard() {
       }
 
       let tableName = "";
-      if (activeTab === 'materials') tableName = "resources";
-      else if (activeTab === 'news') tableName = "news";
-      else if (activeTab === 'ebooks') tableName = "ebooks";
-      else if (activeTab === 'courses') tableName = "courses";
-      else if (activeTab === 'updates') tableName = "segment_updates";
+      let currentPage = 0;
+      let searchTerm = "";
+
+      if (activeTab === 'materials') { tableName = "resources"; currentPage = resPage; searchTerm = resSearch; }
+      else if (activeTab === 'news') { tableName = "news"; currentPage = newsPage; searchTerm = newsSearch; }
+      else if (activeTab === 'ebooks') { tableName = "ebooks"; currentPage = ebPage; searchTerm = ebSearch; }
+      else if (activeTab === 'courses') { tableName = "courses"; currentPage = 0; }
+      else if (activeTab === 'updates') { tableName = "segment_updates"; currentPage = updatePage; searchTerm = updateSearch; }
 
       let query = supabase.from(tableName).select("*", { count: 'exact' });
 
@@ -303,11 +321,11 @@ export default function AdminDashboard() {
 
       if (searchTerm) query = query.ilike("title", `%${searchTerm}%`);
 
-      const now = new Date();
       if (startDate && endDate) {
          query = query.gte('created_at', new Date(startDate).toISOString());
          query = query.lte('created_at', new Date(endDate).toISOString());
       } else if (dateFilter !== 'all') {
+          const now = new Date();
           let d;
           if(dateFilter === 'this_month') d = new Date(now.getFullYear(), now.getMonth(), 1);
           else if(dateFilter === 'last_6_months') d = new Date(now.getFullYear(), now.getMonth() - 6, 1);
@@ -323,7 +341,7 @@ export default function AdminDashboard() {
           setDataList(data);
           if (count !== null) setTotalCount(count);
       }
-  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, searchTerm, typeFilter, updateTypeFilter, catFilter, catManagerTypeFilter, dateFilter, startDate, endDate, sortConfig, currentPage, itemsPerPage, editorMode, isLoading]);
+  }, [activeTab, selectedSegment, selectedGroup, selectedSubject, resSearch, newsSearch, ebSearch, updateSearch, catSearch, typeFilter, updateTypeFilter, catFilter, catManagerTypeFilter, dateFilter, startDate, endDate, sortConfig, resPage, newsPage, ebPage, updatePage, itemsPerPage, editorMode, isLoading]);
 
   useEffect(() => { fetchContent(); }, [fetchContent]);
 
@@ -343,8 +361,9 @@ export default function AdminDashboard() {
   const handleSubjectClick = (id: string) => { setSelectedSubject(id); };
   
   const handleTabSwitch = (newTab: string) => {
-      if (isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); resetForms(); setActiveTab(newTab); setCurrentPage(0); });
-      else { setEditorMode(false); resetForms(); setActiveTab(newTab); setCurrentPage(0); setSearchTerm(""); }
+      const clearSearch = () => { setResSearch(""); setNewsSearch(""); setEbSearch(""); setUpdateSearch(""); setCatSearch(""); };
+      if (isDirty) confirmAction("Unsaved changes! Discard?", () => { setIsDirty(false); setEditorMode(false); resetForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); setEbPage(0); setUpdatePage(0); clearSearch(); });
+      else { setEditorMode(false); resetForms(); setActiveTab(newTab); setResPage(0); setNewsPage(0); setEbPage(0); setUpdatePage(0); clearSearch(); }
   };
 
   const handleAddNew = () => {
@@ -390,6 +409,12 @@ export default function AdminDashboard() {
       confirmAction("Permanently delete?", async () => { 
           await supabase.from(table).delete().eq("id", id); 
           if(table === 'categories') fetchDropdowns();
+          if(table === 'segments' || table === 'groups' || table === 'subjects') { 
+              // Refresh hierarchy
+              fetchDropdowns(); 
+              if(selectedSegment) fetchGroups(selectedSegment);
+              if(selectedGroup) fetchSubjects(selectedGroup);
+          }
           fetchContent();
           showSuccess("Deleted!"); 
       }); 
@@ -404,41 +429,61 @@ export default function AdminDashboard() {
       if (!title) return showError("Title is required");
       setSubmitting(true);
 
-      let url: string | null = link;
-      if (imageMethod === 'upload' && imageFile) {
-          const name = `img-${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-          const { data } = await supabase.storage.from('materials').upload(name, imageFile);
-          if(data) url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
-      }
-      if (file) {
-          const name = `file-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-          const { data } = await supabase.storage.from('materials').upload(name, file);
-          if(data) url = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
-      }
-
-      const payload: any = {
+      // DEFINE PAYLOAD FIRST
+      let payload: any = {
           title, 
           seo_title: seoTitle || title, 
           seo_description: seoDesc, 
           tags: tags.split(',').map(t=>t.trim()).filter(Boolean)
       };
 
+      let contentUrl: string | null = link; // Default for PDF/Video/Link
+      let coverUrl: string | null = null; // Default for Covers
+
+      // 1. Upload Cover Image (if exists)
+      if (imageMethod === 'upload' && imageFile) {
+          const name = `img-${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+          const { data } = await supabase.storage.from('materials').upload(name, imageFile);
+          if(data) {
+              const publicUrl = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
+              coverUrl = publicUrl; 
+              // If type is BLOG, the cover is the content_url usually (or separate field)
+              if (activeTab === 'materials' && type === 'blog') contentUrl = publicUrl; 
+              if (activeTab === 'news') payload.image_url = publicUrl;
+          }
+      } else if (imageMethod === 'link' && imageLink) {
+          coverUrl = imageLink;
+          if (activeTab === 'materials' && type === 'blog') contentUrl = imageLink;
+      }
+
+      // 2. Upload Content File (PDF)
+      if (file) {
+          const name = `file-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+          const { data } = await supabase.storage.from('materials').upload(name, file);
+          if(data) contentUrl = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
+      }
+
       if (activeTab === 'materials') {
           payload.type = type;
           payload.segment_id = selectedSegment ? Number(selectedSegment) : null;
           payload.group_id = selectedGroup ? Number(selectedGroup) : null;
           payload.subject_id = selectedSubject ? Number(selectedSubject) : null;
-          if (type === 'blog') { payload.content_body = content; payload.content_url = url; payload.category = category; }
+          if (type === 'blog') { payload.content_body = content; payload.content_url = contentUrl; payload.category = category; }
           else if (type === 'question') { payload.content_body = content; }
-          else { payload.content_url = url; }
+          else { payload.content_url = contentUrl; }
       } else if (activeTab === 'news') {
-          payload.content = content; payload.category = category; payload.image_url = url;
+          payload.content = content; payload.category = category; 
+          if(coverUrl) payload.image_url = coverUrl; // News uses image_url
       } else if (activeTab === 'ebooks') {
-          payload.author = author; payload.category = category; payload.description = content; payload.pdf_url = link; payload.cover_url = url;
+          payload.author = author; payload.category = category; payload.description = content; 
+          payload.pdf_url = contentUrl; // Ebook PDF
+          if(coverUrl) payload.cover_url = coverUrl; // Ebook Cover
       } else if (activeTab === 'courses') {
-          payload.instructor = instructor; payload.price = price; payload.discount_price = discountPrice; payload.duration = duration; payload.enrollment_link = link; payload.description = content; payload.category = category; payload.thumbnail_url = url;
+          payload.instructor = instructor; payload.price = price; payload.discount_price = discountPrice; payload.duration = duration; payload.enrollment_link = link; payload.description = content; payload.category = category; 
+          if(coverUrl) payload.thumbnail_url = coverUrl;
       } else if (activeTab === 'updates') {
-          payload.type = type; payload.content_body = content; payload.attachment_url = url;
+          payload.type = type; payload.content_body = content; 
+          if(contentUrl) payload.attachment_url = contentUrl;
           payload.segment_id = selectedSegment ? Number(selectedSegment) : null;
       }
 
@@ -467,7 +512,9 @@ export default function AdminDashboard() {
 
   const handleAddCategory = async () => {
       if(!newCatName) return showError("Category name required");
-      await supabase.from('categories').insert([{ name: newCatName, type: newCatType }]);
+      // Force context if selected
+      const typeToSave = newCatType || 'general';
+      await supabase.from('categories').insert([{ name: newCatName, type: typeToSave }]);
       setNewCatName("");
       setIsAddCatOpen(false);
       fetchDropdowns();
@@ -475,23 +522,61 @@ export default function AdminDashboard() {
       showSuccess("Category Added");
   };
 
-  const Pagination = () => (
-      <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
-          <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rows:</span>
-              <select className="bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold py-1.5 px-2 outline-none cursor-pointer" value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setCurrentPage(0);}}>
-                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option><option value={100}>100</option>
-              </select>
-          </div>
-          <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-400">Page {currentPage+1}</span>
-              <div className="flex gap-1">
-                  <button onClick={()=>setCurrentPage(Math.max(0,currentPage-1))} disabled={currentPage===0} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-indigo-50 disabled:opacity-30">←</button>
-                  <button onClick={()=>setCurrentPage(currentPage+1)} disabled={(currentPage+1)*itemsPerPage >= totalCount} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-indigo-50 disabled:opacity-30">→</button>
+  // --- HIERARCHY MANAGEMENT HANDLER ---
+  const handleHierarchyAdd = async () => {
+      if(!newHierarchyName) return showError("Name required");
+      const slug = newHierarchyName.toLowerCase().replace(/\s+/g, '-');
+      
+      if(activeHierarchyLevel === 'segment') {
+          await supabase.from('segments').insert([{ title: newHierarchyName, slug }]);
+      } else if (activeHierarchyLevel === 'group') {
+          if(!selectedSegment) return showError("Select a Segment first");
+          await supabase.from('groups').insert([{ title: newHierarchyName, slug, segment_id: Number(selectedSegment) }]);
+      } else if (activeHierarchyLevel === 'subject') {
+          if(!selectedGroup) return showError("Select a Group first");
+          await supabase.from('subjects').insert([{ title: newHierarchyName, slug, group_id: Number(selectedGroup), segment_id: Number(selectedSegment) }]);
+      }
+      
+      setNewHierarchyName("");
+      fetchDropdowns();
+      if(selectedSegment) fetchGroups(selectedSegment);
+      if(selectedGroup) fetchSubjects(selectedGroup);
+      showSuccess("Added Successfully");
+  };
+
+  // --- PAGINATION RENDERER (FIXED DYNAMIC SCOPE) ---
+  const Pagination = () => {
+      // Determine which page state to use
+      const currentPage = activeTab === 'materials' ? resPage : 
+                          activeTab === 'news' ? newsPage : 
+                          activeTab === 'ebooks' ? ebPage : 
+                          activeTab === 'updates' ? updatePage : 0;
+
+      const setPage = (p: number) => {
+          if (activeTab === 'materials') setResPage(p);
+          else if (activeTab === 'news') setNewsPage(p);
+          else if (activeTab === 'ebooks') setEbPage(p);
+          else if (activeTab === 'updates') setUpdatePage(p);
+      };
+
+      return (
+          <div className="flex justify-between items-center px-6 py-4 bg-white border-t border-gray-100">
+              <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rows:</span>
+                  <select className="bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold py-1.5 px-2 outline-none cursor-pointer" value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setPage(0);}}>
+                      <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option><option value={100}>100</option>
+                  </select>
+              </div>
+              <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-slate-400">Page {currentPage+1}</span>
+                  <div className="flex gap-1">
+                      <button onClick={()=>setPage(Math.max(0,currentPage-1))} disabled={currentPage===0} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-indigo-50 disabled:opacity-30">←</button>
+                      <button onClick={()=>setPage(currentPage+1)} disabled={(currentPage+1)*itemsPerPage >= totalCount} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-indigo-50 disabled:opacity-30">→</button>
+                  </div>
               </div>
           </div>
-      </div>
-  );
+      );
+  };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-slate-400 font-bold bg-[#F8FAFC]">Loading Dashboard...</div>;
   if (!isAuthenticated) return null;
@@ -505,7 +590,7 @@ export default function AdminDashboard() {
 
         <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-2xl pt-28">
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                {[{ id: 'materials', label: 'Study Materials', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }, { id: 'categories', label: 'Categories', icon: '🏷️' }].map((tab) => (
+                {[{ id: 'materials', label: 'Study Materials', icon: '📚' }, { id: 'updates', label: 'Updates', icon: '📢' }, { id: 'ebooks', label: 'eBooks', icon: '📖' }, { id: 'courses', label: 'Courses', icon: '🎓' }, { id: 'news', label: 'Newsroom', icon: '📰' }, { id: 'hierarchy', label: 'Hierarchy', icon: '🌳' }, { id: 'categories', label: 'Categories', icon: '🏷️' }].map((tab) => (
                     <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}><span className="text-lg opacity-80">{tab.icon}</span> {tab.label}</button>
                 ))}
             </nav>
@@ -514,7 +599,58 @@ export default function AdminDashboard() {
 
         <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
             <div className="max-w-[1800px] mx-auto w-full">
-                {!editorMode && <ListHeader title={activeTab.replace('-', ' ').toUpperCase()} onAdd={() => { if(activeTab==='categories') openCategoryModal('general'); else handleAddNew(); }} onSearch={(v:string)=>setSearchTerm(v)} searchVal={searchTerm} />}
+                {!editorMode && activeTab !== 'hierarchy' && <ListHeader title={activeTab.replace('-', ' ').toUpperCase()} onAdd={() => { if(activeTab==='categories') openCategoryModal('general'); else handleAddNew(); }} onSearch={(v:string)=>{ if(activeTab==='materials') setResSearch(v); else if(activeTab==='news') setNewsSearch(v); else if(activeTab==='ebooks') setEbSearch(v); else if(activeTab==='updates') setUpdateSearch(v); else if(activeTab==='categories') setCatSearch(v); }} searchVal={activeTab==='materials'?resSearch:activeTab==='news'?newsSearch:activeTab==='ebooks'?ebSearch:activeTab==='updates'?updateSearch:catSearch} />}
+
+                {/* --- HIERARCHY MANAGER (MILLER COLUMNS) --- */}
+                {activeTab === 'hierarchy' && (
+                    <div className="animate-fade-in h-[calc(100vh-100px)] flex flex-col">
+                        <div className="mb-6 flex justify-between items-center">
+                            <h2 className="text-2xl font-black text-slate-800">Hierarchy Manager</h2>
+                            <div className="flex gap-2">
+                                <input className="bg-white border p-2 rounded-lg text-sm outline-none w-64" placeholder={`New ${activeHierarchyLevel}...`} value={newHierarchyName} onChange={e=>setNewHierarchyName(e.target.value)} />
+                                <button onClick={handleHierarchyAdd} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add {activeHierarchyLevel}</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 grid grid-cols-3 gap-6 overflow-hidden">
+                            {/* COL 1: SEGMENTS */}
+                            <div className="bg-white border rounded-2xl flex flex-col overflow-hidden shadow-sm" onClick={()=>setActiveHierarchyLevel('segment')}>
+                                <div className={`p-4 font-bold border-b bg-slate-50 ${activeHierarchyLevel==='segment'?'text-indigo-600':'text-slate-500'}`}>1. Segments</div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                    {segments.map(s => (
+                                        <div key={s.id} onClick={()=>handleSegmentClick(String(s.id))} className={`p-3 rounded-xl cursor-pointer flex justify-between items-center ${selectedSegment===String(s.id)?'bg-indigo-600 text-white':'hover:bg-slate-50 text-slate-700'}`}>
+                                            <span className="font-medium text-sm">{s.title}</span>
+                                            <button onClick={(e)=>{e.stopPropagation(); deleteItem('segments', s.id)}} className={`text-xs ${selectedSegment===String(s.id)?'text-indigo-200 hover:text-white':'text-slate-300 hover:text-red-500'}`}>🗑️</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* COL 2: GROUPS */}
+                            <div className={`bg-white border rounded-2xl flex flex-col overflow-hidden shadow-sm transition-opacity ${selectedSegment ? 'opacity-100':'opacity-50 pointer-events-none'}`} onClick={()=>setActiveHierarchyLevel('group')}>
+                                <div className={`p-4 font-bold border-b bg-slate-50 ${activeHierarchyLevel==='group'?'text-indigo-600':'text-slate-500'}`}>2. Groups</div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                    {groups.map(g => (
+                                        <div key={g.id} onClick={()=>handleGroupClick(String(g.id))} className={`p-3 rounded-xl cursor-pointer flex justify-between items-center ${selectedGroup===String(g.id)?'bg-indigo-600 text-white':'hover:bg-slate-50 text-slate-700'}`}>
+                                            <span className="font-medium text-sm">{g.title}</span>
+                                            <button onClick={(e)=>{e.stopPropagation(); deleteItem('groups', g.id)}} className={`text-xs ${selectedGroup===String(g.id)?'text-indigo-200 hover:text-white':'text-slate-300 hover:text-red-500'}`}>🗑️</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* COL 3: SUBJECTS */}
+                            <div className={`bg-white border rounded-2xl flex flex-col overflow-hidden shadow-sm transition-opacity ${selectedGroup ? 'opacity-100':'opacity-50 pointer-events-none'}`} onClick={()=>setActiveHierarchyLevel('subject')}>
+                                <div className={`p-4 font-bold border-b bg-slate-50 ${activeHierarchyLevel==='subject'?'text-indigo-600':'text-slate-500'}`}>3. Subjects</div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                    {subjects.map(s => (
+                                        <div key={s.id} className="p-3 rounded-xl flex justify-between items-center hover:bg-slate-50 text-slate-700">
+                                            <span className="font-medium text-sm">{s.title}</span>
+                                            <button onClick={()=>deleteItem('subjects', s.id)} className="text-slate-300 hover:text-red-500 text-xs">🗑️</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* CATEGORIES MANAGEMENT VIEW */}
                 {activeTab === 'categories' && !editorMode && (
@@ -545,7 +681,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* OTHER LIST VIEWS */}
-                {activeTab !== 'categories' && !editorMode && (
+                {activeTab !== 'categories' && activeTab !== 'hierarchy' && !editorMode && (
                     <div className="animate-fade-in space-y-6">
                         <FilterBar 
                             segments={segments} groups={groups} subjects={subjects} 
@@ -580,7 +716,7 @@ export default function AdminDashboard() {
                                         <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    {(activeTab === 'news' || activeTab === 'ebooks' || (activeTab==='materials' && item.type==='blog')) && item.image_url && <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0"><img src={item.image_url || item.cover_url} className="w-full h-full object-cover"/></div>}
+                                                    {(activeTab === 'news' || activeTab === 'ebooks' || (activeTab==='materials' && item.type==='blog')) && (item.image_url || item.cover_url) && <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0"><img src={item.image_url || item.cover_url} className="w-full h-full object-cover"/></div>}
                                                     <div>
                                                         <p className="font-bold text-slate-800 text-base">{item.title}</p>
                                                         {(activeTab === 'ebooks' || activeTab === 'courses') && <p className="text-[10px] text-slate-400 mt-0.5">{item.author || item.instructor}</p>}
@@ -659,7 +795,7 @@ export default function AdminDashboard() {
 
                                         {/* Category Selectors */}
                                         {(activeTab === 'news' || activeTab === 'ebooks' || (activeTab === 'materials' && type === 'blog') || activeTab === 'courses') && (
-                                            <CategoryManager label="Category" value={category} onChange={setCategory} context={activeTab === 'materials' ? 'blog' : activeTab === 'courses' ? 'course' : activeTab === 'ebooks' ? 'ebook' : 'news'} categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
+                                            <CategoryManagerSelector label="Category" value={category} onChange={setCategory} context={activeTab === 'materials' ? 'blog' : activeTab === 'courses' ? 'course' : activeTab === 'ebooks' ? 'ebook' : 'news'} categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
                                         )}
 
                                         {/* Extra Fields based on Tab */}
