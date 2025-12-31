@@ -22,11 +22,12 @@ import {
   Youtube,
   Clock,
   ChevronRight,
-  FileClock
+  FileClock,
+  User
 } from "lucide-react";
 
 // 1. CACHING CONFIG
-export const revalidate = 0; // Set to 0 temporarily to ensure you see your new ebook immediately
+export const revalidate = 0; // Keep 0 to see instant updates for new ebooks
 
 export default async function HomePage() {
   
@@ -39,11 +40,10 @@ export default async function HomePage() {
       .order("created_at", { ascending: false }),
     supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
     
-    // UPDATED QUERY: Checks for both 'pdf' and 'ebook' types
-    supabase.from("resources")
-      .select("id, title, content_url, created_at, type")
-      .in("type", ["pdf", "ebook"]) 
-      .limit(4)
+    // UPDATED: Fetch from 'ebooks' table to match your EbooksPage
+    supabase.from("ebooks")
+      .select("id, title, author, content_url, created_at")
+      .limit(5)
       .order("created_at", { ascending: false })
   ]);
 
@@ -251,7 +251,7 @@ export default async function HomePage() {
             {/* RIGHT COLUMN: SIDEBAR */}
             <div className="lg:col-span-4 space-y-6">
                 
-                {/* 1. SOCIAL WIDGETS (REPLICA DESIGN) */}
+                {/* 1. SOCIAL WIDGETS */}
                 <div className="space-y-4">
                     {/* Facebook Button */}
                     <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
@@ -265,11 +265,12 @@ export default async function HomePage() {
                         </div>
                     </a>
 
-                    {/* YouTube Button (FIXED ICON) */}
+                    {/* YouTube Button - FIXED ICON */}
                     <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
                        className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            <Youtube className="w-6 h-6 fill-current" />
+                            {/* fill="currentColor" makes the icon solid white, matching the provided image */}
+                            <Youtube className="w-6 h-6" fill="currentColor" />
                         </div>
                         <div className="flex flex-col">
                             <span className="text-lg font-bold leading-tight">Watch Classes</span>
@@ -296,7 +297,7 @@ export default async function HomePage() {
                     <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
                 </div>
 
-                {/* 3. POPULAR EBOOKS */}
+                {/* 3. POPULAR EBOOKS (UPDATED DATA SOURCE) */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-purple-600" />
@@ -310,8 +311,10 @@ export default async function HomePage() {
                                         <div className="flex items-center gap-3 overflow-hidden">
                                             <div className="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0"><FileText className="w-4 h-4" /></div>
                                             <div className="min-w-0">
-                                                <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">{book.title}</h4>
-                                                <p className="text-[10px] text-slate-400">PDF • Free Download</p>
+                                                <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">
+                                                    <Link href={`/ebooks/${book.id}`} className="hover:underline">{book.title}</Link>
+                                                </h4>
+                                                <p className="text-[10px] text-slate-400">{book.author || 'PDF • Free Download'}</p>
                                             </div>
                                         </div>
                                         <a href={book.content_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Download className="w-4 h-4" /></a>
@@ -322,7 +325,6 @@ export default async function HomePage() {
                             <div className="p-4 text-center text-slate-400 text-xs font-medium">No eBooks available.</div>
                         )}
                     </div>
-                    {/* Link updated to /ebooks */}
                     <Link href="/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
                 </div>
 
