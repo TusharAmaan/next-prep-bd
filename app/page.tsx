@@ -26,11 +26,11 @@ export default async function HomePage() {
   // --- HELPER: Question Bank Relatable Texts ---
   const getQuestionText = (slug: string) => {
     const s = slug.toLowerCase();
-    if (s.includes('ssc')) return "Check out previous year questions of SSC and School exams.";
-    if (s.includes('hsc')) return "Check out previous year questions of HSC and College exams.";
-    if (s.includes('admission')) return "Practice with previous year questions of University & Medical Admission exams.";
-    if (s.includes('job')) return "Prepare with previous year questions for BCS, Bank & Govt. jobs.";
-    return `Browse our extensive collection of ${slug.replace(/-/g, ' ')} questions.`;
+    if (s.includes('ssc')) return "Dhaka, Rajshahi, Comilla & all board questions.";
+    if (s.includes('hsc')) return "All board questions & college test papers.";
+    if (s.includes('admission')) return "DU, BUET, Medical & GMAT past papers.";
+    if (s.includes('job')) return "BCS, Bank & NTRCA previous exams.";
+    return `Browse archive of ${slug.replace(/-/g, ' ')} questions.`;
   };
 
   // --- CONFIG: Custom Goal Cards ---
@@ -188,7 +188,6 @@ export default async function HomePage() {
                             <h3 className="font-extrabold text-sm md:text-lg text-white tracking-wide leading-tight mb-1">
                               {card.title}
                             </h3>
-                            {/* Updated Text Size for Desktop */}
                             <p className="hidden md:block text-xs md:text-sm font-medium text-white/90 leading-snug">
                                 {card.desc}
                             </p>
@@ -205,7 +204,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. PREVIOUS YEAR QUESTIONS (NEW CARD UI)
+          4. PREVIOUS YEAR QUESTIONS (UPDATED LINK & DESIGN)
          ========================================= */}
       <section className="py-16 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
@@ -222,29 +221,44 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {segments.map((seg: any) => (
                     <Link 
-                        href={`/resources/${seg.slug}?category=Previous%20Year%20Questions`} 
+                        /* -----------------------------------------------
+                           UPDATED LINK FORMAT: ?type=question
+                           ----------------------------------------------- */
+                        href={`/resources/${seg.slug}?type=question`} 
                         key={seg.id}
+                        /* -----------------------------------------------
+                           UPDATED CARD DESIGN: High Contrast Dark Theme
+                           ----------------------------------------------- */
                         className="
-                            bg-white p-6 rounded-2xl border border-slate-200 shadow-sm 
-                            hover:shadow-lg hover:border-blue-200 transition-all group flex flex-col h-full
+                           group relative overflow-hidden rounded-2xl bg-slate-900 p-6 shadow-lg 
+                           transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl 
+                           border border-slate-800 flex flex-col h-full
                         "
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        {/* Decorative Gradient Top Border */}
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 group-hover:h-2 transition-all duration-300"></div>
+
+                        <div className="flex items-start justify-between mb-4 relative z-10">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-sm text-blue-300 rounded-xl flex items-center justify-center text-2xl group-hover:bg-white/20 group-hover:text-white transition-all">
                                 ❓
                             </div>
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-500 transition-colors">
-                                Open Bank
+                            <span className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-[10px] font-bold uppercase tracking-wider border border-blue-500/30">
+                                Question Bank
                             </span>
                         </div>
                         
-                        <h4 className="font-extrabold text-xl text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                        <h4 className="font-extrabold text-xl text-white mb-2 group-hover:text-blue-300 transition-colors">
                             {seg.title}
                         </h4>
                         
-                        <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                        <p className="text-sm text-slate-400 leading-relaxed font-medium mb-6">
                             {getQuestionText(seg.slug)}
                         </p>
+
+                        <div className="mt-auto flex items-center gap-2 text-sm font-bold text-blue-400 group-hover:text-white transition-colors">
+                            <span>Solve Papers</span>
+                            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </div>
                     </Link>
                 ))}
             </div>
@@ -252,7 +266,7 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          5. MAIN CONTENT AREA (Refined Mobile Header)
+          5. MAIN CONTENT AREA
          ========================================= */}
       <section className="pt-10 pb-20 max-w-7xl mx-auto px-4 md:px-6">
         
@@ -264,7 +278,7 @@ export default async function HomePage() {
             
             {/* LEFT COLUMN */}
             <div className="lg:col-span-8">
-                {/* NEW HEADER DESIGN */}
+                {/* HEADER DESIGN */}
                 <div className="mb-8 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-2xl">⚡</div>
@@ -296,7 +310,7 @@ export default async function HomePage() {
                                  <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-1 inline-block uppercase">{n.category || 'Update'}</span>
                                  <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">{n.title}</h4>
                                  <p className="text-[10px] text-slate-400 mt-1.5 flex items-center gap-1">
-                                     <span>🕒</span> {new Date(n.created_at).toLocaleDateString()}
+                                    <span>🕒</span> {new Date(n.created_at).toLocaleDateString()}
                                  </p>
                              </Link>
                           ))}
