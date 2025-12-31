@@ -22,12 +22,11 @@ import {
   Youtube,
   Clock,
   ChevronRight,
-  FileClock, 
-  PlayCircle
+  FileClock
 } from "lucide-react";
 
 // 1. CACHING CONFIG
-export const revalidate = 60;
+export const revalidate = 0; // Set to 0 temporarily to ensure you see your new ebook immediately
 
 export default async function HomePage() {
   
@@ -39,9 +38,11 @@ export default async function HomePage() {
       .limit(50) 
       .order("created_at", { ascending: false }),
     supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
+    
+    // UPDATED QUERY: Checks for both 'pdf' and 'ebook' types
     supabase.from("resources")
-      .select("id, title, content_url, created_at")
-      .eq("type", "pdf")
+      .select("id, title, content_url, created_at, type")
+      .in("type", ["pdf", "ebook"]) 
       .limit(4)
       .order("created_at", { ascending: false })
   ]);
@@ -165,7 +166,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. PREVIOUS YEAR QUESTIONS (UPDATED CARDS: Black/Blue Gradient) */}
+      {/* 4. PREVIOUS YEAR QUESTIONS */}
       <section className="py-20 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12 space-y-3">
@@ -181,7 +182,6 @@ export default async function HomePage() {
                     <Link 
                         href={`/resources/${seg.slug}?type=question`} 
                         key={seg.id}
-                        /* DARK GRADIENT CARD - Compact & Optimized */
                         className="
                            group relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950
                            rounded-2xl p-5 border border-slate-700/50 shadow-lg
@@ -265,11 +265,11 @@ export default async function HomePage() {
                         </div>
                     </a>
 
-                    {/* YouTube Button */}
+                    {/* YouTube Button (FIXED ICON) */}
                     <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
                        className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            <PlayCircle className="w-6 h-6 fill-current" />
+                            <Youtube className="w-6 h-6 fill-current" />
                         </div>
                         <div className="flex flex-col">
                             <span className="text-lg font-bold leading-tight">Watch Classes</span>
@@ -322,7 +322,8 @@ export default async function HomePage() {
                             <div className="p-4 text-center text-slate-400 text-xs font-medium">No eBooks available.</div>
                         )}
                     </div>
-                    <Link href="/resources/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
+                    {/* Link updated to /ebooks */}
+                    <Link href="/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
                 </div>
 
                 {/* 4. TEACHER PROMO */}
@@ -339,7 +340,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 6. APP DOWNLOAD */}
+      {/* 5. APP DOWNLOAD */}
       <HomeAppSection />
     </div>
   );
