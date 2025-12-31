@@ -22,8 +22,8 @@ import {
   Youtube,
   Clock,
   ChevronRight,
-  FileClock, // New Icon for Past Papers
-  Files
+  FileClock, 
+  PlayCircle
 } from "lucide-react";
 
 // 1. CACHING CONFIG
@@ -53,20 +53,20 @@ export default async function HomePage() {
 
   const getQuestionText = (slug: string) => {
     const s = slug.toLowerCase();
-    if (s.includes('ssc')) return "Dhaka, Rajshahi, Comilla & all board questions.";
-    if (s.includes('hsc')) return "All board questions & college test papers.";
-    if (s.includes('admission')) return "DU, BUET, Medical & GMAT past papers.";
-    if (s.includes('job')) return "BCS, Bank & NTRCA previous exams.";
-    return `Browse archive of ${slug.replace(/-/g, ' ')} questions.`;
+    if (s.includes('ssc')) return "All board questions.";
+    if (s.includes('hsc')) return "Board & college tests.";
+    if (s.includes('admission')) return "DU, BUET, Medical papers.";
+    if (s.includes('job')) return "BCS & Bank exams.";
+    return `Archive of ${slug.replace(/-/g, ' ')}.`;
   };
 
   const goalCards = [
-    { title: "SSC", desc: "Complete guide for Science, Arts & Commerce.", link: "/resources/ssc", bg: "bg-gradient-to-br from-blue-600 to-indigo-700", icon: School },
-    { title: "HSC", desc: "Notes, question banks & college admission prep.", link: "/resources/hsc", bg: "bg-gradient-to-br from-purple-600 to-fuchsia-700", icon: GraduationCap },
-    { title: "University Admission", desc: "Varsity A/B/C unit & Engineering prep.", link: "/resources/university-admission", bg: "bg-gradient-to-br from-rose-500 to-orange-600", icon: BookOpen },
-    { title: "Medical Prep", desc: "MBBS & Dental admission comprehensive guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-gradient-to-br from-emerald-500 to-teal-700", icon: Stethoscope },
-    { title: "IBA - MBA", desc: "Master your BBA/MBA admission tests.", link: "/resources/master's-admission/mba/iba", bg: "bg-gradient-to-br from-slate-700 to-black", icon: TrendingUp },
-    { title: "Job Preparation", desc: "BCS, Bank Jobs & NTRCA preparation.", link: "/resources/job-prep", bg: "bg-gradient-to-br from-cyan-500 to-blue-700", icon: Briefcase }
+    { title: "SSC", desc: "Science, Arts & Commerce guide.", link: "/resources/ssc", bg: "bg-gradient-to-br from-blue-600 to-indigo-700", icon: School },
+    { title: "HSC", desc: "Notes & college admission prep.", link: "/resources/hsc", bg: "bg-gradient-to-br from-purple-600 to-fuchsia-700", icon: GraduationCap },
+    { title: "University Admission", desc: "Varsity & Engineering prep.", link: "/resources/university-admission", bg: "bg-gradient-to-br from-rose-500 to-orange-600", icon: BookOpen },
+    { title: "Medical Prep", desc: "MBBS & Dental admission guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-gradient-to-br from-emerald-500 to-teal-700", icon: Stethoscope },
+    { title: "IBA - MBA", desc: "BBA/MBA admission tests.", link: "/resources/master's-admission/mba/iba", bg: "bg-gradient-to-br from-slate-700 to-black", icon: TrendingUp },
+    { title: "Job Preparation", desc: "BCS, Bank Jobs & NTRCA.", link: "/resources/job-prep", bg: "bg-gradient-to-br from-cyan-500 to-blue-700", icon: Briefcase }
   ];
 
   return (
@@ -165,54 +165,53 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. PREVIOUS YEAR QUESTIONS (UPDATED CARDS) */}
+      {/* 4. PREVIOUS YEAR QUESTIONS (UPDATED CARDS: Black/Blue Gradient) */}
       <section className="py-20 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12 space-y-3">
                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-                  Previous Year <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Questions</span>
+                  Previous Year <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Questions</span>
                 </h2>
-                <div className="w-16 h-1.5 bg-amber-500 mx-auto rounded-full"></div>
+                <div className="w-16 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
                 <p className="text-slate-500 font-medium pt-2">Access our extensive archive of past board questions.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {segments.map((seg: any) => (
                     <Link 
                         href={`/resources/${seg.slug}?type=question`} 
                         key={seg.id}
-                        /* UPDATED CARD DESIGN: 
-                           1. Removed top-right text.
-                           2. Gradient Icon Box for "Catchy Color".
-                           3. Left border accent color.
-                        */
+                        /* DARK GRADIENT CARD - Compact & Optimized */
                         className="
-                           group relative bg-gradient-to-br from-white to-slate-50 
-                           rounded-2xl p-6 border-l-4 border-l-amber-500 
-                           border-y border-r border-slate-200 shadow-sm
-                           hover:shadow-2xl hover:shadow-amber-500/10 
-                           transition-all duration-300 hover:-translate-y-1 flex flex-col h-full
+                           group relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950
+                           rounded-2xl p-5 border border-slate-700/50 shadow-lg
+                           hover:shadow-xl hover:shadow-blue-500/10 
+                           transition-all duration-300 hover:-translate-y-1 flex flex-col
                         "
                     >
-                        {/* Icon Row */}
-                        <div className="flex items-center justify-between mb-5">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300">
-                                {/* Changed Question Mark to FileClock (History/Past) */}
-                                <FileClock className="w-7 h-7" />
+                        {/* Glowing Accent Top */}
+                        <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                                <FileClock className="w-5 h-5" />
                             </div>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-700">
+                                Archive
+                            </span>
                         </div>
                         
-                        <h4 className="font-extrabold text-2xl text-slate-900 mb-2 group-hover:text-amber-600 transition-colors">
+                        <h4 className="font-bold text-lg text-white mb-1 group-hover:text-blue-300 transition-colors">
                             {seg.title}
                         </h4>
                         
-                        <p className="text-sm text-slate-500 leading-relaxed font-medium mb-6">
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
                             {getQuestionText(seg.slug)}
                         </p>
 
-                        <div className="mt-auto flex items-center gap-2 text-sm font-bold text-amber-600 group-hover:gap-3 transition-all uppercase tracking-wide">
-                            <span>View Archive</span>
-                            <ChevronRight className="w-4 h-4" />
+                        <div className="mt-auto pt-3 border-t border-white/5 flex items-center gap-2 text-xs font-bold text-blue-400 group-hover:text-blue-300 transition-colors uppercase tracking-wide">
+                            <span>View Questions</span>
+                            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                         </div>
                     </Link>
                 ))}
@@ -250,9 +249,36 @@ export default async function HomePage() {
             </div>
 
             {/* RIGHT COLUMN: SIDEBAR */}
-            <div className="lg:col-span-4 space-y-8">
+            <div className="lg:col-span-4 space-y-6">
                 
-                {/* 1. NOTICE BOARD */}
+                {/* 1. SOCIAL WIDGETS (REPLICA DESIGN) */}
+                <div className="space-y-4">
+                    {/* Facebook Button */}
+                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
+                       className="flex items-center gap-4 bg-[#1877F2] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <Facebook className="w-6 h-6 fill-current" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-lg font-bold leading-tight">Join Community</span>
+                            <span className="text-xs font-medium opacity-90">Facebook Page</span>
+                        </div>
+                    </a>
+
+                    {/* YouTube Button */}
+                    <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
+                       className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <PlayCircle className="w-6 h-6 fill-current" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-lg font-bold leading-tight">Watch Classes</span>
+                            <span className="text-xs font-medium opacity-90">YouTube Channel</span>
+                        </div>
+                    </a>
+                </div>
+
+                {/* 2. NOTICE BOARD */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="bg-[#0f172a] text-white px-5 py-4 flex justify-between items-center">
                         <h3 className="font-bold text-sm flex items-center gap-2"><Bell className="w-4 h-4" /> Notice Board</h3>
@@ -270,7 +296,7 @@ export default async function HomePage() {
                     <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
                 </div>
 
-                {/* 2. POPULAR EBOOKS */}
+                {/* 3. POPULAR EBOOKS */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-purple-600" />
@@ -298,23 +324,6 @@ export default async function HomePage() {
                     </div>
                     <Link href="/resources/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
                 </div>
-                
-                {/* 3. SOCIAL WIDGETS (COMPLETELY REDESIGNED) */}
-                <div className="grid grid-cols-2 gap-3">
-                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
-                       className="flex flex-col items-center justify-center p-4 bg-[#1877F2] text-white rounded-xl shadow-md hover:bg-[#166fe5] hover:-translate-y-1 transition-all group">
-                        <Facebook className="w-8 h-8 mb-2 fill-current" />
-                        <span className="text-xs font-black uppercase tracking-wide">Facebook</span>
-                        <span className="text-[10px] opacity-80">Like Page</span>
-                    </a>
-
-                    <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
-                       className="flex flex-col items-center justify-center p-4 bg-[#FF0000] text-white rounded-xl shadow-md hover:bg-[#e60000] hover:-translate-y-1 transition-all group">
-                        <Youtube className="w-8 h-8 mb-2 fill-current" />
-                        <span className="text-xs font-black uppercase tracking-wide">YouTube</span>
-                        <span className="text-[10px] opacity-80">Subscribe</span>
-                    </a>
-                </div>
 
                 {/* 4. TEACHER PROMO */}
                 <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden group">
@@ -330,7 +339,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. APP DOWNLOAD */}
+      {/* 6. APP DOWNLOAD */}
       <HomeAppSection />
     </div>
   );
