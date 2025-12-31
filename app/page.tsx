@@ -23,50 +23,55 @@ export default async function HomePage() {
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
 
-  // --- CONFIG: Custom Goal Cards (Mixing DB Segments + Custom Deep Links) ---
-  // We manually define the visual style and links here to include your specific requests
+  // --- CONFIG: Custom Goal Cards ---
   const goalCards = [
     {
       title: "SSC",
+      desc: "Complete guide for Science, Arts & Commerce with suggestions.",
       link: "/resources/ssc",
-      bg: "bg-gradient-to-br from-blue-500 to-indigo-600",
+      bg: "bg-gradient-to-br from-blue-600 to-indigo-700",
       shadow: "shadow-blue-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
     },
     {
       title: "HSC",
+      desc: "Notes, question banks & college admission prep.",
       link: "/resources/hsc",
-      bg: "bg-gradient-to-br from-purple-500 to-fuchsia-600",
+      bg: "bg-gradient-to-br from-purple-600 to-fuchsia-700",
       shadow: "shadow-purple-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
     },
     {
-      title: "Admission",
+      title: "University Admission",
+      desc: "Varsity A/B/C unit & Engineering prep materials.",
       link: "/resources/university-admission",
-      bg: "bg-gradient-to-br from-rose-500 to-orange-500",
+      bg: "bg-gradient-to-br from-rose-500 to-orange-600",
       shadow: "shadow-rose-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
     },
     {
       title: "Medical Prep",
+      desc: "MBBS & Dental admission comprehensive guide.",
       link: "/resources/university-admission/science/medical-admission",
-      bg: "bg-gradient-to-br from-emerald-400 to-teal-600",
+      bg: "bg-gradient-to-br from-emerald-500 to-teal-700",
       shadow: "shadow-emerald-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> // Heart/Health Icon
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
     },
     {
       title: "IBA - MBA",
+      desc: "Master your BBA/MBA admission tests.",
       link: "/resources/master's-admission/mba/iba",
       bg: "bg-gradient-to-br from-slate-700 to-black",
       shadow: "shadow-slate-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> // Briefcase
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
     },
     {
       title: "Govt. Jobs",
+      desc: "BCS, Bank Jobs & NTRCA preparation.",
       link: "/resources/job-prep/govt.-jobs",
-      bg: "bg-gradient-to-br from-cyan-500 to-blue-600",
+      bg: "bg-gradient-to-br from-cyan-500 to-blue-700",
       shadow: "shadow-cyan-200",
-      icon: <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg> // Building
+      icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
     }
   ];
 
@@ -83,7 +88,7 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-sm font-semibold text-blue-100 mb-8 shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold text-blue-100 mb-8 shadow-lg">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -91,7 +96,7 @@ export default async function HomePage() {
                 Bangladesh's Largest Education Portal
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
+            <h1 className="text-4xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
                 Master Your Exams with <br/> 
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">NextPrepBD</span>
             </h1>
@@ -104,7 +109,7 @@ export default async function HomePage() {
                 <input 
                     name="q" 
                     type="text" 
-                    placeholder="Search for notes (e.g. Physics)" 
+                    placeholder="Search notes (e.g. Physics)" 
                     className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 px-4 py-3 sm:px-6 sm:py-4 text-base sm:text-lg w-full"
                     required
                 />
@@ -121,74 +126,67 @@ export default async function HomePage() {
       {/* =========================================
           2. STATS BAR
          ========================================= */}
-      <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-20">
-        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-12">
+      <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-16 md:-mt-20">
+        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-6 md:p-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 <div className="flex flex-col items-center text-center p-2 group">
-                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </div>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Study Notes</p>
+                    <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-1">5,000+</h3>
+                    <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-widest">Study Notes</p>
                 </div>
                 <div className="flex flex-col items-center text-center p-2 group">
-                    <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">1,200+</h3>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Active Students</p>
+                    <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-1">1,200+</h3>
+                    <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-widest">Active Students</p>
                 </div>
                 <div className="flex flex-col items-center text-center p-2 group">
-                    <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tight">500+</h3>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Daily Visitors</p>
+                    <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-1">500+</h3>
+                    <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-widest">Daily Visitors</p>
                 </div>
             </div>
         </div>
       </section>
 
       {/* =========================================
-          3. CATEGORIES (COMPACT, MODERN CARDS)
+          3. CATEGORIES (REDESIGNED)
          ========================================= */}
-      <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
-        <div className="text-center mb-12 space-y-4">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
+      <section className="pt-20 pb-12 max-w-7xl mx-auto px-4 md:px-6">
+        <div className="text-center mb-10 md:mb-16 space-y-3">
+            <h2 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight">
               Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Goal</span>
             </h2>
-            <div className="w-20 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
+            <div className="w-16 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
         </div>
         
-        {/* New Responsive Grid: 2 cols on mobile, 6 cols on large screens */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-5">
             {goalCards.map((card: any, idx: number) => {
                 return (
                     <Link 
                         href={card.link} 
                         key={idx} 
                         className={`
-                          group relative flex flex-col justify-between p-5 rounded-3xl 
+                          group relative flex flex-col justify-between p-4 md:p-5 rounded-[1.5rem] 
                           ${card.bg} shadow-lg hover:shadow-xl hover:shadow-blue-500/20
                           transition-all duration-300 hover:-translate-y-1 overflow-hidden
-                          border border-white/10 aspect-[1/1.1]
+                          border border-white/10 min-h-[140px] md:min-h-[180px]
                         `}
                     >
-                        {/* Subtle background noise/decor */}
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 group-hover:bg-white/20 transition-all duration-500"></div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-white/20 transition-all duration-500"></div>
 
                         <div className="relative z-10">
-                            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3 shadow-inner border border-white/20">
+                            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3 shadow-inner border border-white/20">
                                 {card.icon}
                             </div>
-                            <h3 className="font-extrabold text-lg text-white tracking-wide leading-tight">
+                            <h3 className="font-extrabold text-sm md:text-lg text-white tracking-wide leading-tight mb-1">
                               {card.title}
                             </h3>
+                            {/* Desktop-Only Description */}
+                            <p className="hidden md:block text-[10px] text-white/80 leading-relaxed font-medium">
+                                {card.desc}
+                            </p>
                         </div>
 
-                        <div className="relative z-10 flex items-center justify-between text-white/80 group-hover:text-white mt-auto pt-4">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Explore</span>
-                            <span className="text-base transform group-hover:translate-x-1 transition-transform">→</span>
+                        <div className="relative z-10 flex items-center justify-between text-white/90 group-hover:text-white mt-auto pt-3">
+                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-80">Explore</span>
+                            <span className="text-sm md:text-base transform group-hover:translate-x-1 transition-transform">→</span>
                         </div>
                     </Link>
                 );
@@ -197,33 +195,34 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. PREVIOUS YEAR QUESTIONS
+          4. PREVIOUS YEAR QUESTIONS (Refined UI)
          ========================================= */}
       <section className="py-12 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-                <div>
-                    <span className="text-orange-500 font-bold tracking-widest uppercase text-xs">Repository</span>
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Previous Year Questions</h2>
-                    <p className="text-slate-500 text-sm mt-1 max-w-lg">Access our extensive archive of past board questions.</p>
-                </div>
-                <Link href="/resources" className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs md:text-sm transition-colors">
-                    Browse Archive →
-                </Link>
+            <div className="mb-8">
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2">
+                    <span className="text-orange-500">🗂️</span> Question Bank
+                </h2>
+                <p className="text-slate-500 text-sm mt-1">Archive of previous year board questions.</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {segments.map((seg: any) => (
                     <Link 
                         href={`/resources/${seg.slug}?category=Previous%20Year%20Questions`} 
                         key={seg.id}
-                        className="bg-slate-50 hover:bg-orange-50 p-4 rounded-xl border border-slate-200 hover:border-orange-200 transition-all group text-center"
+                        className="
+                            flex items-center gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50 
+                            hover:bg-white hover:border-orange-200 hover:shadow-md transition-all group
+                        "
                     >
-                        <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center text-xl mx-auto mb-2 group-hover:scale-110 transition-transform">
-                            🗂️
+                        <div className="w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 transition-transform">
+                            📁
                         </div>
-                        <h4 className="font-bold text-xs md:text-sm text-slate-700 group-hover:text-orange-700 truncate">{seg.title}</h4>
-                        <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-orange-400">View Collection</p>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-slate-700 group-hover:text-orange-600 truncate">{seg.title}</h4>
+                            <p className="text-[10px] text-slate-400">View Archive</p>
+                        </div>
                     </Link>
                 ))}
             </div>
@@ -231,31 +230,29 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          5. MAIN CONTENT AREA (Filter)
+          5. MAIN CONTENT AREA (Refined Mobile Header)
          ========================================= */}
-      <section className="pt-10 pb-20 max-w-7xl mx-auto px-6">
+      <section className="pt-10 pb-20 max-w-7xl mx-auto px-4 md:px-6">
         
-        {/* AD BANNER */}
         <div className="mb-10">
-            <AdBanner 
-                dataAdSlot="8219606997" 
-                dataAdFormat="fluid" 
-                dataAdLayoutKey="-f9+a+14-5p+64" 
-            />
+            <AdBanner dataAdSlot="8219606997" dataAdFormat="fluid" dataAdLayoutKey="-f9+a+14-5p+64" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            {/* LEFT COLUMN: FILTER & LIST */}
+            {/* LEFT COLUMN */}
             <div className="lg:col-span-8">
-                {/* Refined Header UI */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4 border-b border-slate-200 pb-4">
-                    <div>
-                        <span className="text-blue-600 font-bold tracking-widest text-[10px] uppercase bg-blue-50 px-2 py-1 rounded">Fresh Content</span>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2 tracking-tight">Latest Materials</h2>
+                {/* NEW HEADER DESIGN */}
+                <div className="mb-8 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-2xl">⚡</div>
+                        <div>
+                            <h2 className="text-xl md:text-2xl font-black text-slate-900">Latest Materials</h2>
+                            <p className="text-xs text-slate-500 font-medium">Freshly added content & updates</p>
+                        </div>
                     </div>
-                    <div className="text-right hidden sm:block">
-                        <p className="text-slate-400 text-xs font-bold">Updated Hourly</p>
+                    <div className="hidden sm:block text-right">
+                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full animate-pulse">Live Feed</span>
                     </div>
                 </div>
                 
@@ -263,58 +260,46 @@ export default async function HomePage() {
             </div>
 
             {/* RIGHT COLUMN: SIDEBAR */}
-            <div className="lg:col-span-4 space-y-8">
+            <div className="lg:col-span-4 space-y-6">
                 
-                {/* 1. PROFESSIONAL NOTICE BOARD */}
+                {/* NOTICE BOARD */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="bg-[#0f172a] text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
-                        <h3 className="font-bold flex items-center gap-2 text-sm">
-                            <span>📢</span> Notice Board
-                        </h3>
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+                    <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
+                        <h3 className="font-bold text-sm flex items-center gap-2"><span>📢</span> Notice Board</h3>
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     </div>
                     <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto custom-scrollbar">
                           {news.map((n: any) => (
-                             <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-blue-50 transition group">
-                                 <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded mb-1 inline-block group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors uppercase">
-                                     {n.category || 'Update'}
-                                 </span>
-                                 <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
-                                     {n.title}
-                                 </h4>
+                             <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-slate-50 transition group">
+                                 <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-1 inline-block uppercase">{n.category || 'Update'}</span>
+                                 <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">{n.title}</h4>
                                  <p className="text-[10px] text-slate-400 mt-1.5 flex items-center gap-1">
-                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                     {new Date(n.created_at).toLocaleDateString()}
+                                     <span>🕒</span> {new Date(n.created_at).toLocaleDateString()}
                                  </p>
                              </Link>
                           ))}
                     </div>
-                    <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">
-                        View All Notices →
-                    </Link>
+                    <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
                 </div>
                 
-                {/* 2. SOCIAL WIDGETS */}
-                <div className="space-y-3">
-                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-[#1877F2] text-white p-4 rounded-xl shadow-lg shadow-blue-500/20 hover:bg-[#166fe5] transition-all transform hover:-translate-y-1 group">
-                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl group-hover:scale-110 transition-transform">f</div>
-                        <div><h4 className="font-bold text-sm leading-tight">Join Community</h4><p className="text-blue-100 text-[10px] mt-0.5">Get updates & free notes</p></div>
-                        <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity text-sm">➔</div>
+                {/* SOCIAL WIDGETS */}
+                <div className="grid grid-cols-2 gap-3">
+                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 bg-[#1877F2] text-white p-4 rounded-xl shadow-lg hover:bg-[#166fe5] transition-all text-center">
+                        <div className="text-2xl">f</div>
+                        <span className="text-xs font-bold">Facebook</span>
                     </a>
-                    <a href="https://youtube.com/gmatclub" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-[#FF0000] text-white p-4 rounded-xl shadow-lg shadow-red-500/20 hover:bg-[#e60000] transition-all transform hover:-translate-y-1 group">
-                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg group-hover:scale-110 transition-transform">▶</div>
-                        <div><h4 className="font-bold text-sm leading-tight">Watch Classes</h4><p className="text-red-100 text-[10px] mt-0.5">Subscribe for tutorials</p></div>
-                        <div className="ml-auto opacity-70 group-hover:opacity-100 transition-opacity text-sm">➔</div>
+                    <a href="https://youtube.com/gmatclub" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 bg-[#FF0000] text-white p-4 rounded-xl shadow-lg hover:bg-[#e60000] transition-all text-center">
+                        <div className="text-2xl">▶</div>
+                        <span className="text-xs font-bold">YouTube</span>
                     </a>
                 </div>
 
-                {/* 3. Teacher Promo */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
-                    <h4 className="font-black text-xl mb-2 relative z-10">Need 1-on-1 Help?</h4>
-                    <p className="text-indigo-100 text-xs mb-5 relative z-10 leading-relaxed">Struggling with a topic? Book a private session with our expert teachers today.</p>
-                    <button className="bg-white text-indigo-700 w-full py-3 rounded-lg text-xs font-black hover:bg-indigo-50 transition shadow-lg relative z-10 transform group-hover:scale-105 duration-300">Find a Teacher</button>
+                {/* TEACHER PROMO */}
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    <h4 className="font-black text-xl mb-2 relative z-10">Need Help?</h4>
+                    <p className="text-indigo-100 text-xs mb-4 relative z-10">Book a private session with expert teachers.</p>
+                    <button className="bg-white text-indigo-700 w-full py-3 rounded-xl text-xs font-black hover:bg-indigo-50 transition shadow-lg relative z-10">Find Teacher</button>
                 </div>
             </div>
         </div>
