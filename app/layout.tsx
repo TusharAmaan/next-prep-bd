@@ -20,7 +20,11 @@ const geistMono = Geist_Mono({
 // 1. PROFESSIONAL SEO METADATA (The "Courstika" Look)
 export const metadata: Metadata = {
   metadataBase: new URL("https://nextprepbd.com"),
-
+    icons: {
+        icon: "/icon.png", // Explicitly tells browsers to use the PNG
+        shortcut: "/favicon.ico", // Fallback for very old browsers
+        apple: "/apple-icon.png", // (Optional) If you added this file
+      },
   // Dynamic Title Template
   title: {
     default: "NextPrepBD | Bangladesh's Largest Education Portal",
