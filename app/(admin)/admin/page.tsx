@@ -584,7 +584,55 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32">
         {/* Modals */}
-        {isAddCatOpen && (<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"><div className="bg-white rounded-2xl shadow-2xl w-[400px] animate-slide-up overflow-hidden"><div className="p-5 border-b flex justify-between items-center bg-gray-50"><div><h3 className="font-bold text-lg text-slate-900">New Category</h3><p className="text-xs text-slate-500 font-bold uppercase">For: {newCatType}</p></div><button onClick={()=>setIsAddCatOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">✕</button></div><div className="p-6 space-y-4"><input className="w-full bg-slate-50 border p-3 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Category Name..." value={newCatName} onChange={e=>setNewCatName(e.target.value)} /><button onClick={handleAddCategory} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all">Create Category</button></div></div></div>)}
+{isAddCatOpen && (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl w-[400px] animate-slide-up overflow-hidden">
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 className="font-bold text-lg text-slate-900">New Category</h3>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Create a tag for posts</p>
+                </div>
+                <button onClick={() => setIsAddCatOpen(false)} className="bg-white p-2 rounded-full shadow hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">✕</button>
+            </div>
+            <div className="p-6 space-y-5">
+                <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-2 uppercase">1. Select Post Type</label>
+                    <select 
+                        className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer" 
+                        value={newCatType} 
+                        onChange={e => setNewCatType(e.target.value)}
+                    >
+                        <option value="general">General (All)</option>
+                        <option value="news">News Post</option>
+                        <option value="ebook">eBook</option>
+                        <option value="blog">Study Material (Blog)</option>
+                        <option value="course">Course</option>
+                    </select>
+                    <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">
+                        This category will <strong>only</strong> appear when you are creating a <strong>{newCatType}</strong> post.
+                    </p>
+                </div>
+                
+                <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-2 uppercase">2. Category Name</label>
+                    <input 
+                        className="w-full bg-white border border-slate-200 p-3 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500" 
+                        placeholder="e.g. Scholarship, Physics, Fiction..." 
+                        value={newCatName} 
+                        onChange={e => setNewCatName(e.target.value)} 
+                    />
+                </div>
+
+                <button 
+                    onClick={handleAddCategory} 
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all transform active:scale-95"
+                >
+                    Create Category
+                </button>
+            </div>
+        </div>
+    </div>
+)}
         
         {modal.isOpen && <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={()=>{modal.onConfirm?.();closeModal()}} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
 
@@ -599,7 +647,34 @@ export default function AdminDashboard() {
 
         <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
             <div className="max-w-[1800px] mx-auto w-full">
-                {!editorMode && activeTab !== 'hierarchy' && <ListHeader title={activeTab.replace('-', ' ').toUpperCase()} onAdd={() => { if(activeTab==='categories') openCategoryModal('general'); else handleAddNew(); }} onSearch={(v:string)=>{ if(activeTab==='materials') setResSearch(v); else if(activeTab==='news') setNewsSearch(v); else if(activeTab==='ebooks') setEbSearch(v); else if(activeTab==='updates') setUpdateSearch(v); else if(activeTab==='categories') setCatSearch(v); }} searchVal={activeTab==='materials'?resSearch:activeTab==='news'?newsSearch:activeTab==='ebooks'?ebSearch:activeTab==='updates'?updateSearch:catSearch} />}
+{!editorMode && activeTab !== 'hierarchy' && (
+    <ListHeader 
+        title={activeTab.replace('-', ' ').toUpperCase()} 
+        onAdd={() => { 
+            if(activeTab === 'categories') {
+                // Smart Open: Default to the filter you are currently looking at
+                const defaultContext = catManagerTypeFilter === 'all' ? 'general' : catManagerTypeFilter;
+                openCategoryModal(defaultContext); 
+            } else {
+                handleAddNew(); 
+            }
+        }} 
+        onSearch={(v:string) => { 
+            if(activeTab==='materials') setResSearch(v); 
+            else if(activeTab==='news') setNewsSearch(v); 
+            else if(activeTab==='ebooks') setEbSearch(v); 
+            else if(activeTab==='updates') setUpdateSearch(v); 
+            else if(activeTab==='categories') setCatSearch(v); 
+        }} 
+        searchVal={
+            activeTab==='materials' ? resSearch : 
+            activeTab==='news' ? newsSearch : 
+            activeTab==='ebooks' ? ebSearch : 
+            activeTab==='updates' ? updateSearch : 
+            catSearch
+        } 
+    />
+)}
 
                 {/* --- HIERARCHY MANAGER (MILLER COLUMNS) --- */}
                 {activeTab === 'hierarchy' && (
@@ -652,33 +727,65 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* CATEGORIES MANAGEMENT VIEW */}
-                {activeTab === 'categories' && !editorMode && (
-                    <div className="animate-fade-in space-y-6">
-                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                            <span className="text-xs font-bold text-slate-400 uppercase">Filter By Type:</span>
-                            <div className="flex gap-2">
-                                {['all', 'blog', 'news', 'ebook', 'course', 'general'].map(t => (
-                                    <button key={t} onClick={() => setCatManagerTypeFilter(t)} className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${catManagerTypeFilter === t ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{t}</button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {dataList.map((cat:any) => (
-                                <div key={cat.id} className="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition-all group flex justify-between items-center">
-                                    <div>
-                                        <h3 className="font-bold text-slate-800">{cat.name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${cat.type === 'news' ? 'bg-blue-50 text-blue-600' : cat.type === 'ebook' ? 'bg-orange-50 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>{cat.type || 'General'}</span>
-                                            <span className="text-[10px] font-bold text-slate-400">{categoryCounts[cat.id] || 0} Posts</span>
-                                        </div>
-                                    </div>
-                                    <button onClick={()=>handleDelete(cat.id)} className="text-slate-300 hover:text-red-500 p-2"><span className="text-xl">🗑️</span></button>
-                                </div>
-                            ))}
-                        </div>
+{/* CATEGORIES MANAGEMENT VIEW */}
+{activeTab === 'categories' && !editorMode && (
+    <div className="animate-fade-in space-y-6">
+        {/* Filter Bar */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-4 justify-between">
+            <div className="flex items-center gap-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter Context:</span>
+                <div className="flex gap-2 flex-wrap">
+                    {['all', 'news', 'ebook', 'blog', 'course', 'general'].map(t => (
+                        <button 
+                            key={t} 
+                            onClick={() => setCatManagerTypeFilter(t)} 
+                            className={`px-4 py-2 rounded-lg text-xs font-bold capitalize transition-all border ${catManagerTypeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        >
+                            {t}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="text-xs font-bold text-slate-400">
+                Total: {dataList.length}
+            </div>
+        </div>
+
+        {/* Category Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {dataList.map((cat:any) => (
+                <div key={cat.id} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group relative">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider ${
+                            cat.type === 'news' ? 'bg-blue-50 text-blue-600' : 
+                            cat.type === 'ebook' ? 'bg-orange-50 text-orange-600' : 
+                            cat.type === 'blog' ? 'bg-purple-50 text-purple-600' : 
+                            cat.type === 'course' ? 'bg-emerald-50 text-emerald-600' : 
+                            'bg-slate-100 text-slate-500'
+                        }`}>
+                            {cat.type || 'General'}
+                        </span>
+                        <button onClick={()=>handleDelete(cat.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1">
+                            🗑️
+                        </button>
                     </div>
-                )}
+                    
+                    <h3 className="font-bold text-slate-800 text-lg mb-1">{cat.name}</h3>
+                    
+                    <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                        <span>Used in {categoryCounts[cat.id] || 0} posts</span>
+                    </div>
+                </div>
+            ))}
+        </div>
+        
+        {dataList.length === 0 && (
+            <div className="text-center py-20 text-slate-400">
+                <p>No categories found for this filter.</p>
+            </div>
+        )}
+    </div>
+)}
 
                 {/* OTHER LIST VIEWS */}
                 {activeTab !== 'categories' && activeTab !== 'hierarchy' && !editorMode && (
