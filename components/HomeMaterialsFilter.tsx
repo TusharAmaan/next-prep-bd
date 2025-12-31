@@ -2,34 +2,37 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Clock, FileText, PlayCircle, HelpCircle } from "lucide-react";
+import { ArrowRight, Clock, CalendarDays, ChevronRight, Hash } from "lucide-react";
 
 export default function HomeMaterialsFilter({ segments = [], resources = [] }: { segments: any[], resources: any[] }) {
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize active tab to the first segment
+  // Initialize active tab
   useEffect(() => {
     if (segments.length > 0 && !activeTab) {
       setActiveTab(segments[0].id);
     }
   }, [segments, activeTab]);
 
-  // --- FILTER LOGIC ---
+  // --- 1. FILTERING LOGIC (BLOGS ONLY) ---
   const filteredResources = resources.filter((res) => {
+    // STRICTLY BLOGS
+    if (res.type !== 'blog') return false;
+    
+    // Segment Filter
     if (!activeTab) return true;
-    // Check direct segment match OR linked segment via subject/group
     if (res.segment_id === activeTab) return true;
     const linkedSegment = res.subjects?.groups?.segments?.id;
     return linkedSegment === activeTab;
   });
 
   const latestPost = filteredResources[0];
-  const sidePosts = filteredResources.slice(1, 6);
+  const sidePosts = filteredResources.slice(1, 6); // Next 5 posts
   const activeSegmentData = segments.find(s => s.id === activeTab);
 
-  // --- HANDLER: Smooth Tab Switch ---
+  // --- 2. HANDLER: Smooth Tab Switch ---
   const handleTabChange = (id: number) => {
     if (id === activeTab) return;
     setIsAnimating(true);
@@ -37,36 +40,31 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     setTimeout(() => setIsAnimating(false), 300);
   };
 
-  // --- HELPER: Visual Configs ---
-  const getTypeStyles = (type: string) => {
-     switch(type) {
-         case 'pdf': return { icon: FileText, color: 'text-red-600', bg: 'bg-red-50' };
-         case 'video': return { icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-50' };
-         case 'question': return { icon: HelpCircle, color: 'text-amber-600', bg: 'bg-amber-50' };
-         default: return { icon: FileText, color: 'text-slate-600', bg: 'bg-slate-50' };
-     }
-  }
+  // --- 3. SMART LABEL HELPER ---
+  const getLabel = (res: any) => {
+    if (res.subjects?.title) return res.subjects.title;
+    if (res.groups?.title) return res.groups.title;
+    return activeSegmentData?.title || 'General';
+  };
 
   return (
     <div className="w-full">
       
-      {/* ========================================================
-          1. TOP NAVIGATION TABS
-      ======================================================== */}
-      <div className="relative mb-8 group">
+      {/* --- TABS --- */}
+      <div className="relative mb-6 group">
           <div 
             ref={scrollContainerRef}
-            className="flex items-center gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x cursor-grab border-b border-slate-100"
+            className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x cursor-grab"
           >
             {segments.map((seg) => (
               <button
                 key={seg.id}
                 onClick={() => handleTabChange(seg.id)}
                 className={`
-                  whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 snap-start
+                  whitespace-nowrap px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-300 snap-start border
                   ${activeTab === seg.id 
-                    ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20 scale-105" 
-                    : "bg-white text-slate-500 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                   }
                 `}
               >
@@ -74,145 +72,138 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
               </button>
             ))}
           </div>
-          {/* Fade Effect for Scroll */}
-          <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-[#F8FAFC] to-transparent pointer-events-none md:hidden"></div>
       </div>
 
-      {/* ========================================================
-          2. CONTENT LAYOUT (Hero Left + List Right)
-      ======================================================== */}
+      {/* --- GRID LAYOUT --- */}
       <div className={`
-          grid grid-cols-1 lg:grid-cols-12 gap-8 
+          grid grid-cols-1 lg:grid-cols-12 gap-6 
           transition-all duration-300 ease-in-out
           ${isAnimating ? 'opacity-50 translate-y-1' : 'opacity-100 translate-y-0'}
       `}>
           
-          {/* --- LEFT COLUMN: HERO CARD (Col Span 7) --- */}
+          {/* --- HERO COLUMN (Left) --- */}
           <div className="lg:col-span-7 flex flex-col">
               {latestPost ? (
                   <Link 
-                      href={latestPost.type === 'blog' ? `/blog/${latestPost.id}` : (latestPost.content_url || '#')}
-                      className="group relative flex flex-col h-full bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                      href={`/blog/${latestPost.id}`}
+                      className="group relative flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 min-h-[350px]"
                   >
-                      {/* Image / Black Box Area */}
-                      <div className="relative w-full aspect-video md:aspect-[16/9] overflow-hidden bg-slate-100">
-                          {latestPost.content_url && (latestPost.type === 'blog' || latestPost.content_url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) ? (
+                      {/* Cover Image or Black Box Fallback */}
+                      <div className="relative w-full flex-1 min-h-[220px] bg-slate-900 overflow-hidden">
+                          {latestPost.content_url ? (
                               <Image 
                                   src={latestPost.content_url} 
                                   alt={latestPost.title}
                                   fill
-                                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                  className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
                               />
                           ) : (
-                              // "Black Box" Fallback Design
-                              <div className="absolute inset-0 bg-[#0f172a] flex items-center justify-center p-8 text-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-                                  <div className="space-y-3 max-w-lg">
-                                      <span className="inline-block px-3 py-1 rounded bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest border border-white/10 backdrop-blur-md">
-                                          {latestPost.type}
-                                      </span>
+                              // THE BLACK BOX DESIGN
+                              <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-slate-900">
+                                  <div className="space-y-4 max-w-md relative z-10">
+                                      <div className="inline-block px-3 py-1 rounded border border-white/20 bg-white/5 backdrop-blur-md text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                                          {getLabel(latestPost)}
+                                      </div>
                                       <h3 className="text-white text-xl md:text-3xl font-black leading-tight line-clamp-3">
                                           {latestPost.title}
                                       </h3>
                                   </div>
+                                  {/* Subtle grid pattern for texture */}
+                                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                               </div>
                           )}
                           
-                          {/* "Latest" Badge */}
-                          <div className="absolute top-4 left-4 z-10">
-                              <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-pulse">
-                                  LATEST UPDATE
+                          {/* Floating Badge */}
+                          <div className="absolute top-4 left-4 z-20">
+                              <span className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg">
+                                  LATEST
                               </span>
                           </div>
                       </div>
 
                       {/* Text Content */}
-                      <div className="p-6 md:p-8 flex-1 flex flex-col">
-                          <div className="flex items-center gap-3 text-xs font-bold text-slate-400 mb-3">
-                              <span className="uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                {latestPost.subjects?.title || activeSegmentData?.title || 'General'}
-                              </span>
+                      <div className="p-5 flex flex-col bg-white">
+                          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wide">
+                              <span className="text-blue-600">{getLabel(latestPost)}</span>
                               <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3"/> {new Date(latestPost.created_at).toLocaleDateString()}
-                              </span>
+                              <span>{new Date(latestPost.created_at).toLocaleDateString()}</span>
                           </div>
                           
-                          <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-tight group-hover:text-blue-700 transition-colors">
+                          <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-700 transition-colors line-clamp-2">
                               {latestPost.title}
                           </h3>
                           
-                          <p className="text-slate-500 line-clamp-2 mb-6 flex-1 text-sm md:text-base leading-relaxed">
-                              {latestPost.seo_description || "Click to view full details, download materials, or watch the video lesson."}
+                          <p className="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4">
+                              {latestPost.seo_description || "Read the full article to learn more about this topic..."}
                           </p>
                           
-                          <span className="inline-flex items-center text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors mt-auto">
-                              Read Full Post <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"/>
+                          <span className="inline-flex items-center text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors mt-auto uppercase tracking-wide">
+                              Read Article <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform"/>
                           </span>
                       </div>
                   </Link>
               ) : (
-                  <div className="h-64 flex flex-col items-center justify-center bg-slate-50 rounded-3xl border border-dashed border-slate-300 text-center p-6">
-                      <div className="text-4xl mb-2 opacity-30">📂</div>
-                      <p className="text-slate-500 font-medium">No content available for {activeSegmentData?.title}.</p>
+                  <div className="h-64 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center p-6">
+                      <div className="text-3xl mb-2 opacity-30">✍️</div>
+                      <p className="text-slate-500 text-sm font-medium">No blogs posted yet.</p>
                   </div>
               )}
           </div>
 
-          {/* --- RIGHT COLUMN: POST LIST (Col Span 5) --- */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
+          {/* --- LIST COLUMN (Right) --- */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
               {sidePosts.length > 0 ? (
-                  sidePosts.map(post => {
-                      const { icon: Icon, color, bg } = getTypeStyles(post.type);
-                      return (
-                          <Link 
-                              key={post.id}
-                              href={post.type === 'blog' ? `/blog/${post.id}` : (post.content_url || '#')}
-                              className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-blue-100 transition-all group relative overflow-hidden"
-                          >
-                              {/* Thumbnail / Icon */}
-                              <div className={`w-20 h-20 shrink-0 rounded-xl overflow-hidden relative ${bg} flex items-center justify-center border border-slate-100`}>
-                                   {post.content_url && (post.type === 'blog' || post.content_url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) ? (
-                                       <Image src={post.content_url} alt={post.title} fill className="object-cover group-hover:scale-110 transition-transform"/>
-                                   ) : (
-                                       <Icon className={`w-8 h-8 ${color}`} strokeWidth={1.5} />
-                                   )}
+                  sidePosts.map(post => (
+                      <Link 
+                          key={post.id}
+                          href={`/blog/${post.id}`}
+                          className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group h-full"
+                      >
+                          {/* Thumbnail */}
+                          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden relative bg-slate-100 border border-slate-100">
+                               {post.content_url ? (
+                                   <Image src={post.content_url} alt={post.title} fill className="object-cover group-hover:scale-110 transition-transform"/>
+                               ) : (
+                                   <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
+                                       <Hash className="w-6 h-6" />
+                                   </div>
+                               )}
+                          </div>
+                          
+                          {/* Info */}
+                          <div className="min-w-0 flex-1 flex flex-col justify-center">
+                              <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">
+                                      {getLabel(post)}
+                                  </span>
                               </div>
-                              
-                              {/* Text Info */}
-                              <div className="min-w-0 flex-1 py-1">
-                                  <h4 className="text-sm md:text-base font-bold text-slate-800 leading-snug line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
-                                      {post.title}
-                                  </h4>
-                                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                      <span className={color.replace('text-', 'bg-').replace('600', '50') + ' ' + color + ' px-2 py-0.5 rounded border border-transparent group-hover:border-current transition-colors'}>
-                                          {post.type}
-                                      </span>
-                                      <span>{new Date(post.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span>
-                                  </div>
-                              </div>
-                          </Link>
-                      )
-                  })
+                              <h4 className="text-sm font-bold text-slate-800 leading-snug line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                                  {post.title}
+                              </h4>
+                              <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                                  <CalendarDays className="w-3 h-3" /> {new Date(post.created_at).toLocaleDateString()}
+                              </span>
+                          </div>
+                      </Link>
+                  ))
               ) : (
-                  <div className="flex-1 flex items-center justify-center p-8 text-slate-400 text-sm border rounded-2xl border-slate-100 bg-slate-50/50">
-                      No additional posts to show.
+                  <div className="flex-1 flex items-center justify-center p-8 text-slate-400 text-xs border rounded-2xl border-slate-100 bg-slate-50/50">
+                      No more posts to show.
                   </div>
               )}
               
-              {/* View All Button */}
               {activeTab && (
                   <Link 
-                      href={`/resources/${activeSegmentData?.slug}`}
-                      className="mt-2 block w-full py-3.5 text-center bg-slate-900 text-white hover:bg-blue-600 font-bold text-sm rounded-xl transition-colors shadow-lg shadow-slate-900/10"
+                      href={`/blog?segment=${activeSegmentData?.title}`}
+                      className="mt-1 block w-full py-3 text-center bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white font-bold text-xs rounded-xl transition-colors border border-slate-200"
                   >
-                      View All {activeSegmentData?.title} Posts →
+                      View All {activeSegmentData?.title} Blogs →
                   </Link>
               )}
           </div>
 
       </div>
 
-      {/* Utility CSS for hiding scrollbar cleanly */}
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

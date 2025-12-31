@@ -19,30 +19,30 @@ import {
   Bell,
   Download,
   Facebook,
-  Youtube,
+  Youtube, // Will use fill="currentColor"
   Clock,
   ChevronRight,
-  FileClock,
-  User
+  FileClock
 } from "lucide-react";
 
-// 1. CACHING CONFIG
-export const revalidate = 0; // Keep 0 to see instant updates for new ebooks
+export const revalidate = 0; 
 
 export default async function HomePage() {
   
   // 2. FETCH DATA
   const [segmentsData, latestResources, latestNews, ebooksData] = await Promise.all([
     supabase.from("segments").select("*").order("id"),
+    // Fetch generic resources for the filter component
     supabase.from("resources")
       .select("*, subjects ( title, groups ( segments ( id, title, slug ) ) )")
       .limit(50) 
       .order("created_at", { ascending: false }),
+    
     supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
     
-    // UPDATED: Fetch from 'ebooks' table to match your EbooksPage
+    // --- FIX: FETCH FROM 'ebooks' TABLE (NOT RESOURCES) ---
     supabase.from("ebooks")
-      .select("id, title, author, content_url, created_at")
+      .select("id, title, author, cover_url, created_at, category")
       .limit(5)
       .order("created_at", { ascending: false })
   ]);
@@ -251,7 +251,7 @@ export default async function HomePage() {
             {/* RIGHT COLUMN: SIDEBAR */}
             <div className="lg:col-span-4 space-y-6">
                 
-                {/* 1. SOCIAL WIDGETS */}
+                {/* 1. SOCIAL WIDGETS (REPLICA DESIGN) */}
                 <div className="space-y-4">
                     {/* Facebook Button */}
                     <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
@@ -269,7 +269,7 @@ export default async function HomePage() {
                     <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
                        className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            {/* fill="currentColor" makes the icon solid white, matching the provided image */}
+                            {/* FIX: fill="currentColor" makes the icon solid white */}
                             <Youtube className="w-6 h-6" fill="currentColor" />
                         </div>
                         <div className="flex flex-col">
@@ -297,7 +297,7 @@ export default async function HomePage() {
                     <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
                 </div>
 
-                {/* 3. POPULAR EBOOKS (UPDATED DATA SOURCE) */}
+                {/* 3. POPULAR EBOOKS (NOW FETCHING FROM EBOOKS TABLE) */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-purple-600" />
@@ -307,18 +307,22 @@ export default async function HomePage() {
                         {ebooks.length > 0 ? (
                              <div className="space-y-1">
                                 {ebooks.map((book: any) => (
-                                    <div key={book.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition group border border-transparent hover:border-slate-100">
+                                    <Link href={`/ebooks/${book.id}`} key={book.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition group border border-transparent hover:border-slate-100">
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0"><FileText className="w-4 h-4" /></div>
+                                            <div className="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                                              <FileText className="w-4 h-4" />
+                                            </div>
                                             <div className="min-w-0">
                                                 <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">
-                                                    <Link href={`/ebooks/${book.id}`} className="hover:underline">{book.title}</Link>
+                                                    {book.title}
                                                 </h4>
-                                                <p className="text-[10px] text-slate-400">{book.author || 'PDF • Free Download'}</p>
+                                                <p className="text-[10px] text-slate-400">{book.author || book.category}</p>
                                             </div>
                                         </div>
-                                        <a href={book.content_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Download className="w-4 h-4" /></a>
-                                    </div>
+                                        <span className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                          <Download className="w-4 h-4" />
+                                        </span>
+                                    </Link>
                                 ))}
                              </div>
                         ) : (
