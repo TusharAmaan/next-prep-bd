@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import EbookFilters from "@/components/EbookFilters"; // Adjust path as needed
-import { BookOpen, Calendar, User } from "lucide-react"; // npm i lucide-react
-import { Search } from 'lucide-react';
+import { BookOpen, Calendar, User, Search } from "lucide-react"; // npm i lucide-react
 export const dynamic = "force-dynamic";
 
 type Props = {
