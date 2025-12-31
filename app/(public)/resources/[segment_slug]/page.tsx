@@ -87,21 +87,21 @@ export default async function SegmentPage({
             </div>
             
             {/* 2. CONTENT GRID */}
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-                
-                {/* Main Content (Material List) */}
-                <div className="lg:col-span-8 order-2 lg:order-1">
-                    {/* Note: Ensure MaterialList component handles the individual card design! */}
-                    <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
-                </div>
-                
-                {/* Sidebar (Sticky on Desktop) */}
-                <div className="lg:col-span-4 order-1 lg:order-2 space-y-6">
-                    <div className="sticky top-24">
-                        <Sidebar />
-                    </div>
-                </div>
-            </div>
+{/* 2. CONTENT GRID */}
+<div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+    
+    {/* Main Content - REMOVED 'order-2 lg:order-1' */}
+    <div className="lg:col-span-8">
+        <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
+    </div>
+    
+    {/* Sidebar - REMOVED 'order-1 lg:order-2' */}
+    <div className="lg:col-span-4 space-y-6">
+        <div className="sticky top-24">
+            <Sidebar />
+        </div>
+    </div>
+</div>
         </div>
       );
   }
