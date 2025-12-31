@@ -4,6 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { debounce } from "lodash";
 import Link from "next/link";
+import { 
+  FileText, 
+  PlayCircle, 
+  HelpCircle, 
+  Zap, 
+  Search, 
+  ChevronRight, 
+  ChevronLeft, 
+  Filter,
+  Calendar,
+  FileBox
+} from "lucide-react";
 
 type MaterialListProps = {
   segmentId?: number;
@@ -33,7 +45,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
     try {
       let tableName = "resources";
       
-      // 1. IMPROVED QUERY: Fetch Group and Segment titles for better labeling
       let selectColumns = `
         id, title, type, created_at, content_url, category, 
         subjects ( title ),
@@ -77,20 +88,16 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
       if (error) throw error;
       
       if (data) {
-          // 2. SMART LABEL LOGIC: Subject > Group > Segment > Category
+          // Smart Label Logic
           const formatted = data.map((item: any) => {
               let badgeText = "General";
               
               if (['routine', 'syllabus', 'exam_result'].includes(item.type)) {
                   badgeText = item.type.replace('_', ' ').toUpperCase();
               } else {
-                  // Try Subject Name
                   if (item.subjects?.title) badgeText = item.subjects.title;
-                  // If no subject, Try Group Name (e.g., "Science")
                   else if (item.groups?.title) badgeText = item.groups.title;
-                  // If no group, Try Segment Name (e.g., "HSC")
                   else if (item.segments?.title) badgeText = item.segments.title;
-                  // Fallback to manual category
                   else if (item.category) badgeText = item.category;
               }
 
@@ -116,7 +123,6 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
     handler();
   };
 
-  // Link Helper
   const getLink = (item: any) => {
       if (item.content_url) return item.content_url;
       if (item.type === 'blog') return `/blog/${item.id}`;
@@ -129,132 +135,192 @@ export default function MaterialList({ segmentId, groupId, subjectId, initialTyp
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // 3. COLOR THEME CONFIG (High Contrast)
+  // 3. MODERN THEME CONFIG
+  // Returns Lucide Icons and high-contrast color sets
   const getTheme = (itemType: string) => {
      switch(itemType) {
-         case 'pdf': return { icon: '📄', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-100', btn: 'bg-rose-600', label: 'Download' };
-         case 'video': return { icon: '▶', bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100', btn: 'bg-indigo-600', label: 'Watch' };
-         case 'question': return { icon: '❓', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100', btn: 'bg-amber-600', label: 'Solution' };
-         default: return { icon: '⚡', bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-100', btn: 'bg-slate-800', label: 'View' };
+         case 'pdf': 
+            return { Icon: FileText, bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', btn: 'bg-red-600', label: 'Download' };
+         case 'video': 
+            return { Icon: PlayCircle, bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', btn: 'bg-blue-600', label: 'Watch Class' };
+         case 'question': 
+            return { Icon: HelpCircle, bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', btn: 'bg-amber-600', label: 'View Solution' };
+         case 'routine':
+         case 'syllabus':
+            return { Icon: Calendar, bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100', btn: 'bg-purple-600', label: 'View Update' };
+         default: 
+            return { Icon: Zap, bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', btn: 'bg-slate-800', label: 'View' };
      }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-500">
       
-      {/* 4. COMPACT FILTERS & SEARCH */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center sticky top-[60px] z-10 md:static">
-           
-           {/* Tab Switcher */}
-           {type !== 'update' ? (
-                <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto">
-                    {['pdf', 'question'].map((t) => (
-                        <button 
-                            key={t}
-                            onClick={() => { setType(t); setPage(1); }} 
-                            className={`
-                                flex-1 md:flex-none px-5 py-2 text-xs font-bold rounded-md transition-all uppercase tracking-wide
-                                ${type === t ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'}
-                            `}
-                        >
-                            {t === 'pdf' ? '📚 Materials' : '❓ Questions'}
-                        </button>
-                    ))}
-                </div>
-           ) : (
-                <div className="w-full md:w-auto bg-red-50 text-red-700 px-4 py-2 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2">
-                    <span>📢 UPDATES</span>
-                    {category !== 'all' && <span>• {category.toUpperCase()}</span>}
-                    <button onClick={()=>setCategory('all')} className="ml-auto underline opacity-60 hover:opacity-100">Clear</button>
-                </div>
-           )}
+      {/* 4. MODERN FILTER BAR */}
+      <div className="bg-white p-2 md:p-3 rounded-2xl border border-slate-200 shadow-sm sticky top-[70px] z-20 md:static backdrop-blur-xl bg-white/90 supports-[backdrop-filter]:bg-white/60">
+           <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
+                
+                {/* Type Switcher */}
+                {type !== 'update' ? (
+                    <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-hidden">
+                        {[
+                            { id: 'pdf', label: 'Materials', icon: FileBox }, 
+                            { id: 'question', label: 'Questions', icon: HelpCircle }
+                        ].map((t) => (
+                            <button 
+                                key={t.id}
+                                onClick={() => { setType(t.id); setPage(1); }} 
+                                className={`
+                                    flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all
+                                    ${type === t.id 
+                                        ? 'bg-white text-slate-900 shadow-sm scale-[1.02]' 
+                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                    }
+                                `}
+                            >
+                                <t.icon className="w-4 h-4" />
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="w-full md:w-auto bg-red-50 text-red-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-red-100 flex items-center gap-2 shadow-sm">
+                        <span className="flex items-center gap-1"><Zap className="w-3 h-3 fill-current"/> UPDATES CENTER</span>
+                        {category !== 'all' && <span className="bg-white/50 px-2 py-0.5 rounded text-red-800 border border-red-200 ml-1">{category.toUpperCase()}</span>}
+                        <button onClick={()=>setCategory('all')} className="ml-auto underline opacity-60 hover:opacity-100 text-[10px] uppercase">Clear Filter</button>
+                    </div>
+                )}
 
-           {/* Search Input */}
-           <div className="relative w-full md:w-64">
-                <input 
-                    type="text" 
-                    placeholder="Search title..." 
-                    value={search} 
-                    onChange={(e) => handleSearch(e.target.value)} 
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none transition-all" 
-                />
-                <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                {/* Search Input */}
+                <div className="relative w-full md:w-72 group">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-blue-500 transition-colors" />
+                    <input 
+                        type="text" 
+                        placeholder="Search resources..." 
+                        value={search} 
+                        onChange={(e) => handleSearch(e.target.value)} 
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400" 
+                    />
+                </div>
            </div>
       </div>
 
       {/* 5. LIST OF CARDS */}
       {loading ? (
-         <div className="grid gap-3">
-             {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white rounded-lg border border-slate-100 animate-pulse"></div>)}
+         <div className="grid gap-4">
+             {[1, 2, 3, 4].map(i => (
+                 <div key={i} className="h-24 bg-white rounded-2xl border border-slate-100 animate-pulse shadow-sm"></div>
+             ))}
          </div>
       ) : items.length > 0 ? (
-         <div className="grid gap-3">
+         <div className="grid gap-4">
             {items.map((item) => {
-                const theme = getTheme(item.type);
+                const { Icon, ...theme } = getTheme(item.type);
                 return (
-                   <div key={item.id} className="group bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200 flex items-center gap-4">
-                       
-                       {/* Icon (High Contrast) */}
-                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0 ${theme.bg} ${theme.text} border ${theme.border}`}>
-                           {theme.icon}
+                   <div 
+                        key={item.id} 
+                        className={`
+                            group relative bg-white p-4 md:p-5 rounded-2xl border border-slate-200 
+                            shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] 
+                            hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-0.5
+                            flex items-start md:items-center gap-4 md:gap-6
+                        `}
+                   >
+                       {/* Modern Icon Container */}
+                       <div className={`
+                            w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 
+                            ${theme.bg} ${theme.text} border ${theme.border} 
+                            shadow-sm group-hover:scale-110 transition-transform duration-300
+                       `}>
+                           <Icon className="w-6 h-6 md:w-7 md:h-7" strokeWidth={2} />
                        </div>
                        
-                       {/* Text Content (Adjusted Sizes) */}
-                       <div className="flex-1 min-w-0">
-                           {/* Badge */}
-                           <div className="flex items-center gap-2 mb-1">
-                               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 truncate max-w-[150px]">
+                       {/* Text Content - OPTIMIZED FOR MOBILE WRAPPING */}
+                       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                           
+                           {/* Metadata Row */}
+                           <div className="flex items-center flex-wrap gap-2">
+                               {/* Gradient Badge */}
+                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-blue-700 to-slate-900 text-white shadow-sm">
                                    {item.badgeTitle}
                                </span>
-                               <span className="text-[10px] font-semibold text-slate-400">
-                                   {new Date(item.created_at).toLocaleDateString()}
+                               
+                               <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                    {new Date(item.created_at).toLocaleDateString()}
                                </span>
                            </div>
 
-                           {/* Title (Text-base for better readability on all devices) */}
-                           <h3 className="text-sm md:text-base font-bold text-slate-900 leading-tight group-hover:text-blue-700 transition-colors line-clamp-1">
+                           {/* Title: Removed truncate, added leading-snug for multi-line readability */}
+                           <h3 className="text-base md:text-lg font-bold text-slate-800 leading-snug break-words group-hover:text-blue-600 transition-colors pr-2">
                                {item.content_url ? (
-                                   <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                   <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="focus:outline-none">
+                                       <span className="absolute inset-0 sm:hidden"></span> {/* Mobile Full Click */}
+                                       {item.title}
+                                   </a>
                                ) : (
-                                   <Link href={getLink(item)}>{item.title}</Link>
+                                   <Link href={getLink(item)} className="focus:outline-none">
+                                       <span className="absolute inset-0 sm:hidden"></span> {/* Mobile Full Click */}
+                                       {item.title}
+                                   </Link>
                                )}
                            </h3>
                        </div>
 
-                       {/* Action Button (Desktop Only) */}
-                       <div className="hidden sm:block">
+                       {/* Action Button (Desktop) */}
+                       <div className="hidden sm:block shrink-0">
                            {item.content_url ? (
-                               <a href={item.content_url} target="_blank" rel="noopener noreferrer" className={`px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm hover:opacity-90 transition-opacity ${theme.btn}`}>
-                                   {theme.label}
+                               <a href={item.content_url} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-md hover:shadow-lg hover:brightness-110 transition-all ${theme.btn}`}>
+                                   {theme.label} <ChevronRight className="w-3 h-3" />
                                </a>
                            ) : (
-                               <Link href={getLink(item)} className="px-4 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors">
-                                   Read
+                               <Link href={getLink(item)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-md hover:bg-slate-800 hover:shadow-lg transition-all">
+                                   Read Now <ChevronRight className="w-3 h-3" />
                                </Link>
                            )}
                        </div>
 
-                       {/* Mobile Arrow (Replaces Button) */}
-                       <div className="sm:hidden text-slate-300">
-                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                       {/* Mobile Arrow Indicator */}
+                       <div className="sm:hidden self-center text-slate-300 group-hover:text-blue-500 transition-colors pl-2">
+                           <ChevronRight className="w-5 h-5" />
                        </div>
                    </div>
                 );
             })}
          </div>
       ) : (
-         <div className="text-center py-16 bg-white rounded-xl border border-dashed border-slate-300">
-             <div className="text-3xl mb-2 opacity-30">📂</div>
-             <p className="text-slate-900 font-bold text-sm">No materials found.</p>
+         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-slate-300" />
+             </div>
+             <p className="text-slate-900 font-bold text-base">No results found</p>
+             <p className="text-slate-500 text-sm mt-1">Try adjusting your filters or search terms.</p>
+             <button onClick={() => {setSearch(''); setType('pdf'); setCategory('all');}} className="mt-4 text-blue-600 text-xs font-bold hover:underline">Reset Filters</button>
          </div>
       )}
 
-      {/* 6. PAGINATION */}
+      {/* 6. MODERN PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-3 pt-4 border-t border-slate-100">
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-bold text-slate-600 disabled:opacity-50">Prev</button>
-            <span className="text-xs font-bold text-slate-400">Page {page} of {totalPages}</span>
-            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-bold text-slate-600 disabled:opacity-50">Next</button>
+        <div className="flex justify-center items-center gap-2 pt-6">
+            <button 
+                disabled={page === 1} 
+                onClick={() => setPage(p => p - 1)} 
+                className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+                <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="bg-white border border-slate-200 px-4 h-10 flex items-center justify-center rounded-lg text-xs font-bold text-slate-600 shadow-sm">
+                Page {page} <span className="text-slate-400 mx-1">/</span> {totalPages}
+            </div>
+            
+            <button 
+                disabled={page === totalPages} 
+                onClick={() => setPage(p => p + 1)} 
+                className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+                <ChevronRight className="w-5 h-5" />
+            </button>
         </div>
       )}
     </div>
