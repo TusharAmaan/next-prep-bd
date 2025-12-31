@@ -23,6 +23,16 @@ export default async function HomePage() {
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
 
+  // --- HELPER: Question Bank Relatable Texts ---
+  const getQuestionText = (slug: string) => {
+    const s = slug.toLowerCase();
+    if (s.includes('ssc')) return "Check out previous year questions of SSC and School exams.";
+    if (s.includes('hsc')) return "Check out previous year questions of HSC and College exams.";
+    if (s.includes('admission')) return "Practice with previous year questions of University & Medical Admission exams.";
+    if (s.includes('job')) return "Prepare with previous year questions for BCS, Bank & Govt. jobs.";
+    return `Browse our extensive collection of ${slug.replace(/-/g, ' ')} questions.`;
+  };
+
   // --- CONFIG: Custom Goal Cards ---
   const goalCards = [
     {
@@ -66,9 +76,9 @@ export default async function HomePage() {
       icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
     },
     {
-      title: "Govt. Jobs",
+      title: "Job Preparation",
       desc: "BCS, Bank Jobs & NTRCA preparation.",
-      link: "/resources/job-prep/govt.-jobs",
+      link: "/resources/job-prep",
       bg: "bg-gradient-to-br from-cyan-500 to-blue-700",
       shadow: "shadow-cyan-200",
       icon: <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
@@ -178,8 +188,8 @@ export default async function HomePage() {
                             <h3 className="font-extrabold text-sm md:text-lg text-white tracking-wide leading-tight mb-1">
                               {card.title}
                             </h3>
-                            {/* Desktop-Only Description */}
-                            <p className="hidden md:block text-[10px] text-white/80 leading-relaxed font-medium">
+                            {/* Updated Text Size for Desktop */}
+                            <p className="hidden md:block text-xs md:text-sm font-medium text-white/90 leading-snug">
                                 {card.desc}
                             </p>
                         </div>
@@ -195,34 +205,46 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
-          4. PREVIOUS YEAR QUESTIONS (Refined UI)
+          4. PREVIOUS YEAR QUESTIONS (NEW CARD UI)
          ========================================= */}
-      <section className="py-12 bg-white border-y border-slate-100">
+      <section className="py-16 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
-            <div className="mb-8">
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2">
-                    <span className="text-orange-500">🗂️</span> Question Bank
+            <div className="mb-10 text-center md:text-left">
+                <span className="text-orange-500 font-bold tracking-widest uppercase text-xs">Archives</span>
+                <h2 className="text-2xl md:text-4xl font-black text-slate-900 mt-2">
+                    Previous Year Questions
                 </h2>
-                <p className="text-slate-500 text-sm mt-1">Archive of previous year board questions.</p>
+                <p className="text-slate-500 text-sm md:text-base mt-2 max-w-2xl">
+                    Access our extensive archive of past board questions to prepare better.
+                </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {segments.map((seg: any) => (
                     <Link 
                         href={`/resources/${seg.slug}?category=Previous%20Year%20Questions`} 
                         key={seg.id}
                         className="
-                            flex items-center gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50 
-                            hover:bg-white hover:border-orange-200 hover:shadow-md transition-all group
+                            bg-white p-6 rounded-2xl border border-slate-200 shadow-sm 
+                            hover:shadow-lg hover:border-blue-200 transition-all group flex flex-col h-full
                         "
                     >
-                        <div className="w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 transition-transform">
-                            📁
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                ❓
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-500 transition-colors">
+                                Open Bank
+                            </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-slate-700 group-hover:text-orange-600 truncate">{seg.title}</h4>
-                            <p className="text-[10px] text-slate-400">View Archive</p>
-                        </div>
+                        
+                        <h4 className="font-extrabold text-xl text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                            {seg.title}
+                        </h4>
+                        
+                        <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                            {getQuestionText(seg.slug)}
+                        </p>
                     </Link>
                 ))}
             </div>
