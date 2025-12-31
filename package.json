@@ -25,7 +25,8 @@
     "resend": "^6.6.0",
     "stripe": "^20.1.0",
     "suneditor": "^2.47.8",
-    "suneditor-react": "^3.6.1"
+    "suneditor-react": "^3.6.1",
+    "use-debounce": "^10.0.6"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
