@@ -18,106 +18,144 @@ export default async function SegmentPage({
   const { segment_slug } = await params;
   const { type, category } = await searchParams;
 
-  // 1. Fetch Segment Details
+  // 1. Fetch Current Segment
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
+  
+  // 2. Fetch ALL Segments (For the "Switch Class" Navigation)
+  const { data: allSegments } = await supabase.from("segments").select("id, title, slug").order("id");
+
   if (!segmentData) return notFound();
 
   // =========================================================
+  //  HELPER: VIEW CONFIGURATION
+  // =========================================================
+  const getPageTitle = () => {
+    if (category) return category.replace(/_/g, ' '); 
+    if (type === 'pdf') return 'Study Materials';
+    if (type === 'video') return 'Video Classes';
+    if (type === 'update') return 'Latest Updates';
+    return 'Question Bank'; 
+  };
+
+  const getPageIcon = () => {
+     if (type === 'question') return '❓';
+     if (type === 'pdf') return '📚';
+     if (type === 'video') return '▶';
+     return '⚡';
+  };
+
+  // =========================================================
   //  A. LIST VIEW MODE (Question Bank / PDF List)
-  //  Redesigned for a cleaner, modern look
   // =========================================================
   if (type) {
-      // Helper to format the title dynamically
-      const getPageTitle = () => {
-        if (category) return category.replace(/_/g, ' '); // e.g. "Exam Routine"
-        if (type === 'pdf') return 'Study Materials';
-        if (type === 'video') return 'Video Classes';
-        if (type === 'update') return 'Latest Updates';
-        return 'Question Bank'; // Default for type=question
-      };
-
-      const getPageIcon = () => {
-         if (type === 'question') return '❓';
-         if (type === 'pdf') return '📚';
-         if (type === 'video') return '▶';
-         return '⚡';
-      };
-
       return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
             
-            {/* 1. MODERN HEADER (White with subtle border) */}
-            <div className="bg-white border-b border-slate-200 pt-24 pb-12 px-4 md:px-8">
-                <div className="max-w-7xl mx-auto">
-                    {/* Breadcrumb Navigation */}
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-                        <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
-                        <span>/</span>
-                        <Link href={`/resources/${segment_slug}`} className="hover:text-blue-600 transition-colors">{segmentData.title}</Link>
-                        <span>/</span>
-                        <span className="text-slate-800">{getPageTitle()}</span>
-                    </div>
-
-                    {/* Dynamic Title */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight capitalize flex items-center gap-3">
-                                <span className="bg-slate-100 w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl border border-slate-200">
-                                    {getPageIcon()}
-                                </span>
-                                <span>
-                                    {segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">{getPageTitle()}</span>
-                                </span>
-                            </h1>
-                            <p className="mt-3 text-slate-500 font-medium max-w-2xl text-sm md:text-base">
-                                Browse our complete collection of {segmentData.title} {getPageTitle().toLowerCase()}. 
-                                Use the search bar below to find specific topics.
-                            </p>
+            {/* 1. PREMIUM HEADER (Dark Theme for Contrast) */}
+            <div className="bg-[#0f172a] text-white pt-24 pb-12 px-5 md:px-8 relative overflow-hidden">
+                {/* Background Decor */}
+                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                
+                <div className="max-w-7xl mx-auto relative z-10">
+                    {/* Navigation Row */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        {/* Breadcrumbs */}
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <Link href="/" className="hover:text-blue-400 transition-colors">Home</Link>
+                            <span className="opacity-50">/</span>
+                            <Link href={`/resources/${segment_slug}`} className="hover:text-blue-400 transition-colors">{segmentData.title}</Link>
+                            <span className="opacity-50">/</span>
+                            <span className="text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{getPageTitle()}</span>
                         </div>
 
-                        {/* Quick Back Button (Mobile Optimized) */}
+                        {/* HIGH VISIBILITY BACK BUTTON */}
                         <Link 
                             href={`/resources/${segment_slug}`} 
-                            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                            className="self-start md:self-auto inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-bold uppercase tracking-wide transition-all backdrop-blur-md"
                         >
-                            <span>← Back to Dashboard</span>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                            Back to Dashboard
                         </Link>
+                    </div>
+
+                    {/* Title Section */}
+                    <div className="flex flex-col gap-4">
+                        <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight md:leading-snug break-words flex flex-col md:flex-row md:items-center gap-3 md:gap-5">
+                            {/* Icon Box */}
+                            <span className="shrink-0 bg-blue-600 w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-900/50 border border-blue-400/30">
+                                {getPageIcon()}
+                            </span>
+                            {/* Text Wrapper */}
+                            <span className="flex-1">
+                                {segmentData.title} <span className="text-blue-400">{getPageTitle()}</span>
+                            </span>
+                        </h1>
+                        <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl leading-relaxed">
+                            Browsing the complete archive for <span className="text-white">{segmentData.title}</span>. 
+                            Use the filters below to refine your search.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. "NOT LOOKING FOR THIS?" NAVIGATION BAR */}
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+                <div className="max-w-7xl mx-auto px-5 md:px-8 py-3 flex items-center gap-4 overflow-x-auto hide-scrollbar">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Switch Class:</span>
+                    <div className="flex items-center gap-2">
+                        {allSegments?.map((seg) => (
+                            <Link 
+                                key={seg.id} 
+                                href={`/resources/${seg.slug}?type=${type}`} 
+                                className={`
+                                    px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border
+                                    ${seg.slug === segment_slug 
+                                        ? "bg-slate-900 text-white border-slate-900" 
+                                        : "bg-slate-50 text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"}
+                                `}
+                            >
+                                {seg.title}
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>
             
-            {/* 2. CONTENT GRID */}
-{/* 2. CONTENT GRID */}
-<div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-    
-    {/* Main Content - REMOVED 'order-2 lg:order-1' */}
-    <div className="lg:col-span-8">
-        <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
-    </div>
-    
-    {/* Sidebar - REMOVED 'order-1 lg:order-2' */}
-    <div className="lg:col-span-4 space-y-6">
-        <div className="sticky top-24">
-            <Sidebar />
-        </div>
-    </div>
-</div>
+            {/* 3. CONTENT GRID (Fixed Mobile Order) */}
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                
+                {/* Main Content (First on Mobile) */}
+                <div className="lg:col-span-8">
+                    <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
+                </div>
+                
+                {/* Sidebar (Second on Mobile) */}
+                <div className="lg:col-span-4 space-y-6">
+                    {/* "Wrong Class" CTA Card */}
+                    <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                         <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/20 rounded-full blur-xl"></div>
+                         <h4 className="font-bold text-lg mb-1 relative z-10">Not {segmentData.title}?</h4>
+                         <p className="text-indigo-100 text-xs mb-4 relative z-10">Find materials for other classes easily.</p>
+                         <Link href="/" className="block w-full text-center bg-white text-indigo-700 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-50 transition shadow-md relative z-10">
+                             Browse All Classes
+                         </Link>
+                    </div>
+
+                    <div className="sticky top-24">
+                        <Sidebar />
+                    </div>
+                </div>
+            </div>
         </div>
       );
   }
 
   // =========================================================
   //  B. DASHBOARD VIEW MODE
-  //  (Kept mostly same but polished for consistency)
   // =========================================================
 
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
-
-  const { data: updates } = await supabase
-    .from("segment_updates")
-    .select("id, type, title, created_at, attachment_url")
-    .eq("segment_id", segmentData.id)
-    .order("created_at", { ascending: false });
+  const { data: updates } = await supabase.from("segment_updates").select("id, type, title, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false });
 
   // Preview Content
   const { data: blogs } = await supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4);
@@ -143,15 +181,27 @@ export default async function SegmentPage({
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
       {/* HERO SECTION */}
-      <section className="bg-slate-900 text-white pt-36 pb-24 px-6 relative overflow-hidden">
+      <section className="bg-[#0f172a] text-white pt-32 pb-20 px-6 relative overflow-hidden">
         <div className="absolute top-[-50%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">
-                <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
-                <span className="text-blue-400">{segmentData.title}</span>
+            {/* Nav */}
+            <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
+                    <span className="text-blue-400">{segmentData.title}</span>
+                </div>
+                
+                {/* Quick Switcher (Desktop) */}
+                <div className="hidden md:flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Switch:</span>
+                    {allSegments?.slice(0, 4).map(s => (
+                        s.slug !== segment_slug && <Link key={s.id} href={`/resources/${s.slug}`} className="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 bg-white/5 rounded border border-white/10">{s.title}</Link>
+                    ))}
+                </div>
             </div>
+
             <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
                 {segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Hub</span>
             </h1>
@@ -161,7 +211,16 @@ export default async function SegmentPage({
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 md:px-8 py-16">
+      {/* MOBILE QUICK SWITCHER */}
+      <div className="md:hidden bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar py-3 px-4 flex gap-2">
+         {allSegments?.map(s => (
+             <Link key={s.id} href={`/resources/${s.slug}`} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold border ${s.slug === segment_slug ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                 {s.title}
+             </Link>
+         ))}
+      </div>
+
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-16">
                 
@@ -189,27 +248,25 @@ export default async function SegmentPage({
                     )}
                 </div>
 
-                {/* 2. QUICK UPDATES */}
+                {/* 2. QUICK UPDATES (Routine/Syllabus) */}
+                {/* ... (Existing Quick Actions code remains mostly same, just ensuring correct styling) ... */}
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="text-xl">⚡</span> Quick Actions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Routine */}
                         <Link href={`/resources/${segment_slug}?type=update&category=routine`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition group relative overflow-hidden">
                             <div className="flex justify-between items-start mb-2"><span className="text-2xl">📅</span><span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase">Routine</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Exam Routine</h4>
-                            {routine ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p>{isNew(routine.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No active routine</p>}
+                            {routine ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">{routine.title}</p> : <p className="text-xs text-slate-400 mt-1 italic">No active routine</p>}
                         </Link>
-                        {/* Syllabus */}
                         <Link href={`/resources/${segment_slug}?type=update&category=syllabus`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group relative overflow-hidden">
                             <div className="flex justify-between items-start mb-2"><span className="text-2xl">📝</span><span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold uppercase">Syllabus</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Full Syllabus</h4>
-                            {syllabus ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p>{isNew(syllabus.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No syllabus found</p>}
+                            {syllabus ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">{syllabus.title}</p> : <p className="text-xs text-slate-400 mt-1 italic">No syllabus found</p>}
                         </Link>
-                        {/* Result */}
                         <Link href={`/resources/${segment_slug}?type=update&category=exam_result`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition group relative overflow-hidden">
                             <div className="flex justify-between items-start mb-2"><span className="text-2xl">🏆</span><span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold uppercase">Result</span></div>
                             <h4 className="font-bold text-slate-800 text-sm">Exam Results</h4>
-                            {result ? <><p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p>{isNew(result.created_at) && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}</> : <p className="text-xs text-slate-400 mt-1 italic">No results yet</p>}
+                            {result ? <p className="text-xs text-slate-500 mt-1 line-clamp-1">{result.title}</p> : <p className="text-xs text-slate-400 mt-1 italic">No results yet</p>}
                         </Link>
                     </div>
                 </div>
@@ -218,7 +275,6 @@ export default async function SegmentPage({
                 <section>
                     <div className="flex items-center justify-between mb-6 border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-3"><span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span><h2 className="text-xl font-bold text-slate-900">Latest Articles</h2></div>
-                        {/* FIX 1: Point to /blog page */}
                         <Link href={`/blog?segment=${encodeURIComponent(segmentData.title)}`} className="text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">View All →</Link>
                     </div>
                     {blogs && blogs.length > 0 ? (
