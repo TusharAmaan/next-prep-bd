@@ -22,34 +22,94 @@ export default async function SegmentPage({
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   if (!segmentData) return notFound();
 
-  // === A. LIST VIEW MODE ===
+  // =========================================================
+  //  A. LIST VIEW MODE (Question Bank / PDF List)
+  //  Redesigned for a cleaner, modern look
+  // =========================================================
   if (type) {
+      // Helper to format the title dynamically
+      const getPageTitle = () => {
+        if (category) return category.replace(/_/g, ' '); // e.g. "Exam Routine"
+        if (type === 'pdf') return 'Study Materials';
+        if (type === 'video') return 'Video Classes';
+        if (type === 'update') return 'Latest Updates';
+        return 'Question Bank'; // Default for type=question
+      };
+
+      const getPageIcon = () => {
+         if (type === 'question') return '❓';
+         if (type === 'pdf') return '📚';
+         if (type === 'video') return '▶';
+         return '⚡';
+      };
+
       return (
-        <div className="min-h-screen bg-[#F8FAFC] font-sans">
-            <div className="bg-slate-900 text-white py-16 px-6">
+        <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
+            
+            {/* 1. MODERN HEADER (White with subtle border) */}
+            <div className="bg-white border-b border-slate-200 pt-24 pb-12 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
-                    <Link href={`/resources/${segment_slug}`} className="text-xs font-bold text-slate-400 hover:text-white uppercase mb-4 inline-flex items-center gap-1 transition-colors">
-                        ← Back to Dashboard
-                    </Link>
-                    <h1 className="text-3xl md:text-4xl font-black capitalize">
-                        {category ? category.replace('_', ' ') : type === 'pdf' ? 'Study Materials' : type === 'update' ? 'Latest Updates' : 'Question Bank'}
-                    </h1>
+                    {/* Breadcrumb Navigation */}
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                        <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
+                        <span>/</span>
+                        <Link href={`/resources/${segment_slug}`} className="hover:text-blue-600 transition-colors">{segmentData.title}</Link>
+                        <span>/</span>
+                        <span className="text-slate-800">{getPageTitle()}</span>
+                    </div>
+
+                    {/* Dynamic Title */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight capitalize flex items-center gap-3">
+                                <span className="bg-slate-100 w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl border border-slate-200">
+                                    {getPageIcon()}
+                                </span>
+                                <span>
+                                    {segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">{getPageTitle()}</span>
+                                </span>
+                            </h1>
+                            <p className="mt-3 text-slate-500 font-medium max-w-2xl text-sm md:text-base">
+                                Browse our complete collection of {segmentData.title} {getPageTitle().toLowerCase()}. 
+                                Use the search bar below to find specific topics.
+                            </p>
+                        </div>
+
+                        {/* Quick Back Button (Mobile Optimized) */}
+                        <Link 
+                            href={`/resources/${segment_slug}`} 
+                            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                        >
+                            <span>← Back to Dashboard</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
             
-            <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8">
+            {/* 2. CONTENT GRID */}
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                
+                {/* Main Content (Material List) */}
+                <div className="lg:col-span-8 order-2 lg:order-1">
+                    {/* Note: Ensure MaterialList component handles the individual card design! */}
                     <MaterialList segmentId={segmentData.id} initialType={type} initialCategory={category} />
                 </div>
-                <div className="lg:col-span-4 space-y-8">
-                    <Sidebar />
+                
+                {/* Sidebar (Sticky on Desktop) */}
+                <div className="lg:col-span-4 order-1 lg:order-2 space-y-6">
+                    <div className="sticky top-24">
+                        <Sidebar />
+                    </div>
                 </div>
             </div>
         </div>
       );
   }
 
-  // === B. DASHBOARD VIEW MODE ===
+  // =========================================================
+  //  B. DASHBOARD VIEW MODE
+  //  (Kept mostly same but polished for consistency)
+  // =========================================================
 
   const { data: groups } = await supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id");
 
@@ -61,7 +121,7 @@ export default async function SegmentPage({
 
   // Preview Content
   const { data: blogs } = await supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4);
-  const { data: materials } = await supabase.from("resources").select("*").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5);
+  const { data: materials } = await supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5);
   const { data: questions } = await supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5);
 
   const routine = updates?.find(u => u.type === 'routine');
@@ -83,7 +143,7 @@ export default async function SegmentPage({
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
       {/* HERO SECTION */}
-      <section className="bg-slate-900 text-white pt-32 pb-20 px-6 relative overflow-hidden">
+      <section className="bg-slate-900 text-white pt-36 pb-24 px-6 relative overflow-hidden">
         <div className="absolute top-[-50%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -101,7 +161,7 @@ export default async function SegmentPage({
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-16">
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-16">
                 
