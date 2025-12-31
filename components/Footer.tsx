@@ -56,7 +56,7 @@ export default function Footer() {
           <ul className="space-y-4 text-sm text-gray-400">
             <li className="flex items-center gap-3">
                 <span className="text-blue-500 bg-blue-500/10 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                <span className="font-medium hover:text-white transition">Call: 16910 (24x7)</span>
+                <span className="font-medium hover:text-white transition">Call: 01619663933 (24x7)</span>
             </li>
             
             <li>
@@ -69,14 +69,16 @@ export default function Footer() {
             </li>
 
             <li className="flex items-center gap-3">
+              <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-3 group">
                 <span className="text-gray-500 bg-gray-800 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
-                <span className="font-medium hover:text-white transition">support@nextprepbd.com</span>
+                <span className="font-medium hover:text-white transition">nextprepbd@gmail.com</span>
+                </a>
             </li>
           </ul>
 
           {/* Social Icons */}
           <div className="flex gap-4 mt-8">
-            <a href="https://facebook.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition-all">
+            <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition-all">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             </a>
             <a href="https://instagram.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:border-pink-600 hover:text-white transition-all">
@@ -92,7 +94,7 @@ export default function Footer() {
       
       {/* COPYRIGHT */}
       <div className="text-center text-gray-600 text-xs mt-16 pt-8 border-t border-gray-900 font-bold tracking-wide">
-        &copy; {currentYear} NextPrep BD. All rights reserved.
+        &copy; {currentYear} Next Edtech. All rights reserved.
       </div>
     </footer>
   );
