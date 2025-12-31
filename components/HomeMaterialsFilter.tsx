@@ -40,9 +40,19 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
 
   return (
     <div>
-      {/* 1. APP-LIKE HORIZONTAL SCROLL TABS */}
-      {/* -mx-4 px-4 allows scroll to touch screen edges on mobile while keeping alignment */}
-      <div className="flex overflow-x-auto pb-4 gap-3 -mx-6 px-6 md:mx-0 md:px-0 no-scrollbar mb-6 snap-x">
+      {/* CSS TO HIDE SCROLLBAR */}
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
+      {/* 1. HORIZONTAL TABS (Scrollbar Hidden) */}
+      <div className="flex overflow-x-auto pb-2 gap-3 -mx-6 px-6 md:mx-0 md:px-0 hide-scrollbar mb-6 snap-x">
         {segments.map((seg) => (
           <button
             key={seg.id}
