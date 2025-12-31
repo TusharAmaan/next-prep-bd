@@ -47,7 +47,6 @@ export default async function EbooksPage({ searchParams }: Props) {
       
       {/* --- HERO HEADER --- */}
       <div className="max-w-7xl mx-auto px-6 mb-10 text-center relative">
-        {/* Background Blob */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
         
         <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight relative z-10">
@@ -229,12 +228,6 @@ export default async function EbooksPage({ searchParams }: Props) {
             </div>
         )}
       </div>
-
-      {/* Utility to hide scrollbar but allow scrolling */}
-      <style jsx global>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
