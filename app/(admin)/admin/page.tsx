@@ -3,10 +3,10 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
+import Link from "next/link"; // Added for Profile Link
 import 'suneditor/dist/css/suneditor.min.css';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import UserManagement from "@/components/UserManagement";
 
 // --- TYPES ---
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
@@ -145,45 +145,73 @@ const ListHeader = memo(({ title, onAdd, onSearch, searchVal, showAdd = true }: 
 ));
 ListHeader.displayName = "ListHeader";
 
-// --- USER MANAGEMENT COMPONENTS ---
-const InviteModal = memo(({ isOpen, onClose, onInvite, submitting }: any) => {
+// --- NEW USER MANAGEMENT COMPONENT ---
+// Now uses showSuccess/showError passed as props instead of window.alert
+const UserManagementView = memo(({ onShowError, onShowSuccess }: any) => {
+    const [users, setUsers] = useState<any[]>([]);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [email, setEmail] = useState("");
     const [role, setRole] = useState("editor");
+    const [submitting, setSubmitting] = useState(false);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
-    return (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-[400px] animate-pop-in overflow-hidden">
-                <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-slate-900">Invite Team Member</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-red-500">✕</button>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Email Address</label>
-                        <input className="w-full border p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" value={email} onChange={e => setEmail(e.target.value)} placeholder="colleague@example.com" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Assign Role</label>
-                        <select className="w-full border p-3 rounded-xl text-sm font-bold outline-none bg-white" value={role} onChange={e => setRole(e.target.value)}>
-                            <option value="editor">Editor (Content Manager)</option>
-                            <option value="tutor">Tutor (Pro Features)</option>
-                            <option value="institute">Institute (Branding)</option>
-                            <option value="admin">Admin (Full Access)</option>
-                        </select>
-                    </div>
-                    <button disabled={submitting} onClick={() => onInvite(email, role)} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">
-                        {submitting ? "Sending Invitation..." : "Send Invitation 📨"}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-});
-InviteModal.displayName = "InviteModal";
+    const fetchUsers = async () => {
+        const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        if(data) setUsers(data);
+    };
 
-const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDeleteUser }: any) => {
+    const handleRoleUpdate = async (userId: string, newRole: string) => {
+        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+        if (error) onShowError(error.message);
+        else {
+            onShowSuccess(`Role updated to ${newRole.toUpperCase()}`);
+            fetchUsers();
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        // We use a simple confirm here, but in real app could use the custom modal too if passed down
+        if(!confirm("Delete this user? Content will remain, but login will be revoked.")) return;
+        
+        try {
+            const res = await fetch('/api/admin/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId }),
+            });
+            if (!res.ok) throw new Error("Failed to delete user");
+            onShowSuccess("User removed successfully");
+            fetchUsers();
+        } catch (err: any) {
+            onShowError(err.message);
+        }
+    };
+
+    const handleInvite = async () => {
+        setSubmitting(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const res = await fetch('/api/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role, invitedByEmail: user?.email }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            onShowSuccess("Invitation sent successfully! (Check Resend logs if verified)");
+            setIsInviteModalOpen(false);
+            setEmail("");
+        } catch (err: any) {
+            onShowError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const getRoleColor = (r: string) => {
         switch (r) {
             case 'admin': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -196,16 +224,48 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDelete
 
     return (
         <div className="animate-fade-in space-y-6">
+            {/* INVITE MODAL */}
+            {isInviteModalOpen && (
+                <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[400px] animate-pop-in overflow-hidden">
+                        <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-slate-900">Invite Team Member</h3>
+                            <button onClick={()=>setIsInviteModalOpen(false)} className="text-slate-400 hover:text-red-500">✕</button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Email Address</label>
+                                <input className="w-full border p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" value={email} onChange={e => setEmail(e.target.value)} placeholder="colleague@example.com" />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Assign Role</label>
+                                <select className="w-full border p-3 rounded-xl text-sm font-bold outline-none bg-white" value={role} onChange={e => setRole(e.target.value)}>
+                                    <option value="editor">Editor</option>
+                                    <option value="tutor">Tutor</option>
+                                    <option value="institute">Institute</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button disabled={submitting} onClick={handleInvite} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">
+                                {submitting ? "Sending..." : "Send Invitation 📨"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* HEADER */}
             <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                 <div>
                     <h2 className="text-xl font-black text-slate-800 uppercase">User Management</h2>
                     <p className="text-xs text-slate-400 font-bold">Manage roles and permissions</p>
                 </div>
-                <button onClick={onInviteClick} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2">
+                <button onClick={()=>setIsInviteModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2">
                     <span>✉️</span> Invite User
                 </button>
             </div>
 
+            {/* TABLE */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-xs uppercase font-extrabold text-slate-400">
@@ -226,7 +286,7 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDelete
                                     <select
                                         className={`border border-slate-200 text-xs font-bold py-1.5 px-3 rounded-lg outline-none cursor-pointer uppercase ${getRoleColor(user.role)}`}
                                         value={user.role}
-                                        onChange={(e) => onRoleUpdate(user.id, e.target.value)}
+                                        onChange={(e) => handleRoleUpdate(user.id, e.target.value)}
                                     >
                                         <option value="student">Student</option>
                                         <option value="tutor">Tutor</option>
@@ -237,7 +297,7 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDelete
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <button
-                                        onClick={() => onDeleteUser(user.id)}
+                                        onClick={() => handleDeleteUser(user.id)}
                                         className="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all"
                                     >
                                         Remove
@@ -251,7 +311,7 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDelete
         </div>
     );
 });
-UserManagementTable.displayName = "UserManagementTable";
+UserManagementView.displayName = "UserManagementView";
 
 // --- MAIN PAGE ---
 
@@ -262,6 +322,8 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [editorMode, setEditorMode] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null); // New User State
+    const [showProfileMenu, setShowProfileMenu] = useState(false); // New Menu State
 
     // --- STATE ---
     const [resSearch, setResSearch] = useState("");
@@ -310,10 +372,6 @@ export default function AdminDashboard() {
     // HIERARCHY MANAGER STATE
     const [newHierarchyName, setNewHierarchyName] = useState("");
     const [activeHierarchyLevel, setActiveHierarchyLevel] = useState<'segment' | 'group' | 'subject'>('segment');
-
-    // USERS STATE
-    const [users, setUsers] = useState<any[]>([]);
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     // --- FORM INPUTS ---
     const [submitting, setSubmitting] = useState(false);
@@ -381,7 +439,7 @@ export default function AdminDashboard() {
     const fetchContent = useCallback(async () => {
         if (editorMode || isLoading) return;
 
-        if (activeTab === 'hierarchy') return;
+        if (activeTab === 'hierarchy' || activeTab === 'users') return;
 
         if (activeTab === 'categories') {
             let query = supabase.from("categories").select("*", { count: 'exact' });
@@ -401,13 +459,6 @@ export default function AdminDashboard() {
                 setDataList(data);
                 if (count !== null) setTotalCount(count);
             }
-            return;
-        }
-
-        // --- USER FETCH LOGIC ---
-        if (activeTab === 'users') {
-            const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-            setUsers(data || []);
             return;
         }
 
@@ -464,8 +515,15 @@ export default function AdminDashboard() {
     useEffect(() => {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            if (session) { setIsAuthenticated(true); fetchDropdowns(); }
-            else { router.push("/login"); }
+            if (session) { 
+                setIsAuthenticated(true); 
+                // Fetch User Details for Sidebar
+                const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+                if(data) setCurrentUser(data);
+                fetchDropdowns(); 
+            } else { 
+                router.push("/login"); 
+            }
             setIsLoading(false);
         };
         init();
@@ -539,56 +597,6 @@ export default function AdminDashboard() {
     const handleDelete = (id: number) => {
         let table = activeTab === 'materials' ? 'resources' : activeTab === 'updates' ? 'segment_updates' : activeTab === 'categories' ? 'categories' : activeTab;
         deleteItem(table, id);
-    };
-
-    // --- NEW HANDLERS FOR USERS (WITH DELETE) ---
-    const handleRoleUpdate = async (userId: string, newRole: string) => {
-        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
-        if (error) showError(error.message);
-        else {
-            showSuccess(`Role updated to ${newRole.toUpperCase()}`);
-            fetchContent();
-        }
-    };
-
-    const handleDeleteUser = async (userId: string) => {
-        confirmAction("Are you sure? This removes their login access but keeps content.", async () => {
-            try {
-                const res = await fetch('/api/admin/delete-user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId }),
-                });
-                
-                if (!res.ok) throw new Error("Failed to delete user");
-                
-                showSuccess("User removed successfully");
-                fetchContent(); // Refresh list
-            } catch (err: any) {
-                showError(err.message);
-            }
-        });
-    };
-
-    const handleInvite = async (email: string, role: string) => {
-        setSubmitting(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            const res = await fetch('/api/invite', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, role, invitedByEmail: user?.email }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-
-            showSuccess("Invitation sent successfully!");
-            setIsInviteModalOpen(false);
-        } catch (err: any) {
-            showError(err.message);
-        } finally {
-            setSubmitting(false);
-        }
     };
 
     const handleSave = async () => {
@@ -801,13 +809,6 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            <InviteModal
-                isOpen={isInviteModalOpen}
-                onClose={() => setIsInviteModalOpen(false)}
-                onInvite={handleInvite}
-                submitting={submitting}
-            />
-
             {modal.isOpen && <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={() => { modal.onConfirm?.(); closeModal() }} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
 
             <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-2xl pt-28">
@@ -824,7 +825,42 @@ export default function AdminDashboard() {
                         <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}><span className="text-lg opacity-80">{tab.icon}</span> {tab.label}</button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-slate-800"><button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-all">Sign Out</button></div>
+                
+                {/* UPGRADED PROFILE FOOTER */}
+                <div className="p-4 border-t border-slate-800 relative">
+                    {currentUser && (
+                        <>
+                            <div 
+                                onClick={() => setShowProfileMenu(!showProfileMenu)} 
+                                className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 cursor-pointer transition-colors"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                                    {currentUser.full_name ? currentUser.full_name[0].toUpperCase() : "A"}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{currentUser.full_name}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{currentUser.role}</p>
+                                </div>
+                                <span className="text-slate-500 text-xs">▲</span>
+                            </div>
+
+                            {/* DROPDOWN MENU */}
+                            {showProfileMenu && (
+                                <div className="absolute bottom-20 left-4 right-4 bg-white rounded-xl shadow-2xl overflow-hidden animate-slide-up z-30">
+                                    <Link href="/profile" className="block px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-gray-100">
+                                        ⚙️ Settings
+                                    </Link>
+                                    <button 
+                                        onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} 
+                                        className="w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50"
+                                    >
+                                        🚪 Log Out
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
             </aside>
 
             <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
@@ -858,9 +894,12 @@ export default function AdminDashboard() {
                         />
                     )}
 
-                    {/* --- USER MANAGEMENT VIEW --- */}
+                    {/* --- USER MANAGEMENT VIEW (With Custom Error Handling) --- */}
                     {activeTab === 'users' && (
-                        <UserManagement />
+                        <UserManagementView
+                            onShowError={showError}
+                            onShowSuccess={showSuccess}
+                        />
                     )}
 
                     {/* --- HIERARCHY MANAGER (MILLER COLUMNS) --- */}

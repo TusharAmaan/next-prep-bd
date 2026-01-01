@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     if (dbError) throw new Error(dbError.message);
 
     const { error: emailError } = await resend.emails.send({
-      from: 'NextPrep Admin <onboarding@resend.dev>',
+      from: 'NextPrep Admin <admin@nextprepbd.com>',
       to: email,
       subject: `You have been invited to join NextPrepBD`,
       react: InvitationEmail({ token, role, inviterName: invitedByEmail }),
