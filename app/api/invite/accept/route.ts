@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use Service Role to bypass security and update roles
+// ADMIN CLIENT (Bypasses RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -11,29 +11,37 @@ export async function POST(req: Request) {
   try {
     const { email, token, userId } = await req.json();
 
-    // 1. Verify the invitation exists
+    console.log("Processing Invite for:", email, "Token:", token);
+
+    // 1. Verify invitation (Case Insensitive Email Check)
     const { data: invite, error: inviteError } = await supabaseAdmin
       .from('invitations')
       .select('*')
-      .eq('email', email)
+      .ilike('email', email) // ilike = case insensitive
       .eq('token', token)
       .single();
 
-    if (inviteError || !invite) throw new Error("Invalid or expired invitation.");
+    if (inviteError || !invite) {
+      console.error("Invite not found:", inviteError);
+      return NextResponse.json({ error: "Invalid or expired invitation link." }, { status: 400 });
+    }
 
-    // 2. Update the user's profile with the assigned role
+    // 2. Update Role (Force the upgrade)
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ role: invite.role }) // Apply the role from the invite
+      .update({ role: invite.role })
       .eq('id', userId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Profile update failed:", updateError);
+      throw new Error("Failed to assign role.");
+    }
 
-    // 3. Delete the invitation (One-time use)
+    // 3. Delete used invitation
     await supabaseAdmin.from('invitations').delete().eq('id', invite.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, role: invite.role });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
