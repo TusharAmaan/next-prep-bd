@@ -15,6 +15,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [institution, setInstitution] = useState("");
   const [phone, setPhone] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Modal State
   const [modal, setModal] = useState({ isOpen: false, type: 'success', message: '' });
@@ -66,7 +68,19 @@ export default function ProfilePage() {
       setModal({ isOpen: true, type: 'success', message: "Profile updated successfully!" });
     }
   };
-
+const handleChangePassword = async () => {
+  if (newPassword.length < 6) return alert("Password must be at least 6 characters");
+  
+  setPasswordLoading(true);
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  
+  setPasswordLoading(false);
+  if (error) setModal({ isOpen: true, type: 'error', message: error.message });
+  else {
+    setModal({ isOpen: true, type: 'success', message: "Password updated successfully!" });
+    setNewPassword("");
+  }
+};
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Loading Profile...</div>;
 
   return (
@@ -156,7 +170,29 @@ export default function ProfilePage() {
               placeholder="Tell us a bit about yourself..."
             />
           </div>
-
+{/* --- PASSWORD SECTION --- */}
+<div className="pt-6 border-t border-slate-100">
+  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Security</h3>
+  <div className="bg-red-50 border border-red-100 p-5 rounded-2xl">
+    <label className="text-xs font-bold text-red-400 uppercase block mb-2">New Password</label>
+    <div className="flex gap-3">
+      <input 
+        type="password"
+        className="w-full bg-white border border-red-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-200"
+        placeholder="••••••••"
+        value={newPassword}
+        onChange={e => setNewPassword(e.target.value)}
+      />
+      <button 
+        onClick={handleChangePassword}
+        disabled={passwordLoading || !newPassword}
+        className="whitespace-nowrap px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200 transition-all disabled:opacity-50"
+      >
+        {passwordLoading ? "Updating..." : "Update Password"}
+      </button>
+    </div>
+  </div>
+</div>
           <div className="pt-6 border-t border-slate-100 flex justify-end gap-4">
             <button onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-colors">
               Cancel

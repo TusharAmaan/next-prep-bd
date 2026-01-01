@@ -512,22 +512,36 @@ export default function AdminDashboard() {
 
     useEffect(() => { fetchContent(); }, [fetchContent]);
 
-    useEffect(() => {
-        const init = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) { 
-                setIsAuthenticated(true); 
-                // Fetch User Details for Sidebar
-                const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-                if(data) setCurrentUser(data);
-                fetchDropdowns(); 
-            } else { 
-                router.push("/login"); 
+// Inside app/admin/page.tsx
+
+useEffect(() => {
+    const init = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) { 
+            setIsAuthenticated(true); 
+            
+            // SECURITY CHECK: Fetch Profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            // If Student, Kick them out
+            if (profile && profile.role === 'student') {
+                router.push("/profile"); // Redirect unauthorized users
+                return;
             }
-            setIsLoading(false);
-        };
-        init();
-    }, [router, fetchDropdowns]);
+
+            if(profile) setCurrentUser(profile);
+            fetchDropdowns(); 
+        } else { 
+            router.push("/login"); 
+        }
+        setIsLoading(false);
+    };
+    init();
+}, [router, fetchDropdowns]);
 
     // --- HANDLERS ---
     const handleSegmentClick = (id: string) => { setSelectedSegment(id); setSelectedGroup(""); setSelectedSubject(""); setGroups([]); setSubjects([]); fetchGroups(id); };
