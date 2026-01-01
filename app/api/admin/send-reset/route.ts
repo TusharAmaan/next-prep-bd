@@ -12,39 +12,50 @@ export async function POST(req: Request) {
   try {
     const { email } = await req.json();
 
-    // 1. Generate the Password Reset Link (Securely)
+    // 1. Determine the Base URL (Production vs Local)
+    // PRIORITIZE: The explicit Env Var > Vercel URL > Hardcoded Production > Localhost
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL 
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) 
+      || 'https://nextprepbd.com'; // <--- REPLACE THIS with your actual domain if different
+
+    console.log("Generating reset link for:", siteUrl);
+
+    // 2. Generate the Password Reset Link
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
       options: {
-        // Redirect user to your update password page
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/update-password` 
+        // This ensures the user comes back to the correct live page
+        redirectTo: `${siteUrl}/update-password` 
       }
     });
 
     if (error) throw error;
 
-    // 2. Send the Link via Resend
-    // This guarantees the email lands in the inbox (unlike default Supabase SMTP)
+    // 3. Send via Resend
     const actionLink = data.properties.action_link;
 
     await resend.emails.send({
-      from: 'NextPrep Admin <admin@nextprepbd.com>', // Ensure this matches your verified domain
+      from: 'NextPrep Admin <admin@nextprepbd.com>', // Must be your verified domain
       to: email,
       subject: 'Reset Your Password',
       html: `
-        <h2>Password Reset Request</h2>
-        <p>You (or an administrator) requested a password reset for your NextPrepBD account.</p>
-        <p>Click the button below to set a new password:</p>
-        <a href="${actionLink}" style="background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-          Reset Password
-        </a>
-        <p style="margin-top: 20px; color: #666; font-size: 12px;">If you didn't ask for this, you can ignore this email.</p>
+        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #2563EB;">Password Reset Request</h2>
+          <p>You requested to reset your password for <strong>NextPrepBD</strong>.</p>
+          <p>Click the button below to set a new password:</p>
+          <a href="${actionLink}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 10px 0;">
+            Reset Password
+          </a>
+          <p style="margin-top: 20px; color: #666; font-size: 12px;">If you didn't ask for this, you can safely ignore this email.</p>
+          <p style="color: #aaa; font-size: 10px; margin-top: 10px;">Link valid for 24 hours.</p>
+        </div>
       `,
     });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    console.error("Reset Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
