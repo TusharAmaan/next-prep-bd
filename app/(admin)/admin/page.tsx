@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import 'suneditor/dist/css/suneditor.min.css';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import UserManagement from "@/components/UserManagement";
 
 // --- TYPES ---
 type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
@@ -859,12 +860,7 @@ export default function AdminDashboard() {
 
                     {/* --- USER MANAGEMENT VIEW --- */}
                     {activeTab === 'users' && (
-                        <UserManagementTable
-                            users={users}
-                            onRoleUpdate={handleRoleUpdate}
-                            onInviteClick={() => setIsInviteModalOpen(true)}
-                            onDeleteUser={handleDeleteUser}
-                        />
+                        <UserManagement />
                     )}
 
                     {/* --- HIERARCHY MANAGER (MILLER COLUMNS) --- */}
