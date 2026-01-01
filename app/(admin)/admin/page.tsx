@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; 
 
-// --- IMPORTS: THE NEW MODULAR COMPONENTS ---
+// --- IMPORTS: The New Modular Components ---
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
@@ -28,6 +28,11 @@ export default function AdminDashboard() {
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryCounts, setCategoryCounts] = useState<any>({});
 
+    // --- MISSING STATE RESTORED HERE ---
+    const [selectedSegment, setSelectedSegment] = useState("");
+    const [selectedGroup, setSelectedGroup] = useState("");
+    const [selectedSubject, setSelectedSubject] = useState("");
+
     // Modal State
     const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'success', message: '' });
     
@@ -46,7 +51,6 @@ export default function AdminDashboard() {
         if (c) {
             const counts: any = {};
             for (const cat of c) {
-                // Approximate count logic (can be optimized later)
                 const { count } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', cat.name);
                 counts[cat.id] = count || 0;
             }
@@ -67,7 +71,7 @@ export default function AdminDashboard() {
                 
                 if (profile) {
                     if (profile.role === 'student') router.replace("/profile");
-                    else if (profile.status === 'pending') router.replace("/verification-pending"); // Redirect pending users
+                    else if (profile.status === 'pending') router.replace("/verification-pending"); 
                     else {
                         setIsAuthenticated(true);
                         setCurrentUser(profile);
@@ -133,12 +137,32 @@ export default function AdminDashboard() {
                     {/* 2. HIERARCHY MANAGER */}
                     {activeTab === 'hierarchy' && (
                         <HierarchyManager 
-                            segments={segments} groups={groups} subjects={subjects}
-                            // STATE IS MANAGED INTERNALLY, JUST PASS FETCHERS & DATA
-                            // If you need shared selection state, create it here, otherwise keep it internal to the component
-                            selectedSegment={null} setSelectedSegment={() => {}} 
-                            selectedGroup={null} setSelectedGroup={() => {}}
-                            fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
+                            segments={segments} 
+                            groups={groups} 
+                            subjects={subjects}
+                            
+                            // Connected State
+                            selectedSegment={selectedSegment} 
+                            setSelectedSegment={(id: string) => {
+                                setSelectedSegment(id);
+                                setSelectedGroup("");
+                                setSelectedSubject("");
+                                setGroups([]);
+                                setSubjects([]);
+                                fetchGroups(id);
+                            }}
+                            
+                            selectedGroup={selectedGroup} 
+                            setSelectedGroup={(id: string) => {
+                                setSelectedGroup(id);
+                                setSelectedSubject("");
+                                setSubjects([]);
+                                fetchSubjects(id);
+                            }}
+                            
+                            fetchDropdowns={fetchDropdowns} 
+                            fetchGroups={fetchGroups} 
+                            fetchSubjects={fetchSubjects}
                         />
                     )}
 
@@ -151,14 +175,14 @@ export default function AdminDashboard() {
                         />
                     )}
 
-                    {/* 4. CONTENT MANAGER (Materials, News, Ebooks, Courses, Updates) */}
+                    {/* 4. CONTENT MANAGER */}
                     {['materials', 'news', 'ebooks', 'courses', 'updates'].includes(activeTab) && (
                         <ContentManager 
                             activeTab={activeTab}
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                             showSuccess={showSuccess} showError={showError} confirmAction={confirmAction}
-                            openCategoryModal={() => { /* If you want to support quick-add category from here */ }}
+                            openCategoryModal={() => { }}
                         />
                     )}
 
