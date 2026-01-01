@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; 
 
-// --- IMPORTS: The New Modular Components ---
+// --- IMPORTS: THE NEW MODULAR COMPONENTS ---
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
@@ -46,6 +46,7 @@ export default function AdminDashboard() {
         if (c) {
             const counts: any = {};
             for (const cat of c) {
+                // Approximate count logic (can be optimized later)
                 const { count } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', cat.name);
                 counts[cat.id] = count || 0;
             }
@@ -133,8 +134,10 @@ export default function AdminDashboard() {
                     {activeTab === 'hierarchy' && (
                         <HierarchyManager 
                             segments={segments} groups={groups} subjects={subjects}
-                            selectedSegment={null} setSelectedSegment={() => {}} // Pass generic handlers or local state if needed inside HierarchyManager
-                            // NOTE: HierarchyManager has internal state, but we pass fetching logic
+                            // STATE IS MANAGED INTERNALLY, JUST PASS FETCHERS & DATA
+                            // If you need shared selection state, create it here, otherwise keep it internal to the component
+                            selectedSegment={null} setSelectedSegment={() => {}} 
+                            selectedGroup={null} setSelectedGroup={() => {}}
                             fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                         />
                     )}
@@ -143,7 +146,7 @@ export default function AdminDashboard() {
                     {activeTab === 'categories' && (
                         <CategoryManager 
                             categories={categories} categoryCounts={categoryCounts}
-                            filter="all" setFilter={() => {}} search="" setSearch={() => {}} // Pass local state if needed
+                            filter="all" setFilter={() => {}} search="" setSearch={() => {}} 
                             fetchCategories={fetchDropdowns}
                         />
                     )}
@@ -155,7 +158,7 @@ export default function AdminDashboard() {
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                             showSuccess={showSuccess} showError={showError} confirmAction={confirmAction}
-                            openCategoryModal={() => { /* Handle opening category modal here if needed, or move modal state up */ }}
+                            openCategoryModal={() => { /* If you want to support quick-add category from here */ }}
                         />
                     )}
 
