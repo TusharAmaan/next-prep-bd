@@ -45,18 +45,15 @@ export default function Header() {
 
   // --- EFFECTS ---
   useEffect(() => {
-    // Scroll detection
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    // User Session Check
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
     };
     checkUser();
 
-    // Click Outside detection for dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveDropdown(null);
@@ -93,8 +90,6 @@ export default function Header() {
         
         {/* --- LEFT GROUP: LOGO + SEARCH --- */}
         <div className="flex items-center gap-6 flex-1 lg:flex-none lg:w-auto">
-            
-            {/* 1. LOGO */}
             <Link href="/" className="flex items-center gap-1 group flex-shrink-0">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:rotate-12 transition-transform">N</div>
                 <span className={`text-2xl font-extrabold tracking-tight ${getTextColor()} hidden sm:block`}>
@@ -102,7 +97,6 @@ export default function Header() {
                 </span>
             </Link>
 
-            {/* 2. SEARCH BAR (Moved Here) */}
             <form onSubmit={handleSearch} className="relative group flex-1 hidden md:block max-w-sm">
                 <input 
                     type="text" 
@@ -119,10 +113,9 @@ export default function Header() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
             </form>
-
         </div>
 
-        {/* --- 3. CENTER/RIGHT: NAVIGATION --- */}
+        {/* --- CENTER: NAVIGATION --- */}
         <nav ref={navRef} className="hidden lg:flex items-center gap-6 ml-auto">
           {navLinks.map((link) => (
             <div key={link.name} className="relative">
@@ -133,27 +126,12 @@ export default function Header() {
                     className={`flex items-center gap-1 text-sm font-bold transition-colors ${getTextColor()} ${getHoverColor()} ${activeDropdown === link.name ? 'text-blue-600' : ''}`}
                   >
                     {link.name}
-                    <svg 
-                      className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === link.name ? "rotate-180" : ""}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <svg className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === link.name ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
-                  
-                  {/* DROPDOWN MENU */}
-                  <div className={`absolute top-full right-0 mt-4 w-56 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-right z-50 
-                    ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
+                  <div className={`absolute top-full right-0 mt-4 w-56 bg-white rounded-xl shadow-xl border border-gray-100 transition-all duration-200 ease-in-out transform origin-top-right z-50 ${activeDropdown === link.name ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"}`}>
                     <div className="p-2 flex flex-col gap-1">
                       {link.submenu?.map((subItem) => (
-                        <Link 
-                          key={subItem.name} 
-                          href={subItem.href}
-                          onClick={() => setActiveDropdown(null)}
-                          className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left"
-                        >
+                        <Link key={subItem.name} href={subItem.href} onClick={() => setActiveDropdown(null)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-left">
                           {subItem.name}
                         </Link>
                       ))}
@@ -161,10 +139,7 @@ export default function Header() {
                   </div>
                 </>
               ) : (
-                <Link 
-                  href={link.href}
-                  className={`text-sm font-bold transition-colors ${pathname === link.href ? "text-blue-500" : `${getTextColor()} ${getHoverColor()}`}`}
-                >
+                <Link href={link.href} className={`text-sm font-bold transition-colors ${pathname === link.href ? "text-blue-500" : `${getTextColor()} ${getHoverColor()}`}`}>
                   {link.name}
                 </Link>
               )}
@@ -172,17 +147,28 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* --- 4. FAR RIGHT: DASHBOARD & MOBILE MENU --- */}
+        {/* --- 4. RIGHT: AUTH & MOBILE --- */}
         <div className="flex items-center gap-4">
             
-            {/* DASHBOARD BUTTON (Only if User Exists) */}
-            {user && (
-                <Link href="/admin" className="hidden md:block bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 whitespace-nowrap">
-                    Dashboard
-                </Link>
-            )}
+            {/* DESKTOP AUTH BUTTONS */}
+            <div className="hidden lg:flex items-center gap-4">
+                {user ? (
+                    <Link href="/admin" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 whitespace-nowrap">
+                        Dashboard
+                    </Link>
+                ) : (
+                    <>
+                        <Link href="/login" className={`text-sm font-bold transition-colors ${getTextColor()} hover:text-blue-500`}>
+                            Log In
+                        </Link>
+                        <Link href="/signup" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 whitespace-nowrap">
+                            Sign Up
+                        </Link>
+                    </>
+                )}
+            </div>
 
-            {/* MOBILE MENU BUTTON */}
+            {/* MOBILE MENU TOGGLE */}
             <button className={`lg:hidden p-2 ${getTextColor()}`} onClick={() => setIsOpen(!isOpen)}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
@@ -195,7 +181,7 @@ export default function Header() {
       {/* --- MOBILE DROPDOWN --- */}
       {isOpen && (
         <div className="lg:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl flex flex-col p-6 gap-4 max-h-[80vh] overflow-y-auto animate-fade-in-down">
-           {/* Mobile Search shows here if screen is small */}
+           
            <form onSubmit={handleSearch} className="relative md:hidden">
                 <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-gray-50 border border-gray-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
@@ -223,15 +209,23 @@ export default function Header() {
              </div>
            ))}
            
-           {/* MOBILE LOGIC: Dashboard Button */}
-           {user && (
-               <>
-                   <hr className="my-2" />
+           {/* MOBILE AUTH BUTTONS */}
+           <div className="border-t border-gray-100 pt-4 mt-2 flex flex-col gap-3">
+               {user ? (
                    <Link href="/admin" onClick={() => setIsOpen(false)} className="bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg">
-                       Dashboard
+                       Go to Dashboard
                    </Link>
-               </>
-           )}
+               ) : (
+                   <>
+                       <Link href="/login" onClick={() => setIsOpen(false)} className="w-full text-center py-3 rounded-lg font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">
+                           Log In
+                       </Link>
+                       <Link href="/signup" onClick={() => setIsOpen(false)} className="w-full text-center py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                           Create Account
+                       </Link>
+                   </>
+               )}
+           </div>
         </div>
       )}
     </header>
