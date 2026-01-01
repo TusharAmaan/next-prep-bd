@@ -114,9 +114,10 @@ const ImageInput = memo(({ label, method, setMethod, file, setFile, link, setLin
 ImageInput.displayName = "ImageInput";
 
 const CategoryManagerSelector = memo(({ label, value, onChange, context, categories, openModal, markDirty }: any) => {
-    const filtered = categories.filter((c: any) => c.type === context || c.type === 'general' || !c.type);
+    // Robust Filter: If context is 'question', we show 'question' OR 'general' OR 'all' types
+    const filtered = categories.filter((c: any) => c.type === context || c.type === 'general' || !c.type || (context === 'question' && c.type === 'question'));
     return (
-        <div className="space-y-1.5"><label className="text-xs font-bold text-slate-600 block uppercase">{label}</label><div className="flex gap-2"><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e => { onChange(e.target.value); markDirty(); }}><option value="">Select Category</option>{filtered.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div></div>
+        <div className="space-y-1.5"><label className="text-xs font-bold text-slate-600 block uppercase">{label}</label><div className="flex gap-2"><select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none cursor-pointer hover:border-slate-300 transition-colors" value={value} onChange={e => { onChange(e.target.value); markDirty(); }}><option value="">Select Category</option>{filtered.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}</select><button onClick={() => openModal(context)} className="bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-black transition-all">New</button></div></div>
     );
 });
 CategoryManagerSelector.displayName = "CategoryManagerSelector";
@@ -143,7 +144,7 @@ const ListHeader = memo(({ title, onAdd, onSearch, searchVal, showAdd = true }: 
 ));
 ListHeader.displayName = "ListHeader";
 
-// --- NEW USER MANAGEMENT COMPONENTS ---
+// --- USER MANAGEMENT COMPONENTS ---
 const InviteModal = memo(({ isOpen, onClose, onInvite, submitting }: any) => {
     const [email, setEmail] = useState("");
     const [role, setRole] = useState("editor");
@@ -181,7 +182,7 @@ const InviteModal = memo(({ isOpen, onClose, onInvite, submitting }: any) => {
 });
 InviteModal.displayName = "InviteModal";
 
-const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick }: any) => {
+const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick, onDeleteUser }: any) => {
     const getRoleColor = (r: string) => {
         switch (r) {
             case 'admin': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -209,9 +210,8 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick }: any) =
                     <thead className="bg-slate-50 text-xs uppercase font-extrabold text-slate-400">
                         <tr>
                             <th className="px-6 py-4">User</th>
-                            <th className="px-6 py-4">Current Role</th>
-                            <th className="px-6 py-4">Change Role</th>
-                            <th className="px-6 py-4 text-right">Joined</th>
+                            <th className="px-6 py-4">Role</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -222,13 +222,8 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick }: any) =
                                     <div className="text-xs text-slate-400">{user.email}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${getRoleColor(user.role)}`}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
                                     <select
-                                        className="bg-white border border-slate-200 text-xs font-bold py-1.5 px-3 rounded-lg outline-none hover:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer"
+                                        className={`border border-slate-200 text-xs font-bold py-1.5 px-3 rounded-lg outline-none cursor-pointer uppercase ${getRoleColor(user.role)}`}
                                         value={user.role}
                                         onChange={(e) => onRoleUpdate(user.id, e.target.value)}
                                     >
@@ -239,8 +234,13 @@ const UserManagementTable = memo(({ users, onRoleUpdate, onInviteClick }: any) =
                                         <option value="admin">Admin</option>
                                     </select>
                                 </td>
-                                <td className="px-6 py-4 text-right text-xs text-slate-400 font-bold">
-                                    {new Date(user.created_at).toLocaleDateString()}
+                                <td className="px-6 py-4 text-right">
+                                    <button
+                                        onClick={() => onDeleteUser(user.id)}
+                                        className="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all"
+                                    >
+                                        Remove
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -403,7 +403,7 @@ export default function AdminDashboard() {
             return;
         }
 
-        // --- NEW USER FETCH LOGIC ---
+        // --- USER FETCH LOGIC ---
         if (activeTab === 'users') {
             const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
             setUsers(data || []);
@@ -540,7 +540,7 @@ export default function AdminDashboard() {
         deleteItem(table, id);
     };
 
-    // --- NEW HANDLERS FOR USERS ---
+    // --- NEW HANDLERS FOR USERS (WITH DELETE) ---
     const handleRoleUpdate = async (userId: string, newRole: string) => {
         const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
         if (error) showError(error.message);
@@ -548,6 +548,25 @@ export default function AdminDashboard() {
             showSuccess(`Role updated to ${newRole.toUpperCase()}`);
             fetchContent();
         }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        confirmAction("Are you sure? This removes their login access but keeps content.", async () => {
+            try {
+                const res = await fetch('/api/admin/delete-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId }),
+                });
+                
+                if (!res.ok) throw new Error("Failed to delete user");
+                
+                showSuccess("User removed successfully");
+                fetchContent(); // Refresh list
+            } catch (err: any) {
+                showError(err.message);
+            }
+        });
     };
 
     const handleInvite = async (email: string, role: string) => {
@@ -753,6 +772,7 @@ export default function AdminDashboard() {
                                     <option value="ebook">eBook</option>
                                     <option value="blog">Study Material (Blog)</option>
                                     <option value="course">Course</option>
+                                    <option value="question">Question</option> {/* ADDED THIS */}
                                 </select>
                                 <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">
                                     This category will <strong>only</strong> appear when you are creating a <strong>{newCatType}</strong> post.
@@ -843,6 +863,7 @@ export default function AdminDashboard() {
                             users={users}
                             onRoleUpdate={handleRoleUpdate}
                             onInviteClick={() => setIsInviteModalOpen(true)}
+                            onDeleteUser={handleDeleteUser}
                         />
                     )}
 
@@ -905,7 +926,7 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-4">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter Context:</span>
                                     <div className="flex gap-2 flex-wrap">
-                                        {['all', 'news', 'ebook', 'blog', 'course', 'general'].map(t => (
+                                        {['all', 'news', 'ebook', 'blog', 'question', 'course', 'general'].map(t => (
                                             <button
                                                 key={t}
                                                 onClick={() => setCatManagerTypeFilter(t)}
@@ -929,8 +950,9 @@ export default function AdminDashboard() {
                                             <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider ${cat.type === 'news' ? 'bg-blue-50 text-blue-600' :
                                                     cat.type === 'ebook' ? 'bg-orange-50 text-orange-600' :
                                                         cat.type === 'blog' ? 'bg-purple-50 text-purple-600' :
-                                                            cat.type === 'course' ? 'bg-emerald-50 text-emerald-600' :
-                                                                'bg-slate-100 text-slate-500'
+                                                            cat.type === 'question' ? 'bg-pink-50 text-pink-600' :
+                                                                cat.type === 'course' ? 'bg-emerald-50 text-emerald-600' :
+                                                                    'bg-slate-100 text-slate-500'
                                                 }`}>
                                                 {cat.type || 'General'}
                                             </span>
@@ -1058,21 +1080,15 @@ export default function AdminDashboard() {
                                             {/* NEW: Question Category Selector */}
                                             {activeTab === 'materials' && type === 'question' && (
                                                 <div className="mt-4 animate-fade-in">
-                                                    <label className="text-xs font-bold text-slate-500 block mb-2 uppercase">
-                                                        Question Category
-                                                    </label>
-                                                    <select
-                                                        className="w-full bg-blue-50 border border-blue-200 p-3 rounded-xl text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500"
-                                                        value={category}
-                                                        onChange={e => { setCategory(e.target.value); markDirty(); }}
-                                                    >
-                                                        <option value="">Select Exam Type</option>
-                                                        <option value="Board Question">Board Question</option>
-                                                        <option value="College Test">College Test Paper</option>
-                                                        <option value="Cadet College">Cadet College Question</option>
-                                                        <option value="Suggestion">Suggestion / Final Prep</option>
-                                                        <option value="Lecture Sheet">Lecture Sheet</option>
-                                                    </select>
+                                                    <CategoryManagerSelector 
+                                                        label="Question Category" 
+                                                        value={category} 
+                                                        onChange={setCategory} 
+                                                        context="question" 
+                                                        categories={categories} 
+                                                        openModal={openCategoryModal} 
+                                                        markDirty={markDirty} 
+                                                    />
                                                 </div>
                                             )}
 
