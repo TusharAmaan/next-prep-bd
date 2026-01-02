@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { 
@@ -34,106 +34,101 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. AUTH & DATA ---
+  // --- 1. DATA FETCHING (Refactored to be reusable) ---
+  const fetchUserData = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) { 
+        setUser(null); 
+        setProfile(null); 
+        return; 
+    }
+    
+    setUser(session.user);
+    
+    // Fetch Profile & Goal
+    const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+    if (data) {
+      setProfile(data);
+      if (data.role === 'admin') fetchNotifications();
+    }
+  }, []);
+
+  // Initial Load & Auth Listener
   useEffect(() => {
-    const fetchProfile = async (session: any) => {
-      if (!session?.user) { setUser(null); setProfile(null); return; }
-      setUser(session.user);
-      
-      const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-      if (data) {
-        setProfile(data);
-        if (data.role === 'admin') fetchNotifications();
-      }
-    };
+    fetchUserData();
 
-    supabase.auth.getSession().then(({ data: { session } }) => fetchProfile(session));
-
-    // Realtime Listener for Auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      fetchProfile(session);
+      fetchUserData();
     });
 
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchUserData]);
+
+  // --- FIX: Re-fetch on Path Change (Updates 'Materials' link after profile save) ---
+  useEffect(() => {
+    fetchUserData(); // <--- This ensures the header updates when you navigate away from Profile
+    setActiveDesktopDropdown(null);
+    setIsMobileOpen(false);
+    setShowProfileMenu(false);
+    setShowNotifications(false);
+  }, [pathname, fetchUserData]);
+
+
+  // Close menus on click outside
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) setShowProfileMenu(false);
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) setShowNotifications(false);
       if (navRef.current && !navRef.current.contains(event.target as Node)) setActiveDesktopDropdown(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
-    
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      subscription.unsubscribe();
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close menus on route change
-  useEffect(() => {
-    setActiveDesktopDropdown(null);
-    setIsMobileOpen(false);
-    setShowProfileMenu(false);
-    setShowNotifications(false);
-  }, [pathname]);
 
-
-  // --- 2. STRONG NOTIFICATION LOGIC ---
-  
+  // --- 2. NOTIFICATIONS ---
   const fetchNotifications = async () => {
-    // Get ALL notifications (read and unread) to show history, but count only 'new'
     const { data } = await supabase
       .from('feedbacks')
       .select('*')
-      .order('created_at', { ascending: false }); // Show newest first
+      .order('created_at', { ascending: false });
     
     if (data) {
       setNotifications(data);
-      // Calculate unread count manually based on status 'new'
       const unread = data.filter((n: any) => n.status === 'new').length;
       setUnreadCount(unread);
     }
   };
 
   const handleNotificationClick = () => {
-    if (!showNotifications) fetchNotifications(); // Refresh data when opening
+    if (!showNotifications) fetchNotifications();
     setShowNotifications(!showNotifications);
   };
 
-  // INSTANT READ
   const markAsRead = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    
-    // 1. Optimistic UI Update (Instant)
     const currentNotif = notifications.find(n => n.id === id);
     if (currentNotif && currentNotif.status === 'new') {
-        setUnreadCount(prev => Math.max(0, prev - 1)); // Decrease count instantly
+        setUnreadCount(prev => Math.max(0, prev - 1));
     }
-    
-    setNotifications(prev => prev.map(n => 
-        n.id === id ? { ...n, status: 'read' } : n
-    ));
-
-    // 2. Database Update (Background)
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, status: 'read' } : n));
     await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
   };
 
-  // INSTANT DELETE
   const deleteNotification = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if(!confirm("Delete this notification permanently?")) return;
-
-    // 1. Optimistic UI Update (Instant)
+    if(!confirm("Delete this notification?")) return;
     const currentNotif = notifications.find(n => n.id === id);
     if (currentNotif && currentNotif.status === 'new') {
-        setUnreadCount(prev => Math.max(0, prev - 1)); // Decrease count if it was unread
+        setUnreadCount(prev => Math.max(0, prev - 1));
     }
-    setNotifications(prev => prev.filter(n => n.id !== id)); // Remove from list
-
-    // 2. Database Update (Background)
+    setNotifications(prev => prev.filter(n => n.id !== id));
     await supabase.from('feedbacks').delete().eq('id', id);
   };
 
-
-  // --- 3. ACTIONS & UTILS ---
+  // --- 3. HELPERS ---
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -154,8 +149,13 @@ export default function Header() {
     return '/student/dashboard'; 
   };
 
-  const getMaterialsLink = () => profile?.current_goal || '/profile';
+  // --- 4. DYNAMIC LINK LOGIC (FIXED) ---
+  const getMaterialsLink = () => {
+      // If goal exists, return it. Otherwise default to profile.
+      return profile?.current_goal ? profile.current_goal : '/profile';
+  };
 
+  // --- DATA ---
   const centerNav = [
     { name: "Home", icon: Home, href: "/", isDropdown: false },
     { name: "Courses", icon: BookOpen, href: "/courses", isDropdown: false },
@@ -191,9 +191,9 @@ export default function Header() {
 
   return (
     <>
-    {/* --- NOTIFICATION MODAL (View Details) --- */}
+    {/* --- NOTIFICATION MODAL --- */}
     {selectedNotification && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in font-sans">
             <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95">
                 <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
@@ -211,10 +211,7 @@ export default function Header() {
                     {selectedNotification.message}
                 </div>
                 <div className="flex justify-end gap-2">
-                    <button 
-                        onClick={(e) => { markAsRead(e, selectedNotification.id); setSelectedNotification(null); }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700"
-                    >
+                    <button onClick={(e) => { markAsRead(e, selectedNotification.id); setSelectedNotification(null); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700">
                         Mark Read & Close
                     </button>
                 </div>
@@ -222,7 +219,8 @@ export default function Header() {
         </div>
     )}
 
-    <header className="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm h-16 border-b border-white/20">
+    {/* --- HEADER --- */}
+    <header className="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm h-16 border-b border-white/20 font-sans">
       <div className="flex items-center justify-between h-full px-4 max-w-[1920px] mx-auto">
         
         {/* --- LEFT: LOGO --- */}
@@ -234,13 +232,7 @@ export default function Header() {
           </Link>
           <form onSubmit={handleSearch} className="hidden lg:flex items-center bg-slate-100/80 hover:bg-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 rounded-full px-4 py-2.5 w-64 transition-all">
             <Search className="w-4 h-4 text-slate-500 mr-2 flex-shrink-0" />
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm placeholder:text-slate-400 text-slate-900 w-full"
-            />
+            <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-sm placeholder:text-slate-400 text-slate-900 w-full" />
           </form>
         </div>
 
@@ -277,26 +269,16 @@ export default function Header() {
           )}
         </nav>
 
-        {/* --- RIGHT: ACTIONS & PROFILE --- */}
+        {/* --- RIGHT: ACTIONS --- */}
         <div className="hidden md:flex items-center justify-end gap-3 w-[25%]">
           {user ? (
             <>
-              {/* ADMIN NOTIFICATION */}
               {profile?.role === 'admin' && (
                   <div className="relative" ref={notifRef}>
-                      <button 
-                        onClick={handleNotificationClick}
-                        className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors relative group border border-slate-100"
-                      >
+                      <button onClick={handleNotificationClick} className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors relative group border border-slate-100">
                         <Bell className="w-5 h-5 text-slate-600 group-hover:text-slate-900" />
-                        {/* THE RED DOT: Only shows if unreadCount > 0 */}
-                        {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
-                                {unreadCount}
-                            </span>
-                        )}
+                        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">{unreadCount}</span>}
                       </button>
-
                       {showNotifications && (
                           <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-0 animate-in fade-in zoom-in-95 duration-100 z-50 overflow-hidden">
                               <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -304,60 +286,32 @@ export default function Header() {
                                   <span className="text-xs font-bold text-slate-400">{unreadCount} new</span>
                               </div>
                               <div className="max-h-80 overflow-y-auto">
-                                  {notifications.length === 0 ? (
-                                      <div className="p-8 text-center text-slate-500 text-sm">No notifications</div>
-                                  ) : (
-                                      notifications.map((notif) => (
-                                          <div 
-                                            key={notif.id} 
-                                            onClick={() => { setSelectedNotification(notif); setShowNotifications(false); }}
-                                            className={`p-3 border-b border-slate-50 transition-colors flex gap-3 cursor-pointer group ${notif.status === 'read' ? 'bg-white opacity-60' : 'bg-blue-50/30'}`}
-                                          >
-                                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.category === 'bug' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
-                                                  {notif.category === 'bug' ? <Settings className="w-4 h-4"/> : <MessageCircle className="w-4 h-4"/>}
-                                              </div>
-                                              <div className="flex-1 min-w-0">
-                                                  <p className="text-sm font-bold text-slate-800 truncate">{notif.full_name}</p>
-                                                  <p className="text-xs text-slate-500 truncate">{notif.message}</p>
-                                              </div>
-                                              <div className="flex flex-col gap-1">
-                                                  {/* TICK BUTTON: Only shows if notification is NEW */}
-                                                  {notif.status === 'new' && (
-                                                    <button onClick={(e) => markAsRead(e, notif.id)} className="text-green-600 hover:bg-green-100 p-1 rounded" title="Mark as Read"><Check className="w-3 h-3" /></button>
-                                                  )}
-                                                  {/* DELETE BUTTON */}
-                                                  <button onClick={(e) => deleteNotification(e, notif.id)} className="text-red-500 hover:bg-red-100 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><Trash2 className="w-3 h-3" /></button>
-                                              </div>
-                                          </div>
-                                      ))
-                                  )}
+                                  {notifications.length === 0 ? <div className="p-8 text-center text-slate-500 text-sm">No notifications</div> : notifications.map((notif) => (
+                                      <div key={notif.id} onClick={() => { setSelectedNotification(notif); setShowNotifications(false); }} className={`p-3 border-b border-slate-50 transition-colors flex gap-3 cursor-pointer group ${notif.status === 'read' ? 'bg-white opacity-60' : 'bg-blue-50/30'}`}>
+                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.category === 'bug' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>{notif.category === 'bug' ? <Settings className="w-4 h-4"/> : <MessageCircle className="w-4 h-4"/>}</div>
+                                          <div className="flex-1 min-w-0"><p className="text-sm font-bold text-slate-800 truncate">{notif.full_name}</p><p className="text-xs text-slate-500 truncate">{notif.message}</p></div>
+                                          <div className="flex flex-col gap-1">{notif.status === 'new' && <button onClick={(e) => markAsRead(e, notif.id)} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check className="w-3 h-3" /></button>}<button onClick={(e) => deleteNotification(e, notif.id)} className="text-red-500 hover:bg-red-100 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3 h-3" /></button></div>
+                                      </div>
+                                  ))}
                               </div>
                           </div>
                       )}
                   </div>
               )}
-
               {/* Profile Dropdown */}
               <div className="relative" ref={profileRef}>
                 <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-slate-200 hover:bg-slate-50 transition-all group">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                      {profile?.full_name?.[0] || user.email[0]}
-                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md">{profile?.full_name?.[0] || user.email[0]}</div>
                   <ChevronDown className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
                 {showProfileMenu && (
                   <div className="absolute top-12 right-0 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right ring-1 ring-black/5">
-                    <div className="px-3 py-3 mb-2 bg-slate-50 rounded-xl">
-                        <p className="font-bold text-slate-900">{profile?.full_name || "User"}</p>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{profile?.role || "Student"}</p>
-                    </div>
+                    <div className="px-3 py-3 mb-2 bg-slate-50 rounded-xl"><p className="font-bold text-slate-900">{profile?.full_name || "User"}</p><p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{profile?.role || "Student"}</p></div>
                     <div className="space-y-1">
                         <Link href={getDashboardLink()} className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><LayoutDashboard className="w-4 h-4" /> Dashboard</Link>
                         <Link href="/profile" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg"><Settings className="w-4 h-4" /> Settings</Link>
                     </div>
-                    <div className="border-t border-slate-100 mt-2 pt-2">
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left"><LogOut className="w-4 h-4" /> Log Out</button>
-                    </div>
+                    <div className="border-t border-slate-100 mt-2 pt-2"><button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left"><LogOut className="w-4 h-4" /> Log Out</button></div>
                   </div>
                 )}
               </div>
@@ -370,7 +324,7 @@ export default function Header() {
           )}
         </div>
 
-        {/* MOBILE TOGGLE - FIXED */}
+        {/* MOBILE TOGGLE */}
         <div className="md:hidden flex items-center justify-end flex-1 gap-2">
             <button onClick={() => setIsMobileOpen(true)} className="p-2 text-slate-600"><Search className="w-6 h-6" /></button>
              <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="w-10 h-10 flex items-center justify-center text-slate-800 bg-slate-100 rounded-full active:scale-90 transition-transform">
@@ -379,7 +333,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* MOBILE MENU - FIXED */}
+      {/* MOBILE MENU */}
       {isMobileOpen && (
         <div className="fixed inset-0 top-[64px] z-[60] bg-slate-100 w-full h-[calc(100vh-64px)] overflow-y-auto animate-in slide-in-from-right duration-300">
           <div className="p-4 pb-20">
@@ -390,13 +344,8 @@ export default function Header() {
 
             {user && (
                 <Link href="/profile" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm mb-8 border border-slate-100 active:scale-95 transition-transform">
-                    <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
-                        {profile?.full_name?.[0] || user.email[0]}
-                    </div>
-                    <div className="flex-1">
-                        <p className="font-bold text-slate-900 text-lg">{profile?.full_name || "My Profile"}</p>
-                        <p className="text-sm text-slate-500 font-medium">View your profile</p>
-                    </div>
+                    <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">{profile?.full_name?.[0] || user.email[0]}</div>
+                    <div className="flex-1"><p className="font-bold text-slate-900 text-lg">{profile?.full_name || "My Profile"}</p><p className="text-sm text-slate-500 font-medium">View your profile</p></div>
                 </Link>
             )}
 
