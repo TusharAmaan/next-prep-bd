@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
-// --- COMPONENT: ROLE CARD ---
 const RoleCard = ({ icon: Icon, title, description, onClick, active }: any) => (
   <button 
     onClick={onClick}
@@ -39,7 +38,6 @@ const RoleCard = ({ icon: Icon, title, description, onClick, active }: any) => (
   </button>
 );
 
-// --- COMPONENT: INPUT FIELD ---
 const InputField = ({ label, icon: Icon, ...props }: any) => (
   <div className="space-y-1.5 w-full">
     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">{label}</label>
@@ -61,34 +59,26 @@ function SignupContent() {
   const router = useRouter();
   const { executeRecaptcha } = useGoogleReCaptcha();
   
-  // URL Params
   const token = searchParams.get("token");
   const invitedRole = searchParams.get("role"); 
   const alertType = searchParams.get("alert");
   const prefilledEmail = searchParams.get("email"); 
 
-  // Steps: 1 = Role, 2 = Form
   const [step, setStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState<string>(""); 
   
-  // Core Fields
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [bio, setBio] = useState("");
-  
-  // Contact Fields
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [isWhatsappSame, setIsWhatsappSame] = useState(false);
-
-  // Student Specific
   const [batch, setBatch] = useState("");
-
+  const [bio, setBio] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Init
   useEffect(() => {
     if (token) { setStep(2); setSelectedRole(invitedRole || 'editor'); }
   }, [token, invitedRole]);
@@ -97,7 +87,6 @@ function SignupContent() {
     if (alertType === 'no_account' && prefilledEmail) setEmail(prefilledEmail);
   }, [alertType, prefilledEmail]);
 
-  // Logic: Sync Whatsapp if checked
   const handlePhoneChange = (val: string) => {
     setPhone(val);
     if (isWhatsappSame) setWhatsapp(val);
@@ -133,7 +122,7 @@ function SignupContent() {
             phone, 
             whatsapp, 
             bio,
-            batch: selectedRole === 'student' ? batch : null // Only save batch for students
+            batch: selectedRole === 'student' ? batch : null
           }
         }
       });
@@ -141,25 +130,36 @@ function SignupContent() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed.");
 
-      // 2. SUCCESS HANDLING
+      // 2. SUCCESS & REDIRECT LOGIC
       if (token) {
-          const res = await fetch("/api/invite/accept", {
+          await fetch("/api/invite/accept", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, token, userId: authData.user.id }),
           });
-          if (!res.ok) throw new Error((await res.json()).error);
           router.replace("/admin");
       } else {
-          // Explicit Update to ensure all fields are saved
+          // Ensure Profile Updated
           await supabase.from('profiles').update({ 
              phone, whatsapp, bio, batch: selectedRole === 'student' ? batch : null 
           }).eq('id', authData.user.id);
 
-          alert("Account created successfully! Redirecting to login...");
-          router.push("/login?signup=success"); 
+          // REDIRECT LOGIC: 
+          // If session exists (Auto-login successful), go to Dashboard/Home immediately.
+          if (authData.session) {
+             if (selectedRole === 'student' || selectedRole === 'tutor') {
+                router.replace("/"); // Home Page
+             } else {
+                router.replace("/admin"); // Dashboard
+             }
+          } else {
+             // If email confirmation is required, they won't have a session
+             alert("Account created! Please check your email to confirm.");
+             router.push("/login");
+          }
       }
     } catch (err: any) {
       if (err.message.includes("already registered")) {
+          // This should happen much less now that we delete the stub user
           setError("This email is already associated with an account. Please Log In.");
       } else {
           setError(err.message);
@@ -170,10 +170,8 @@ function SignupContent() {
   };
 
   return (
-    // FIX: Optimized for Mobile (pt-32, pb-12, flex-col, justify-start)
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-start pt-32 pb-12 px-4">
       
-      {/* Alert Banner */}
       {alertType === 'no_account' && (
         <div className="w-full max-w-lg mb-8 animate-in slide-in-from-top-4 duration-500">
             <div className="bg-white border-l-4 border-indigo-600 rounded-r-xl shadow-lg p-6 flex items-start gap-4">
@@ -188,14 +186,12 @@ function SignupContent() {
 
       <div className="bg-white w-full max-w-lg rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
           
-          {/* Progress Line */}
           <div className="h-1.5 bg-slate-100 w-full">
               <div className={`h-full bg-indigo-600 transition-all duration-500 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
           </div>
 
           <div className="p-8 md:p-10">
             
-            {/* BACK BUTTON (Only on Step 2 and NOT an Invite) */}
             {!token && step === 2 && (
                 <button 
                   onClick={() => setStep(1)} 
@@ -221,7 +217,6 @@ function SignupContent() {
                 </div>
             )}
 
-            {/* STEP 1: ROLES */}
             {step === 1 && !token && (
                 <div className="space-y-4 animate-in slide-in-from-left-8 duration-300">
                     <RoleCard icon={GraduationCap} title="Student" description="I want to study, take exams & access materials." onClick={() => handleRoleSelect('student')} active={selectedRole === 'student'} />
@@ -231,11 +226,9 @@ function SignupContent() {
                 </div>
             )}
 
-            {/* STEP 2: FORM */}
             {(step === 2 || token) && (
                 <form onSubmit={handleSignup} className="space-y-5 animate-in slide-in-from-right-8 duration-300">
                     
-                    {/* Basic Info */}
                     <InputField 
                         label={selectedRole === 'institute' ? "Institution Name" : "Full Name"} 
                         icon={selectedRole === 'institute' ? School : User}
@@ -249,7 +242,6 @@ function SignupContent() {
                         readOnly={!!token} className={token ? 'opacity-70 cursor-not-allowed bg-slate-50' : ''} required 
                     />
 
-                    {/* Phone & WhatsApp Section */}
                     <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-100 space-y-4">
                         <InputField 
                             label="Phone Number" icon={Phone} type="tel" placeholder="017..."
@@ -280,7 +272,6 @@ function SignupContent() {
                         </div>
                     </div>
 
-                    {/* Student Specific Fields */}
                     {selectedRole === 'student' && (
                         <InputField 
                             label="Batch / Year" icon={Calendar} type="text"
@@ -289,7 +280,6 @@ function SignupContent() {
                         />
                     )}
 
-                    {/* Bio / Goal */}
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">
                             {selectedRole === 'student' ? "Your Goal" : "Bio"}

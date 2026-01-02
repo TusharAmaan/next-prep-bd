@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -9,6 +10,7 @@ export async function GET(request: Request) {
   if (code) {
     const cookieStore = await cookies();
 
+    // 1. Standard Client (for checking session)
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,6 +23,12 @@ export async function GET(request: Request) {
       }
     );
 
+    // 2. Admin Client (for DELETING the stub user)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! // Ensure this is in your .env.local
+    );
+
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && session) {
@@ -30,19 +38,31 @@ export async function GET(request: Request) {
         .eq('id', session.user.id)
         .single();
 
-      // --- SCENARIO: NO ACCOUNT FOUND (New Google User) ---
+      // --- SCENARIO: NO PROFILE FOUND (New Google User) ---
       if (!profile) {
         const googleEmail = session.user.email;
-        // Sign out immediately so they can sign up fresh
+        const userId = session.user.id;
+
+        // CRITICAL FIX: Delete the "Stub" Google User.
+        // This frees up the email so they can sign up manually on the next page.
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        
+        // Sign out from the browser side too
         await supabase.auth.signOut();
-        // Redirect to Signup with Email Pre-filled and Alert
+
+        // Redirect to Signup with Email Pre-filled
         return NextResponse.redirect(`${origin}/signup?alert=no_account&email=${googleEmail}`);
       }
 
-      // --- SCENARIO: EXISTING USER ---
+      // --- EXISTING USER LOGIC ---
       if (profile.status === 'pending') return NextResponse.redirect(`${origin}/verification-pending`);
-      if (profile.role === 'student' || profile.role === 'tutor') return NextResponse.redirect(`${origin}/`);
-      return NextResponse.redirect(`${origin}/admin`);
+      
+      // Redirect Students/Tutors to Home, Others to Admin
+      if (profile.role === 'student' || profile.role === 'tutor') {
+        return NextResponse.redirect(`${origin}/`);
+      } else {
+        return NextResponse.redirect(`${origin}/admin`);
+      }
     }
   }
 
