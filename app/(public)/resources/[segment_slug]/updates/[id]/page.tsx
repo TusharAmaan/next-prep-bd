@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 import PrintableBlogBody from "@/components/PrintableBlogBody";
 import { Noto_Serif_Bengali } from "next/font/google"; 
-import { Metadata } from 'next'; // Import Metadata type
+import { Metadata } from 'next';
+import { createClient } from "@/utils/supabase/server"; // <--- 1. ADD THIS IMPORT
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function UpdateDetailsPage({ params }: { params: Promise<{ segment_slug: string; id: string }> }) {
   const { segment_slug, id } = await params;
 
+  // --- 2. AUTH CHECK (Added) ---
+  const supabaseServer = await createClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  const isLoggedIn = !!user; // Converts to true/false
+  // ----------------------------
+
   // Fetch data
   const { data: post } = await supabase
     .from("segment_updates")
@@ -85,6 +92,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                     formattedDate={formattedDate}
                     attachmentUrl={post.attachment_url}
                     bengaliFontClass={bengaliFont.className} 
+                    isLoggedIn={isLoggedIn} /* <--- 3. PASS THE PROP HERE */
                 />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 mt-8">
