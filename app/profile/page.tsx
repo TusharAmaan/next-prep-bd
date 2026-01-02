@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { BookOpen, GraduationCap, Briefcase, Activity, MapPin } from "lucide-react";
-import LocationTracker from "@/components/LocationTracker"; // <--- 1. IMPORT TRACKER
+import { GraduationCap, Briefcase } from "lucide-react";
+import LocationTracker from "@/components/LocationTracker"; // Kept for background tracking
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -17,7 +17,9 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [institution, setInstitution] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState(""); // <--- 2. NEW CITY STATE
+  
+  // HIDDEN STATE: We keep this so we don't accidentally delete the city when saving
+  const [city, setCity] = useState(""); 
   
   // Student Specific State
   const [currentGoal, setCurrentGoal] = useState("");
@@ -61,7 +63,7 @@ export default function ProfilePage() {
         setBio(data.bio || "");
         setInstitution(data.institution || "");
         setPhone(data.phone || "");
-        setCity(data.city || ""); // <--- 3. LOAD CITY
+        setCity(data.city || ""); // Load secretly
         setCurrentGoal(data.current_goal || "");
       }
       setLoading(false);
@@ -79,7 +81,7 @@ export default function ProfilePage() {
         institution: institution,
         phone: phone,
         current_goal: currentGoal,
-        // We preserve the city here so manual edits to other fields don't wipe it
+        // CRITICAL: We pass the hidden city value back so it doesn't get wiped
         city: city, 
       })
       .eq('id', user.id);
@@ -112,7 +114,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pt-32 pb-20 px-4 font-sans text-slate-900">
       
-      {/* 4. MOUNT TRACKER (This is the invisible secret agent) */}
+      {/* 1. INVISIBLE TRACKER (Runs silently) */}
       <LocationTracker />
 
       {/* CUSTOM MODAL */}
@@ -221,23 +223,7 @@ export default function ProfilePage() {
              </div>
           </div>
 
-          {/* 5. LOCATION DISPLAY FIELD (NEW) */}
-          <div className="grid grid-cols-1">
-             <div>
-                <label className="text-xs font-bold text-slate-500 uppercase block mb-2 flex items-center gap-2">
-                   <MapPin className="w-3 h-3" /> Location (Auto-Detected)
-                </label>
-                <input 
-                  className="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl font-bold text-slate-500 outline-none cursor-not-allowed"
-                  value={city || "Detecting..."}
-                  placeholder="Dhaka, Bangladesh"
-                  disabled
-                />
-                <p className="text-[10px] text-slate-400 mt-1.5 ml-1">
-                   We periodically update this to show relevant content near you.
-                </p>
-             </div>
-          </div>
+          {/* --- LOCATION UI REMOVED COMPLETELY --- */}
 
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Bio / About</label>

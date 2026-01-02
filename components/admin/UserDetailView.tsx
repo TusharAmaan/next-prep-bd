@@ -9,14 +9,12 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
 export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser, onApproveUser }: any) {
-  // --- HOOKS MUST BE AT THE TOP (Before any return) ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
-  // 1. FETCH LIKES (Safe inside useEffect)
+  // --- 1. HOOKS FIRST (Prevents Crash) ---
   useEffect(() => {
-    // Only fetch if we have a valid user and tab is active
     if (activeTab === 'likes' && user?.id) {
       const fetchUserLikes = async () => {
         setLoadingLikes(true);
@@ -40,13 +38,25 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     }
   }, [activeTab, user?.id]);
 
-  // --- SAFE GUARD: NOW we can return null if no user ---
   if (!user) return null;
 
-  // --- HELPER: Fix Goal Display ---
-  const displayGoal = user.goal || user.target_exam || user.educational_goal || "Not Set";
+  // --- 2. FIX: SMART GOAL PARSER ---
+  // Maps the URL slugs from your DB back to readable text
+  const getReadableGoal = (slug: string) => {
+    if (!slug) return "Not Set";
+    if (slug.includes('ssc')) return "SSC Preparation";
+    if (slug.includes('hsc')) return "HSC Preparation";
+    if (slug.includes('medical')) return "Medical Admission";
+    if (slug.includes('university')) return "University Admission";
+    if (slug.includes('mba')) return "IBA / MBA";
+    if (slug.includes('job')) return "Job Preparation";
+    return slug; // Fallback to showing the raw text if unknown
+  };
 
-  // --- HELPER: Role Styling ---
+  // CHECK 'current_goal' specifically (matches your DB)
+  const displayGoal = getReadableGoal(user.current_goal || user.goal);
+
+  // --- 3. HELPER: Role Styling ---
   const getRoleTheme = (role: string) => {
     switch (role) {
       case 'student': return { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <GraduationCap className="w-4 h-4"/>, label: 'Student' };
@@ -57,7 +67,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   };
   const theme = getRoleTheme(user.role);
 
-  // --- ANALYTICS: Group Likes by Type ---
+  // --- 4. ANALYTICS ---
   const likesByType = likesData.reduce((acc: any, item: any) => {
     const type = item.resources?.type || 'Other';
     acc[type] = (acc[type] || 0) + 1;
@@ -66,16 +76,14 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
         
-        {/* HEADER & TABS */}
+        {/* HEADER */}
         <div className="bg-white p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
              <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2">
                 <User className="w-4 h-4"/> User Profile
              </h3>
-             {/* TABS SWITCHER */}
              <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button 
                     onClick={() => setActiveTab('profile')}
@@ -95,8 +103,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
         </div>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
-          
-           {/* HERO SECTION */}
+           {/* HERO */}
            <div className="p-8 pb-6 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-4 border-white shadow-sm ${theme.color.replace('bg-', 'bg-opacity-20 ')}`}>
                   {user.full_name?.[0]?.toUpperCase() || "?"}
@@ -119,14 +126,10 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
               </div>
            </div>
 
-           {/* === TAB CONTENT === */}
            <div className="p-8">
-              
-              {/* TAB 1: PROFILE OVERVIEW */}
+              {/* TAB 1: PROFILE */}
               {activeTab === 'profile' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
-                      
-                      {/* Left Column: Details */}
                       <div className="space-y-6">
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -139,7 +142,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                                   </div>
                                   <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
                                       <span className="text-slate-500 font-medium">Target Goal</span>
-                                      <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded">
+                                      <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded text-right">
                                           {displayGoal}
                                       </span>
                                   </div>
@@ -150,7 +153,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                               </div>
                           </div>
 
-                          {/* LOCATION BOX (ADMIN VIEW) */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                   <MapPin className="w-4 h-4"/> Location Data
@@ -174,7 +176,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                           </div>
                       </div>
 
-                      {/* Right Column: Actions */}
                       <div className="space-y-6">
                           <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
                               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Account Control</h5>
@@ -199,7 +200,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                   </div>
               )}
 
-              {/* TAB 2: LIKES & ACTIVITY */}
+              {/* TAB 2: LIKES */}
               {activeTab === 'likes' && (
                   <div className="animate-in fade-in space-y-6">
                       {loadingLikes ? (
@@ -213,7 +214,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                           </div>
                       ) : (
                           <>
-                              {/* Analytics Grid */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                   <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Likes</p>
@@ -227,7 +227,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                                   ))}
                               </div>
 
-                              {/* Liked List */}
                               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                                   <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                       <h5 className="font-bold text-slate-700 text-sm flex items-center gap-2">
