@@ -1,228 +1,278 @@
+import { useState, useEffect } from "react";
 import { 
-  Trash2, KeyRound, Activity, Calendar, Phone, 
+  Trash2, KeyRound, Activity, Phone, 
   Building, Mail, GraduationCap, BookOpen, 
-  School, CheckCircle2, XCircle, Shield, User
+  Shield, User, CheckCircle2, MapPin, 
+  Heart, ExternalLink, Loader2
 } from "lucide-react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient"; 
 
 export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser, onApproveUser }: any) {
+  const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
+  const [likesData, setLikesData] = useState<any[]>([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
+
   if (!user) return null;
 
-  // --- 1. HELPER: Get Role Specific Styles & Icons ---
+  // --- 1. HELPER: Fix Goal Display ---
+  // Checks multiple possible column names for the student's goal
+  const displayGoal = user.goal || user.target_exam || user.educational_goal || "Not Set";
+
+  // --- 2. FETCH LIKES (When Tab is Active) ---
+  useEffect(() => {
+    if (activeTab === 'likes' && user.id) {
+      fetchUserLikes();
+    }
+  }, [activeTab, user.id]);
+
+  const fetchUserLikes = async () => {
+    setLoadingLikes(true);
+    const { data, error } = await supabase
+      .from('likes')
+      .select(`
+        created_at,
+        resources (
+          id, title, type, subjects(title)
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setLikesData(data);
+    }
+    setLoadingLikes(false);
+  };
+
+  // --- 3. HELPER: Role Styling ---
   const getRoleTheme = (role: string) => {
     switch (role) {
       case 'student': return { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <GraduationCap className="w-4 h-4"/>, label: 'Student' };
       case 'tutor':   return { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: <BookOpen className="w-4 h-4"/>, label: 'Tutor' };
-      case 'admin':   return { color: 'bg-red-100 text-red-700 border-red-200', icon: <Shield className="w-4 h-4"/>, label: 'Administrator' };
-      case 'editor':  return { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <User className="w-4 h-4"/>, label: 'Editor' };
+      case 'admin':   return { color: 'bg-red-100 text-red-700 border-red-200', icon: <Shield className="w-4 h-4"/>, label: 'Admin' };
       default:        return { color: 'bg-slate-100 text-slate-700 border-slate-200', icon: <User className="w-4 h-4"/>, label: role || 'User' };
     }
   };
-
   const theme = getRoleTheme(user.role);
 
-  // --- 2. HELPER: Parse JSON Fields safely (if subjects is stored as JSON/Array) ---
-  const renderList = (data: any) => {
-    if (Array.isArray(data)) return data.join(", ");
-    if (typeof data === 'string' && data.startsWith('[')) {
-        try { return JSON.parse(data).join(", "); } catch { return data; }
-    }
-    return data || "None";
-  };
+  // --- 4. ANALYTICS: Group Likes by Type ---
+  const likesByType = likesData.reduce((acc: any, item: any) => {
+    const type = item.resources?.type || 'Other';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       
-      {/* CARD CONTAINER */}
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
         
-        {/* HEADER */}
+        {/* HEADER & TABS */}
         <div className="bg-white p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
-          <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2">
-            <User className="w-4 h-4"/> User Profile
-          </h3>
-          <button 
-            onClick={onClose} 
-            className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center font-bold"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-4">
+             <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2">
+                <User className="w-4 h-4"/> User Profile
+             </h3>
+             {/* TABS SWITCHER */}
+             <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                    onClick={() => setActiveTab('profile')}
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Overview
+                </button>
+                <button 
+                    onClick={() => setActiveTab('likes')}
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <Heart className="w-3 h-3" /> Activity
+                </button>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold">✕</button>
         </div>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
           
-          {/* --- HERO SECTION --- */}
-          <div className="p-8 pb-6 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
-            {/* Avatar */}
-            <div className={`w-24 h-24 rounded-2xl shadow-sm flex items-center justify-center text-4xl font-bold border-4 border-white ${theme.color.replace('bg-', 'bg-opacity-20 ')}`}>
-               {user.full_name?.[0]?.toUpperCase() || "?"}
-            </div>
-
-            {/* Name & Basic Info */}
-            <div className="flex-1 space-y-2">
-               <div>
-                  <h4 className="text-3xl font-black text-slate-900 tracking-tight">{user.full_name}</h4>
+           {/* HERO SECTION (Always Visible) */}
+           <div className="p-8 pb-6 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
+              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-4 border-white shadow-sm ${theme.color.replace('bg-', 'bg-opacity-20 ')}`}>
+                  {user.full_name?.[0]?.toUpperCase() || "?"}
+              </div>
+              <div>
+                  <h4 className="text-2xl font-black text-slate-900">{user.full_name}</h4>
                   <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
-                    <Mail className="w-3.5 h-3.5"/> {user.email}
+                     <Mail className="w-3.5 h-3.5"/> {user.email}
                   </p>
-               </div>
-
-               <div className="flex flex-wrap gap-2 mt-3">
-                  {/* Role Badge */}
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${theme.color}`}>
-                     {theme.icon} <span>{theme.label}</span>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                      <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${theme.color}`}>
+                          {theme.icon} {theme.label}
+                      </span>
+                      {user.status === 'active' && (
+                         <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                            <CheckCircle2 className="w-3.5 h-3.5"/> Active
+                         </span>
+                      )}
                   </div>
+              </div>
+           </div>
 
-                  {/* Status Badge */}
-                  {user.status === 'active' ? (
-                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                        <CheckCircle2 className="w-3.5 h-3.5"/> <span>Active</span>
-                     </div>
-                  ) : (
-                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200">
-                        <Activity className="w-3.5 h-3.5"/> <span>{user.status || "Pending"}</span>
-                     </div>
-                  )}
-               </div>
-            </div>
-          </div>
+           {/* === TAB CONTENT === */}
+           <div className="p-8">
+              
+              {/* TAB 1: PROFILE OVERVIEW */}
+              {activeTab === 'profile' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
+                      
+                      {/* Left Column: Details */}
+                      <div className="space-y-6">
+                          {/* EDUCATION BOX */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                  <GraduationCap className="w-4 h-4"/> Education
+                              </h5>
+                              <div className="space-y-3">
+                                  <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                      <span className="text-slate-500 font-medium">Institution</span>
+                                      <span className="font-bold text-slate-900">{user.institution || "—"}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                      <span className="text-slate-500 font-medium">Target Goal</span>
+                                      <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded">
+                                          {displayGoal}
+                                      </span>
+                                  </div>
+                                  <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                      <span className="text-slate-500 font-medium">Phone</span>
+                                      <span className="font-bold text-slate-900">{user.phone || "—"}</span>
+                                  </div>
+                              </div>
+                          </div>
 
-          {/* --- APPROVAL ACTION (Only if Pending) --- */}
-          {user.status === 'pending' && (
-              <div className="mx-8 mt-6 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center justify-between shadow-sm">
-                  <div className="flex gap-3">
-                      <div className="p-2 bg-orange-100 text-orange-600 rounded-lg h-fit"><Shield className="w-5 h-5"/></div>
-                      <div>
-                          <h5 className="font-bold text-orange-900 text-sm">Approval Required</h5>
-                          <p className="text-xs text-orange-700 mt-0.5">User requested access as <strong>{user.role}</strong>.</p>
+                          {/* LOCATION BOX (SMART LOCATION) */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                  <MapPin className="w-4 h-4"/> Location Data
+                              </h5>
+                              <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                      <MapPin className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-400 uppercase">Current City</p>
+                                      <p className="text-lg font-bold text-slate-900">
+                                          {user.city || "Not Detected"}
+                                      </p>
+                                      {user.location_updated_at ? (
+                                          <p className="text-[10px] text-slate-400 mt-1">
+                                              Updated: {new Date(user.location_updated_at).toLocaleDateString()}
+                                          </p>
+                                      ) : (
+                                          <p className="text-[10px] text-orange-400 mt-1 italic">
+                                              Waiting for user login...
+                                          </p>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Right Column: Actions */}
+                      <div className="space-y-6">
+                          <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
+                              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Account Control</h5>
+                              <div className="space-y-3">
+                                <button onClick={() => onSendReset(user.email)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all text-left">
+                                    <KeyRound className="w-4 h-4 text-indigo-400"/>
+                                    <span className="text-sm font-bold">Reset Password</span>
+                                </button>
+                                <button onClick={() => onDeleteUser(user.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-red-900/40 transition-all text-left">
+                                    <Trash2 className="w-4 h-4 text-red-400"/>
+                                    <span className="text-sm font-bold text-red-100">Delete Account</span>
+                                </button>
+                                {user.status === 'pending' && (
+                                   <button onClick={() => onApproveUser(user.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-orange-600 hover:bg-orange-500 transition-all text-left mt-2">
+                                      <Shield className="w-4 h-4 text-white"/>
+                                      <span className="text-sm font-bold text-white">Approve Access</span>
+                                   </button>
+                                )}
+                              </div>
+                          </div>
                       </div>
                   </div>
-                  <button onClick={() => onApproveUser(user.id)} className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-xs shadow-md shadow-orange-200 transition-all active:scale-95">
-                      Approve Access
-                  </button>
-              </div>
-          )}
+              )}
 
-          {/* --- MAIN GRID LAYOUT --- */}
-          <div className="p-8 grid grid-cols-1 md:grid-cols-12 gap-8">
-             
-             {/* LEFT COL: Personal Details */}
-             <div className="md:col-span-7 space-y-8">
-                
-                {/* 1. ACADEMIC / PROFESSIONAL INFO */}
-                <section>
-                    <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        {user.role === 'student' ? <GraduationCap className="w-4 h-4"/> : <Building className="w-4 h-4"/>}
-                        {user.role === 'student' ? 'Academic Profile' : 'Professional Info'}
-                    </h5>
-                    
-                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-4">
-                        {/* Institution */}
-                        <div className="flex justify-between items-center border-b border-slate-200 pb-3 last:border-0 last:pb-0">
-                            <span className="text-sm font-semibold text-slate-500">Institution</span>
-                            <span className="text-sm font-bold text-slate-900 text-right">{user.institution || "—"}</span>
-                        </div>
+              {/* TAB 2: LIKES & ACTIVITY */}
+              {activeTab === 'likes' && (
+                  <div className="animate-in fade-in space-y-6">
+                      {loadingLikes ? (
+                          <div className="flex items-center justify-center py-12 text-slate-400">
+                              <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading history...
+                          </div>
+                      ) : likesData.length === 0 ? (
+                          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                              <Heart className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                              <p className="text-slate-500 font-medium">No activity recorded yet.</p>
+                          </div>
+                      ) : (
+                          <>
+                              {/* Analytics Grid */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Likes</p>
+                                      <p className="text-3xl font-black text-rose-500 mt-1">{likesData.length}</p>
+                                  </div>
+                                  {Object.entries(likesByType).map(([type, count]: any) => (
+                                      <div key={type} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{type}s</p>
+                                          <p className="text-3xl font-black text-slate-800 mt-1">{count}</p>
+                                      </div>
+                                  ))}
+                              </div>
 
-                        {/* Student Specific: GOAL */}
-                        {user.role === 'student' && (
-                            <div className="flex justify-between items-center border-b border-slate-200 pb-3 last:border-0 last:pb-0">
-                                <span className="text-sm font-semibold text-slate-500">Target Exam (Goal)</span>
-                                <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-right">
-                                    {user.goal || "—"}
-                                </span>
-                            </div>
-                        )}
+                              {/* Liked List */}
+                              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                      <h5 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                          <Activity className="w-4 h-4 text-slate-400"/> Liked Resources
+                                      </h5>
+                                  </div>
+                                  <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                      {likesData.map((like) => (
+                                          <div key={like.created_at} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                              <div className="flex-1 pr-4">
+                                                  <div className="flex items-center gap-2 mb-1">
+                                                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                                                          like.resources?.type === 'blog' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                                                      }`}>
+                                                          {like.resources?.type || 'Resource'}
+                                                      </span>
+                                                      <span className="text-[10px] text-slate-400">
+                                                          {new Date(like.created_at).toLocaleDateString()}
+                                                      </span>
+                                                  </div>
+                                                  <p className="text-sm font-bold text-slate-800 line-clamp-1">
+                                                      {like.resources?.title || "Unknown Resource"}
+                                                  </p>
+                                              </div>
+                                              <Link 
+                                                  href={`/${like.resources?.type === 'question' ? 'question' : 'blog'}/${like.resources?.id}`} 
+                                                  target="_blank"
+                                                  className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all opacity-0 group-hover:opacity-100"
+                                              >
+                                                  <ExternalLink className="w-4 h-4" />
+                                              </Link>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </div>
+                          </>
+                      )}
+                  </div>
+              )}
 
-                        {/* Subjects */}
-                        {(user.subjects || user.expertise) && (
-                            <div className="flex flex-col gap-2 pt-1">
-                                <span className="text-sm font-semibold text-slate-500">
-                                    {user.role === 'tutor' ? 'Expertise Areas' : 'Enrolled Subjects'}
-                                </span>
-                                <div className="text-sm font-medium text-slate-800 leading-relaxed bg-white p-3 rounded-lg border border-slate-200">
-                                    {renderList(user.subjects || user.expertise)}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* 2. CONTACT INFO */}
-                <section>
-                    <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Phone className="w-4 h-4"/> Contact Details
-                    </h5>
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">Phone Number</p>
-                            <p className="text-sm font-semibold text-slate-800">{user.phone || "Not Provided"}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">Location/City</p>
-                            <p className="text-sm font-semibold text-slate-800">{user.city || "—"}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">Date Joined</p>
-                            <p className="text-sm font-semibold text-slate-800">{new Date(user.created_at).toLocaleDateString()}</p>
-                        </div>
-                    </div>
-                </section>
-             </div>
-
-             {/* RIGHT COL: Actions & Logs */}
-             <div className="md:col-span-5 space-y-6">
-                
-                {/* ACTIONS PANEL */}
-                <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl shadow-slate-200">
-                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Admin Actions</h5>
-                    
-                    <div className="space-y-3">
-                        <button 
-                            onClick={() => onSendReset(user.email)} 
-                            className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700 hover:border-slate-600 group text-left"
-                        >
-                            <KeyRound className="w-5 h-5 text-indigo-400"/>
-                            <div>
-                                <p className="text-sm font-bold text-slate-200">Reset Password</p>
-                                <p className="text-[10px] text-slate-400">Send recovery email</p>
-                            </div>
-                        </button>
-
-                        <button 
-                            onClick={() => onDeleteUser(user.id)} 
-                            className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-red-900/30 transition-all border border-slate-700 hover:border-red-900 group text-left"
-                        >
-                            <Trash2 className="w-5 h-5 text-red-400"/>
-                            <div>
-                                <p className="text-sm font-bold text-red-100">Delete Account</p>
-                                <p className="text-[10px] text-slate-400">Permanently remove</p>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                {/* LOGS / METADATA */}
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                    <h5 className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                        <Activity className="w-4 h-4"/> Audit Log
-                    </h5>
-                    <div className="space-y-3 pl-2 border-l-2 border-slate-200">
-                        <div className="relative">
-                            <span className="absolute -left-[13px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 ring-4 ring-slate-50"></span>
-                            <p className="text-xs font-bold text-slate-700">Account Created</p>
-                            <p className="text-[10px] text-slate-400">{new Date(user.created_at).toLocaleString()}</p>
-                        </div>
-                        {user.updated_at && (
-                            <div className="relative pt-2">
-                                <span className="absolute -left-[13px] top-3 w-2.5 h-2.5 rounded-full bg-blue-300 ring-4 ring-slate-50"></span>
-                                <p className="text-xs font-bold text-slate-700">Last Profile Update</p>
-                                <p className="text-[10px] text-slate-400">{new Date(user.updated_at).toLocaleString()}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-             </div>
-          </div>
+           </div>
         </div>
       </div>
     </div>

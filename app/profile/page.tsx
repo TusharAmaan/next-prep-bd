@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { BookOpen, GraduationCap, Briefcase, Activity } from "lucide-react";
+import { BookOpen, GraduationCap, Briefcase, Activity, MapPin } from "lucide-react";
+import LocationTracker from "@/components/LocationTracker"; // <--- 1. IMPORT TRACKER
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -16,8 +17,9 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [institution, setInstitution] = useState("");
   const [phone, setPhone] = useState("");
+  const [city, setCity] = useState(""); // <--- 2. NEW CITY STATE
   
-  // NEW: Student Specific State
+  // Student Specific State
   const [currentGoal, setCurrentGoal] = useState("");
 
   // Password State
@@ -27,7 +29,7 @@ export default function ProfilePage() {
   // Modal State
   const [modal, setModal] = useState({ isOpen: false, type: 'success', message: '' });
 
-  // --- GOAL OPTIONS (Mapped to URL Slugs) ---
+  // --- GOAL OPTIONS ---
   const goalOptions = [
     { name: "Select your goal...", value: "" },
     { name: "SSC Preparation", value: "/resources/ssc" },
@@ -59,7 +61,8 @@ export default function ProfilePage() {
         setBio(data.bio || "");
         setInstitution(data.institution || "");
         setPhone(data.phone || "");
-        setCurrentGoal(data.current_goal || ""); // Load Goal
+        setCity(data.city || ""); // <--- 3. LOAD CITY
+        setCurrentGoal(data.current_goal || "");
       }
       setLoading(false);
     };
@@ -75,7 +78,9 @@ export default function ProfilePage() {
         bio: bio,
         institution: institution,
         phone: phone,
-        current_goal: currentGoal, // Save Goal
+        current_goal: currentGoal,
+        // We preserve the city here so manual edits to other fields don't wipe it
+        city: city, 
       })
       .eq('id', user.id);
 
@@ -84,7 +89,7 @@ export default function ProfilePage() {
       setModal({ isOpen: true, type: 'error', message: error.message });
     } else {
       setModal({ isOpen: true, type: 'success', message: "Profile updated successfully!" });
-      router.refresh(); // Refresh to update Header state immediately
+      router.refresh();
     }
   };
 
@@ -107,6 +112,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pt-32 pb-20 px-4 font-sans text-slate-900">
       
+      {/* 4. MOUNT TRACKER (This is the invisible secret agent) */}
+      <LocationTracker />
+
       {/* CUSTOM MODAL */}
       {modal.isOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -146,7 +154,7 @@ export default function ProfilePage() {
         {/* Form */}
         <div className="p-8 md:p-10 space-y-6">
           
-          {/* --- STUDENT SPECIFIC: CURRENTLY PREPARING FOR --- */}
+          {/* --- STUDENT GOAL SELECTOR --- */}
           {user?.role === 'student' && (
              <div className="bg-blue-50 border border-blue-100 p-5 rounded-2xl animate-in slide-in-from-top-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -210,6 +218,24 @@ export default function ProfilePage() {
                   onChange={e => setInstitution(e.target.value)}
                   placeholder="e.g. Dhaka College"
                 />
+             </div>
+          </div>
+
+          {/* 5. LOCATION DISPLAY FIELD (NEW) */}
+          <div className="grid grid-cols-1">
+             <div>
+                <label className="text-xs font-bold text-slate-500 uppercase block mb-2 flex items-center gap-2">
+                   <MapPin className="w-3 h-3" /> Location (Auto-Detected)
+                </label>
+                <input 
+                  className="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl font-bold text-slate-500 outline-none cursor-not-allowed"
+                  value={city || "Detecting..."}
+                  placeholder="Dhaka, Bangladesh"
+                  disabled
+                />
+                <p className="text-[10px] text-slate-400 mt-1.5 ml-1">
+                   We periodically update this to show relevant content near you.
+                </p>
              </div>
           </div>
 

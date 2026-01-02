@@ -7,7 +7,7 @@ import {
   FileText, Calendar, Clock, ChevronRight, 
   Lock, Download, Check
 } from "lucide-react";
-
+import LikeButton from "./LikeButton";
 interface PrintableBlogBodyProps {
   post: any;
   formattedDate: string;
@@ -48,8 +48,10 @@ export default function PrintableBlogBody({
                 {post.subjects?.groups?.segments?.title || "Post"}
             </span>
          </div>
-         
-         {/* REMOVED THE TOP RED BUTTON */}
+        {/* --- ADD LIKE BUTTON HERE --- */}
+        <div className="no-print">
+            <LikeButton resourceId={post.id} />
+        </div>
       </div>
 
       {/* === PRINTABLE DOCUMENT AREA === */}
