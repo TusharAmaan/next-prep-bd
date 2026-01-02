@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import ListHeader from "../shared/ListHeader";
 import ContentFilterBar from "../shared/ContentFilterBar";
 import ContentEditor from "./ContentEditor";
+import PostLikersModal from "@/components/PostLikersModal"; // <--- 1. IMPORT MODAL
 
 // Helper for sortable headers
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
@@ -69,7 +70,10 @@ export default function ContentManager({
     const [editSeg, setEditSeg] = useState("");
     const [editGrp, setEditGrp] = useState("");
     const [editSub, setEditSub] = useState("");
-
+    
+    // This state was already here, now we will use it!
+    const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
+    
     const markDirty = () => setIsDirty(true);
 
     const resetForms = () => {
@@ -308,6 +312,15 @@ export default function ContentManager({
                                 {(activeTab === 'materials' || activeTab === 'updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
                                 <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                    {/* 2. ADDED LIKES BUTTON (Only for materials) */}
+                                    {activeTab === 'materials' && (
+                                        <button 
+                                            onClick={() => setShowLikers({ id: String(item.id), title: item.title })}
+                                            className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100"
+                                        >
+                                            Likes
+                                        </button>
+                                    )}
                                     <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
                                     <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
                                 </td>
@@ -315,8 +328,16 @@ export default function ContentManager({
                         ))}
                     </tbody>
                 </table>
-                {/* Add Pagination Control here if needed (copied from UserTable) */}
             </div>
+
+            {/* 3. RENDER MODAL */}
+            {showLikers && (
+                <PostLikersModal 
+                    resourceId={showLikers.id} 
+                    resourceTitle={showLikers.title} 
+                    onClose={() => setShowLikers(null)} 
+                />
+            )}
         </div>
     );
 }
