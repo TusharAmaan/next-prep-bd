@@ -7,6 +7,7 @@ import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
+import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function SingleQuestionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Fetch Data (Removed the .eq('type', 'blog') restriction so it loads Questions too)
+  // --- A. AUTH CHECK (ADDED) ---
+  const supabaseServer = await createClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  const isLoggedIn = !!user; // Converts to true/false
+  // ---------------------------
+
+  // Fetch Data 
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
@@ -70,14 +77,12 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
         
         {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
-            {/* We reuse PrintableBlogBody because the design is perfect.
-               Ideally, rename this component to 'PrintableResourceBody' later 
-               if you want to be strict with naming.
-            */}
             <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
                 bengaliFontClass={bengaliFont.className} 
+                isLoggedIn={isLoggedIn} /* <--- FIXED: Passed the required prop */
+                attachmentUrl={post.content_url} /* <--- OPTIONAL: Added this so questions can have downloads too */
             />
 
             {/* Comments */}
