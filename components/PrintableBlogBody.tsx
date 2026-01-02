@@ -1,42 +1,34 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import PrintBtn from "./PrintBtn";
 import { 
   FileText, Calendar, Clock, ChevronRight, 
-  Lock, Download, ShieldCheck, AlertCircle, 
-  Check
+  Lock, Download, Check
 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 
+// 1. UPDATE INTERFACE
 interface PrintableBlogBodyProps {
   post: any;
   formattedDate: string;
   attachmentUrl?: string;
   bengaliFontClass?: string;
+  isLoggedIn: boolean; // <--- ADDED THIS
 }
 
 export default function PrintableBlogBody({ 
   post, 
   formattedDate, 
   attachmentUrl,
-  bengaliFontClass 
+  bengaliFontClass,
+  isLoggedIn // <--- DESTRUCTURE THIS
 }: PrintableBlogBodyProps) {
   
   const contentRef = useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  // 1. Check User Session
-  useEffect(() => {
-    const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
-        setLoading(false);
-    };
-    checkUser();
-  }, []);
+  
+  // REMOVED: useState for user and useEffect. 
+  // We now trust the 'isLoggedIn' prop from the server.
 
   const readTime = Math.ceil((post.content_body?.split(" ").length || 0) / 200);
 
@@ -54,7 +46,16 @@ export default function PrintableBlogBody({
                 {post.subjects?.groups?.segments?.title || "Post"}
             </span>
          </div>
-         <PrintBtn contentRef={contentRef} />
+         
+         {/* 2. CONDITIONAL PRINT BUTTON */}
+         {/* Only show the Print Button if logged in */}
+         {isLoggedIn ? (
+            <PrintBtn contentRef={contentRef} />
+         ) : (
+             <div className="text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                Log in to Download PDF
+             </div>
+         )}
       </div>
 
       {/* === PRINTABLE DOCUMENT AREA === */}
@@ -95,9 +96,9 @@ export default function PrintableBlogBody({
         </div>
 
         {/* === PROFESSIONAL ATTACHMENT SECTION === */}
-        {attachmentUrl && !loading && (
+        {attachmentUrl && (
           <div className="mb-10 print:hidden animate-in fade-in slide-in-from-top-4 duration-500">
-            {user ? (
+            {isLoggedIn ? (
                 // --- OPTION A: LOGGED IN (ACCESS GRANTED) ---
                 <div className="bg-green-50/50 border border-green-200 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
@@ -131,7 +132,6 @@ export default function PrintableBlogBody({
             ) : (
                 // --- OPTION B: NOT LOGGED IN (GATED CONTENT) ---
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-1 relative overflow-hidden group">
-                    {/* The "Blur" Effect Container */}
                     <div className="bg-white rounded-lg p-6 flex flex-col md:flex-row items-center justify-between gap-6">
                         
                         <div className="flex items-start gap-4 opacity-60 grayscale group-hover:grayscale-0 transition-all duration-500">
@@ -144,7 +144,6 @@ export default function PrintableBlogBody({
                             </div>
                         </div>
 
-                        {/* The Professional "Prompt" Button */}
                         <div className="w-full md:w-auto">
                             <Link href="/login" className="block w-full">
                                 <button className="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-bold transition-all shadow-md group-hover:shadow-lg">
@@ -157,8 +156,6 @@ export default function PrintableBlogBody({
                             </p>
                         </div>
                     </div>
-
-                    {/* Decorative Warning Stripe */}
                     <div className="absolute top-0 left-0 w-1 h-full bg-slate-300 group-hover:bg-blue-600 transition-colors"></div>
                 </div>
             )}
@@ -181,7 +178,7 @@ export default function PrintableBlogBody({
         {/* FOOTER */}
         <div className="hidden print:flex flex-row justify-center items-center text-gray-400 mt-12 pt-6 border-t border-gray-200">
             <p className="text-[10px] uppercase tracking-widest">
-                 © {new Date().getFullYear()} NextPrepBD — Your Ultimate Exam Companion
+                  © {new Date().getFullYear()} NextPrepBD — Your Ultimate Exam Companion
             </p>
         </div>
 
