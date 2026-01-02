@@ -5,9 +5,20 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { 
   GraduationCap, School, BookOpenCheck, ArrowRight, Check, 
-  User, Mail, Lock, Phone, FileText, ChevronLeft, AlertCircle, MessageCircle, Calendar
+  User, Mail, Lock, Phone, FileText, ChevronLeft, AlertCircle, 
+  MessageCircle, Calendar, Target, ChevronDown
 } from "lucide-react";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
+
+// --- CONSTANTS ---
+const goalOptions = [
+  { name: "SSC Preparation", value: "/resources/ssc" },
+  { name: "HSC Preparation", value: "/resources/hsc" },
+  { name: "University Admission", value: "/resources/university-admission" },
+  { name: "Medical Admission", value: "/resources/university-admission/science/medical-admission" },
+  { name: "IBA MBA", value: "/resources/master's-admission/mba/iba" },
+  { name: "Job Preparation", value: "/resources/job-prep" },
+];
 
 const RoleCard = ({ icon: Icon, title, description, onClick, active }: any) => (
   <button 
@@ -73,7 +84,11 @@ function SignupContent() {
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [isWhatsappSame, setIsWhatsappSame] = useState(false);
+  
+  // Student Specific
   const [batch, setBatch] = useState("");
+  const [currentGoal, setCurrentGoal] = useState(""); // New Mandatory Goal State
+
   const [bio, setBio] = useState("");
   
   const [loading, setLoading] = useState(false);
@@ -102,6 +117,13 @@ function SignupContent() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if(!selectedRole) { setError("Role is missing."); return; }
+    
+    // --- VALIDATION FOR STUDENT GOAL ---
+    if (selectedRole === 'student' && !currentGoal) {
+        setError("Please select your primary academic goal.");
+        return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -122,7 +144,9 @@ function SignupContent() {
             phone, 
             whatsapp, 
             bio,
-            batch: selectedRole === 'student' ? batch : null
+            // Save specific fields for student
+            batch: selectedRole === 'student' ? batch : null,
+            current_goal: selectedRole === 'student' ? currentGoal : null 
           }
         }
       });
@@ -138,13 +162,15 @@ function SignupContent() {
           });
           router.replace("/admin");
       } else {
-          // Ensure Profile Updated
+          // Double check Profile Update (Redundancy for safety)
           await supabase.from('profiles').update({ 
-             phone, whatsapp, bio, batch: selectedRole === 'student' ? batch : null 
+             phone, 
+             whatsapp, 
+             bio, 
+             batch: selectedRole === 'student' ? batch : null,
+             current_goal: selectedRole === 'student' ? currentGoal : null 
           }).eq('id', authData.user.id);
 
-          // REDIRECT LOGIC: 
-          // If session exists (Auto-login successful), go to Dashboard/Home immediately.
           if (authData.session) {
              if (selectedRole === 'student' || selectedRole === 'tutor') {
                 router.replace("/"); // Home Page
@@ -152,14 +178,12 @@ function SignupContent() {
                 router.replace("/admin"); // Dashboard
              }
           } else {
-             // If email confirmation is required, they won't have a session
              alert("Account created! Please check your email to confirm.");
              router.push("/login");
           }
       }
     } catch (err: any) {
       if (err.message.includes("already registered")) {
-          // This should happen much less now that we delete the stub user
           setError("This email is already associated with an account. Please Log In.");
       } else {
           setError(err.message);
@@ -273,26 +297,58 @@ function SignupContent() {
                     </div>
 
                     {selectedRole === 'student' && (
-                        <InputField 
-                            label="Batch / Year" icon={Calendar} type="text"
-                            placeholder="e.g. HSC 2025, SSC 2026"
-                            value={batch} onChange={(e:any) => setBatch(e.target.value)} 
-                        />
+                        <>
+                            <InputField 
+                                label="Batch / Year" icon={Calendar} type="text"
+                                placeholder="e.g. HSC 2025, SSC 2026"
+                                value={batch} onChange={(e:any) => setBatch(e.target.value)} 
+                            />
+
+                            {/* --- MANDATORY GOAL SELECTION --- */}
+                            <div className="space-y-1.5 w-full bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
+                                <label className="text-xs font-bold text-indigo-800 uppercase tracking-wide ml-1 flex items-center gap-1">
+                                    Primary Goal <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative group">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none">
+                                        <Target className="w-4 h-4" />
+                                    </div>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none">
+                                        <ChevronDown className="w-4 h-4" />
+                                    </div>
+                                    <select 
+                                        required
+                                        value={currentGoal}
+                                        onChange={(e) => setCurrentGoal(e.target.value)}
+                                        className="w-full bg-white border border-indigo-200 text-slate-900 pl-10 pr-8 py-3 rounded-lg text-sm font-bold outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 appearance-none cursor-pointer hover:border-indigo-300"
+                                    >
+                                        <option value="" disabled>Select what you are preparing for...</option>
+                                        {goalOptions.map((option) => (
+                                            <option key={option.name} value={option.value}>{option.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <p className="text-[11px] text-indigo-600/80 font-medium leading-tight mt-1 ml-1">
+                                    We use this to customize your <span className="font-bold">Materials</span> dashboard. You can change this later in settings.
+                                </p>
+                            </div>
+                        </>
                     )}
 
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">
-                            {selectedRole === 'student' ? "Your Goal" : "Bio"}
-                        </label>
-                        <div className="relative">
-                            <div className="absolute left-3 top-3 text-slate-400 pointer-events-none"><FileText className="w-4 h-4" /></div>
-                            <textarea 
-                                className="w-full bg-white border border-slate-200 text-slate-900 pl-10 pr-4 py-3 rounded-lg text-sm font-medium outline-none transition-all placeholder:text-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300 h-20 resize-none"
-                                placeholder={selectedRole === 'student' ? "e.g. I want to crack BUET admission..." : "Tell us about yourself..."}
-                                value={bio} onChange={e => setBio(e.target.value)}
-                            />
+                    {/* Show Bio for non-students, or optional for everyone? Kept simple based on prompt. */}
+                    {selectedRole !== 'student' && (
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Bio / About</label>
+                            <div className="relative">
+                                <div className="absolute left-3 top-3 text-slate-400 pointer-events-none"><FileText className="w-4 h-4" /></div>
+                                <textarea 
+                                    className="w-full bg-white border border-slate-200 text-slate-900 pl-10 pr-4 py-3 rounded-lg text-sm font-medium outline-none transition-all placeholder:text-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300 h-20 resize-none"
+                                    placeholder="Tell us about your expertise or institution..."
+                                    value={bio} onChange={e => setBio(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <InputField 
                         label="Password" icon={Lock} type="password" placeholder="••••••••"
@@ -311,7 +367,7 @@ function SignupContent() {
       </div>
       
       <p className="text-[10px] text-slate-400 text-center mt-8 pb-8">
-         Protected by reCAPTCHA and Google <a href="#" className="hover:text-indigo-600">Privacy Policy</a> & <a href="#" className="hover:text-indigo-600">Terms</a>.
+          Protected by reCAPTCHA and Google <a href="#" className="hover:text-indigo-600">Privacy Policy</a> & <a href="#" className="hover:text-indigo-600">Terms</a>.
       </p>
     </div>
   );
@@ -329,4 +385,3 @@ export default function SignupPage() {
     </GoogleReCaptchaProvider>
   );
 }
-//

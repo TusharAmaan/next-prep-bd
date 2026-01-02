@@ -34,7 +34,7 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. DATA FETCHING (Refactored to be reusable) ---
+  // --- 1. DATA FETCHING ---
   const fetchUserData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) { 
@@ -45,38 +45,38 @@ export default function Header() {
     
     setUser(session.user);
     
-    // Fetch Profile & Goal
+    // Fetch Profile
     const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     if (data) {
       setProfile(data);
-      if (data.role === 'admin') fetchNotifications();
+      // Only Admins need to fetch notifications
+      if (data.role === 'admin') {
+          fetchNotifications();
+      }
     }
   }, []);
 
-  // Initial Load & Auth Listener
   useEffect(() => {
     fetchUserData();
 
+    // Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       fetchUserData();
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  // --- FIX: Re-fetch on Path Change (Updates 'Materials' link after profile save) ---
+  // Re-fetch on navigation (keeps "Materials" link fresh)
   useEffect(() => {
-    fetchUserData(); // <--- This ensures the header updates when you navigate away from Profile
+    fetchUserData(); 
     setActiveDesktopDropdown(null);
     setIsMobileOpen(false);
     setShowProfileMenu(false);
     setShowNotifications(false);
   }, [pathname, fetchUserData]);
 
-
-  // Close menus on click outside
+  // Click Outside Listener
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) setShowProfileMenu(false);
@@ -90,6 +90,7 @@ export default function Header() {
 
   // --- 2. NOTIFICATIONS ---
   const fetchNotifications = async () => {
+    // 1. Get Real Data from DB
     const { data } = await supabase
       .from('feedbacks')
       .select('*')
@@ -97,36 +98,46 @@ export default function Header() {
     
     if (data) {
       setNotifications(data);
+      // 2. Calculate Unread Count (Only items with status 'new')
       const unread = data.filter((n: any) => n.status === 'new').length;
       setUnreadCount(unread);
     }
   };
 
   const handleNotificationClick = () => {
-    if (!showNotifications) fetchNotifications();
+    if (!showNotifications) fetchNotifications(); // Sync with DB when opening
     setShowNotifications(!showNotifications);
   };
 
   const markAsRead = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    
+    // Optimistic Update (Instant Red Dot Removal)
     const currentNotif = notifications.find(n => n.id === id);
     if (currentNotif && currentNotif.status === 'new') {
         setUnreadCount(prev => Math.max(0, prev - 1));
     }
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, status: 'read' } : n));
+
+    // Persist to DB
     await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
   };
 
   const deleteNotification = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if(!confirm("Delete this notification?")) return;
+    
+    // Optimistic Update
     const currentNotif = notifications.find(n => n.id === id);
     if (currentNotif && currentNotif.status === 'new') {
         setUnreadCount(prev => Math.max(0, prev - 1));
     }
     setNotifications(prev => prev.filter(n => n.id !== id));
+
+    // Persist to DB
     await supabase.from('feedbacks').delete().eq('id', id);
   };
+
 
   // --- 3. HELPERS ---
   const handleLogout = async () => {
@@ -149,11 +160,7 @@ export default function Header() {
     return '/student/dashboard'; 
   };
 
-  // --- 4. DYNAMIC LINK LOGIC (FIXED) ---
-  const getMaterialsLink = () => {
-      // If goal exists, return it. Otherwise default to profile.
-      return profile?.current_goal ? profile.current_goal : '/profile';
-  };
+  const getMaterialsLink = () => profile?.current_goal || '/profile';
 
   // --- DATA ---
   const centerNav = [
@@ -172,14 +179,22 @@ export default function Header() {
     { name: "Job Prep", href: "/resources/job-prep", icon: Briefcase, color: "bg-slate-100 text-slate-600" },
   ];
 
+  // --- MOBILE SHORTCUTS (Conditional Logic) ---
   const mobileShortcuts = [
     { name: "Home", href: "/", icon: Home, color: "text-blue-600" },
     { name: "Dashboard", href: getDashboardLink(), icon: LayoutDashboard, color: "text-orange-600" },
     { name: "Courses", href: "/courses", icon: BookOpen, color: "text-green-600" },
-    { name: "Materials", href: getMaterialsLink(), icon: Library, color: "text-purple-600" },
-    { name: "eBooks", href: "/ebooks", icon: FileText, color: "text-red-500" },
   ];
 
+  // Only add Materials if role is STUDENT
+  if (profile?.role === 'student') {
+    mobileShortcuts.push({ name: "Materials", href: getMaterialsLink(), icon: Library, color: "text-purple-600" });
+  }
+
+  // Everyone sees eBooks
+  mobileShortcuts.push({ name: "eBooks", href: "/ebooks", icon: FileText, color: "text-red-500" });
+
+  // Only add Feedback if NOT admin
   if (profile?.role !== 'admin') {
     mobileShortcuts.push({ name: "Feedback", href: "/feedback", icon: MessageCircle, color: "text-teal-600" });
   }
@@ -191,7 +206,7 @@ export default function Header() {
 
   return (
     <>
-    {/* --- NOTIFICATION MODAL --- */}
+    {/* --- NOTIFICATION DETAIL MODAL --- */}
     {selectedNotification && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in font-sans">
             <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95">
