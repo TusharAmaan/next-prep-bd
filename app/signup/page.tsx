@@ -154,7 +154,18 @@ function SignupContent() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed.");
 
-      // 2. SUCCESS & REDIRECT LOGIC
+      // 2. TRIGGER WELCOME EMAIL (NEW)
+      // Call the API route silently in the background
+      fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            email: email, 
+            name: fullName 
+        }),
+      }).catch(err => console.error("Failed to send welcome email:", err));
+
+      // 3. SUCCESS & REDIRECT LOGIC
       if (token) {
           await fetch("/api/invite/accept", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -335,7 +346,6 @@ function SignupContent() {
                         </>
                     )}
 
-                    {/* Show Bio for non-students, or optional for everyone? Kept simple based on prompt. */}
                     {selectedRole !== 'student' && (
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Bio / About</label>
