@@ -41,6 +41,7 @@ export default function Header() {
       setIsMobileOpen(false);
     });
 
+    // Close menus on click outside
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setShowProfileMenu(false);
@@ -65,7 +66,6 @@ export default function Header() {
   // --- CONFIGURATION ---
   
   // 1. Desktop Center Nav
-  // logic: if 'isDropdown' is true, it triggers the mega menu
   const centerNav = [
     { name: "Home", icon: Home, href: "/", isDropdown: false },
     { name: "Courses", icon: BookOpen, href: "/courses", isDropdown: false },
@@ -83,25 +83,23 @@ export default function Header() {
     { name: "Job Prep", href: "/resources/job-prep", icon: Briefcase, color: "bg-slate-100 text-slate-600" },
   ];
 
-  // 3. Mobile Grid Shortcuts (Dynamic based on role)
+  // 3. Mobile Grid Shortcuts
   const mobileShortcuts = [
     { name: "Home", href: "/", icon: Home, color: "text-blue-600" },
     { name: "Dashboard", href: profile?.role === 'admin' ? '/admin/dashboard' : '/dashboard', icon: LayoutDashboard, color: "text-orange-600" },
     { name: "Courses", href: "/courses", icon: BookOpen, color: "text-green-600" },
-    { name: "Materials", href: "/materials", icon: Library, color: "text-purple-600" }, // Placeholder for user specific materials
+    { name: "Materials", href: "/materials", icon: Library, color: "text-purple-600" },
     { name: "eBooks", href: "/ebooks", icon: FileText, color: "text-red-500" },
   ];
 
-  // Only add Feedback if NOT admin
+  // Add Feedback for NON-admins only
   if (profile?.role !== 'admin') {
     mobileShortcuts.push({ name: "Feedback", href: "/feedback", icon: MessageCircle, color: "text-teal-600" });
   }
 
   // Helper: Active State Class
   const getNavClass = (path: string, isDropdown: boolean) => {
-    // Active if pathname matches OR if it's the Exams dropdown and currently open
     const isActive = pathname === path || (isDropdown && activeDesktopDropdown === "Exams");
-    
     return `relative group flex items-center justify-center w-full md:w-24 lg:w-28 h-12 rounded-lg transition-all duration-200 cursor-pointer 
       ${isActive 
         ? "text-blue-600 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-1 after:bg-blue-600" 
@@ -136,7 +134,6 @@ export default function Header() {
           {centerNav.map((item) => (
             <div key={item.name} className="relative">
                 {item.isDropdown ? (
-                    // Dropdown Trigger
                     <button 
                         onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === item.name ? null : item.name)}
                         className={getNavClass(item.href, true)}
@@ -147,7 +144,6 @@ export default function Header() {
                         </span>
                     </button>
                 ) : (
-                    // Regular Link
                     <Link href={item.href} className={getNavClass(item.href, false)}>
                         <item.icon className={`w-7 h-7 ${pathname === item.href ? "fill-current" : ""}`} />
                         <span className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-xs px-2 py-1 rounded pointer-events-none z-50">
@@ -158,7 +154,7 @@ export default function Header() {
             </div>
           ))}
 
-          {/* EXAMS MEGA MENU DROPDOWN */}
+          {/* EXAMS MEGA MENU */}
           {activeDesktopDropdown === "Exams" && (
             <div className="absolute top-14 left-1/2 -translate-x-1/2 w-[600px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 animate-in fade-in slide-in-from-top-2 z-[60]">
                 <h3 className="text-slate-900 font-bold mb-4 px-2">Exam Categories</h3>
@@ -184,10 +180,21 @@ export default function Header() {
           )}
         </nav>
 
-        {/* --- RIGHT: ACTIONS & PROFILE (Desktop Only) --- */}
+        {/* --- RIGHT: ACTIONS & PROFILE --- */}
         <div className="hidden md:flex items-center justify-end gap-2 w-[25%]">
           {user ? (
             <>
+              {/* ADMIN DASHBOARD ICON (Only for Admins) */}
+              {profile?.role === 'admin' && (
+                 <Link 
+                    href="/admin/dashboard"
+                    title="Admin Dashboard"
+                    className="w-10 h-10 bg-slate-100 hover:bg-orange-100 rounded-full flex items-center justify-center transition-colors text-slate-700 hover:text-orange-600"
+                 >
+                    <LayoutDashboard className="w-5 h-5" />
+                 </Link>
+              )}
+
               {/* Notification Icon */}
               <button className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors relative flex-shrink-0">
                 <Bell className="w-5 h-5 text-slate-900" />
@@ -205,7 +212,7 @@ export default function Header() {
                   </div>
                 </button>
 
-                {/* Desktop Profile Menu Content */}
+                {/* Profile Menu Content */}
                 {showProfileMenu && (
                   <div className="absolute top-12 right-0 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
                     <div className="p-2 mb-2 shadow-sm rounded-lg border border-slate-50 bg-slate-50/50">
@@ -213,25 +220,6 @@ export default function Header() {
                         <p className="text-slate-500 text-sm capitalize">{profile?.role || "Student"}</p>
                     </div>
 
-                    {/* Admin specific link */}
-                    {profile?.role === 'admin' ? (
-                        <Link 
-                            href="/admin/dashboard" 
-                            onClick={() => setShowProfileMenu(false)}
-                            className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-colors font-semibold text-slate-700"
-                        >
-                            <LayoutDashboard className="w-5 h-5 text-orange-600" /> Admin Dashboard
-                        </Link>
-                    ) : (
-                        <Link 
-                            href="/dashboard" 
-                            onClick={() => setShowProfileMenu(false)}
-                            className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-colors font-semibold text-slate-700"
-                        >
-                            <LayoutDashboard className="w-5 h-5" /> Dashboard
-                        </Link>
-                    )}
-                    
                     <Link href="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-colors font-semibold text-slate-700">
                         <Settings className="w-5 h-5" /> Settings & Privacy
                     </Link>
@@ -288,7 +276,7 @@ export default function Header() {
               </button>
             </div>
 
-            {/* Mobile Search (Inside Menu) */}
+            {/* Mobile Search */}
             <div className="relative mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -298,7 +286,7 @@ export default function Header() {
                 />
             </div>
 
-            {/* User Profile Card (Click closes menu) */}
+            {/* User Profile Card */}
             {user && (
                 <Link 
                     href="/profile" 
@@ -331,15 +319,8 @@ export default function Header() {
                 ))}
             </div>
 
-            {/* Help & Settings List */}
+            {/* Logout/Login */}
             <div className="space-y-1 border-t border-slate-200 pt-4">
-                 <Link href="/settings" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center justify-between p-3 bg-transparent hover:bg-slate-200 rounded-lg">
-                    <span className="font-semibold text-slate-700 flex items-center gap-3">
-                        <Settings className="w-6 h-6 text-slate-500" /> Settings & Privacy
-                    </span>
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                 </Link>
-                 
                  {user ? (
                      <button onClick={handleLogout} className="w-full flex items-center justify-between p-3 bg-transparent hover:bg-slate-200 rounded-lg">
                         <span className="font-semibold text-slate-700 flex items-center gap-3">
@@ -354,7 +335,6 @@ export default function Header() {
                     </Link>
                  )}
             </div>
-
           </div>
         </div>
       )}
@@ -362,22 +342,9 @@ export default function Header() {
   );
 }
 
-// Helper Icon for Medical (Simple placeholder)
+// Icon Components
 function ActivityIcon(props: any) {
   return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
   )
 }
