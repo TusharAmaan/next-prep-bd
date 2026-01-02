@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; 
 
-// --- IMPORTS: The New Modular Components ---
+// --- IMPORTS ---
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
@@ -16,19 +16,21 @@ type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; mess
 export default function AdminDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("materials");
+    
+    // Auth State
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-    // Global Data State (Shared across tabs)
+    // Global Data State
     const [segments, setSegments] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [subjects, setSubjects] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryCounts, setCategoryCounts] = useState<any>({});
 
-    // --- MISSING STATE RESTORED HERE ---
+    // Selection State
     const [selectedSegment, setSelectedSegment] = useState("");
     const [selectedGroup, setSelectedGroup] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
@@ -42,12 +44,11 @@ export default function AdminDashboard() {
     const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
     const closeModal = () => setModal({ ...modal, isOpen: false });
 
-    // --- FETCH SHARED DATA ---
+    // --- FETCH DATA ---
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
         const { data: c } = await supabase.from("categories").select("*").order('name'); setCategories(c || []);
         
-        // Fetch category counts
         if (c) {
             const counts: any = {};
             for (const cat of c) {
@@ -61,41 +62,102 @@ export default function AdminDashboard() {
     const fetchGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data || []); };
     const fetchSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data || []); };
 
-    // --- AUTH CHECK ---
+    // --- AUTHENTICATION CHECK (ROBUST) ---
     useEffect(() => {
-        const init = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) { 
-                // Security Check
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        const checkAuth = async () => {
+            try {
+                // 1. Get Session
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
-                if (profile) {
-                    if (profile.role === 'student') router.replace("/profile");
-                    else if (profile.status === 'pending') router.replace("/verification-pending"); 
-                    else {
-                        setIsAuthenticated(true);
-                        setCurrentUser(profile);
-                        fetchDropdowns();
-                    }
+                if (sessionError || !session) {
+                    console.log("No session found, redirecting to login.");
+                    router.replace("/login");
+                    return;
                 }
-            } else { 
-                router.push("/login"); 
+
+                // 2. Fetch Profile
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profileError || !profile) {
+                    console.error("Profile fetch error:", profileError);
+                    // Don't redirect yet, let the Debug UI show the error
+                    setCurrentUser({ id: session.user.id, role: "Error fetching profile" });
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 3. Check Role
+                if (profile.role === 'admin') {
+                    setCurrentUser(profile);
+                    setIsAuthenticated(true);
+                    fetchDropdowns(); // Only fetch data if admin
+                } else if (profile.role === 'student' || profile.role === 'tutor') {
+                    // Redirect non-admins appropriately
+                    router.replace("/");
+                } else {
+                    // Pending or unknown
+                    router.replace("/verification-pending");
+                }
+            } catch (err) {
+                console.error("Auth check failed:", err);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
-        init();
+
+        checkAuth();
     }, [router, fetchDropdowns]);
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center text-slate-400 font-bold bg-[#F8FAFC]">Loading Dashboard...</div>;
-    if (!isAuthenticated) return null;
+    // --- LOADING VIEW ---
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] gap-4">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-slate-400 font-bold animate-pulse">Loading Dashboard...</div>
+            </div>
+        );
+    }
 
+    // --- DEBUG UI (Instead of "return null") ---
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 text-center">
+                <div className="bg-red-50 p-8 rounded-3xl border border-red-100 max-w-md shadow-xl">
+                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+                    <h1 className="text-2xl font-black text-slate-900 mb-2">Access Denied</h1>
+                    <p className="text-slate-500 mb-6 font-medium text-sm leading-relaxed">
+                        Your account does not have Administrator privileges.
+                    </p>
+                    
+                    {/* Debug Info Panel */}
+                    <div className="text-left bg-white p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-500 mb-6 shadow-sm">
+                        <p className="mb-1"><span className="font-bold text-slate-700">User ID:</span> {currentUser?.id || "Unknown"}</p>
+                        <p className="mb-1"><span className="font-bold text-slate-700">Email:</span> {currentUser?.email || "Unknown"}</p>
+                        <p><span className="font-bold text-slate-700">Detected Role:</span> <span className="inline-block px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">{currentUser?.role || "None"}</span></p>
+                    </div>
+
+                    <div className="flex gap-3 justify-center">
+                        <button onClick={() => router.push('/')} className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Go Home</button>
+                        <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- MAIN DASHBOARD (If Authenticated) ---
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32">
+        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-20 lg:pt-24">
             
             {/* GLOBAL MODAL */}
-            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={() => { modal.onConfirm?.(); closeModal() }} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
+            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type === 'error' ? 'Oops!' : modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={() => { modal.onConfirm?.(); closeModal() }} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
 
-            <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden md:flex flex-col shadow-2xl pt-28">
+            {/* SIDEBAR */}
+            <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden lg:flex flex-col shadow-2xl pt-24">
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
                     {[{ id: 'materials', label: 'Study Materials', icon: '📚' },
                     { id: 'updates', label: 'Updates', icon: '📢' },
@@ -128,8 +190,9 @@ export default function AdminDashboard() {
                 </div>
             </aside>
 
-            <main className="flex-1 md:ml-64 p-8 overflow-x-hidden min-h-screen">
-                <div className="max-w-[1800px] mx-auto w-full">
+            {/* MAIN CONTENT AREA */}
+            <main className="flex-1 lg:ml-64 p-4 md:p-8 overflow-x-hidden min-h-screen">
+                <div className="max-w-[1800px] mx-auto w-full space-y-6">
                     
                     {/* 1. USER MANAGEMENT */}
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
