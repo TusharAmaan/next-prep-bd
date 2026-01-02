@@ -21,37 +21,28 @@ export async function GET(request: Request) {
       }
     );
 
-    // 1. Exchange Code for Session
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && session) {
-      // 2. Check if Profile Exists
       const { data: profile } = await supabase
         .from('profiles')
         .select('role, status')
         .eq('id', session.user.id)
         .single();
 
-      // --- SCENARIO: NO ACCOUNT FOUND ---
+      // --- SCENARIO: NO ACCOUNT FOUND (New Google User) ---
       if (!profile) {
-        // User logged in with Google, but has no profile in our DB.
-        // Action: Sign them out immediately and send to Signup.
+        const googleEmail = session.user.email;
+        // Sign out immediately so they can sign up fresh
         await supabase.auth.signOut();
-        return NextResponse.redirect(`${origin}/signup?alert=no_account`);
+        // Redirect to Signup with Email Pre-filled and Alert
+        return NextResponse.redirect(`${origin}/signup?alert=no_account&email=${googleEmail}`);
       }
 
-      // --- SCENARIO: PENDING ACCOUNT ---
-      if (profile.status === 'pending') {
-        return NextResponse.redirect(`${origin}/verification-pending`);
-      }
-
-      // --- SCENARIO: EXISTING USER REDIRECTS ---
-      // Requirement: Student/Tutor -> Home. Others -> Dashboard.
-      if (profile.role === 'student' || profile.role === 'tutor') {
-        return NextResponse.redirect(`${origin}/`);
-      } else {
-        return NextResponse.redirect(`${origin}/admin`);
-      }
+      // --- SCENARIO: EXISTING USER ---
+      if (profile.status === 'pending') return NextResponse.redirect(`${origin}/verification-pending`);
+      if (profile.role === 'student' || profile.role === 'tutor') return NextResponse.redirect(`${origin}/`);
+      return NextResponse.redirect(`${origin}/admin`);
     }
   }
 
