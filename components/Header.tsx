@@ -8,7 +8,7 @@ import {
   GraduationCap, Bell, MessageCircle, 
   LogOut, LayoutDashboard, ChevronDown, 
   Settings, Layers, FileText, Briefcase, 
-  Library, Sparkles, Trash2, Check, Eye
+  Library, Trash2, Check
 } from "lucide-react";
 
 export default function Header() {
@@ -22,7 +22,7 @@ export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null); // For Modal
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   // Dropdown States
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -34,7 +34,7 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. AUTH & DATA FETCHING ---
+  // --- 1. AUTH & DATA ---
   useEffect(() => {
     const fetchProfile = async (session: any) => {
       if (!session?.user) { setUser(null); setProfile(null); return; }
@@ -49,30 +49,25 @@ export default function Header() {
 
     supabase.auth.getSession().then(({ data: { session } }) => fetchProfile(session));
 
+    // Realtime Listener for Auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       fetchProfile(session);
-      // Don't auto-close here to prevent jarring UX on refresh, handle in pathname effect
     });
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setShowProfileMenu(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setActiveDesktopDropdown(null);
-      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) setShowProfileMenu(false);
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) setShowNotifications(false);
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setActiveDesktopDropdown(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       subscription.unsubscribe();
     };
   }, []);
 
-  // Force close on route change
+  // Close menus on route change
   useEffect(() => {
     setActiveDesktopDropdown(null);
     setIsMobileOpen(false);
@@ -80,37 +75,65 @@ export default function Header() {
     setShowNotifications(false);
   }, [pathname]);
 
-  // --- 2. NOTIFICATION ACTIONS ---
+
+  // --- 2. STRONG NOTIFICATION LOGIC ---
+  
   const fetchNotifications = async () => {
-    const { data, count } = await supabase
+    // Get ALL notifications (read and unread) to show history, but count only 'new'
+    const { data } = await supabase
       .from('feedbacks')
-      .select('*', { count: 'exact' })
-      .eq('status', 'new')
-      .order('created_at', { ascending: false });
+      .select('*')
+      .order('created_at', { ascending: false }); // Show newest first
     
-    setUnreadCount(count || 0);
-    setNotifications(data || []);
+    if (data) {
+      setNotifications(data);
+      // Calculate unread count manually based on status 'new'
+      const unread = data.filter((n: any) => n.status === 'new').length;
+      setUnreadCount(unread);
+    }
   };
 
   const handleNotificationClick = () => {
-    if (!showNotifications) fetchNotifications();
+    if (!showNotifications) fetchNotifications(); // Refresh data when opening
     setShowNotifications(!showNotifications);
   };
 
+  // INSTANT READ
   const markAsRead = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    
+    // 1. Optimistic UI Update (Instant)
+    const currentNotif = notifications.find(n => n.id === id);
+    if (currentNotif && currentNotif.status === 'new') {
+        setUnreadCount(prev => Math.max(0, prev - 1)); // Decrease count instantly
+    }
+    
+    setNotifications(prev => prev.map(n => 
+        n.id === id ? { ...n, status: 'read' } : n
+    ));
+
+    // 2. Database Update (Background)
     await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
-    fetchNotifications(); // Refresh list
   };
 
+  // INSTANT DELETE
   const deleteNotification = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if(!confirm("Delete this notification?")) return;
+    if(!confirm("Delete this notification permanently?")) return;
+
+    // 1. Optimistic UI Update (Instant)
+    const currentNotif = notifications.find(n => n.id === id);
+    if (currentNotif && currentNotif.status === 'new') {
+        setUnreadCount(prev => Math.max(0, prev - 1)); // Decrease count if it was unread
+    }
+    setNotifications(prev => prev.filter(n => n.id !== id)); // Remove from list
+
+    // 2. Database Update (Background)
     await supabase.from('feedbacks').delete().eq('id', id);
-    fetchNotifications();
   };
 
-  // --- 3. ACTIONS ---
+
+  // --- 3. ACTIONS & UTILS ---
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -124,7 +147,15 @@ export default function Header() {
     }
   };
 
-  // --- 4. NAVIGATION DATA ---
+  const getDashboardLink = () => {
+    if (profile?.role === 'admin') return '/admin';
+    if (profile?.role === 'tutor') return '/tutor/dashboard';
+    if (profile?.role === 'institution') return '/institution/dashboard';
+    return '/student/dashboard'; 
+  };
+
+  const getMaterialsLink = () => profile?.current_goal || '/profile';
+
   const centerNav = [
     { name: "Home", icon: Home, href: "/", isDropdown: false },
     { name: "Courses", icon: BookOpen, href: "/courses", isDropdown: false },
@@ -141,23 +172,6 @@ export default function Header() {
     { name: "Job Prep", href: "/resources/job-prep", icon: Briefcase, color: "bg-slate-100 text-slate-600" },
   ];
 
-  // Dynamic Dashboard Link
-  const getDashboardLink = () => {
-    if (profile?.role === 'admin') return '/admin';
-    if (profile?.role === 'editor') return '/editor/dashboard';
-    if (profile?.role === 'tutor') return '/tutor/dashboard';
-    if (profile?.role === 'institution') return '/institution/dashboard';
-    return '/student/dashboard'; 
-  };
-
-  // Dynamic Materials Link
-  const getMaterialsLink = () => {
-     if (profile?.current_goal) {
-         return profile.current_goal;
-     }
-     return '/profile'; 
-  };
-
   const mobileShortcuts = [
     { name: "Home", href: "/", icon: Home, color: "text-blue-600" },
     { name: "Dashboard", href: getDashboardLink(), icon: LayoutDashboard, color: "text-orange-600" },
@@ -170,19 +184,14 @@ export default function Header() {
     mobileShortcuts.push({ name: "Feedback", href: "/feedback", icon: MessageCircle, color: "text-teal-600" });
   }
 
-  // --- STYLES ---
   const getNavClass = (path: string, isDropdown: boolean) => {
     const isActive = pathname === path || (isDropdown && activeDesktopDropdown === "Exams");
-    return `relative group flex items-center justify-center w-20 lg:w-28 h-12 rounded-xl transition-all duration-300 cursor-pointer overflow-hidden
-      ${isActive 
-        ? "text-blue-600 bg-blue-50/50" 
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95"
-      }`;
+    return `relative group flex items-center justify-center w-20 lg:w-28 h-12 rounded-xl transition-all duration-300 cursor-pointer overflow-hidden ${isActive ? "text-blue-600 bg-blue-50/50" : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 hover:scale-105 active:scale-95"}`;
   };
 
   return (
     <>
-    {/* --- NOTIFICATION DETAIL MODAL --- */}
+    {/* --- NOTIFICATION MODAL (View Details) --- */}
     {selectedNotification && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95">
@@ -240,21 +249,14 @@ export default function Header() {
           {centerNav.map((item) => (
             <div key={item.name}>
                 {item.isDropdown ? (
-                    <button 
-                        onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === item.name ? null : item.name)}
-                        className={getNavClass(item.href, true)}
-                    >
+                    <button onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === item.name ? null : item.name)} className={getNavClass(item.href, true)}>
                         <item.icon className={`w-7 h-7 transition-all ${activeDesktopDropdown === item.name ? "fill-blue-200 stroke-blue-600" : "stroke-[1.5px]"}`} />
-                        {activeDesktopDropdown === item.name && (
-                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></span>
-                        )}
+                        {activeDesktopDropdown === item.name && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></span>}
                     </button>
                 ) : (
                     <Link href={item.href} className={getNavClass(item.href, false)}>
                         <item.icon className={`w-7 h-7 transition-all ${pathname === item.href ? "fill-blue-200 stroke-blue-600" : "stroke-[1.5px]"}`} />
-                        {pathname === item.href && (
-                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></span>
-                        )}
+                        {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></span>}
                     </Link>
                 )}
             </div>
@@ -266,13 +268,8 @@ export default function Header() {
                 <div className="grid grid-cols-2 gap-4">
                     {examLinks.map((sub) => (
                         <Link key={sub.name} href={sub.href} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${sub.color}`}>
-                                <sub.icon className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-slate-800 text-base group-hover:text-blue-600 transition-colors">{sub.name}</p>
-                                <p className="text-xs text-slate-500 font-medium">Click to explore resources</p>
-                            </div>
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${sub.color}`}><sub.icon className="w-6 h-6" /></div>
+                            <div><p className="font-bold text-slate-800 text-base group-hover:text-blue-600 transition-colors">{sub.name}</p><p className="text-xs text-slate-500 font-medium">Click to explore resources</p></div>
                         </Link>
                     ))}
                 </div>
@@ -292,6 +289,7 @@ export default function Header() {
                         className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors relative group border border-slate-100"
                       >
                         <Bell className="w-5 h-5 text-slate-600 group-hover:text-slate-900" />
+                        {/* THE RED DOT: Only shows if unreadCount > 0 */}
                         {unreadCount > 0 && (
                             <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
                                 {unreadCount}
@@ -303,17 +301,17 @@ export default function Header() {
                           <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-0 animate-in fade-in zoom-in-95 duration-100 z-50 overflow-hidden">
                               <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                   <h4 className="font-bold text-slate-800">Notifications</h4>
-                                  <Link href="/admin" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
+                                  <span className="text-xs font-bold text-slate-400">{unreadCount} new</span>
                               </div>
                               <div className="max-h-80 overflow-y-auto">
                                   {notifications.length === 0 ? (
-                                      <div className="p-8 text-center text-slate-500 text-sm">No new notifications</div>
+                                      <div className="p-8 text-center text-slate-500 text-sm">No notifications</div>
                                   ) : (
                                       notifications.map((notif) => (
                                           <div 
                                             key={notif.id} 
                                             onClick={() => { setSelectedNotification(notif); setShowNotifications(false); }}
-                                            className="p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors flex gap-3 cursor-pointer group"
+                                            className={`p-3 border-b border-slate-50 transition-colors flex gap-3 cursor-pointer group ${notif.status === 'read' ? 'bg-white opacity-60' : 'bg-blue-50/30'}`}
                                           >
                                               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.category === 'bug' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
                                                   {notif.category === 'bug' ? <Settings className="w-4 h-4"/> : <MessageCircle className="w-4 h-4"/>}
@@ -322,9 +320,13 @@ export default function Header() {
                                                   <p className="text-sm font-bold text-slate-800 truncate">{notif.full_name}</p>
                                                   <p className="text-xs text-slate-500 truncate">{notif.message}</p>
                                               </div>
-                                              <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                  <button onClick={(e) => markAsRead(e, notif.id)} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check className="w-3 h-3" /></button>
-                                                  <button onClick={(e) => deleteNotification(e, notif.id)} className="text-red-500 hover:bg-red-100 p-1 rounded"><Trash2 className="w-3 h-3" /></button>
+                                              <div className="flex flex-col gap-1">
+                                                  {/* TICK BUTTON: Only shows if notification is NEW */}
+                                                  {notif.status === 'new' && (
+                                                    <button onClick={(e) => markAsRead(e, notif.id)} className="text-green-600 hover:bg-green-100 p-1 rounded" title="Mark as Read"><Check className="w-3 h-3" /></button>
+                                                  )}
+                                                  {/* DELETE BUTTON */}
+                                                  <button onClick={(e) => deleteNotification(e, notif.id)} className="text-red-500 hover:bg-red-100 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><Trash2 className="w-3 h-3" /></button>
                                               </div>
                                           </div>
                                       ))
@@ -343,7 +345,6 @@ export default function Header() {
                   </div>
                   <ChevronDown className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
-
                 {showProfileMenu && (
                   <div className="absolute top-12 right-0 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right ring-1 ring-black/5">
                     <div className="px-3 py-3 mb-2 bg-slate-50 rounded-xl">
@@ -351,17 +352,11 @@ export default function Header() {
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{profile?.role || "Student"}</p>
                     </div>
                     <div className="space-y-1">
-                        <Link href={getDashboardLink()} className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                            <LayoutDashboard className="w-4 h-4" /> Dashboard
-                        </Link>
-                        <Link href="/profile" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg">
-                            <Settings className="w-4 h-4" /> Settings
-                        </Link>
+                        <Link href={getDashboardLink()} className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><LayoutDashboard className="w-4 h-4" /> Dashboard</Link>
+                        <Link href="/profile" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg"><Settings className="w-4 h-4" /> Settings</Link>
                     </div>
                     <div className="border-t border-slate-100 mt-2 pt-2">
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left">
-                            <LogOut className="w-4 h-4" /> Log Out
-                        </button>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left"><LogOut className="w-4 h-4" /> Log Out</button>
                     </div>
                   </div>
                 )}
@@ -375,36 +370,26 @@ export default function Header() {
           )}
         </div>
 
-        {/* MOBILE TOGGLE (UPDATED) */}
+        {/* MOBILE TOGGLE - FIXED */}
         <div className="md:hidden flex items-center justify-end flex-1 gap-2">
-            <button onClick={() => setIsMobileOpen(true)} className="p-2 text-slate-600">
-                <Search className="w-6 h-6" />
-            </button>
-             <button 
-                onClick={() => setIsMobileOpen(!isMobileOpen)} 
-                className="w-10 h-10 flex items-center justify-center text-slate-800 bg-slate-100 rounded-full active:scale-90 transition-transform"
-             >
-                {/* Dynamically swap icon based on state */}
+            <button onClick={() => setIsMobileOpen(true)} className="p-2 text-slate-600"><Search className="w-6 h-6" /></button>
+             <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="w-10 h-10 flex items-center justify-center text-slate-800 bg-slate-100 rounded-full active:scale-90 transition-transform">
                 {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
              </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU - FIXED */}
       {isMobileOpen && (
         <div className="fixed inset-0 top-[64px] z-[60] bg-slate-100 w-full h-[calc(100vh-64px)] overflow-y-auto animate-in slide-in-from-right duration-300">
           <div className="p-4 pb-20">
             <form onSubmit={handleSearch} className="relative mb-6 mt-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search courses, exams..." className="w-full bg-white border border-slate-200 pl-12 pr-4 py-4 rounded-2xl text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="w-full bg-white border border-slate-200 pl-12 pr-4 py-4 rounded-2xl text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
             </form>
 
             {user && (
-                <Link 
-                    href="/profile" 
-                    onClick={() => setIsMobileOpen(false)}
-                    className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm mb-8 border border-slate-100 active:scale-95 transition-transform"
-                >
+                <Link href="/profile" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm mb-8 border border-slate-100 active:scale-95 transition-transform">
                     <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
                         {profile?.full_name?.[0] || user.email[0]}
                     </div>
@@ -418,12 +403,7 @@ export default function Header() {
             <h3 className="text-slate-400 font-bold mb-4 px-1 text-xs uppercase tracking-widest">Quick Access</h3>
             <div className="grid grid-cols-2 gap-3 mb-8">
                 {mobileShortcuts.map((item) => (
-                    <Link 
-                        key={item.name} 
-                        href={item.href} 
-                        onClick={() => setIsMobileOpen(false)}
-                        className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 active:scale-95 transition-all hover:shadow-md hover:border-blue-100 group"
-                    >
+                    <Link key={item.name} href={item.href} onClick={() => setIsMobileOpen(false)} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 active:scale-95 transition-all hover:shadow-md hover:border-blue-100 group">
                         <item.icon className={`w-8 h-8 ${item.color} group-hover:scale-110 transition-transform`} />
                         <span className="font-bold text-slate-800">{item.name}</span>
                     </Link>
