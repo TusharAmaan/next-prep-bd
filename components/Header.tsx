@@ -8,7 +8,7 @@ import {
   GraduationCap, Bell, MessageCircle, 
   LogOut, LayoutDashboard, ChevronDown, 
   Settings, Layers, FileText, Briefcase, 
-  Library, Sparkles, Heart, User
+  Library, Sparkles, Trash2, Check, Eye
 } from "lucide-react";
 
 export default function Header() {
@@ -22,6 +22,7 @@ export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null); // For Modal
 
   // Dropdown States
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -50,7 +51,7 @@ export default function Header() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       fetchProfile(session);
-      setIsMobileOpen(false);
+      // Don't auto-close here to prevent jarring UX on refresh, handle in pathname effect
     });
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -71,7 +72,7 @@ export default function Header() {
     };
   }, []);
 
-  // Close menus on navigation
+  // Force close on route change
   useEffect(() => {
     setActiveDesktopDropdown(null);
     setIsMobileOpen(false);
@@ -79,25 +80,34 @@ export default function Header() {
     setShowNotifications(false);
   }, [pathname]);
 
-  // --- 2. NOTIFICATION LOGIC ---
+  // --- 2. NOTIFICATION ACTIONS ---
   const fetchNotifications = async () => {
-    // Fetch unread feedback
     const { data, count } = await supabase
       .from('feedbacks')
       .select('*', { count: 'exact' })
       .eq('status', 'new')
-      .order('created_at', { ascending: false })
-      .limit(5); // Show latest 5
-
+      .order('created_at', { ascending: false });
+    
     setUnreadCount(count || 0);
     setNotifications(data || []);
   };
 
   const handleNotificationClick = () => {
-    if (!showNotifications) {
-      fetchNotifications(); // Refresh on open
-    }
+    if (!showNotifications) fetchNotifications();
     setShowNotifications(!showNotifications);
+  };
+
+  const markAsRead = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
+    fetchNotifications(); // Refresh list
+  };
+
+  const deleteNotification = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if(!confirm("Delete this notification?")) return;
+    await supabase.from('feedbacks').delete().eq('id', id);
+    fetchNotifications();
   };
 
   // --- 3. ACTIONS ---
@@ -127,23 +137,32 @@ export default function Header() {
     { name: "HSC", href: "/resources/hsc", icon: BookOpen, color: "bg-purple-100 text-purple-600" },
     { name: "University Admission", href: "/resources/university-admission", icon: GraduationCap, color: "bg-green-100 text-green-600" },
     { name: "Medical Prep", href: "/resources/university-admission/science/medical-admission", icon: ActivityIcon, color: "bg-red-100 text-red-600" },
-    { name: "IBA MBA", href: "/resources/masters-admission/mba/iba", icon: Briefcase, color: "bg-orange-100 text-orange-600" },
+    { name: "IBA MBA", href: "/resources/master's-admission/mba/iba", icon: Briefcase, color: "bg-orange-100 text-orange-600" },
     { name: "Job Prep", href: "/resources/job-prep", icon: Briefcase, color: "bg-slate-100 text-slate-600" },
   ];
 
-  // Logic to determine dashboard link based on role
+  // Dynamic Dashboard Link
   const getDashboardLink = () => {
-    if (profile?.role === 'admin') return '/admin'; // Matches your folder structure
+    if (profile?.role === 'admin') return '/admin';
+    if (profile?.role === 'editor') return '/editor/dashboard';
     if (profile?.role === 'tutor') return '/tutor/dashboard';
     if (profile?.role === 'institution') return '/institution/dashboard';
-    return '/student/dashboard'; // Default
+    return '/student/dashboard'; 
+  };
+
+  // Dynamic Materials Link
+  const getMaterialsLink = () => {
+     if (profile?.current_goal) {
+         return profile.current_goal;
+     }
+     return '/profile'; 
   };
 
   const mobileShortcuts = [
     { name: "Home", href: "/", icon: Home, color: "text-blue-600" },
     { name: "Dashboard", href: getDashboardLink(), icon: LayoutDashboard, color: "text-orange-600" },
     { name: "Courses", href: "/courses", icon: BookOpen, color: "text-green-600" },
-    { name: "Materials", href: "/materials", icon: Library, color: "text-purple-600" },
+    { name: "Materials", href: getMaterialsLink(), icon: Library, color: "text-purple-600" },
     { name: "eBooks", href: "/ebooks", icon: FileText, color: "text-red-500" },
   ];
 
@@ -162,17 +181,48 @@ export default function Header() {
   };
 
   return (
+    <>
+    {/* --- NOTIFICATION DETAIL MODAL --- */}
+    {selectedNotification && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95">
+                <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-3">
+                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedNotification.category === 'bug' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                             {selectedNotification.full_name?.[0]}
+                         </div>
+                         <div>
+                             <h3 className="font-bold text-lg text-slate-900">{selectedNotification.full_name}</h3>
+                             <p className="text-xs text-slate-500 uppercase font-bold">{selectedNotification.role} • {selectedNotification.category}</p>
+                         </div>
+                    </div>
+                    <button onClick={() => setSelectedNotification(null)} className="p-1 hover:bg-slate-100 rounded-full"><X className="w-5 h-5"/></button>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl text-slate-700 text-sm leading-relaxed mb-6 max-h-60 overflow-y-auto">
+                    {selectedNotification.message}
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button 
+                        onClick={(e) => { markAsRead(e, selectedNotification.id); setSelectedNotification(null); }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700"
+                    >
+                        Mark Read & Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    )}
+
     <header className="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm h-16 border-b border-white/20">
       <div className="flex items-center justify-between h-full px-4 max-w-[1920px] mx-auto">
         
-        {/* --- LEFT: LOGO & SEARCH --- */}
+        {/* --- LEFT: LOGO --- */}
         <div className="flex items-center gap-4 w-auto lg:w-[25%]">
           <Link href="/" className="flex-shrink-0 group">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:rotate-3 transition-transform">
               N
             </div>
           </Link>
-          
           <form onSubmit={handleSearch} className="hidden lg:flex items-center bg-slate-100/80 hover:bg-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 rounded-full px-4 py-2.5 w-64 transition-all">
             <Search className="w-4 h-4 text-slate-500 mr-2 flex-shrink-0" />
             <input 
@@ -213,17 +263,9 @@ export default function Header() {
           {/* EXAMS MEGA MENU */}
           {activeDesktopDropdown === "Exams" && (
             <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[650px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 p-6 animate-in fade-in slide-in-from-top-4 z-[60]">
-                <div className="flex items-center gap-2 mb-4 px-2">
-                    <Sparkles className="w-5 h-5 text-yellow-500" />
-                    <h3 className="text-slate-900 font-bold text-lg">Choose your goal</h3>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                     {examLinks.map((sub) => (
-                        <Link 
-                            key={sub.name} 
-                            href={sub.href} 
-                            className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group"
-                        >
+                        <Link key={sub.name} href={sub.href} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${sub.color}`}>
                                 <sub.icon className="w-6 h-6" />
                             </div>
@@ -242,7 +284,7 @@ export default function Header() {
         <div className="hidden md:flex items-center justify-end gap-3 w-[25%]">
           {user ? (
             <>
-              {/* ADMIN NOTIFICATION (Dropdown) */}
+              {/* ADMIN NOTIFICATION */}
               {profile?.role === 'admin' && (
                   <div className="relative" ref={notifRef}>
                       <button 
@@ -257,26 +299,32 @@ export default function Header() {
                         )}
                       </button>
 
-                      {/* Notification Dropdown */}
                       {showNotifications && (
                           <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-0 animate-in fade-in zoom-in-95 duration-100 z-50 overflow-hidden">
                               <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                   <h4 className="font-bold text-slate-800">Notifications</h4>
-                                  <Link href="/admin" className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
+                                  <Link href="/admin" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
                               </div>
                               <div className="max-h-80 overflow-y-auto">
                                   {notifications.length === 0 ? (
                                       <div className="p-8 text-center text-slate-500 text-sm">No new notifications</div>
                                   ) : (
                                       notifications.map((notif) => (
-                                          <div key={notif.id} className="p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors flex gap-3">
+                                          <div 
+                                            key={notif.id} 
+                                            onClick={() => { setSelectedNotification(notif); setShowNotifications(false); }}
+                                            className="p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors flex gap-3 cursor-pointer group"
+                                          >
                                               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.category === 'bug' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
                                                   {notif.category === 'bug' ? <Settings className="w-4 h-4"/> : <MessageCircle className="w-4 h-4"/>}
                                               </div>
-                                              <div>
-                                                  <p className="text-sm font-bold text-slate-800 line-clamp-1">{notif.full_name}</p>
-                                                  <p className="text-xs text-slate-500 line-clamp-2">{notif.message}</p>
-                                                  <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleDateString()}</p>
+                                              <div className="flex-1 min-w-0">
+                                                  <p className="text-sm font-bold text-slate-800 truncate">{notif.full_name}</p>
+                                                  <p className="text-xs text-slate-500 truncate">{notif.message}</p>
+                                              </div>
+                                              <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  <button onClick={(e) => markAsRead(e, notif.id)} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check className="w-3 h-3" /></button>
+                                                  <button onClick={(e) => deleteNotification(e, notif.id)} className="text-red-500 hover:bg-red-100 p-1 rounded"><Trash2 className="w-3 h-3" /></button>
                                               </div>
                                           </div>
                                       ))
@@ -289,34 +337,27 @@ export default function Header() {
 
               {/* Profile Dropdown */}
               <div className="relative" ref={profileRef}>
-                <button 
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-slate-200 hover:bg-slate-50 transition-all group"
-                >
+                <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-slate-200 hover:bg-slate-50 transition-all group">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                     {profile?.full_name?.[0] || user.email[0]}
+                      {profile?.full_name?.[0] || user.email[0]}
                   </div>
                   <ChevronDown className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile Menu Content */}
                 {showProfileMenu && (
                   <div className="absolute top-12 right-0 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right ring-1 ring-black/5">
                     <div className="px-3 py-3 mb-2 bg-slate-50 rounded-xl">
                         <p className="font-bold text-slate-900">{profile?.full_name || "User"}</p>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{profile?.role || "Student"}</p>
                     </div>
-
                     <div className="space-y-1">
                         <Link href={getDashboardLink()} className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                             <LayoutDashboard className="w-4 h-4" /> Dashboard
                         </Link>
-                        
                         <Link href="/profile" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg">
                             <Settings className="w-4 h-4" /> Settings
                         </Link>
                     </div>
-
                     <div className="border-t border-slate-100 mt-2 pt-2">
                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left">
                             <LogOut className="w-4 h-4" /> Log Out
@@ -334,44 +375,34 @@ export default function Header() {
           )}
         </div>
 
-        {/* --- MOBILE TOGGLE --- */}
+        {/* MOBILE TOGGLE (UPDATED) */}
         <div className="md:hidden flex items-center justify-end flex-1 gap-2">
             <button onClick={() => setIsMobileOpen(true)} className="p-2 text-slate-600">
                 <Search className="w-6 h-6" />
             </button>
              <button 
-                onClick={() => setIsMobileOpen(true)}
+                onClick={() => setIsMobileOpen(!isMobileOpen)} 
                 className="w-10 h-10 flex items-center justify-center text-slate-800 bg-slate-100 rounded-full active:scale-90 transition-transform"
              >
-                <Menu className="w-6 h-6" />
+                {/* Dynamically swap icon based on state */}
+                {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
              </button>
         </div>
-
       </div>
 
-      {/* --- MOBILE MENU OVERLAY (FIXED) --- */}
+      {/* MOBILE MENU */}
       {isMobileOpen && (
         <div className="fixed inset-0 top-[64px] z-[60] bg-slate-100 w-full h-[calc(100vh-64px)] overflow-y-auto animate-in slide-in-from-right duration-300">
           <div className="p-4 pb-20">
-            
-            {/* Header / Close is not needed here as it is under the main header, but we can add a close button inside if preferred, or use the header X */}
-            
-            {/* Mobile Search */}
             <form onSubmit={handleSearch} className="relative mb-6 mt-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input 
-                    type="text" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search courses, exams..." 
-                    className="w-full bg-white border border-slate-200 pl-12 pr-4 py-4 rounded-2xl text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                />
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search courses, exams..." className="w-full bg-white border border-slate-200 pl-12 pr-4 py-4 rounded-2xl text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
             </form>
 
-            {/* User Profile Card */}
             {user && (
                 <Link 
                     href="/profile" 
+                    onClick={() => setIsMobileOpen(false)}
                     className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm mb-8 border border-slate-100 active:scale-95 transition-transform"
                 >
                     <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
@@ -384,13 +415,13 @@ export default function Header() {
                 </Link>
             )}
 
-            {/* Grid Shortcuts */}
             <h3 className="text-slate-400 font-bold mb-4 px-1 text-xs uppercase tracking-widest">Quick Access</h3>
             <div className="grid grid-cols-2 gap-3 mb-8">
                 {mobileShortcuts.map((item) => (
                     <Link 
                         key={item.name} 
-                        href={item.href}
+                        href={item.href} 
+                        onClick={() => setIsMobileOpen(false)}
                         className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 active:scale-95 transition-all hover:shadow-md hover:border-blue-100 group"
                     >
                         <item.icon className={`w-8 h-8 ${item.color} group-hover:scale-110 transition-transform`} />
@@ -399,22 +430,15 @@ export default function Header() {
                 ))}
             </div>
 
-            {/* Logout/Login */}
             <div className="mt-auto space-y-2 border-t border-slate-200 pt-6">
                  {user ? (
                      <button onClick={handleLogout} className="w-full flex items-center justify-between p-4 bg-red-50 rounded-2xl">
-                        <span className="font-bold text-red-600 flex items-center gap-3">
-                            <LogOut className="w-6 h-6" /> Log Out
-                        </span>
+                        <span className="font-bold text-red-600 flex items-center gap-3"><LogOut className="w-6 h-6" /> Log Out</span>
                     </button>
                  ) : (
                     <div className="grid grid-cols-2 gap-3">
-                        <Link href="/login" className="py-4 text-center bg-white border border-slate-200 rounded-xl font-bold text-slate-700 shadow-sm">
-                            Log In
-                        </Link>
-                        <Link href="/signup" className="py-4 text-center bg-slate-900 text-white rounded-xl font-bold shadow-lg">
-                            Sign Up
-                        </Link>
+                        <Link href="/login" onClick={() => setIsMobileOpen(false)} className="py-4 text-center bg-white border border-slate-200 rounded-xl font-bold text-slate-700 shadow-sm">Log In</Link>
+                        <Link href="/signup" onClick={() => setIsMobileOpen(false)} className="py-4 text-center bg-slate-900 text-white rounded-xl font-bold shadow-lg">Sign Up</Link>
                     </div>
                  )}
             </div>
@@ -422,12 +446,10 @@ export default function Header() {
         </div>
       )}
     </header>
+    </>
   );
 }
 
-// Icon Components
 function ActivityIcon(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-  )
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
 }
