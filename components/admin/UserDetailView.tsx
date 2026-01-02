@@ -9,43 +9,44 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
 export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser, onApproveUser }: any) {
+  // --- HOOKS MUST BE AT THE TOP (Before any return) ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
-  if (!user) return null;
-
-  // --- 1. HELPER: Fix Goal Display ---
-  // Checks multiple possible column names for the student's goal
-  const displayGoal = user.goal || user.target_exam || user.educational_goal || "Not Set";
-
-  // --- 2. FETCH LIKES (When Tab is Active) ---
+  // 1. FETCH LIKES (Safe inside useEffect)
   useEffect(() => {
-    if (activeTab === 'likes' && user.id) {
+    // Only fetch if we have a valid user and tab is active
+    if (activeTab === 'likes' && user?.id) {
+      const fetchUserLikes = async () => {
+        setLoadingLikes(true);
+        const { data, error } = await supabase
+          .from('likes')
+          .select(`
+            created_at,
+            resources (
+              id, title, type, subjects(title)
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          setLikesData(data);
+        }
+        setLoadingLikes(false);
+      };
       fetchUserLikes();
     }
-  }, [activeTab, user.id]);
+  }, [activeTab, user?.id]);
 
-  const fetchUserLikes = async () => {
-    setLoadingLikes(true);
-    const { data, error } = await supabase
-      .from('likes')
-      .select(`
-        created_at,
-        resources (
-          id, title, type, subjects(title)
-        )
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+  // --- SAFE GUARD: NOW we can return null if no user ---
+  if (!user) return null;
 
-    if (!error && data) {
-      setLikesData(data);
-    }
-    setLoadingLikes(false);
-  };
+  // --- HELPER: Fix Goal Display ---
+  const displayGoal = user.goal || user.target_exam || user.educational_goal || "Not Set";
 
-  // --- 3. HELPER: Role Styling ---
+  // --- HELPER: Role Styling ---
   const getRoleTheme = (role: string) => {
     switch (role) {
       case 'student': return { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <GraduationCap className="w-4 h-4"/>, label: 'Student' };
@@ -56,7 +57,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   };
   const theme = getRoleTheme(user.role);
 
-  // --- 4. ANALYTICS: Group Likes by Type ---
+  // --- ANALYTICS: Group Likes by Type ---
   const likesByType = likesData.reduce((acc: any, item: any) => {
     const type = item.resources?.type || 'Other';
     acc[type] = (acc[type] || 0) + 1;
@@ -95,7 +96,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
         
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
           
-           {/* HERO SECTION (Always Visible) */}
+           {/* HERO SECTION */}
            <div className="p-8 pb-6 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-4 border-white shadow-sm ${theme.color.replace('bg-', 'bg-opacity-20 ')}`}>
                   {user.full_name?.[0]?.toUpperCase() || "?"}
@@ -127,7 +128,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                       
                       {/* Left Column: Details */}
                       <div className="space-y-6">
-                          {/* EDUCATION BOX */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                   <GraduationCap className="w-4 h-4"/> Education
@@ -150,7 +150,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                               </div>
                           </div>
 
-                          {/* LOCATION BOX (SMART LOCATION) */}
+                          {/* LOCATION BOX (ADMIN VIEW) */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                   <MapPin className="w-4 h-4"/> Location Data
@@ -162,15 +162,11 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                                   <div>
                                       <p className="text-xs font-bold text-slate-400 uppercase">Current City</p>
                                       <p className="text-lg font-bold text-slate-900">
-                                          {user.city || "Not Detected"}
+                                          {user.city || "Not Reachable"}
                                       </p>
-                                      {user.location_updated_at ? (
+                                      {user.location_updated_at && (
                                           <p className="text-[10px] text-slate-400 mt-1">
                                               Updated: {new Date(user.location_updated_at).toLocaleDateString()}
-                                          </p>
-                                      ) : (
-                                          <p className="text-[10px] text-orange-400 mt-1 italic">
-                                              Waiting for user login...
                                           </p>
                                       )}
                                   </div>
@@ -271,7 +267,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                       )}
                   </div>
               )}
-
            </div>
         </div>
       </div>
