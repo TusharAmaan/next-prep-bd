@@ -8,7 +8,7 @@ import {
   GraduationCap, Bell, MessageCircle, 
   LogOut, LayoutDashboard, ChevronDown, 
   Settings, Layers, FileText, Briefcase, 
-  Library, Sparkles
+  Library, Sparkles, Heart, User
 } from "lucide-react";
 
 export default function Header() {
@@ -16,8 +16,12 @@ export default function Header() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Notification State
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Dropdown States
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -26,6 +30,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
   // --- 1. AUTH & DATA FETCHING ---
@@ -37,8 +42,7 @@ export default function Header() {
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (data) {
         setProfile(data);
-        // If Admin, fetch notification count
-        if (data.role === 'admin') fetchUnreadCount();
+        if (data.role === 'admin') fetchNotifications();
       }
     };
 
@@ -49,36 +53,51 @@ export default function Header() {
       setIsMobileOpen(false);
     });
 
-    // Close menus on click outside
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setShowProfileMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveDesktopDropdown(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       subscription.unsubscribe();
     };
   }, []);
 
-  // --- 2. FIX: AUTO-CLOSE DROPDOWN ON NAVIGATION ---
+  // Close menus on navigation
   useEffect(() => {
     setActiveDesktopDropdown(null);
     setIsMobileOpen(false);
     setShowProfileMenu(false);
-  }, [pathname]); // Runs whenever the URL changes
+    setShowNotifications(false);
+  }, [pathname]);
 
-  const fetchUnreadCount = async () => {
-    const { count } = await supabase
+  // --- 2. NOTIFICATION LOGIC ---
+  const fetchNotifications = async () => {
+    // Fetch unread feedback
+    const { data, count } = await supabase
       .from('feedbacks')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'new');
+      .select('*', { count: 'exact' })
+      .eq('status', 'new')
+      .order('created_at', { ascending: false })
+      .limit(5); // Show latest 5
+
     setUnreadCount(count || 0);
+    setNotifications(data || []);
+  };
+
+  const handleNotificationClick = () => {
+    if (!showNotifications) {
+      fetchNotifications(); // Refresh on open
+    }
+    setShowNotifications(!showNotifications);
   };
 
   // --- 3. ACTIONS ---
@@ -90,17 +109,16 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      setIsMobileOpen(false); // Close mobile menu if open
+      setIsMobileOpen(false);
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
-  // --- CONFIGURATION ---
-  
+  // --- 4. NAVIGATION DATA ---
   const centerNav = [
     { name: "Home", icon: Home, href: "/", isDropdown: false },
     { name: "Courses", icon: BookOpen, href: "/courses", isDropdown: false },
-    { name: "Exams", icon: Layers, href: "#", isDropdown: true }, // Triggers Mega Menu
+    { name: "Exams", icon: Layers, href: "#", isDropdown: true },
     { name: "eBooks", icon: FileText, href: "/ebooks", isDropdown: false },
   ];
 
@@ -113,9 +131,17 @@ export default function Header() {
     { name: "Job Prep", href: "/resources/job-prep", icon: Briefcase, color: "bg-slate-100 text-slate-600" },
   ];
 
+  // Logic to determine dashboard link based on role
+  const getDashboardLink = () => {
+    if (profile?.role === 'admin') return '/admin'; // Matches your folder structure
+    if (profile?.role === 'tutor') return '/tutor/dashboard';
+    if (profile?.role === 'institution') return '/institution/dashboard';
+    return '/student/dashboard'; // Default
+  };
+
   const mobileShortcuts = [
     { name: "Home", href: "/", icon: Home, color: "text-blue-600" },
-    { name: "Dashboard", href: profile?.role === 'admin' ? '/admin/dashboard' : '/dashboard', icon: LayoutDashboard, color: "text-orange-600" },
+    { name: "Dashboard", href: getDashboardLink(), icon: LayoutDashboard, color: "text-orange-600" },
     { name: "Courses", href: "/courses", icon: BookOpen, color: "text-green-600" },
     { name: "Materials", href: "/materials", icon: Library, color: "text-purple-600" },
     { name: "eBooks", href: "/ebooks", icon: FileText, color: "text-red-500" },
@@ -126,7 +152,6 @@ export default function Header() {
   }
 
   // --- STYLES ---
-  // Improved Icon Style with better Hover/Active effects
   const getNavClass = (path: string, isDropdown: boolean) => {
     const isActive = pathname === path || (isDropdown && activeDesktopDropdown === "Exams");
     return `relative group flex items-center justify-center w-20 lg:w-28 h-12 rounded-xl transition-all duration-300 cursor-pointer overflow-hidden
@@ -148,7 +173,6 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Desktop Search */}
           <form onSubmit={handleSearch} className="hidden lg:flex items-center bg-slate-100/80 hover:bg-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 rounded-full px-4 py-2.5 w-64 transition-all">
             <Search className="w-4 h-4 text-slate-500 mr-2 flex-shrink-0" />
             <input 
@@ -218,20 +242,49 @@ export default function Header() {
         <div className="hidden md:flex items-center justify-end gap-3 w-[25%]">
           {user ? (
             <>
-              {/* ADMIN NOTIFICATION (Only visible to admin) */}
+              {/* ADMIN NOTIFICATION (Dropdown) */}
               {profile?.role === 'admin' && (
-                  <Link 
-                    href="/admin/dashboard"
-                    className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors relative group border border-slate-100"
-                    title="Admin Notifications"
-                  >
-                    <Bell className="w-5 h-5 text-slate-600 group-hover:text-slate-900" />
-                    {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
-                            {unreadCount}
-                        </span>
-                    )}
-                  </Link>
+                  <div className="relative" ref={notifRef}>
+                      <button 
+                        onClick={handleNotificationClick}
+                        className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors relative group border border-slate-100"
+                      >
+                        <Bell className="w-5 h-5 text-slate-600 group-hover:text-slate-900" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                                {unreadCount}
+                            </span>
+                        )}
+                      </button>
+
+                      {/* Notification Dropdown */}
+                      {showNotifications && (
+                          <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-0 animate-in fade-in zoom-in-95 duration-100 z-50 overflow-hidden">
+                              <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                  <h4 className="font-bold text-slate-800">Notifications</h4>
+                                  <Link href="/admin" className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
+                              </div>
+                              <div className="max-h-80 overflow-y-auto">
+                                  {notifications.length === 0 ? (
+                                      <div className="p-8 text-center text-slate-500 text-sm">No new notifications</div>
+                                  ) : (
+                                      notifications.map((notif) => (
+                                          <div key={notif.id} className="p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors flex gap-3">
+                                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.category === 'bug' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
+                                                  {notif.category === 'bug' ? <Settings className="w-4 h-4"/> : <MessageCircle className="w-4 h-4"/>}
+                                              </div>
+                                              <div>
+                                                  <p className="text-sm font-bold text-slate-800 line-clamp-1">{notif.full_name}</p>
+                                                  <p className="text-xs text-slate-500 line-clamp-2">{notif.message}</p>
+                                                  <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleDateString()}</p>
+                                              </div>
+                                          </div>
+                                      ))
+                                  )}
+                              </div>
+                          </div>
+                      )}
+                  </div>
               )}
 
               {/* Profile Dropdown */}
@@ -255,15 +308,9 @@ export default function Header() {
                     </div>
 
                     <div className="space-y-1">
-                        {profile?.role === 'admin' ? (
-                            <Link href="/admin/dashboard" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg">
-                                <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
-                            </Link>
-                        ) : (
-                            <Link href="/dashboard" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                                <LayoutDashboard className="w-4 h-4" /> Dashboard
-                            </Link>
-                        )}
+                        <Link href={getDashboardLink()} className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                            <LayoutDashboard className="w-4 h-4" /> Dashboard
+                        </Link>
                         
                         <Link href="/profile" className="menu-item flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg">
                             <Settings className="w-4 h-4" /> Settings
@@ -289,7 +336,6 @@ export default function Header() {
 
         {/* --- MOBILE TOGGLE --- */}
         <div className="md:hidden flex items-center justify-end flex-1 gap-2">
-            {/* Mobile Search Icon Trigger (Optional, opens menu) */}
             <button onClick={() => setIsMobileOpen(true)} className="p-2 text-slate-600">
                 <Search className="w-6 h-6" />
             </button>
@@ -303,24 +349,15 @@ export default function Header() {
 
       </div>
 
-      {/* --- MOBILE MENU OVERLAY --- */}
+      {/* --- MOBILE MENU OVERLAY (FIXED) --- */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-100 overflow-y-auto animate-in slide-in-from-right duration-300">
-          <div className="p-4 min-h-screen flex flex-col">
+        <div className="fixed inset-0 top-[64px] z-[60] bg-slate-100 w-full h-[calc(100vh-64px)] overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div className="p-4 pb-20">
             
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Menu</h2>
-              <button 
-                onClick={() => setIsMobileOpen(false)} 
-                className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"
-              >
-                <X className="w-6 h-6 text-slate-900" />
-              </button>
-            </div>
-
-            {/* Mobile Search - FIXED */}
-            <form onSubmit={handleSearch} className="relative mb-8">
+            {/* Header / Close is not needed here as it is under the main header, but we can add a close button inside if preferred, or use the header X */}
+            
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} className="relative mb-6 mt-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input 
                     type="text" 
@@ -363,7 +400,7 @@ export default function Header() {
             </div>
 
             {/* Logout/Login */}
-            <div className="mt-auto space-y-2 border-t border-slate-200 pt-6 pb-6">
+            <div className="mt-auto space-y-2 border-t border-slate-200 pt-6">
                  {user ? (
                      <button onClick={handleLogout} className="w-full flex items-center justify-between p-4 bg-red-50 rounded-2xl">
                         <span className="font-bold text-red-600 flex items-center gap-3">
