@@ -16,6 +16,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   const [loadingLikes, setLoadingLikes] = useState(false);
   
   // --- MANAGEMENT STATE ---
+  // Initialize from props, but keep local state for editing
   const [status, setStatus] = useState(user?.status || 'pending');
   const [role, setRole] = useState(user?.role || 'student');
   const [notes, setNotes] = useState(user?.admin_notes || "");
@@ -46,48 +47,45 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   // --- 3. MANAGEMENT HANDLERS ---
   
   // Generic Profile Update (Role/Status)
-  const handleUpdateProfile = async (field: string, value: string) => {
+  const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
-    // Optimistic Update
-    if (field === 'status') setStatus(value);
-    if (field === 'role') setRole(value);
+    
+    // 1. Optimistic Update (Update UI immediately)
+    if(field === 'status') setStatus(value);
+    if(field === 'role') setRole(value);
+    if(field === 'is_featured') setIsFeatured(value);
 
+    // 2. Send to DB
     const { error } = await supabase
         .from('profiles')
         .update({ [field]: value })
         .eq('id', user.id);
     
     if (error) {
-        alert(`Failed to update ${field}`);
-        // Revert (Simplified)
-        if (field === 'status') setStatus(user.status);
-        if (field === 'role') setRole(user.role);
+        console.error(`Error updating ${field}:`, error);
+        alert(`Failed to update ${field}. Check console for details.`);
+        // Revert (Simplified logic for now)
+        if(field === 'status') setStatus(user.status);
+        if(field === 'role') setRole(user.role);
+        if(field === 'is_featured') setIsFeatured(user.is_featured);
     }
     setIsSaving(false);
-  };
-
-  // Toggle Featured (For Tutors)
-  const toggleFeatured = async () => {
-      const newValue = !isFeatured;
-      setIsFeatured(newValue);
-      const { error } = await supabase.from('profiles').update({ is_featured: newValue }).eq('id', user.id);
-      if (error) {
-          setIsFeatured(!newValue); // Revert
-          alert("Failed to update featured status");
-      }
   };
 
   // Save Admin Notes (On Blur)
   const saveNotes = async () => {
       if (notes === user.admin_notes) return; // Don't save if no change
       setIsSaving(true);
-      await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
+      const { error } = await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
+      if (error) console.error("Error saving notes:", error);
       setIsSaving(false);
   };
 
   // --- 4. HELPERS ---
   const getReadableGoal = (slug: string) => {
     if (!slug) return "Not Set";
+    // Handle array (for tutors) or string (for students)
+    if (Array.isArray(slug)) return slug.join(", ");
     if (slug.includes('ssc')) return "SSC Preparation";
     if (slug.includes('hsc')) return "HSC Preparation";
     if (slug.includes('medical')) return "Medical Admission";
@@ -96,7 +94,12 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     if (slug.includes('job')) return "Job Preparation";
     return slug;
   };
-  const displayGoal = getReadableGoal(user.current_goal || user.goal);
+
+  // Logic: Students have 'current_goal', Tutors have 'interested_segments'
+  // We prioritize displaying the relevant field based on the current ROLE state (not just user prop)
+  const displayGoal = role === 'tutor' 
+    ? (user.interested_segments?.join(", ") || "No segments selected")
+    : getReadableGoal(user.current_goal || user.goal);
 
   const getRoleIcon = (r: string) => {
     switch (r) {
@@ -146,6 +149,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                   
                   {/* ADMIN CONTROLS */}
                   <div className="flex flex-wrap items-center gap-3 mt-4">
+                      
                       {/* Role Select */}
                       <div className="relative group">
                           <select 
@@ -185,7 +189,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                       {/* Featured Toggle (Only Tutors) */}
                       {role === 'tutor' && (
                           <button 
-                            onClick={toggleFeatured}
+                            onClick={() => handleUpdateProfile('is_featured', !isFeatured)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
                                 isFeatured 
                                 ? 'bg-amber-100 text-amber-700 border-amber-300' 
@@ -228,17 +232,26 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
 
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                  <GraduationCap className="w-4 h-4"/> Education
+                                  <GraduationCap className="w-4 h-4"/> Academic Info
                               </h5>
                               <div className="space-y-3">
                                   <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
                                       <span className="text-slate-500 font-medium">Institution</span>
                                       <span className="font-bold text-slate-900">{user.institution || "—"}</span>
                                   </div>
-                                  <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
-                                      <span className="text-slate-500 font-medium">Target Goal</span>
-                                      <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded text-right">{displayGoal}</span>
-                                  </div>
+                                  
+                                  {/* DYNAMIC GOAL LABEL (Hidden for Editors/Admins if empty) */}
+                                  {(role === 'student' || role === 'tutor') && (
+                                      <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                          <span className="text-slate-500 font-medium">
+                                              {role === 'tutor' ? 'Interested Areas' : 'Target Goal'}
+                                          </span>
+                                          <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded text-right max-w-[200px] truncate">
+                                              {displayGoal}
+                                          </span>
+                                      </div>
+                                  )}
+
                                   <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
                                       <span className="text-slate-500 font-medium">Phone</span>
                                       <span className="font-bold text-slate-900">{user.phone || "—"}</span>
