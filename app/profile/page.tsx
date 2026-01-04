@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { 
   GraduationCap, Briefcase, Plus, Trash2, Eye, EyeOff, 
-  Link as LinkIcon, Building, MapPin, Save, Loader2, X, ChevronRight 
+  Link as LinkIcon, Building, MapPin, Save, Loader2, X 
 } from "lucide-react";
 import LocationTracker from "@/components/LocationTracker"; 
 
@@ -146,12 +146,15 @@ export default function ProfilePage() {
       if (newPass !== confirmPass) return alert("Passwords do not match");
       setPasswordLoading(true);
 
+      // Verify old password
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPass });
       if (signInError) {
           setPasswordLoading(false);
           setModal({ isOpen: true, type: 'error', message: "Current password incorrect." });
           return;
       }
+
+      // Update new password
       const { error } = await supabase.auth.updateUser({ password: newPass });
       setPasswordLoading(false);
       
@@ -418,11 +421,29 @@ export default function ProfilePage() {
           <section className="pt-6 border-t border-slate-100">
             <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Change Password</h3>
             <div className="bg-red-50 border border-red-100 p-5 md:p-6 rounded-2xl space-y-4">
+                
+                {/* Current Password */}
+                <div>
+                    <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">Current Password</label>
+                    <input type={showPass ? "text" : "password"} value={currentPass} onChange={e => setCurrentPass(e.target.value)} className="w-full bg-white border border-red-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100" placeholder="Required for verification" />
+                </div>
+
+                {/* New Passwords */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">New Password</label>
+                        <input type={showPass ? "text" : "password"} value={newPass} onChange={e => setNewPass(e.target.value)} className="w-full bg-white border border-red-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100" placeholder="Min 6 chars" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">Confirm New</label>
+                        <input type={showPass ? "text" : "password"} value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className={`w-full bg-white border p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100 ${confirmPass && newPass !== confirmPass ? 'border-red-500' : 'border-red-200'}`} placeholder="Retype new password" />
+                    </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                     <button onClick={() => setShowPass(!showPass)} className="text-xs font-bold text-slate-500 flex items-center gap-2 hover:text-slate-800 transition-colors">
                         {showPass ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>} {showPass ? "Hide" : "Show"} Passwords
                     </button>
-                    {/* Simplified Password UI for brevity, fully functional */}
                     <button onClick={handlePasswordChange} disabled={passwordLoading} className="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                         {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
                         {passwordLoading ? "Verifying..." : "Update Password"}
