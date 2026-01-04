@@ -5,7 +5,8 @@ import Sidebar from "@/components/Sidebar";
 import ResourceFilterView from "@/components/ResourceFilterView"; 
 import Image from "next/image";
 import { 
-  ChevronRight, Clock, FolderOpen, Calendar, Trophy, FileBarChart, FileText, PlayCircle
+  ChevronRight, Clock, FolderOpen, 
+  Calendar, Trophy, FileBarChart, PlayCircle, FileText
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function SegmentPage({
   const { segment_slug } = await params;
   const { type, category } = await searchParams;
 
-  // 1. Fetch Segment
+  // 1. Fetch Segment Data
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   const { data: allSegments } = await supabase.from("segments").select("id, title, slug").order("id");
 
@@ -30,7 +31,7 @@ export default async function SegmentPage({
   const getPageTitle = () => {
     if (type === 'pdf') return 'Study Materials';
     if (type === 'video') return 'Video Classes';
-    if (type === 'update') return 'Latest Updates'; // Title for updates
+    if (type === 'update') return 'Latest Updates';
     if (type === 'question') return 'Question Bank';
     return 'Resources'; 
   };
@@ -49,24 +50,26 @@ export default async function SegmentPage({
   if (type) {
       let allItems = [];
 
-      // 1. DATA FETCHING BASED ON TYPE
+      // 1. DATA FETCHING & NORMALIZATION
       if (type === 'update') {
-          // Fix for "Updates" page not showing items
+          // Fetch Updates from 'segment_updates' table
           const { data: updates } = await supabase
             .from("segment_updates")
-            .select("id, title, type, created_at, attachment_url") // Specific columns for updates
+            .select("id, title, type, created_at, attachment_url") 
             .eq("segment_id", segmentData.id)
             .order("created_at", { ascending: false });
           
-          // Normalize data to match ResourceFilterView expectations
+          // Normalize for Filter View
+          // Map DB types (routine/syllabus) to readable Categories
           allItems = updates?.map(u => ({
               ...u,
-              category: u.type === 'exam_result' ? 'Result' : (u.type === 'routine' ? 'Routine' : 'Syllabus'), // Map DB types to display categories
-              subjects: null // Updates usually don't have subject links
+              category: u.type === 'exam_result' ? 'Result' : (u.type === 'routine' ? 'Routine' : 'Syllabus'),
+              subjects: null, // Updates don't have subjects
+              content_type: 'update' 
           })) || [];
 
       } else {
-          // Standard Resources (Questions, PDF, Video)
+          // Fetch Resources (Question, PDF, Video)
           const { data: resources } = await supabase
             .from("resources")
             .select("*, subjects(id, title)")
@@ -78,22 +81,22 @@ export default async function SegmentPage({
 
       return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
-            {/* Darker, High Contrast Header */}
-            <div className="bg-[#1e1b4b] text-white pt-28 pb-24 px-6 relative overflow-hidden">
+            {/* High Contrast Header (Indigo/Slate) */}
+            <div className="bg-[#0f172a] text-white pt-28 pb-24 px-6 relative overflow-hidden">
                 <div className="absolute top-[-20%] right-[-10%] w-[400px] h-[400px] bg-indigo-600/30 blur-[100px] rounded-full pointer-events-none"></div>
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-indigo-200 uppercase tracking-wider mb-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
                                 <Link href="/" className="hover:text-white transition-colors">Home</Link> /
                                 <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> /
-                                <span className="text-white bg-indigo-600 px-2 py-0.5 rounded">{getPageTitle()}</span>
+                                <span className="text-indigo-400">{getPageTitle()}</span>
                             </div>
                             <h1 className="text-3xl md:text-5xl font-black tracking-tight flex items-center gap-4">
                                 <span className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl md:text-4xl shadow-inner backdrop-blur-md border border-white/10">
                                     {getPageIcon()}
                                 </span>
-                                <span>{segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">{getPageTitle()}</span></span>
+                                <span>{segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-300">{getPageTitle()}</span></span>
                             </h1>
                         </div>
                         <Link 
@@ -110,7 +113,7 @@ export default async function SegmentPage({
             <ResourceFilterView 
                 items={allItems} 
                 initialType={type} 
-                initialCategory={category} // Pass category from URL to auto-select
+                initialCategory={category} // Pass category from URL for initial state
                 segmentTitle={segmentData.title} 
             />
         </div>
@@ -142,11 +145,20 @@ export default async function SegmentPage({
   const syllabus = updates?.find(u => u.type === 'syllabus');
   const result = updates?.find(u => u.type === 'exam_result');
 
+  const getQuestionTag = (q: any) => {
+    return Array.isArray(q.subjects) ? q.subjects[0]?.title : (q.subjects?.title || q.category || "General");
+  };
+
+  const getGradient = (index: number) => {
+    const gradients = ["from-indigo-600 to-purple-600", "from-blue-600 to-indigo-600", "from-emerald-600 to-teal-600", "from-orange-500 to-red-500"];
+    return gradients[index % gradients.length];
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* HERO DASHBOARD */}
-      <section className="bg-[#1e1b4b] text-white pt-32 pb-24 px-6 relative overflow-hidden">
+      {/* HERO SECTION */}
+      <section className="bg-[#0f172a] text-white pt-32 pb-24 px-6 relative overflow-hidden">
         <div className="absolute top-[-50%] right-[-10%] w-[600px] h-[600px] bg-indigo-600/30 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto relative z-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
@@ -155,7 +167,6 @@ export default async function SegmentPage({
                     <span className="text-indigo-400">{segmentData.title}</span>
                 </div>
                 
-                {/* Desktop Switcher */}
                 <div className="hidden md:flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10 backdrop-blur-sm">
                     {allSegments?.slice(0, 5).map(s => (
                         <Link key={s.id} href={`/resources/${s.slug}`} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${s.slug === segment_slug ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
@@ -196,10 +207,10 @@ export default async function SegmentPage({
                             <h2 className="text-2xl font-bold text-slate-900">Select Group</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {groups.map((group: any) => (
+                            {groups.map((group: any, index: number) => (
                                 <Link key={group.id} href={`/resources/${segment_slug}/${group.slug}`} className="group relative bg-white p-1 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div className="bg-white rounded-xl p-6 h-full flex items-center gap-5 border border-slate-100 group-hover:border-indigo-100 relative z-10">
-                                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-black shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-2xl font-black shadow-inner group-hover:scale-110 transition-transform duration-300`}>
                                             {group.title.charAt(0)}
                                         </div>
                                         <div>
@@ -213,12 +224,13 @@ export default async function SegmentPage({
                     </section>
                 )}
 
-                {/* QUICK ACTIONS (UPDATED LINKS) */}
+                {/* QUICK ACTIONS - Updated to use synchronous filter link */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><span className="text-xl">⚡</span> Quick Actions</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {/* Note: Linking to type=update&category=Routine passes data to ResourceFilterView */}
                         <Link href={`/resources/${segment_slug}?type=update&category=Routine`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition group">
                             <div className="flex justify-between items-start mb-2"><Calendar className="w-6 h-6 text-blue-500"/><span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase">Routine</span></div>
                             <h4 className="font-bold text-slate-800 text-sm mt-2">Exam Routine</h4>
@@ -237,7 +249,7 @@ export default async function SegmentPage({
                     </div>
                 </section>
 
-                {/* QUESTION BANK (BROWSE CATEGORIES) */}
+                {/* QUESTION BANK */}
                 <section id="question-bank">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">?</div>
@@ -247,7 +259,7 @@ export default async function SegmentPage({
                         </div>
                     </div>
 
-                    {/* Categories (Synchronous feel via link to pre-filtered list) */}
+                    {/* CATEGORY GRID */}
                     {availableCategories.length > 0 && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                             {availableCategories.map((cat: any) => (
@@ -263,7 +275,7 @@ export default async function SegmentPage({
                         </div>
                     )}
 
-                    {/* Recent Questions */}
+                    {/* RECENT QUESTIONS */}
                     <div className="bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
                         {questions && questions.length > 0 ? (
                             <div className="flex flex-col divide-y divide-slate-100">
@@ -273,7 +285,7 @@ export default async function SegmentPage({
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-slate-800 text-sm md:text-base truncate group-hover:text-indigo-600 transition-colors">{q.title}</h3>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] font-black text-white bg-indigo-500 px-2 py-0.5 rounded shadow-sm">{Array.isArray(q.subjects) ? q.subjects[0]?.title : "General"}</span>
+                                                <span className="text-[10px] font-black text-white bg-indigo-600 px-2 py-0.5 rounded shadow-sm">{getQuestionTag(q)}</span>
                                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(q.created_at).toLocaleDateString()}</span>
                                             </div>
                                         </div>
@@ -290,59 +302,32 @@ export default async function SegmentPage({
                     </div>
                 </section>
 
-                {/* MATERIALS & BLOGS (Kept consistent with new style) */}
-{/* 4. STUDY MATERIALS */}
+                {/* MATERIALS (Simplified for brevity, similar styling) */}
                 <section>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-3"><span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-lg">📚</span><h2 className="text-xl font-bold text-slate-900">Study Materials</h2></div>
-                        <Link href={`/resources/${segment_slug}?type=pdf`} className="self-start sm:self-auto text-sm font-bold text-[#3498db] hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors flex items-center">View All <ChevronRight className="w-4 h-4" /></Link>
+                        <Link href={`/resources/${segment_slug}?type=pdf`} className="self-start sm:self-auto text-sm font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center">View All <ChevronRight className="w-4 h-4" /></Link>
                     </div>
                     {materials && materials.length > 0 ? (
                         <div className="space-y-3">
                             {materials.map((item: any) => (
-                                <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-[#3498db] hover:shadow-md transition-all flex items-center gap-4 group">
+                                <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-4 group">
                                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
                                         {item.type === 'pdf' ? <FileText className="w-5 h-5"/> : <PlayCircle className="w-5 h-5"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-slate-800 text-sm md:text-base group-hover:text-[#3498db] transition-colors mb-1 truncate">
-                                            <a href={item.content_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                        <h3 className="font-bold text-slate-800 text-sm md:text-base group-hover:text-indigo-600 transition-colors mb-1 truncate">
+                                            {/* Link to single material page */}
+                                            <Link href={`/material/${item.slug || item.id}`} className="block">{item.title}</Link>
                                         </h3>
-                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-bold">
-                                            <span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{Array.isArray(item.subjects) ? item.subjects[0]?.title : 'General'}</span>
-                                        </div>
                                     </div>
-                                    <a href={item.content_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
+                                    <Link href={`/material/${item.slug || item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
                                         {item.type === 'pdf' ? 'Download' : 'Watch'}
-                                    </a>
+                                    </Link>
                                 </div>
                             ))}
                         </div>
                     ) : <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">No materials available.</div>}
-                </section>
-
-                {/* 5. LATEST BLOGS */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
-                        <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
-                    </div>
-                    {blogs && blogs.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {blogs.map((blog: any) => (
-                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
-                                    <div className="h-48 relative overflow-hidden border-b border-slate-100">
-                                        {blog.content_url ? <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" /> : <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900"><h3 className="text-white font-bold text-center line-clamp-3">{blog.title}</h3></div>}
-                                        <div className="absolute top-3 left-3"><span className="bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">{blog.category || 'Article'}</span></div>
-                                    </div>
-                                    <div className="p-5 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-lg text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
-                                        <div className="flex items-center justify-between text-xs text-slate-400 font-bold border-t border-slate-100 pt-4 mt-auto"><span>{new Date(blog.created_at).toLocaleDateString()}</span><span className="text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">Read Now →</span></div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">No articles published yet.</div>}
                 </section>
 
             </div>
