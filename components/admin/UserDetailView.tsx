@@ -3,38 +3,37 @@ import {
   Trash2, KeyRound, Activity, Phone, 
   Building, Mail, GraduationCap, BookOpen, 
   Shield, User, CheckCircle2, MapPin, 
-  Heart, ExternalLink, Loader2, Save, 
+  Heart, ExternalLink, Loader2, 
   Ban, AlertTriangle, FileText, Star
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
 export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser }: any) {
-  // --- 1. HOOKS (Must be at the top) ---
+  // --- 1. HOOKS ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
   
   // --- MANAGEMENT STATE ---
-  // Initialize from props, but keep local state for editing
   const [status, setStatus] = useState(user?.status || 'pending');
   const [role, setRole] = useState(user?.role || 'student');
   const [notes, setNotes] = useState(user?.admin_notes || "");
   const [isFeatured, setIsFeatured] = useState(user?.is_featured || false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- 2. FETCH LIKES EFFECT ---
+  // --- 2. FETCH LIKES ---
   useEffect(() => {
     if (activeTab === 'likes' && user?.id) {
       const fetchUserLikes = async () => {
         setLoadingLikes(true);
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('likes')
           .select(`created_at, resources (id, title, type, subjects(title))`)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (!error && data) setLikesData(data);
+        if (data) setLikesData(data);
         setLoadingLikes(false);
       };
       fetchUserLikes();
@@ -44,9 +43,9 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   // Safe Guard
   if (!user) return null;
 
-  // --- 3. MANAGEMENT HANDLERS ---
+  // --- 3. HANDLERS ---
   
-  // Generic Profile Update (Role/Status)
+  // Generic Profile Update (Role/Status/Featured)
   const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
     
@@ -55,7 +54,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     if(field === 'role') setRole(value);
     if(field === 'is_featured') setIsFeatured(value);
 
-    // 2. Send to DB
+    // 2. Database Update
     const { error } = await supabase
         .from('profiles')
         .update({ [field]: value })
@@ -63,8 +62,8 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     
     if (error) {
         console.error(`Error updating ${field}:`, error);
-        alert(`Failed to update ${field}. Check console for details.`);
-        // Revert (Simplified logic for now)
+        alert(`Failed to update ${field}. Check console/RLS policies.`);
+        // Revert State on error
         if(field === 'status') setStatus(user.status);
         if(field === 'role') setRole(user.role);
         if(field === 'is_featured') setIsFeatured(user.is_featured);
@@ -74,7 +73,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
 
   // Save Admin Notes (On Blur)
   const saveNotes = async () => {
-      if (notes === user.admin_notes) return; // Don't save if no change
+      if (notes === user.admin_notes) return;
       setIsSaving(true);
       const { error } = await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
       if (error) console.error("Error saving notes:", error);
@@ -82,24 +81,9 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   };
 
   // --- 4. HELPERS ---
-  const getReadableGoal = (slug: string) => {
-    if (!slug) return "Not Set";
-    // Handle array (for tutors) or string (for students)
-    if (Array.isArray(slug)) return slug.join(", ");
-    if (slug.includes('ssc')) return "SSC Preparation";
-    if (slug.includes('hsc')) return "HSC Preparation";
-    if (slug.includes('medical')) return "Medical Admission";
-    if (slug.includes('university')) return "University Admission";
-    if (slug.includes('mba')) return "IBA / MBA";
-    if (slug.includes('job')) return "Job Preparation";
-    return slug;
-  };
-
-  // Logic: Students have 'current_goal', Tutors have 'interested_segments'
-  // We prioritize displaying the relevant field based on the current ROLE state (not just user prop)
   const displayGoal = role === 'tutor' 
     ? (user.interested_segments?.join(", ") || "No segments selected")
-    : getReadableGoal(user.current_goal || user.goal);
+    : (user.current_goal || user.goal || "Not Set");
 
   const getRoleIcon = (r: string) => {
     switch (r) {
@@ -127,8 +111,18 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                 <User className="w-4 h-4"/> User Profile
              </h3>
              <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button onClick={() => setActiveTab('profile')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Overview</button>
-                <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Heart className="w-3 h-3" /> Activity</button>
+                <button 
+                    onClick={() => setActiveTab('profile')} 
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Overview
+                </button>
+                <button 
+                    onClick={() => setActiveTab('likes')} 
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <Heart className="w-3 h-3" /> Activity
+                </button>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold">✕</button>
@@ -136,7 +130,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
         
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
            
-           {/* HERO SECTION (EDITABLE) */}
+           {/* HERO SECTION */}
            <div className="p-8 pb-6 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-4 border-white shadow-sm ${role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
                   {user.full_name?.[0]?.toUpperCase() || "?"}
@@ -186,7 +180,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                           </div>
                       </div>
 
-                      {/* Featured Toggle (Only Tutors) */}
+                      {/* FEATURED TOGGLE (Visible only for Tutors) */}
                       {role === 'tutor' && (
                           <button 
                             onClick={() => handleUpdateProfile('is_featured', !isFeatured)}
@@ -207,7 +201,8 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
            </div>
 
            <div className="p-8">
-              {/* TAB 1: PROFILE */}
+              
+              {/* === TAB 1: PROFILE === */}
               {activeTab === 'profile' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in">
                       
@@ -240,7 +235,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                                       <span className="font-bold text-slate-900">{user.institution || "—"}</span>
                                   </div>
                                   
-                                  {/* DYNAMIC GOAL LABEL (Hidden for Editors/Admins if empty) */}
                                   {(role === 'student' || role === 'tutor') && (
                                       <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
                                           <span className="text-slate-500 font-medium">
@@ -259,6 +253,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                               </div>
                           </div>
 
+                          {/* LOCATION */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                   <MapPin className="w-4 h-4"/> Location Data
@@ -306,7 +301,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                   </div>
               )}
 
-              {/* TAB 2: LIKES */}
+              {/* === TAB 2: LIKES === */}
               {activeTab === 'likes' && (
                   <div className="animate-in fade-in space-y-6">
                       {loadingLikes ? (
