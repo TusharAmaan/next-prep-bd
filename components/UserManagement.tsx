@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { UserCheck, Mail } from "lucide-react";
 
 // --- IMPORTS ---
-// Ensure these paths match where you saved the files in 'components/admin/'
 import FilterBar from "./admin/FilterBar";
 import UserTable from "./admin/UserTable";
 import UserDetailView from "./admin/UserDetailView";
@@ -21,6 +20,8 @@ type UserProfile = {
   bio?: string;
   phone?: string;
   institution?: string;
+  is_featured?: boolean; // Added based on your previous Table code
+  admin_notes?: string;
 };
 
 type Invitation = {
@@ -86,36 +87,47 @@ export default function UserManagement({ onShowError, onShowSuccess }: any) {
   // --- ACTIONS ---
 
   const handleRoleUpdate = async (userId: string, newRole: string) => {
-    const prev = [...users];
-    // 1. Update List
+    // 1. Optimistic Update (Immediate Feedback)
+    const prevUsers = [...users];
+    
+    // Update List
     const updatedUsers = users.map(u => u.id === userId ? { ...u, role: newRole } : u);
     setUsers(updatedUsers);
     
-    // 2. Update Modal if open
+    // Update Modal (Syncing Detail View)
     if (selectedUser?.id === userId) {
         setSelectedUser({ ...selectedUser, role: newRole });
     }
 
+    // 2. DB Update
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    
     if (error) { 
         onShowError(error.message); 
-        setUsers(prev); // Revert
+        setUsers(prevUsers); // Revert on failure
+        if (selectedUser?.id === userId) setSelectedUser(prevUsers.find(u => u.id === userId) || null);
     } else {
-        onShowSuccess("Role Updated");
+        onShowSuccess(`Role updated to ${newRole}`);
     }
   };
 
-  // *** THIS WAS MISSING IN YOUR CODE ***
   const handleApproveUser = async (userId: string) => {
+    // 1. Optimistic Update
+    const updatedUsers = users.map(u => u.id === userId ? { ...u, status: 'active' } : u);
+    setUsers(updatedUsers);
+
+    if (selectedUser?.id === userId) {
+        setSelectedUser({ ...selectedUser, status: 'active' });
+    }
+
+    // 2. DB Update
     const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', userId);
+    
     if (error) {
         onShowError(error.message);
+        fetchData(); // Revert/Refresh on error
     } else {
-        onShowSuccess("User Approved");
-        fetchData(); // Refresh to update list
-        if (selectedUser?.id === userId) {
-            setSelectedUser({ ...selectedUser, status: 'active' });
-        }
+        onShowSuccess("User Approved Successfully");
     }
   };
 
@@ -211,17 +223,28 @@ export default function UserManagement({ onShowError, onShowSuccess }: any) {
       <FilterBar search={search} setSearch={setSearch} roleFilter={roleFilter} setRoleFilter={setRoleFilter} activeTab={activeTab} />
       
       <UserTable 
-        activeTab={activeTab} users={users} invites={invites} loading={loading} 
-        page={page} setPage={setPage} totalPages={totalPages} totalItems={totalItems}
-        onRoleUpdate={handleRoleUpdate} onDeleteUser={handleDeleteUser} onRevokeInvite={handleRevokeInvite} onSelectUser={setSelectedUser}
+        activeTab={activeTab} 
+        users={users} 
+        invites={invites} 
+        loading={loading} 
+        page={page} 
+        setPage={setPage} 
+        totalPages={totalPages} 
+        totalItems={totalItems}
+        // Removed onRoleUpdate from here as requested
+        onDeleteUser={handleDeleteUser} 
+        onRevokeInvite={handleRevokeInvite} 
+        onSelectUser={setSelectedUser}
       />
 
+      {/* Syncing happens here: We pass the update functions to the Detail View */}
       <UserDetailView 
         user={selectedUser} 
         onClose={() => setSelectedUser(null)} 
         onSendReset={handleSendReset} 
         onDeleteUser={handleDeleteUser} 
-        onApproveUser={handleApproveUser} // Now this function exists!
+        onApproveUser={handleApproveUser} 
+        onRoleUpdate={handleRoleUpdate}
       />
       
       <InviteModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} onInvite={handleInvite} email={inviteEmail} setEmail={setInviteEmail} role={inviteRole} setRole={setInviteRole} submitting={submitting} />
