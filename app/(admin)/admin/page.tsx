@@ -7,7 +7,7 @@ import Link from "next/link";
 // --- IMPORTS ---
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
-import CategoryManager from "@/components/admin/sections/CategoryManager";
+import CategoryManager from "@/components/admin/sections/CategoryManager"; // Updated Component
 import ContentManager from "@/components/admin/sections/ContentManager";
 
 // --- TYPES ---
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryCounts, setCategoryCounts] = useState<any>({});
 
-    // Selection State
+    // Selection State (For Content/Hierarchy Managers)
     const [selectedSegment, setSelectedSegment] = useState("");
     const [selectedGroup, setSelectedGroup] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
@@ -52,6 +52,9 @@ export default function AdminDashboard() {
         if (c) {
             const counts: any = {};
             for (const cat of c) {
+                // Count how many items use this category name
+                // Note: If you switched to category_id in DB, update this query. 
+                // Assuming 'category' column stores text name based on previous context.
                 const { count } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', cat.name);
                 counts[cat.id] = count || 0;
             }
@@ -62,20 +65,17 @@ export default function AdminDashboard() {
     const fetchGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data || []); };
     const fetchSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data || []); };
 
-    // --- AUTHENTICATION CHECK (ROBUST) ---
+    // --- AUTHENTICATION CHECK ---
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                // 1. Get Session
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
                 if (sessionError || !session) {
-                    console.log("No session found, redirecting to login.");
                     router.replace("/login");
                     return;
                 }
 
-                // 2. Fetch Profile
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('*')
@@ -83,24 +83,18 @@ export default function AdminDashboard() {
                     .single();
 
                 if (profileError || !profile) {
-                    console.error("Profile fetch error:", profileError);
-                    // Don't redirect yet, let the Debug UI show the error
-                    setCurrentUser({ id: session.user.id, role: "Error fetching profile" });
+                    console.error("Profile error:", profileError);
+                    setCurrentUser({ id: session.user.id, role: "Error" });
                     setIsLoading(false);
                     return;
                 }
 
-                // 3. Check Role
                 if (profile.role === 'admin') {
                     setCurrentUser(profile);
                     setIsAuthenticated(true);
-                    fetchDropdowns(); // Only fetch data if admin
-                } else if (profile.role === 'student' || profile.role === 'tutor') {
-                    // Redirect non-admins appropriately
-                    router.replace("/");
+                    fetchDropdowns(); 
                 } else {
-                    // Pending or unknown
-                    router.replace("/verification-pending");
+                    router.replace("/");
                 }
             } catch (err) {
                 console.error("Auth check failed:", err);
@@ -112,7 +106,7 @@ export default function AdminDashboard() {
         checkAuth();
     }, [router, fetchDropdowns]);
 
-    // --- LOADING VIEW ---
+    // --- LOADING UI ---
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] gap-4">
@@ -122,34 +116,9 @@ export default function AdminDashboard() {
         );
     }
 
-    // --- DEBUG UI (Instead of "return null") ---
-    if (!isAuthenticated) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 text-center">
-                <div className="bg-red-50 p-8 rounded-3xl border border-red-100 max-w-md shadow-xl">
-                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
-                    <h1 className="text-2xl font-black text-slate-900 mb-2">Access Denied</h1>
-                    <p className="text-slate-500 mb-6 font-medium text-sm leading-relaxed">
-                        Your account does not have Administrator privileges.
-                    </p>
-                    
-                    {/* Debug Info Panel */}
-                    <div className="text-left bg-white p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-500 mb-6 shadow-sm">
-                        <p className="mb-1"><span className="font-bold text-slate-700">User ID:</span> {currentUser?.id || "Unknown"}</p>
-                        <p className="mb-1"><span className="font-bold text-slate-700">Email:</span> {currentUser?.email || "Unknown"}</p>
-                        <p><span className="font-bold text-slate-700">Detected Role:</span> <span className="inline-block px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">{currentUser?.role || "None"}</span></p>
-                    </div>
+    // --- UNAUTHORIZED UI ---
+    if (!isAuthenticated) return null; // Redirect logic handles this, keeping it clean.
 
-                    <div className="flex gap-3 justify-center">
-                        <button onClick={() => router.push('/')} className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition">Go Home</button>
-                        <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200">Log Out</button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // --- MAIN DASHBOARD (If Authenticated) ---
     return (
         <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-20 lg:pt-24">
             
@@ -204,7 +173,6 @@ export default function AdminDashboard() {
                             groups={groups} 
                             subjects={subjects}
                             
-                            // Connected State
                             selectedSegment={selectedSegment} 
                             setSelectedSegment={(id: string) => {
                                 setSelectedSegment(id);
@@ -229,11 +197,11 @@ export default function AdminDashboard() {
                         />
                     )}
 
-                    {/* 3. CATEGORY MANAGER */}
+                    {/* 3. CATEGORY MANAGER (SIMPLIFIED PROPS) */}
                     {activeTab === 'categories' && (
                         <CategoryManager 
-                            categories={categories} categoryCounts={categoryCounts}
-                            filter="all" setFilter={() => {}} search="" setSearch={() => {}} 
+                            categories={categories} 
+                            categoryCounts={categoryCounts}
                             fetchCategories={fetchDropdowns}
                         />
                     )}
@@ -245,7 +213,7 @@ export default function AdminDashboard() {
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                             showSuccess={showSuccess} showError={showError} confirmAction={confirmAction}
-                            openCategoryModal={() => { }}
+                            openCategoryModal={() => { setActiveTab('categories'); }}
                         />
                     )}
 

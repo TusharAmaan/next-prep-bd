@@ -4,25 +4,27 @@ import { supabase } from "@/lib/supabaseClient";
 import { Trash2, Tag, Plus, Filter, RefreshCw } from "lucide-react";
 
 export default function CategoryManager({ 
-  categories = [], // Default to empty array to prevent crash
+  categories = [], 
   categoryCounts = {}, 
-  filter, setFilter, 
   search, setSearch, 
   fetchCategories 
 }: any) {
+  
+  // 1. INTERNAL STATE (Fixes the switching issue)
+  const [activeFilter, setActiveFilter] = useState("all");
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatType, setNewCatType] = useState("general");
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
-  // --- 1. ROBUST FILTERING LOGIC ---
+  // 2. ROBUST FILTERING LOGIC
   const filteredList = categories.filter((c: any) => {
-      // Normalize data: Handle nulls, whitespace, and capitalization
+      // Normalize data: Handle nulls ('general'), whitespace, and capitalization
       const categoryType = (c.type || 'general').toLowerCase().trim();
-      const currentFilter = filter.toLowerCase().trim();
+      const currentFilter = activeFilter.toLowerCase().trim();
       const categoryName = (c.name || '').toLowerCase();
-      const searchTerm = search.toLowerCase();
+      const searchTerm = (search || '').toLowerCase();
 
       // Logic: Match Type AND Match Search
       const matchesType = currentFilter === 'all' || categoryType === currentFilter;
@@ -31,7 +33,7 @@ export default function CategoryManager({
       return matchesType && matchesSearch;
   });
 
-  // --- 2. ACTIONS ---
+  // 3. ACTIONS
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this category? Items linked to it might lose their tag.")) return;
     setIsDeleting(id);
@@ -59,7 +61,7 @@ export default function CategoryManager({
     }
   };
 
-  // Tabs List (Added 'general' which was missing)
+  // Tabs Configuration
   const tabs = ['all', 'general', 'news', 'ebook', 'blog', 'course', 'question'];
 
   
@@ -84,15 +86,15 @@ export default function CategoryManager({
                 />
             </div>
 
-            {/* Filter Tabs */}
+            {/* Filter Tabs (Now uses setActiveFilter) */}
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar border-b md:border-b-0 border-slate-100">
                 {tabs.map(t => (
                     <button 
                         key={t}
-                        onClick={() => setFilter(t)}
+                        onClick={() => setActiveFilter(t)}
                         className={`
                             px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border
-                            ${filter === t 
+                            ${activeFilter === t 
                                 ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' 
                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                             }
@@ -106,7 +108,7 @@ export default function CategoryManager({
 
          {/* Actions */}
          <div className="flex gap-2 w-full md:w-auto">
-             <button onClick={fetchCategories} className="p-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors">
+             <button onClick={fetchCategories} className="p-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors" title="Refresh Data">
                 <RefreshCw className="w-4 h-4" />
              </button>
              <button onClick={() => setIsModalOpen(true)} className="flex-1 md:flex-none bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
@@ -119,8 +121,8 @@ export default function CategoryManager({
       {filteredList.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
               <Filter className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No categories found for "{filter}".</p>
-              <button onClick={() => setFilter('all')} className="mt-2 text-indigo-600 font-bold text-sm hover:underline">Clear Filters</button>
+              <p className="text-slate-500 font-medium">No categories found for "{activeFilter}".</p>
+              <button onClick={() => setActiveFilter('all')} className="mt-2 text-indigo-600 font-bold text-sm hover:underline">Clear Filters</button>
           </div>
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

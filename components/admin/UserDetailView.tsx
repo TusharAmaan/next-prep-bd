@@ -4,7 +4,7 @@ import {
   Building, Mail, GraduationCap, BookOpen, 
   Shield, User, CheckCircle2, MapPin, 
   Heart, ExternalLink, Loader2, 
-  Ban, AlertTriangle, FileText, Star
+  Ban, AlertTriangle, FileText, Star, Briefcase, Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
@@ -32,7 +32,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
           .select(`created_at, resources (id, title, type, subjects(title))`)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-
         if (data) setLikesData(data);
         setLoadingLikes(false);
       };
@@ -40,30 +39,25 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     }
   }, [activeTab, user?.id]);
 
-  // Safe Guard
   if (!user) return null;
 
   // --- 3. HANDLERS ---
-  
-  // Generic Profile Update (Role/Status/Featured)
   const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
     
-    // 1. Optimistic Update (Update UI immediately)
+    // Optimistic Update
     if(field === 'status') setStatus(value);
     if(field === 'role') setRole(value);
     if(field === 'is_featured') setIsFeatured(value);
 
-    // 2. Database Update
     const { error } = await supabase
         .from('profiles')
         .update({ [field]: value })
         .eq('id', user.id);
     
     if (error) {
-        console.error(`Error updating ${field}:`, error);
-        alert(`Failed to update ${field}. Check console/RLS policies.`);
-        // Revert State on error
+        alert(`Failed to update ${field}: ${error.message}`);
+        // Revert UI on error
         if(field === 'status') setStatus(user.status);
         if(field === 'role') setRole(user.role);
         if(field === 'is_featured') setIsFeatured(user.is_featured);
@@ -71,19 +65,24 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
     setIsSaving(false);
   };
 
-  // Save Admin Notes (On Blur)
   const saveNotes = async () => {
       if (notes === user.admin_notes) return;
       setIsSaving(true);
-      const { error } = await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
-      if (error) console.error("Error saving notes:", error);
+      await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
       setIsSaving(false);
   };
 
   // --- 4. HELPERS ---
-  const displayGoal = role === 'tutor' 
-    ? (user.interested_segments?.join(", ") || "No segments selected")
-    : (user.current_goal || user.goal || "Not Set");
+  const formatGoal = (slug: string) => {
+      if (!slug) return "Not Set";
+      if (slug.includes('ssc')) return "SSC Preparation";
+      if (slug.includes('hsc')) return "HSC Preparation";
+      if (slug.includes('medical')) return "Medical Admission";
+      if (slug.includes('university')) return "University Admission";
+      if (slug.includes('mba')) return "IBA / MBA";
+      if (slug.includes('job')) return "Job Preparation";
+      return slug; 
+  };
 
   const getRoleIcon = (r: string) => {
     switch (r) {
@@ -111,18 +110,8 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                 <User className="w-4 h-4"/> User Profile
              </h3>
              <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button 
-                    onClick={() => setActiveTab('profile')} 
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Overview
-                </button>
-                <button 
-                    onClick={() => setActiveTab('likes')} 
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    <Heart className="w-3 h-3" /> Activity
-                </button>
+                <button onClick={() => setActiveTab('profile')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Overview</button>
+                <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Heart className="w-3 h-3" /> Activity</button>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold">✕</button>
@@ -143,14 +132,9 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                   
                   {/* ADMIN CONTROLS */}
                   <div className="flex flex-wrap items-center gap-3 mt-4">
-                      
-                      {/* Role Select */}
+                      {/* Role */}
                       <div className="relative group">
-                          <select 
-                            value={role}
-                            onChange={(e) => handleUpdateProfile('role', e.target.value)}
-                            className="appearance-none pl-9 pr-8 py-1.5 rounded-full text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer uppercase tracking-wider hover:bg-white transition-all"
-                          >
+                          <select value={role} onChange={(e) => handleUpdateProfile('role', e.target.value)} className="appearance-none pl-9 pr-8 py-1.5 rounded-full text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer uppercase tracking-wider hover:bg-white transition-all">
                               <option value="student">Student</option>
                               <option value="tutor">Tutor</option>
                               <option value="editor">Editor</option>
@@ -159,39 +143,22 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{getRoleIcon(role)}</div>
                       </div>
 
-                      {/* Status Select */}
+                      {/* Status */}
                       <div className="relative">
-                          <select 
-                            value={status}
-                            onChange={(e) => handleUpdateProfile('status', e.target.value)}
-                            className={`appearance-none pl-9 pr-8 py-1.5 rounded-full text-xs font-bold border outline-none cursor-pointer uppercase tracking-wider hover:brightness-95 transition-all
-                                ${status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                  status === 'suspended' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                  'bg-orange-50 text-orange-700 border-orange-200'}`}
-                          >
+                          <select value={status} onChange={(e) => handleUpdateProfile('status', e.target.value)} className={`appearance-none pl-9 pr-8 py-1.5 rounded-full text-xs font-bold border outline-none cursor-pointer uppercase tracking-wider hover:brightness-95 transition-all ${status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : status === 'suspended' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
                               <option value="active">Active</option>
                               <option value="pending">Pending</option>
                               <option value="suspended">Suspended</option>
                           </select>
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                              {status === 'active' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600"/> : 
-                               status === 'suspended' ? <Ban className="w-3.5 h-3.5 text-red-600"/> : 
-                               <Activity className="w-3.5 h-3.5 text-orange-600"/>}
+                              {status === 'active' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600"/> : status === 'suspended' ? <Ban className="w-3.5 h-3.5 text-red-600"/> : <Activity className="w-3.5 h-3.5 text-orange-600"/>}
                           </div>
                       </div>
 
-                      {/* FEATURED TOGGLE (Visible only for Tutors) */}
+                      {/* Featured (Tutor Only) */}
                       {role === 'tutor' && (
-                          <button 
-                            onClick={() => handleUpdateProfile('is_featured', !isFeatured)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                                isFeatured 
-                                ? 'bg-amber-100 text-amber-700 border-amber-300' 
-                                : 'bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
-                            }`}
-                          >
-                              <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} />
-                              {isFeatured ? "Featured" : "Promote"}
+                          <button onClick={() => handleUpdateProfile('is_featured', !isFeatured)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${isFeatured ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'}`}>
+                              <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} /> {isFeatured ? "Featured" : "Promote"}
                           </button>
                       )}
                       
@@ -201,48 +168,77 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
            </div>
 
            <div className="p-8">
-              
-              {/* === TAB 1: PROFILE === */}
               {activeTab === 'profile' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in">
-                      
-                      {/* Left: Info */}
                       <div className="md:col-span-7 space-y-6">
                           
-                          {/* ADMIN NOTES */}
+                          {/* Admin Notes */}
                           <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 shadow-sm">
-                              <h5 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                  <FileText className="w-4 h-4"/> Admin Notes
-                              </h5>
-                              <textarea 
-                                  className="w-full bg-white border border-amber-200 rounded-xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-amber-200 outline-none resize-none placeholder:text-slate-400"
-                                  rows={3}
-                                  placeholder="Internal notes (visible only to admins)..."
-                                  value={notes}
-                                  onChange={(e) => setNotes(e.target.value)}
-                                  onBlur={saveNotes}
-                              />
+                              <h5 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2"><FileText className="w-4 h-4"/> Admin Notes</h5>
+                              <textarea className="w-full bg-white border border-amber-200 rounded-xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-amber-200 outline-none resize-none placeholder:text-slate-400" rows={3} placeholder="Internal notes..." value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={saveNotes}/>
                               <p className="text-[10px] text-amber-700/60 mt-1.5 text-right italic">Auto-saves on exit</p>
                           </div>
 
+                          {/* Info Card */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                  <GraduationCap className="w-4 h-4"/> Academic Info
-                              </h5>
+                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><GraduationCap className="w-4 h-4"/> Academic Info</h5>
                               <div className="space-y-3">
                                   <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
                                       <span className="text-slate-500 font-medium">Institution</span>
                                       <span className="font-bold text-slate-900">{user.institution || "—"}</span>
                                   </div>
                                   
-                                  {(role === 'student' || role === 'tutor') && (
-                                      <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
-                                          <span className="text-slate-500 font-medium">
-                                              {role === 'tutor' ? 'Interested Areas' : 'Target Goal'}
-                                          </span>
-                                          <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded text-right max-w-[200px] truncate">
-                                              {displayGoal}
-                                          </span>
+                                  {/* Student Display */}
+                                  {role === 'student' && (
+                                      <>
+                                        <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                            <span className="text-slate-500 font-medium">Target Goal</span>
+                                            <span className="font-bold text-blue-600 bg-blue-50 px-2 rounded text-right">{formatGoal(user.current_goal || user.goal)}</span>
+                                        </div>
+                                        {user.date_of_birth && (
+                                            <div className="flex justify-between text-sm border-b border-slate-100 pb-2">
+                                                <span className="text-slate-500 font-medium">Date of Birth</span>
+                                                <span className="font-bold text-slate-900">{new Date(user.date_of_birth).toLocaleDateString()}</span>
+                                            </div>
+                                        )}
+                                      </>
+                                  )}
+
+                                  {/* Tutor Display */}
+                                  {role === 'tutor' && (
+                                      <>
+                                        <div className="border-b border-slate-100 pb-2">
+                                            <span className="text-slate-500 font-medium text-sm block mb-1">Interested Segments</span>
+                                            <div className="flex flex-wrap gap-1 justify-end">
+                                                {user.interested_segments && user.interested_segments.length > 0 ? (
+                                                    user.interested_segments.map((seg:string, i:number) => (
+                                                        <span key={i} className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded">{seg}</span>
+                                                    ))
+                                                ) : <span className="text-sm font-bold text-slate-400">None</span>}
+                                            </div>
+                                        </div>
+                                        {user.academic_records && user.academic_records.length > 0 && (
+                                            <div className="pt-1">
+                                                <span className="text-slate-500 font-medium text-sm block mb-1">Academic Records</span>
+                                                <ul className="text-xs space-y-1 text-slate-700 font-medium">
+                                                    {user.academic_records.map((rec:any, i:number) => (
+                                                        <li key={i}>• {rec.degree} @ {rec.institute}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                      </>
+                                  )}
+
+                                  {/* Editor Display */}
+                                  {role === 'editor' && user.skills && (
+                                      <div className="border-b border-slate-100 pb-2">
+                                          <span className="text-slate-500 font-medium text-sm block mb-1">Skills</span>
+                                          <div className="flex flex-wrap gap-1">
+                                              {user.skills.map((sk:string, i:number) => (
+                                                  <span key={i} className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">{sk}</span>
+                                              ))}
+                                          </div>
                                       </div>
                                   )}
 
@@ -255,17 +251,13 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
 
                           {/* LOCATION */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                  <MapPin className="w-4 h-4"/> Location Data
-                              </h5>
+                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><MapPin className="w-4 h-4"/> Location Data</h5>
                               <div className="flex items-start gap-3">
                                   <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><MapPin className="w-5 h-5" /></div>
                                   <div>
                                       <p className="text-xs font-bold text-slate-400 uppercase">Current City</p>
                                       <p className="text-lg font-bold text-slate-900">{user.city || "Not Reachable"}</p>
-                                      {user.location_updated_at && (
-                                          <p className="text-[10px] text-slate-400 mt-1">Updated: {new Date(user.location_updated_at).toLocaleDateString()}</p>
-                                      )}
+                                      {user.location_updated_at && <p className="text-[10px] text-slate-400 mt-1">Updated: {new Date(user.location_updated_at).toLocaleDateString()}</p>}
                                   </div>
                               </div>
                           </div>
@@ -276,32 +268,21 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                           <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
                               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Account Control</h5>
                               <div className="space-y-3">
-                                <button onClick={() => onSendReset(user.email)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all text-left group">
-                                    <KeyRound className="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors"/>
-                                    <span className="text-sm font-bold">Reset Password</span>
-                                </button>
-                                <button onClick={() => onDeleteUser(user.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-red-900/40 transition-all text-left group">
-                                    <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-200 transition-colors"/>
-                                    <span className="text-sm font-bold text-red-100">Delete Account</span>
-                                </button>
+                                <button onClick={() => onSendReset(user.email)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all text-left group"><KeyRound className="w-4 h-4 text-indigo-400"/><span className="text-sm font-bold">Reset Password</span></button>
+                                <button onClick={() => onDeleteUser(user.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-red-900/40 transition-all text-left group"><Trash2 className="w-4 h-4 text-red-400"/><span className="text-sm font-bold text-red-100">Delete Account</span></button>
                               </div>
                           </div>
-                          
-                          {/* SUSPENSION WARNING */}
                           {status === 'suspended' && (
                               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 animate-pulse">
                                   <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
-                                  <div>
-                                      <h5 className="text-sm font-bold text-red-800">User Suspended</h5>
-                                      <p className="text-xs text-red-600 mt-1">This user cannot log in or access materials.</p>
-                                  </div>
+                                  <div><h5 className="text-sm font-bold text-red-800">User Suspended</h5><p className="text-xs text-red-600 mt-1">Access revoked.</p></div>
                               </div>
                           )}
                       </div>
                   </div>
               )}
-
-              {/* === TAB 2: LIKES === */}
+              
+              {/* LIKES TAB (Render logic exists here in full code) */}
               {activeTab === 'likes' && (
                   <div className="animate-in fade-in space-y-6">
                       {loadingLikes ? (
@@ -325,7 +306,6 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
                                       </div>
                                   ))}
                               </div>
-
                               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                                   <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto custom-scrollbar">
                                       {likesData.map((like) => (
