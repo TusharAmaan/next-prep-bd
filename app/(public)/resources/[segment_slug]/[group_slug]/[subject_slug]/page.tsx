@@ -152,7 +152,47 @@ export default async function SubjectPage({
             {/* LEFT CONTENT */}
             <div className="lg:col-span-8 space-y-16">
                 
-                {/* 1. STUDY MATERIALS */}
+                {/* 1. LATEST POSTS */}
+                <section>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg"><PenTool className="w-6 h-6" /></span>
+                            <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
+                        </div>
+                    </div>
+
+                    {blogs && blogs.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {blogs.map((blog) => (
+                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                                    <div className="h-40 bg-gray-100 relative overflow-hidden border-b border-slate-100">
+                                        {blog.content_url ? (
+                                            <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-800 to-slate-900">
+                                                <h4 className="text-white font-bold text-xs text-center line-clamp-2 px-2">{blog.title}</h4>
+                                            </div>
+                                        )}
+                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">
+                                            {blog.category || 'Article'}
+                                        </div>
+                                    </div>
+                                    <div className="p-5 flex-1 flex flex-col">
+                                        <h3 className="font-bold text-base text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
+                                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-400 font-bold border-t border-slate-100">
+                                            <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            <span className="text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">Read <ChevronRight className="w-3 h-3"/></span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">
+                            No articles published yet.
+                        </div>
+                    )}
+                </section>
                 <section>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-3">
@@ -230,48 +270,6 @@ export default async function SubjectPage({
                     ) : (
                         <div className="bg-amber-50/50 p-8 rounded-xl border border-dashed border-amber-200 text-center text-amber-700/50 text-sm font-bold">
                             No questions available yet.
-                        </div>
-                    )}
-                </section>
-
-                {/* 3. LATEST POSTS */}
-                <section>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
-                        <div className="flex items-center gap-3">
-                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg"><PenTool className="w-6 h-6" /></span>
-                            <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
-                        </div>
-                    </div>
-
-                    {blogs && blogs.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {blogs.map((blog) => (
-                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
-                                    <div className="h-40 bg-gray-100 relative overflow-hidden border-b border-slate-100">
-                                        {blog.content_url ? (
-                                            <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                                        ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-800 to-slate-900">
-                                                <h4 className="text-white font-bold text-xs text-center line-clamp-2 px-2">{blog.title}</h4>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">
-                                            {blog.category || 'Article'}
-                                        </div>
-                                    </div>
-                                    <div className="p-5 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-base text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
-                                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-400 font-bold border-t border-slate-100">
-                                            <span>{new Date(blog.created_at).toLocaleDateString()}</span>
-                                            <span className="text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">Read <ChevronRight className="w-3 h-3"/></span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">
-                            No articles published yet.
                         </div>
                     )}
                 </section>
