@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { 
   Search, MapPin, BookOpen, User, Phone, 
   MessageCircle, Star, X, GraduationCap, 
-  Briefcase, Mail, ArrowRight, Filter, ChevronDown 
+  Briefcase, Mail, ArrowRight, ChevronDown, CheckCircle2 
 } from "lucide-react";
 
 export default function FindTutorPage() {
@@ -48,19 +48,17 @@ export default function FindTutorPage() {
 
   // --- 2. FILTER LOGIC ---
   const filteredTutors = tutors.filter(t => {
-    // Parse Subjects safely
     let subjects: string[] = [];
     try {
         subjects = Array.isArray(t.subjects) ? t.subjects : JSON.parse(t.subjects || "[]");
     } catch { subjects = []; }
 
-    // 1. Text Search (Name or Subject Text)
+    // Text Search
     const matchSearch = !search || 
         t.full_name?.toLowerCase().includes(search.toLowerCase()) || 
         subjects.some(s => s.toLowerCase().includes(search.toLowerCase()));
 
-    // 2. Hierarchy Filter
-    // We construct a prefix string based on selection (e.g., "SSC > Science")
+    // Hierarchy Filter
     let filterPrefix = "";
     if (selSegment) {
         const segTitle = dbSegments.find(s => s.slug === selSegment)?.title;
@@ -75,9 +73,7 @@ export default function FindTutorPage() {
         }
     }
 
-    // Check if the tutor has ANY subject that starts with the filter prefix
     const matchFilter = !filterPrefix || subjects.some(sub => sub.startsWith(filterPrefix));
-
     return matchSearch && matchFilter;
   });
 
@@ -99,7 +95,6 @@ export default function FindTutorPage() {
       
       {/* === HERO HEADER === */}
       <div className="relative bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 text-white pt-32 pb-32 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden mb-12">
-        {/* Background Elements */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] translate-x-1/4 translate-y-1/4"></div>
 
@@ -118,7 +113,6 @@ export default function FindTutorPage() {
       <div className="max-w-6xl mx-auto px-4 -mt-24 relative z-20 mb-12">
           <div className="bg-white/90 backdrop-blur-md border border-white/20 p-6 rounded-3xl shadow-xl space-y-4 md:space-y-0 md:flex md:gap-4 items-center">
               
-              {/* Search Input */}
               <div className="relative flex-grow md:flex-[1.5]">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input 
@@ -130,7 +124,6 @@ export default function FindTutorPage() {
                   />
               </div>
 
-              {/* Segment Dropdown */}
               <div className="relative flex-1 min-w-[140px]">
                   <select 
                     value={selSegment} 
@@ -143,7 +136,6 @@ export default function FindTutorPage() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
 
-              {/* Group Dropdown */}
               <div className="relative flex-1 min-w-[140px]">
                   <select 
                     value={selGroup} 
@@ -157,7 +149,6 @@ export default function FindTutorPage() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
 
-              {/* Subject Dropdown */}
               <div className="relative flex-1 min-w-[140px]">
                   <select 
                     value={selSubject} 
@@ -171,7 +162,6 @@ export default function FindTutorPage() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
 
-              {/* Clear Btn */}
               {(selSegment || search) && (
                   <button onClick={clearFilters} className="p-3.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Clear Filters">
                       <X className="w-5 h-5" />
@@ -183,7 +173,6 @@ export default function FindTutorPage() {
       {/* === TUTOR GRID === */}
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          
           {loading ? (
              [1,2,3,4].map(i => <SkeletonCard key={i} />)
           ) : filteredTutors.length === 0 ? (
@@ -204,7 +193,6 @@ export default function FindTutorPage() {
                  />
              ))
           )}
-
         </div>
       </div>
 
@@ -224,7 +212,7 @@ function TutorCard({ tutor, onViewProfile }: { tutor: any, onViewProfile: () => 
         subjects = Array.isArray(tutor.subjects) ? tutor.subjects : JSON.parse(tutor.subjects || "[]");
     } catch { subjects = []; }
 
-    // Simplify subject string for the card (remove "SSC > Science >" part for display)
+    // Simplify subject string for the card: just show Subject name
     const displaySubjects = subjects.map((s: string) => s.split(' > ').pop());
 
     return (
@@ -264,11 +252,10 @@ function TutorCard({ tutor, onViewProfile }: { tutor: any, onViewProfile: () => 
                 {displaySubjects.length > 4 && (
                     <span className="px-2 py-1 text-[10px] font-bold text-slate-400">+{displaySubjects.length - 4}</span>
                 )}
-                {/* Fade effect at bottom of chips if too many */}
                 <div className="absolute bottom-0 left-0 w-full h-4 bg-gradient-to-t from-white to-transparent"></div>
             </div>
 
-            {/* Snippet */}
+            {/* Footer */}
             <div className="pt-4 border-t border-slate-50 flex justify-between items-center mt-auto">
                 <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                      <GraduationCap className="w-3.5 h-3.5" /> 
@@ -302,7 +289,7 @@ function SkeletonCard() {
     )
 }
 
-// --- MODAL COMPONENT ---
+// --- MODAL COMPONENT (UPDATED EXPERTISE VIEW) ---
 function TutorModal({ tutor, onClose }: { tutor: any, onClose: () => void }) {
     useEffect(() => {
         document.body.style.overflow = 'hidden';
@@ -312,10 +299,15 @@ function TutorModal({ tutor, onClose }: { tutor: any, onClose: () => void }) {
     let subjects: string[] = [];
     try { subjects = Array.isArray(tutor.subjects) ? tutor.subjects : JSON.parse(tutor.subjects || "[]"); } catch { }
 
-    // Split hierarchical subjects for better display (e.g. "HSC Science" tag + "Physics" text)
+    // REFINED PARSING LOGIC: Extract Segment (Start) and Subject (End), ignoring Group (Middle).
     const processedSubjects = subjects.map(s => {
         const parts = s.split(' > ');
-        return { full: s, subject: parts.pop(), group: parts.join(' > ') };
+        // parts[0] is Segment, last element is Subject. Ignore anything in between.
+        return { 
+            full: s, 
+            segment: parts.length > 1 ? parts[0] : "General", 
+            subject: parts[parts.length - 1] 
+        };
     });
 
     return (
@@ -325,8 +317,6 @@ function TutorModal({ tutor, onClose }: { tutor: any, onClose: () => void }) {
                 {/* Header */}
                 <div className="relative bg-slate-900 p-6 md:p-8 shrink-0">
                     <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md z-10"><X className="w-5 h-5" /></button>
-                    
-                    {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-400 via-purple-500 to-transparent"></div>
 
                     <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6">
@@ -362,22 +352,24 @@ function TutorModal({ tutor, onClose }: { tutor: any, onClose: () => void }) {
                         </p>
                     </section>
 
-                    {/* Expertise */}
+                    {/* UPDATED EXPERTISE SECTION */}
                     <section>
                         <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             Teaching Expertise <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-[10px]">{subjects.length}</span>
                         </h4>
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2">
                             {processedSubjects.length > 0 ? processedSubjects.map((item, i) => (
-                                <div key={i} className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden group hover:border-indigo-200 transition-colors">
-                                    {item.group && <span className="px-3 py-1.5 text-[10px] font-bold text-slate-400 bg-slate-100 border-r border-slate-200 uppercase">{item.group}</span>}
-                                    <span className="px-3 py-1.5 text-xs font-bold text-slate-700 group-hover:text-indigo-600">{item.subject}</span>
+                                <div key={i} className="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm p-1 pr-3 gap-2 hover:border-indigo-300 transition-all cursor-default">
+                                    <span className="px-2 py-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 rounded uppercase tracking-wider">
+                                        {item.segment}
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-700">{item.subject}</span>
                                 </div>
                             )) : <span className="text-slate-400 text-sm italic">No subjects listed.</span>}
                         </div>
                     </section>
 
-                    {/* Academic Records (If Any) */}
+                    {/* Academic Records */}
                     {tutor.academic_records && tutor.academic_records.length > 0 && (
                         <section>
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Academic Background</h4>
