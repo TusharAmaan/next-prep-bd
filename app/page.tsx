@@ -19,10 +19,12 @@ import {
   Bell,
   Download,
   Facebook,
-  Youtube, // Will use fill="currentColor"
+  Youtube,
   Clock,
   ChevronRight,
-  FileClock
+  FileClock,
+  UserCheck, // Added for Tutor Icon
+  Star // Added for Rating Icon
 } from "lucide-react";
 
 export const revalidate = 0; 
@@ -32,15 +34,11 @@ export default async function HomePage() {
   // 2. FETCH DATA
   const [segmentsData, latestResources, latestNews, ebooksData] = await Promise.all([
     supabase.from("segments").select("*").order("id"),
-    // Fetch generic resources for the filter component
     supabase.from("resources")
       .select("*, subjects ( title, groups ( segments ( id, title, slug ) ) )")
       .limit(50) 
       .order("created_at", { ascending: false }),
-    
     supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
-    
-    // --- FIX: FETCH FROM 'ebooks' TABLE (NOT RESOURCES) ---
     supabase.from("ebooks")
       .select("id, title, author, cover_url, created_at, category")
       .limit(5)
@@ -75,6 +73,7 @@ export default async function HomePage() {
       
       {/* 1. HERO SECTION */}
       <section className="relative bg-[#0f172a] text-white pt-36 pb-32 px-6 overflow-hidden">
+        {/* ... (Hero Code Remains Same) ... */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/30 rounded-full blur-[120px]"></div>
             <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
@@ -189,7 +188,6 @@ export default async function HomePage() {
                            transition-all duration-300 hover:-translate-y-1 flex flex-col
                         "
                     >
-                        {/* Glowing Accent Top */}
                         <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
 
                         <div className="flex items-start justify-between mb-4">
@@ -251,9 +249,8 @@ export default async function HomePage() {
             {/* RIGHT COLUMN: SIDEBAR */}
             <div className="lg:col-span-4 space-y-6">
                 
-                {/* 1. SOCIAL WIDGETS (REPLICA DESIGN) */}
+                {/* 1. SOCIAL WIDGETS */}
                 <div className="space-y-4">
-                    {/* Facebook Button */}
                     <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
                        className="flex items-center gap-4 bg-[#1877F2] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -265,11 +262,9 @@ export default async function HomePage() {
                         </div>
                     </a>
 
-                    {/* YouTube Button - FIXED ICON */}
                     <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
                        className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            {/* FIX: fill="currentColor" makes the icon solid white */}
                             <Youtube className="w-6 h-6" fill="currentColor" />
                         </div>
                         <div className="flex flex-col">
@@ -279,7 +274,40 @@ export default async function HomePage() {
                     </a>
                 </div>
 
-                {/* 2. NOTICE BOARD */}
+                {/* 2. REFINED "FIND TUTOR" PROMO (NEW & ROBUST) */}
+                <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl group cursor-pointer">
+                    {/* Background Graphic */}
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/30 rounded-full blur-3xl group-hover:bg-indigo-500/50 transition-all duration-700"></div>
+                    <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+                    
+                    <div className="relative z-20 p-6 flex flex-col h-full min-h-[220px]">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 rounded-lg p-2">
+                                <UserCheck className="w-6 h-6" />
+                            </div>
+                            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-indigo-600/20">
+                                <Star className="w-3 h-3 fill-current" /> Verified Tutors
+                            </span>
+                        </div>
+
+                        <div className="mt-auto">
+                            <h3 className="text-2xl font-black tracking-tight mb-2 leading-tight">
+                                Find Your <br/><span className="text-indigo-400">Perfect Mentor</span>
+                            </h3>
+                            <p className="text-sm text-slate-300 font-medium mb-5 line-clamp-2">
+                                Connect with expert tutors for 1-on-1 guidance in Math, Physics & more.
+                            </p>
+                            
+                            <Link href="/find-tutor">
+                                <button className="w-full bg-white text-slate-900 py-3 rounded-xl font-bold text-sm hover:bg-indigo-50 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 group-hover:gap-3">
+                                    Browse Tutors <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. NOTICE BOARD */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="bg-[#0f172a] text-white px-5 py-4 flex justify-between items-center">
                         <h3 className="font-bold text-sm flex items-center gap-2"><Bell className="w-4 h-4" /> Notice Board</h3>
@@ -297,7 +325,7 @@ export default async function HomePage() {
                     <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
                 </div>
 
-                {/* 3. POPULAR EBOOKS (NOW FETCHING FROM EBOOKS TABLE) */}
+                {/* 4. POPULAR EBOOKS */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-purple-600" />
@@ -310,7 +338,7 @@ export default async function HomePage() {
                                     <Link href={`/ebooks/${book.id}`} key={book.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition group border border-transparent hover:border-slate-100">
                                         <div className="flex items-center gap-3 overflow-hidden">
                                             <div className="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                                              <FileText className="w-4 h-4" />
+                                                <FileText className="w-4 h-4" />
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">
@@ -320,7 +348,7 @@ export default async function HomePage() {
                                             </div>
                                         </div>
                                         <span className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                          <Download className="w-4 h-4" />
+                                            <Download className="w-4 h-4" />
                                         </span>
                                     </Link>
                                 ))}
@@ -330,16 +358,6 @@ export default async function HomePage() {
                         )}
                     </div>
                     <Link href="/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
-                </div>
-
-                {/* 4. TEACHER PROMO */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white text-center shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
-                    <h4 className="font-black text-xl mb-2 relative z-10">Need Help?</h4>
-                    <p className="text-indigo-100 text-xs mb-4 relative z-10">Book a private session with expert teachers.</p>
-                    <button className="bg-white text-indigo-700 w-full py-3 rounded-xl text-xs font-black hover:bg-indigo-50 transition shadow-lg relative z-10 flex items-center justify-center gap-2">
-                        Find Teacher <ChevronRight className="w-3 h-3"/>
-                    </button>
                 </div>
 
             </div>
