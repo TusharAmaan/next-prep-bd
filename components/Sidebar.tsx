@@ -1,35 +1,38 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { 
+  Search, FileText, PlayCircle, HelpCircle, 
+  PenTool, ChevronRight, LayoutGrid, ArrowRight 
+} from "lucide-react";
 
 // Helper: Get Icon based on file type
 const getIcon = (type: string) => {
   switch (type) {
-    case "pdf": return "📄";
-    case "video": return "▶";
-    case "blog": return "✍️";
-    case "question": return "❓";
-    default: return "📁";
+    case "pdf": return <FileText className="w-4 h-4" />;
+    case "video": return <PlayCircle className="w-4 h-4" />;
+    case "blog": return <PenTool className="w-4 h-4" />;
+    case "question": return <HelpCircle className="w-4 h-4" />;
+    default: return <FileText className="w-4 h-4" />;
   }
 };
 
-// Helper: Get Color Style based on file type
+// Helper: Get Color Style
 const getIconStyle = (type: string) => {
   switch (type) {
     case "pdf": return "bg-red-50 text-red-500 border-red-100";
     case "video": return "bg-blue-50 text-blue-500 border-blue-100";
     case "blog": return "bg-purple-50 text-purple-500 border-purple-100";
-    case "question": return "bg-yellow-50 text-yellow-600 border-yellow-100";
+    case "question": return "bg-amber-50 text-amber-600 border-amber-100";
     default: return "bg-gray-50 text-gray-500 border-gray-100";
   }
 };
 
-// Helper: Link Logic
 const getLink = (item: any) => {
   if (item.type === "blog") return `/blog/${item.id}`;
-  if (item.type === "question") return `/question/${item.id}`;
+  if (item.type === "question") return `/question/${item.slug || item.id}`;
   return item.content_url || "#";
 };
 
@@ -52,22 +55,22 @@ export default function Sidebar() {
   const [questionFilter, setQuestionFilter] = useState("All");
   const [loadingQuestions, setLoadingQuestions] = useState(true);
 
-  // 1. FETCH SEGMENTS (For Filters)
+  // 1. FETCH SEGMENTS (Dynamic Quick Access)
   useEffect(() => {
     const fetchSegments = async () => {
-      const { data } = await supabase.from("segments").select("id, title").order("id");
+      const { data } = await supabase.from("segments").select("id, title, slug, icon_url").order("id");
       if (data) setSegments(data);
     };
     fetchSegments();
   }, []);
 
-  // 2. FETCH MATERIALS (Blogs, PDFs, Videos)
+  // 2. FETCH MATERIALS
   useEffect(() => {
     const fetchMaterials = async () => {
       setLoadingMaterials(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, created_at, segment_id")
+        .select("id, title, slug, type, content_url, created_at, segment_id")
         .in("type", ["blog", "pdf", "video"])
         .order("created_at", { ascending: false })
         .limit(5);
@@ -91,7 +94,7 @@ export default function Sidebar() {
       setLoadingQuestions(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, created_at, segment_id")
+        .select("id, title, slug, type, content_url, created_at, segment_id")
         .eq("type", "question")
         .order("created_at", { ascending: false })
         .limit(5);
@@ -118,164 +121,172 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="space-y-8 sticky top-32">
+    <div className="space-y-8 sticky top-24 transition-all duration-300">
       
-      {/* 1. SEARCH WIDGET */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="font-extrabold text-slate-900 mb-4 text-xs uppercase tracking-wider flex items-center gap-2">
-          <span>🔍</span> Find Content
-        </h3>
+      {/* 1. MODERN SEARCH */}
+      <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200">
         <form onSubmit={handleSearch} className="relative group">
           <input
             type="text"
-            placeholder="Search topics..."
-            className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-4 pr-10 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
+            placeholder="Search resources..."
+            className="w-full bg-transparent text-slate-900 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold placeholder:text-slate-400 outline-none group-focus-within:bg-slate-50 transition-colors"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          </button>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+            <Search className="w-5 h-5" />
+          </div>
         </form>
       </div>
 
-      {/* 2. QUICK ACCESS */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-4 bg-slate-50 border-b border-slate-100">
-          <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">🚀 Quick Access</h3>
+      {/* 2. DYNAMIC QUICK ACCESS */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
+            <LayoutGrid className="w-4 h-4 text-indigo-500" /> Explore
+          </h3>
         </div>
-        <div className="flex flex-col divide-y divide-slate-50">
-          {[
-            { label: "SSC Preparation", href: "/resources/ssc", icon: "📘" },
-            { label: "HSC Preparation", href: "/resources/hsc", icon: "📙" },
-            { label: "Admission Test", href: "/resources/university-admission", icon: "🎓" },
-            { label: "Job Preparation", href: "/resources/job-prep", icon: "💼" },
-          ].map((item) => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors group">
-              <span className="text-lg bg-slate-100 w-8 h-8 flex items-center justify-center rounded-lg group-hover:bg-white transition-colors shadow-sm">{item.icon}</span>
-              <span className="font-bold text-sm text-slate-700 group-hover:text-blue-700 flex-1">{item.label}</span>
-              <span className="text-slate-300 group-hover:text-blue-500 text-xs">➔</span>
+        <div className="p-2 space-y-1">
+          {segments.length > 0 ? segments.map((seg) => (
+            <Link 
+              key={seg.id} 
+              href={`/resources/${seg.slug}`} 
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 shadow-sm group-hover:border-indigo-200 group-hover:text-indigo-600 transition-colors">
+                {seg.title.charAt(0)}
+              </div>
+              <span className="font-bold text-sm text-slate-600 group-hover:text-indigo-700 flex-1">{seg.title}</span>
+              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1" />
             </Link>
-          ))}
+          )) : (
+            <div className="p-4 text-center text-slate-400 text-xs">Loading segments...</div>
+          )}
         </div>
       </div>
 
-      {/* 3. LATEST MATERIALS WIDGET (Blogs/PDFs) */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {/* Header with Filter */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-          <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2">
-            <span>📚</span> Materials
+      {/* 3. LATEST MATERIALS (Polished) */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-500" /> Materials
           </h3>
           <select 
             value={materialFilter}
             onChange={(e) => setMaterialFilter(e.target.value)}
-            className="text-[10px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none focus:border-blue-400 cursor-pointer hover:bg-slate-100 transition-colors"
+            className="text-[10px] font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none focus:border-blue-500 cursor-pointer hover:border-blue-300 transition-colors"
           >
-            <option value="All">All Levels</option>
+            <option value="All">All</option>
             {segments.map(s => <option key={s.id} value={s.title}>{s.title}</option>)}
           </select>
         </div>
 
-        {/* Content List */}
-        <div className="p-2">
+        <div className="p-3">
           {loadingMaterials ? (
-             <div className="p-4 space-y-3">
-               {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-50 rounded-xl animate-pulse"></div>)}
+             <div className="space-y-3 p-2">
+               {[1,2,3].map(i => <div key={i} className="h-10 bg-slate-50 rounded-lg animate-pulse"></div>)}
              </div>
           ) : materials.length === 0 ? (
-             <div className="p-6 text-center text-slate-400 text-xs italic">No materials found for {materialFilter}.</div>
+             <div className="p-6 text-center text-slate-400 text-xs font-medium">No materials found.</div>
           ) : (
-             materials.map(item => (
-                <Link 
+             <div className="space-y-1">
+               {materials.map(item => (
+                 <Link 
                     key={item.id} 
                     href={getLink(item)} 
                     target={getTarget(item)}
-                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-slate-50 transition-all group mb-1 last:mb-0"
-                >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm border ${getIconStyle(item.type)} shadow-sm group-hover:scale-110 transition-transform flex-shrink-0 mt-0.5`}>
+                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-slate-50 transition-all group"
+                 >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${getIconStyle(item.type)} shadow-sm shrink-0 mt-0.5`}>
                         {getIcon(item.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-700 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">{item.title}</p>
-                        <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wide flex items-center gap-1">
-                           <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                           {/* Show segment tag only if 'All' is selected to give context */}
-                           {materialFilter === "All" && item.segment_id && (
-                               <>• <span className="text-blue-400">{segments.find(s=>s.id===item.segment_id)?.title}</span></>
-                           )}
+                        <p className="text-xs font-bold text-slate-700 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                            {item.title}
                         </p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-medium text-slate-400">
+                                {new Date(item.created_at).toLocaleDateString()}
+                            </span>
+                            {materialFilter === "All" && item.segment_id && (
+                                <span className="text-[9px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                    {segments.find(s=>s.id===item.segment_id)?.title}
+                                </span>
+                            )}
+                        </div>
                     </div>
-                </Link>
-             ))
+                 </Link>
+               ))}
+             </div>
           )}
         </div>
-        {/* Footer Link */}
-        <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
-            <Link href="/blog" className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest transition-colors">
-                View All Materials →
-            </Link>
-        </div>
+        <Link href="/blog" className="block p-3 text-center text-[10px] font-black text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors border-t border-slate-100 uppercase tracking-wider">
+            View All Materials
+        </Link>
       </div>
 
-      {/* 4. QUESTION ARCHIVE WIDGET */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {/* Header with Filter */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-          <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2">
-            <span>❓</span> Questions
+      {/* 4. QUESTION ARCHIVE (Polished) */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-amber-500" /> Questions
           </h3>
           <select 
             value={questionFilter}
             onChange={(e) => setQuestionFilter(e.target.value)}
-            className="text-[10px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none focus:border-yellow-400 cursor-pointer hover:bg-slate-100 transition-colors"
+            className="text-[10px] font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none focus:border-amber-500 cursor-pointer hover:border-amber-300 transition-colors"
           >
-            <option value="All">All Exams</option>
+            <option value="All">All</option>
             {segments.map(s => <option key={s.id} value={s.title}>{s.title}</option>)}
           </select>
         </div>
 
-        {/* Content List */}
-        <div className="p-2">
+        <div className="p-3">
           {loadingQuestions ? (
-             <div className="p-4 space-y-3">
-               {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-50 rounded-xl animate-pulse"></div>)}
+             <div className="space-y-3 p-2">
+               {[1,2,3].map(i => <div key={i} className="h-10 bg-slate-50 rounded-lg animate-pulse"></div>)}
              </div>
           ) : questions.length === 0 ? (
-             <div className="p-6 text-center text-slate-400 text-xs italic">No questions found for {questionFilter}.</div>
+             <div className="p-6 text-center text-slate-400 text-xs font-medium">No questions found.</div>
           ) : (
-             questions.map(item => (
-                <Link 
+             <div className="space-y-1">
+               {questions.map(item => (
+                 <Link 
                     key={item.id} 
                     href={getLink(item)} 
                     target={getTarget(item)}
-                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-yellow-50/50 transition-all group mb-1 last:mb-0"
-                >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm border bg-yellow-50 text-yellow-600 border-yellow-100 shadow-sm group-hover:scale-110 transition-transform flex-shrink-0 mt-0.5`}>
-                        ❓
+                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-amber-50/50 transition-all group"
+                 >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border bg-amber-50 text-amber-600 border-amber-100 shadow-sm shrink-0 mt-0.5`}>
+                        <HelpCircle className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-700 leading-snug group-hover:text-yellow-700 transition-colors line-clamp-2">{item.title}</p>
-                        <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wide flex items-center gap-1">
-                           <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                           {questionFilter === "All" && item.segment_id && (
-                               <>• <span className="text-yellow-500">{segments.find(s=>s.id===item.segment_id)?.title}</span></>
-                           )}
+                        <p className="text-xs font-bold text-slate-700 leading-snug group-hover:text-amber-700 transition-colors line-clamp-2">
+                            {item.title}
                         </p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-medium text-slate-400">
+                                {new Date(item.created_at).toLocaleDateString()}
+                            </span>
+                            {questionFilter === "All" && item.segment_id && (
+                                <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                                    {segments.find(s=>s.id===item.segment_id)?.title}
+                                </span>
+                            )}
+                        </div>
                     </div>
-                </Link>
-             ))
+                 </Link>
+               ))}
+             </div>
           )}
         </div>
-        {/* Footer Link (Generic link for now, or link to a dedicated question page if you have one) */}
-        <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
-            <Link href="/" className="text-[10px] font-bold text-yellow-600 hover:text-yellow-800 uppercase tracking-widest transition-colors">
-                Visit Archive →
-            </Link>
+        {/* Placeholder link, assuming you have a main archive page or similar */}
+        <div className="block p-3 text-center text-[10px] font-black text-slate-500 cursor-default border-t border-slate-100 uppercase tracking-wider">
+            Archive Access
         </div>
       </div>
 
-      {/* 5. SOCIAL MEDIA */}
+      {/* 5. SOCIAL MEDIA (UNCHANGED as requested) */}
       <div className="space-y-3">
         <a href="https://www.facebook.com/proyashcoaching" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-5 py-4 bg-[#1877F2] text-white rounded-2xl shadow-lg hover:shadow-blue-500/40 hover:-translate-y-1 transition-all group">
             <div className="flex items-center gap-3">
