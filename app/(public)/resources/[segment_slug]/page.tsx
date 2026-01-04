@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 import ResourceFilterView from "@/components/ResourceFilterView"; 
-import Image from "next/image";
+import Image from "next/image"; // <--- THIS WAS MISSING
 import { 
   ChevronRight, Clock, FolderOpen, 
   Calendar, Trophy, FileBarChart, ArrowRight,
-  BookOpen, Layers, PlayCircle, FileText, PenTool
+  Sparkles, Layers, PenTool
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,6 @@ export default async function SegmentPage({
   const { segment_slug } = await params;
   const { type, category } = await searchParams;
 
-  // 1. Fetch Segment & All Segments (For Header)
   const { data: segmentData } = await supabase.from("segments").select("*").eq("slug", segment_slug).single();
   const { data: allSegments } = await supabase.from("segments").select("id, title, slug").order("id");
 
@@ -46,29 +45,26 @@ export default async function SegmentPage({
   };
 
   // =========================================================
-  //  A. LIST VIEW MODE (Matches Filter View)
+  //  A. LIST VIEW MODE
   // =========================================================
   if (type) {
       let allItems = [];
 
       if (type === 'update') {
-          // Fetch Updates from 'segment_updates'
           const { data: updates } = await supabase
             .from("segment_updates")
             .select("id, title, type, created_at, attachment_url") 
             .eq("segment_id", segmentData.id)
             .order("created_at", { ascending: false });
           
-          // Normalize Data
           allItems = updates?.map(u => ({
               ...u,
               category: u.type === 'exam_result' ? 'Result' : (u.type === 'routine' ? 'Routine' : 'Syllabus'),
               subjects: null, 
-              slug: null // Updates use ID in URL
+              slug: null 
           })) || [];
 
       } else {
-          // Fetch Resources (Question, PDF, Video)
           const { data: resources } = await supabase
             .from("resources")
             .select("*, subjects(id, title)")
@@ -80,48 +76,47 @@ export default async function SegmentPage({
 
       return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
-            {/* HERO HEADER (List Mode) */}
-            <div className="bg-slate-900 text-white pt-32 pb-28 px-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+            {/* Header */}
+            <div className="bg-[#1e1b4b] text-white pt-28 pb-24 px-6 relative overflow-hidden">
+                <div className="absolute top-[-20%] right-[-10%] w-[400px] h-[400px] bg-indigo-600/30 blur-[100px] rounded-full pointer-events-none"></div>
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                            <div className="flex items-center gap-2 text-xs font-bold text-indigo-200 uppercase tracking-wider mb-3">
                                 <Link href="/" className="hover:text-white transition-colors">Home</Link> /
                                 <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> /
-                                <span className="text-indigo-400">{getPageTitle()}</span>
+                                <span className="text-white bg-indigo-600 px-2 py-0.5 rounded">{getPageTitle()}</span>
                             </div>
                             <h1 className="text-3xl md:text-5xl font-black tracking-tight flex items-center gap-4">
-                                <span className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/10">
+                                <span className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl md:text-4xl shadow-inner backdrop-blur-md border border-white/10">
                                     {getPageIcon()}
                                 </span>
-                                <span>{segmentData.title} <span className="text-indigo-400">{getPageTitle()}</span></span>
+                                <span>{segmentData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">{getPageTitle()}</span></span>
                             </h1>
                         </div>
                         <Link 
                             href={`/resources/${segment_slug}`} 
-                            className="self-start md:self-auto px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wide transition-all backdrop-blur-md flex items-center gap-2"
+                            className="self-start md:self-auto px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wide transition-all backdrop-blur-md flex items-center gap-2"
                         >
-                            <ArrowRight className="w-4 h-4 rotate-180" /> Back to Dashboard
+                            Back to Dashboard
                         </Link>
                     </div>
                 </div>
             </div>
 
-            {/* Filter View */}
             <ResourceFilterView 
                 items={allItems} 
                 initialType={type} 
                 initialCategory={category} 
                 segmentTitle={segmentData.title}
-                segmentSlug={segment_slug} // Correctly passed
+                segmentSlug={segment_slug} 
             />
         </div>
       );
   }
 
   // =========================================================
-  //  B. DASHBOARD VIEW MODE (Clean, Professional Dashboard)
+  //  B. DASHBOARD VIEW MODE
   // =========================================================
 
   const [
@@ -149,9 +144,14 @@ export default async function SegmentPage({
     return Array.isArray(q.subjects) ? q.subjects[0]?.title : (q.subjects?.title || q.category || "General");
   };
 
-  const getGradient = (index: number) => {
-    const gradients = ["from-indigo-600 to-purple-600", "from-blue-600 to-indigo-600", "from-teal-500 to-emerald-600", "from-orange-500 to-red-500"];
-    return gradients[index % gradients.length];
+  const getGroupStyle = (index: number) => {
+    const styles = [
+      { bg: "bg-blue-50", iconBg: "bg-blue-600", text: "text-blue-900", accent: "border-blue-100" },
+      { bg: "bg-indigo-50", iconBg: "bg-indigo-600", text: "text-indigo-900", accent: "border-indigo-100" },
+      { bg: "bg-emerald-50", iconBg: "bg-emerald-600", text: "text-emerald-900", accent: "border-emerald-100" },
+      { bg: "bg-purple-50", iconBg: "bg-purple-600", text: "text-purple-900", accent: "border-purple-100" },
+    ];
+    return styles[index % styles.length];
   };
 
   return (
@@ -166,6 +166,7 @@ export default async function SegmentPage({
                     <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
                     <span className="text-indigo-400">{segmentData.title}</span>
                 </div>
+                
                 {/* Switcher */}
                 <div className="hidden md:flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-sm">
                     {allSegments?.slice(0, 5).map(s => (
@@ -199,7 +200,7 @@ export default async function SegmentPage({
             
             <div className="lg:col-span-8 space-y-16">
                 
-                {/* 1. GROUPS (Colorful Cards) */}
+                {/* 1. GROUPS */}
                 {groups && groups.length > 0 && (
                     <section>
                         <div className="flex items-center gap-3 mb-6">
@@ -207,43 +208,71 @@ export default async function SegmentPage({
                             <h2 className="text-2xl font-bold text-slate-900">Select Group</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {groups.map((group: any, index: number) => (
-                                <Link key={group.id} href={`/resources/${segment_slug}/${group.slug}`} className="group relative bg-white p-1 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                                    <div className="bg-white rounded-xl p-6 h-full flex items-center gap-5 border border-slate-100 group-hover:border-indigo-200 relative z-10">
-                                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(index)} text-white flex items-center justify-center text-2xl font-black shadow-lg group-hover:scale-110 transition-transform duration-500`}>
-                                            {group.title.charAt(0)}
+                            {groups.map((group: any, index: number) => {
+                                const style = getGroupStyle(index);
+                                return (
+                                    <Link key={group.id} href={`/resources/${segment_slug}/${group.slug}`} className={`group relative p-1 rounded-3xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white border border-slate-100 overflow-hidden`}>
+                                        <div className={`absolute top-0 right-0 w-32 h-32 ${style.bg} rounded-full blur-3xl -mr-10 -mt-10 opacity-50 group-hover:opacity-100 transition-opacity`}></div>
+                                        <div className="relative z-10 p-6 flex items-start gap-5">
+                                            <div className={`w-16 h-16 rounded-2xl ${style.iconBg} text-white flex items-center justify-center text-3xl font-black shadow-lg shadow-indigo-900/10 group-hover:scale-110 transition-transform duration-300`}>
+                                                {group.title.charAt(0)}
+                                            </div>
+                                            <div className="flex-1 pt-1">
+                                                <h3 className={`text-xl font-bold ${style.text} mb-2`}>{group.title}</h3>
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 group-hover:text-slate-600 transition-colors">
+                                                    <span>Explore Resources</span>
+                                                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{group.title}</h3>
-                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 group-hover:text-indigo-500">View Resources →</p>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </section>
                 )}
 
-                {/* 2. QUICK ACTIONS (Filter Links) */}
+                {/* 2. QUICK ACTIONS */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><span className="text-xl">⚡</span> Quick Updates</h3>
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-500 fill-amber-500"/> Quick Updates</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Link href={`/resources/${segment_slug}?type=update&category=Routine`} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition group">
-                            <div className="flex justify-between items-start mb-4"><div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Calendar className="w-6 h-6"/></div><span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase">Routine</span></div>
-                            <h4 className="font-bold text-slate-900 text-sm">Exam Routine</h4>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-1">{routine ? routine.title : "No active routine"}</p>
+                        <Link href={`/resources/${segment_slug}?type=update&category=Routine`} className="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-lg transition-all group overflow-hidden">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Calendar className="w-20 h-20 text-blue-600"/></div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                    <Calendar className="w-5 h-5 text-blue-600"/>
+                                </div>
+                                <h4 className="font-bold text-slate-900 text-sm mb-1">Exam Routine</h4>
+                                <p className={`text-xs font-medium ${routine ? 'text-slate-500' : 'text-slate-400 italic'} line-clamp-1`}>
+                                    {routine ? routine.title : "No active routine"}
+                                </p>
+                            </div>
                         </Link>
-                        <Link href={`/resources/${segment_slug}?type=update&category=Syllabus`} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group">
-                            <div className="flex justify-between items-start mb-4"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><FileBarChart className="w-6 h-6"/></div><span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase">Syllabus</span></div>
-                            <h4 className="font-bold text-slate-900 text-sm">Full Syllabus</h4>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-1">{syllabus ? syllabus.title : "No syllabus found"}</p>
+                        <Link href={`/resources/${segment_slug}?type=update&category=Syllabus`} className="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-lg transition-all group overflow-hidden">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><FileBarChart className="w-20 h-20 text-emerald-600"/></div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                    <FileBarChart className="w-5 h-5 text-emerald-600"/>
+                                </div>
+                                <h4 className="font-bold text-slate-900 text-sm mb-1">Full Syllabus</h4>
+                                <p className={`text-xs font-medium ${syllabus ? 'text-slate-500' : 'text-slate-400 italic'} line-clamp-1`}>
+                                    {syllabus ? syllabus.title : "No syllabus found"}
+                                </p>
+                            </div>
                         </Link>
-                        <Link href={`/resources/${segment_slug}?type=update&category=Result`} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition group">
-                            <div className="flex justify-between items-start mb-4"><div className="p-3 bg-purple-50 text-purple-600 rounded-xl"><Trophy className="w-6 h-6"/></div><span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase">Result</span></div>
-                            <h4 className="font-bold text-slate-900 text-sm">Exam Results</h4>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-1">{result ? result.title : "No results yet"}</p>
+                        <Link href={`/resources/${segment_slug}?type=update&category=Result`} className="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-lg transition-all group overflow-hidden">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Trophy className="w-20 h-20 text-purple-600"/></div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                    <Trophy className="w-5 h-5 text-purple-600"/>
+                                </div>
+                                <h4 className="font-bold text-slate-900 text-sm mb-1">Exam Results</h4>
+                                <p className={`text-xs font-medium ${result ? 'text-slate-500' : 'text-slate-400 italic'} line-clamp-1`}>
+                                    {result ? result.title : "No results yet"}
+                                </p>
+                            </div>
                         </Link>
                     </div>
                 </section>
@@ -301,37 +330,7 @@ export default async function SegmentPage({
                     </div>
                 </section>
 
-                {/* MATERIALS */}
-                <section>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
-                        <div className="flex items-center gap-3"><span className="p-2 bg-blue-100 text-blue-600 rounded-lg text-lg">📚</span><h2 className="text-xl font-bold text-slate-900">Study Materials</h2></div>
-                        <Link href={`/resources/${segment_slug}?type=pdf`} className="self-start sm:self-auto text-sm font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center">View All <ChevronRight className="w-4 h-4" /></Link>
-                    </div>
-                    {materials && materials.length > 0 ? (
-                        <div className="space-y-3">
-                            {materials.map((item: any) => (
-                                <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-4 group">
-                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                                        {item.type === 'pdf' ? <FileText className="w-5 h-5"/> : <PlayCircle className="w-5 h-5"/>}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-slate-800 text-sm md:text-base group-hover:text-indigo-600 transition-colors mb-1 truncate">
-                                            <Link href={`/material/${item.slug || item.id}`} className="block">{item.title}</Link>
-                                        </h3>
-                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-bold">
-                                            <span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{Array.isArray(item.subjects) ? item.subjects[0]?.title : 'General'}</span>
-                                        </div>
-                                    </div>
-                                    <Link href={`/material/${item.slug || item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
-                                        {item.type === 'pdf' ? 'Download' : 'Watch'}
-                                    </Link>
-                                </div>
-                            ))}
-                        </div>
-                    ) : <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">No materials available.</div>}
-                </section>
-
-                {/* LATEST BLOGS */}
+                {/* LATEST BLOGS (With Image Component Fix) */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
                         <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
@@ -346,7 +345,7 @@ export default async function SegmentPage({
                                             <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900">
-                                                <Layers className="w-8 h-8 text-white/50 mb-2"/>
+                                                <PenTool className="w-8 h-8 text-white/50 mb-2"/>
                                                 <h3 className="text-white font-bold text-center line-clamp-3">{blog.title}</h3>
                                             </div>
                                         )}
