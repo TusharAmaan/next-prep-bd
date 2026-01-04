@@ -3,7 +3,7 @@ import { Eye, Trash2, Clock, CheckCircle, ChevronLeft, ChevronRight, Ban, Star, 
 export default function UserTable({ 
   activeTab, users, invites, loading, 
   page, setPage, totalPages, totalItems, 
-  onRoleUpdate, onDeleteUser, onRevokeInvite, onSelectUser 
+  onDeleteUser, onRevokeInvite, onSelectUser 
 }: any) {
   
   // Helper for Role Styles
@@ -63,26 +63,12 @@ export default function UserTable({
                    </div>
                  </td>
 
-                 {/* ROLE SELECTOR (Enhanced with Visuals) */}
+                 {/* ROLE DISPLAY (Read-Only) */}
                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1 items-start">
-                        {getRoleBadge(user.role, user.is_featured)}
-                        {/* Hidden Select for quick changes - Opacity 0 over a styled button could be better, but keeping standard select for now */}
-                        <select 
-                            value={user.role} 
-                            onChange={(e) => onRoleUpdate(user.id, e.target.value)} 
-                            className="mt-1 bg-transparent text-[10px] font-bold text-slate-400 uppercase cursor-pointer outline-none hover:text-indigo-600 focus:text-indigo-600"
-                        >
-                            <option value="student">Change to Student</option>
-                            <option value="tutor">Change to Tutor</option>
-                            <option value="editor">Change to Editor</option>
-                            <option value="institute">Change to Institute</option>
-                            <option value="admin">Change to Admin</option>
-                        </select>
-                    </div>
+                     {getRoleBadge(user.role, user.is_featured)}
                  </td>
 
-                 {/* STATUS (FIXED LOGIC) */}
+                 {/* STATUS */}
                  <td className="px-6 py-4">
                      {user.status === 'suspended' ? (
                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-red-100 text-red-700 uppercase tracking-wide border border-red-200">
