@@ -10,6 +10,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
 export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser }: any) {
+  
   // --- 1. STATE & HOOKS ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
@@ -21,6 +22,19 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
   const [notes, setNotes] = useState(user?.admin_notes || "");
   const [isFeatured, setIsFeatured] = useState(user?.is_featured || false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- 1.5 SYNC STATE ON PROP CHANGE (THE FIX) ---
+  useEffect(() => {
+    if (user) {
+      // debug: check console to see if role arrives as 'undefined'
+      console.log("Syncing User Data:", user.full_name, "Role:", user.role, "Status:", user.status); 
+
+      setStatus(user.status || 'pending');
+      setRole(user.role || 'student');
+      setNotes(user.admin_notes || "");
+      setIsFeatured(user.is_featured || false);
+    }
+  }, [user]);
 
   // --- 2. FETCH ACTIVITY ---
   useEffect(() => {
@@ -86,7 +100,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
       if (slug.includes('university')) return "University Admission";
       if (slug.includes('mba')) return "IBA / MBA";
       if (slug.includes('job')) return "Job Preparation";
-      return slug.replace('/resources/', '').replace(/-/g, ' '); // Fallback cleaner
+      return slug.replace('/resources/', '').replace(/-/g, ' '); 
   };
 
 
@@ -100,12 +114,12 @@ const getRoleIcon = (r: string) => {
     }
   };
 
-  // --- ADD THIS BLOCK HERE ---
   const likesByType = likesData.reduce((acc: any, item: any) => {
     const type = item.resources?.type || 'Other';
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
+  
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
