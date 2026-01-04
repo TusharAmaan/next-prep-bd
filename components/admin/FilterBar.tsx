@@ -1,22 +1,34 @@
 import { Search, Filter } from "lucide-react";
 
 export default function FilterBar({ search, setSearch, roleFilter, setRoleFilter, activeTab }: any) {
+  
+  // Logic: If the tab is NOT 'invitations', it means we are viewing a list of users (Active, Pending, or Suspended)
+  const isUserView = activeTab !== 'invitations';
+
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <div className="relative flex-1">
-         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      
+      {/* Search Input */}
+      <div className="relative flex-1 group">
+         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+            <Search className="w-4 h-4" />
+         </div>
          <input 
-           className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-sm font-bold outline-none focus:border-indigo-500" 
-           placeholder={activeTab === 'users' ? "Search users..." : "Search invites..."} 
+           className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm" 
+           placeholder={isUserView ? "Search users by name or email..." : "Search invites by email..."} 
            value={search} 
            onChange={(e) => setSearch(e.target.value)} 
          />
       </div>
-      {activeTab === 'users' && (
+
+      {/* Role Filter - Show this for Active, Pending, and Suspended tabs */}
+      {isUserView && (
           <div className="relative min-w-[180px]">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                  <Filter className="w-3.5 h-3.5" />
+              </div>
               <select 
-                className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 outline-none focus:border-indigo-500 appearance-none cursor-pointer" 
+                className="w-full bg-white border border-slate-200 pl-9 pr-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 uppercase outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 appearance-none cursor-pointer shadow-sm transition-all" 
                 value={roleFilter} 
                 onChange={(e) => setRoleFilter(e.target.value)}
               >
