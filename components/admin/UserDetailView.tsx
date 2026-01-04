@@ -4,31 +4,33 @@ import {
   Building, Mail, GraduationCap, BookOpen, 
   Shield, User, CheckCircle2, MapPin, 
   Heart, ExternalLink, Loader2, 
-  Ban, AlertTriangle, FileText, Star, Briefcase, Link as LinkIcon, Calendar
+  Ban, AlertTriangle, FileText, Star, Briefcase, Calendar
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
-export default function UserDetailView({ user, onClose, onSendReset, onDeleteUser }: any) {
+// Update props to include the sync functions from UserManagement
+export default function UserDetailView({ 
+  user, onClose, onSendReset, onDeleteUser, 
+  onRoleUpdate, onApproveUser, onSuspendUser 
+}: any) {
   
   // --- 1. STATE & HOOKS ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
   
-  // Local Management State (Initialized from props)
+  // Local Management State
   const [status, setStatus] = useState(user?.status || 'pending');
   const [role, setRole] = useState(user?.role || 'student');
   const [notes, setNotes] = useState(user?.admin_notes || "");
   const [isFeatured, setIsFeatured] = useState(user?.is_featured || false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- 1.5 SYNC STATE ON PROP CHANGE (THE FIX) ---
+  // --- 1.5 SYNC STATE ON PROP CHANGE ---
+  // This ensures if the parent updates the user (e.g. via optimistic update), this view reflects it
   useEffect(() => {
     if (user) {
-      // debug: check console to see if role arrives as 'undefined'
-      console.log("Syncing User Data:", user.full_name, "Role:", user.role, "Status:", user.status); 
-
       setStatus(user.status || 'pending');
       setRole(user.role || 'student');
       setNotes(user.admin_notes || "");
@@ -55,31 +57,49 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
 
   if (!user) return null;
 
-  // --- 3. CORE ACTIONS ---
+  // --- 3. CORE ACTIONS (SYNCHRONIZED) ---
   
-  // Update Profile Fields (Role, Status, Featured)
   const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
     
-    // 1. Optimistic Update
+    // 1. Optimistic Update Local State
     if(field === 'status') setStatus(value);
     if(field === 'role') setRole(value);
     if(field === 'is_featured') setIsFeatured(value);
 
-    // 2. DB Update
-    const { error } = await supabase
-        .from('profiles')
-        .update({ [field]: value })
-        .eq('id', user.id);
-    
-    if (error) {
-        alert(`❌ SAVE FAILED: ${error.message}\n\nDid you run the SQL RLS policy?`);
-        // Revert State
+    try {
+        // 2. PARENT SYNC vs LOCAL DB UPDATE
+        if (field === 'role') {
+            // Call Parent to sync Table + DB
+            await onRoleUpdate(user.id, value);
+        } 
+        else if (field === 'status') {
+            // Call Parent based on status choice
+            if (value === 'active') await onApproveUser(user.id);
+            else if (value === 'suspended') await onSuspendUser(user.id);
+            else {
+                 // Fallback for 'pending' if no specific parent handler exists
+                 // This ensures the DB updates even if the parent doesn't have a 'make pending' prop
+                 await supabase.from('profiles').update({ status: 'pending' }).eq('id', user.id);
+            }
+        } 
+        else if (field === 'is_featured') {
+            // Featured status is local to this view/tutors, so we update DB directly here
+            const { error } = await supabase
+                .from('profiles')
+                .update({ is_featured: value })
+                .eq('id', user.id);
+            if (error) throw error;
+        }
+    } catch (error: any) {
+        alert(`❌ Update Failed: ${error.message}`);
+        // Revert State on Error
         if(field === 'status') setStatus(user.status);
         if(field === 'role') setRole(user.role);
         if(field === 'is_featured') setIsFeatured(user.is_featured);
+    } finally {
+        setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   // Save Notes (Debounced/Blur)
@@ -87,11 +107,11 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
       if (notes === user.admin_notes) return;
       setIsSaving(true);
       const { error } = await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
-      if (error) alert("Failed to save notes. Check permissions.");
+      if (error) alert("Failed to save notes.");
       setIsSaving(false);
   };
 
-  // --- 4. FORMATTERS ---
+  // --- 4. FORMATTERS & ICONS ---
   const formatGoal = (slug: string) => {
       if (!slug) return "Not Set";
       if (slug.includes('ssc')) return "SSC Preparation";
@@ -103,8 +123,7 @@ export default function UserDetailView({ user, onClose, onSendReset, onDeleteUse
       return slug.replace('/resources/', '').replace(/-/g, ' '); 
   };
 
-
-const getRoleIcon = (r: string) => {
+  const getRoleIcon = (r: string) => {
     switch (r) {
       case 'student': return <GraduationCap className="w-4 h-4"/>;
       case 'tutor': return <BookOpen className="w-4 h-4"/>;
@@ -156,7 +175,7 @@ const getRoleIcon = (r: string) => {
                         </p>
                       </div>
                       {/* SAVING INDICATOR */}
-                      {isSaving && <span className="text-xs font-bold text-indigo-600 flex items-center animate-pulse"><Loader2 className="w-3 h-3 mr-1 animate-spin"/> Saving...</span>}
+                      {isSaving && <span className="text-xs font-bold text-indigo-600 flex items-center animate-pulse"><Loader2 className="w-3 h-3 mr-1 animate-spin"/> Syncing...</span>}
                   </div>
                   
                   {/* === ADMIN ACTION BAR === */}
