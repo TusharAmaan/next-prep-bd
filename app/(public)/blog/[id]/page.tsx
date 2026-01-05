@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
-import PrintableBlogBody from "@/components/PrintableBlogBody"; // <--- Kept your component
+import PrintableBlogBody from "@/components/PrintableBlogBody"; 
 import FacebookComments from "@/components/FacebookComments"; 
+import BlogTOC from "@/components/BlogTOC"; // <--- New Left Sidebar
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
@@ -11,7 +12,6 @@ import { Noto_Serif_Bengali } from "next/font/google";
 
 export const dynamic = "force-dynamic";
 
-// --- 1. INITIALIZE FONT ---
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"], 
@@ -20,17 +20,11 @@ const bengaliFont = Noto_Serif_Bengali({
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const { data: post } = await supabase
-    .from('resources')
-    .select('title, seo_title, seo_description, content_url, tags')
-    .eq('id', id)
-    .single();
-
+  const { data: post } = await supabase.from('resources').select('title, seo_title, seo_description, content_url, tags').eq('id', id).single();
   if (!post) return { title: 'Post Not Found' };
-
   return {
     title: post.seo_title || post.title, 
-    description: post.seo_description || `Read about ${post.title} on NextPrepBD.`,
+    description: post.seo_description,
     keywords: post.tags,
     openGraph: {
       title: post.seo_title || post.title,
@@ -41,16 +35,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// --- MAIN PAGE COMPONENT ---
 export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-
-  // 1. CHECK USER SESSION
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-  const isLoggedIn = !!user; 
+  const isLoggedIn = !!user;
 
-  // 2. FETCH DATA
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
@@ -59,7 +49,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   if (!post || post.type !== 'blog') return notFound();
 
-  // 3. META FOR COMMENTS
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -67,12 +56,17 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
   return (
-    <div className={`min-h-screen bg-gray-50 font-sans pt-24 pb-20 ${bengaliFont.className}`}>
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+    <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 ${bengaliFont.className}`}>
+      {/* 3-COLUMN GRID LAYOUT */}
+      <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
         
-        {/* MAIN CONTENT */}
-        <div className="lg:col-span-8">
-            {/* We pass the data to your component, which now internally handles the TOC */}
+        {/* COL 1: LEFT TOC (2 Cols) - Hidden on mobile/laptop, visible on XL */}
+        <aside className="hidden xl:block xl:col-span-2 relative">
+            <BlogTOC content={post.content_body || ""} />
+        </aside>
+
+        {/* COL 2: MAIN CONTENT (7 Cols on XL, 8 Cols on LG) */}
+        <main className="xl:col-span-7 lg:col-span-8 col-span-1">
             <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
@@ -80,14 +74,18 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 isLoggedIn={isLoggedIn}
                 attachmentUrl={post.content_url} 
             />
-
             <div className="mt-12 comments-section print:hidden">
                 <FacebookComments url={absoluteUrl} />
             </div>
-        </div>
+            
+            {/* Mobile/Tablet TOC Bubble (Logic inside component handles visibility) */}
+            <div className="xl:hidden">
+                <BlogTOC content={post.content_body || ""} />
+            </div>
+        </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="lg:col-span-4 space-y-8 print:hidden">
+        {/* COL 3: RIGHT SIDEBAR (3 Cols on XL, 4 Cols on LG) */}
+        <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
             <Sidebar />
         </aside>
 
