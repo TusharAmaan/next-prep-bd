@@ -8,6 +8,8 @@ import {
   Lock, Download, Check
 } from "lucide-react";
 import LikeButton from "./LikeButton";
+import ArticleWithTOC from "@/components/ArticleWithTOC"; // <--- New Import
+
 interface PrintableBlogBodyProps {
   post: any;
   formattedDate: string;
@@ -48,7 +50,7 @@ export default function PrintableBlogBody({
                 {post.subjects?.groups?.segments?.title || "Post"}
             </span>
          </div>
-        {/* --- ADD LIKE BUTTON HERE --- */}
+        {/* --- LIKE BUTTON --- */}
         <div className="no-print">
             <LikeButton resourceId={post.id} />
         </div>
@@ -57,10 +59,10 @@ export default function PrintableBlogBody({
       {/* === PRINTABLE DOCUMENT AREA === */}
       <div 
         ref={contentRef} 
-        className="bg-white md:rounded-3xl shadow-sm border-y md:border border-slate-200 p-5 md:p-12 lg:px-16 relative print:shadow-none print:border-none print:p-0 print:block"
+        className={`bg-white md:rounded-3xl shadow-sm border-y md:border border-slate-200 p-5 md:p-12 lg:px-16 relative print:shadow-none print:border-none print:p-0 print:block ${bengaliFontClass}`}
       >
         
-        {/* PRINT HEADER */}
+        {/* PRINT HEADER (Visible only on print) */}
         <div className="hidden print:flex justify-between items-end border-b-2 border-black pb-4 mb-8">
             <div>
                 <h1 className="text-3xl font-black tracking-tighter text-black">
@@ -74,7 +76,7 @@ export default function PrintableBlogBody({
 
         {/* TITLE & META */}
         <div className="mb-8 md:mb-12 print:mb-6 border-b border-slate-100 pb-8 print:border-none">
-            <h1 className={`text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-6 leading-tight print:text-4xl print:text-black ${bengaliFontClass}`}>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-6 leading-tight print:text-4xl print:text-black">
                 {post.title}
             </h1>
 
@@ -91,7 +93,7 @@ export default function PrintableBlogBody({
             </div>
         </div>
 
-        {/* === 2. DOWNLOAD SECTION (ALWAYS VISIBLE NOW) === */}
+        {/* === 2. DOWNLOAD SECTION (ALWAYS VISIBLE ON WEB, HIDDEN ON PRINT) === */}
         <div className="mb-10 print:hidden animate-in fade-in slide-in-from-top-4 duration-500">
           {isLoggedIn ? (
               // --- OPTION A: LOGGED IN (GREEN BUTTON -> TRIGGERS PRINT) ---
@@ -155,20 +157,11 @@ export default function PrintableBlogBody({
           )}
         </div>
 
-        {/* MAIN CONTENT */}
-        <div 
-          className={`
-            blog-content 
-            text-base md:text-lg 
-            text-slate-800 
-            leading-7 md:leading-8 
-            print:text-base print:text-justify print:text-black print:leading-normal 
-            ${bengaliFontClass}
-          `} 
-          dangerouslySetInnerHTML={{ __html: post.content_body || "<p>No content available.</p>" }} 
-        />
+        {/* MAIN CONTENT WITH DYNAMIC TOC */}
+        {/* Pass the raw HTML content to our new component */}
+        <ArticleWithTOC content={post.content_body || "<p>No content available.</p>"} />
         
-        {/* FOOTER */}
+        {/* FOOTER (Visible only on print) */}
         <div className="hidden print:flex flex-row justify-center items-center text-gray-400 mt-12 pt-6 border-t border-gray-200">
             <p className="text-[10px] uppercase tracking-widest">
                   © {new Date().getFullYear()} NextPrepBD — Your Ultimate Exam Companion

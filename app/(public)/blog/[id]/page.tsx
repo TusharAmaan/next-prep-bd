@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/utils/supabase/server"; // Fixes Error 1
+import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
-import PrintableBlogBody from "@/components/PrintableBlogBody"; 
+import PrintableBlogBody from "@/components/PrintableBlogBody"; // <--- Kept your component
 import FacebookComments from "@/components/FacebookComments"; 
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
@@ -11,7 +11,7 @@ import { Noto_Serif_Bengali } from "next/font/google";
 
 export const dynamic = "force-dynamic";
 
-// --- 1. INITIALIZE FONT (Fixes Error 2: Ensure this is at top level) ---
+// --- 1. INITIALIZE FONT ---
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"], 
@@ -45,11 +45,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // 1. CHECK USER SESSION (SERVER SIDE)
-  // We use the server client we created in Step 1
+  // 1. CHECK USER SESSION
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-  const isLoggedIn = !!user; // Converts user object to true/false
+  const isLoggedIn = !!user; 
 
   // 2. FETCH DATA
   const { data: post } = await supabase
@@ -68,26 +67,27 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
+    <div className={`min-h-screen bg-gray-50 font-sans pt-24 pb-20 ${bengaliFont.className}`}>
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
         {/* MAIN CONTENT */}
         <div className="lg:col-span-8">
+            {/* We pass the data to your component, which now internally handles the TOC */}
             <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
                 bengaliFontClass={bengaliFont.className} 
-                isLoggedIn={isLoggedIn} /* Fixes Error 3 */
-                attachmentUrl={post.content_url} /* Pass attachment URL */
+                isLoggedIn={isLoggedIn}
+                attachmentUrl={post.content_url} 
             />
 
-            <div className="mt-12 comments-section">
+            <div className="mt-12 comments-section print:hidden">
                 <FacebookComments url={absoluteUrl} />
             </div>
         </div>
 
-        {/* SIDEBAR */}
-        <aside className="lg:col-span-4 space-y-8">
+        {/* RIGHT SIDEBAR */}
+        <aside className="lg:col-span-4 space-y-8 print:hidden">
             <Sidebar />
         </aside>
 
