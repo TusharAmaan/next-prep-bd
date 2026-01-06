@@ -61,7 +61,7 @@ export default function ContentEditor({
               {/* RICH TEXT EDITOR (Hidden for some simple types if needed, but usually always good) */}
               <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[400px]">
                   <Editor
-                      apiKey="YOUR_TINYMCE_API_KEY_HERE" // <--- ADD KEY HERE
+                      apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" // <--- ADD KEY HERE
                       value={content}
                       onEditorChange={(c) => { setContent(c); markDirty(); }}
                       init={{
