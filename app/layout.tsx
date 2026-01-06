@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from "next/script";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -120,6 +121,7 @@ export default function RootLayout({
 
         {/* 3. CORRECT COMPONENT PLACEMENT (Must be inside body) */}
         <SpeedInsights />
+        <ScrollToTop />
       </body>
       
       {/* Analytics can stay in html or body, usually fine here */}
