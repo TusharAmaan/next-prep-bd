@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
-  Bell, FileStack, Settings, LogOut, TrendingUp, HelpCircle 
+  Bell, FileStack, Settings, LogOut, TrendingUp, HelpCircle, X, Clock 
 } from "lucide-react";
 
 // --- IMPORTS ---
@@ -22,7 +22,7 @@ import ContentManager from "@/components/admin/sections/ContentManager";
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState("overview"); // Default to Overview
+    const [activeTab, setActiveTab] = useState("overview"); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -30,8 +30,9 @@ export default function AdminDashboard() {
     const [counts, setCounts] = useState({ materials: 0, questions: 0, ebooks: 0, users: 0, news: 0 });
     const [activities, setActivities] = useState<any[]>([]);
     const [latestUpdate, setLatestUpdate] = useState<any>(null);
+    const [showActivityModal, setShowActivityModal] = useState(false); // <--- NEW STATE FOR MODAL
 
-    // --- SHARED DATA STATES (For other tabs) ---
+    // --- SHARED DATA STATES ---
     const [segments, setSegments] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [subjects, setSubjects] = useState<any[]>([]);
@@ -43,7 +44,7 @@ export default function AdminDashboard() {
     const [selectedGroup, setSelectedGroup] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
 
-    // Modal Helpers (Simplified for brevity)
+    // Modal Helpers
     const [modal, setModal] = useState({ isOpen: false, type: '', message: '' });
     const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
     const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
@@ -53,7 +54,6 @@ export default function AdminDashboard() {
     const fetchDashboardData = useCallback(async () => {
         setIsLoading(true);
         
-        // Parallel Fetching for Speed
         const [
             materialsRes, 
             questionsRes, 
@@ -64,15 +64,16 @@ export default function AdminDashboard() {
             recentResources,
             sysUpdate
         ] = await Promise.all([
-            supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video']),
+            // FIX: Added 'blog' to the type list so your posts count properly
+            supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
             supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
-            supabase.from("ebooks").select('*', { count: 'exact', head: true }), // Separate table
+            supabase.from("ebooks").select('*', { count: 'exact', head: true }),
             supabase.from("profiles").select('*', { count: 'exact', head: true }),
             supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'news'),
             
             // Activity Feed Data
-            supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(3),
-            supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(4),
+            supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(5),
+            supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(5),
             
             // Latest Version Note
             supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single()
@@ -86,18 +87,17 @@ export default function AdminDashboard() {
             news: newsRes.count || 0,
         });
 
-        // Merge & Sort Activities
         const newUsers = (recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'joined the platform', created_at: u.created_at }));
         const newUploads = (recentResources.data || []).map(r => ({ type: 'resource', title: r.title, action: `added to ${r.type}`, created_at: r.created_at }));
         
-        const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6);
-        setActivities(combined);
+        const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setActivities(combined); // Store all activities, component handles slicing for preview
 
         setLatestUpdate(sysUpdate.data);
         setIsLoading(false);
     }, []);
 
-    // --- 2. FETCH MANAGEMENT DROPDOWNS ---
+    // --- 2. FETCH DROPDOWNS ---
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
         const { data: c } = await supabase.from("categories").select("*").order('name'); setCategories(c || []);
@@ -116,8 +116,8 @@ export default function AdminDashboard() {
             if (profile?.role !== 'admin') { router.replace("/"); return; }
             
             setCurrentUser(profile);
-            fetchDashboardData(); // Load dashboard first
-            fetchDropdowns();     // Load dropdowns in background
+            fetchDashboardData();
+            fetchDropdowns();
         };
         init();
     }, [router, fetchDashboardData, fetchDropdowns]);
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
     return (
         <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-16">
             
-            {/* SIDEBAR NAVIGATION */}
+            {/* SIDEBAR */}
             <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 flex flex-col pt-16 shadow-2xl">
                 <div className="px-6 py-4">
                     <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
@@ -175,58 +175,41 @@ export default function AdminDashboard() {
                                     <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
                                     <p className="text-slate-500 mt-1">Welcome back, {currentUser?.full_name}</p>
                                 </div>
-                                <div className="flex gap-3">
-                                    {/* Quick Actions if needed */}
-                                </div>
                             </div>
 
                             {/* 2. STATS ROW */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatsCard title="Total Materials" value={counts.materials} icon={<FileText className="w-6 h-6"/>} colorClass="bg-blue-500" trend="+12%" trendUp={true} />
-                                <StatsCard title="Total Questions" value={counts.questions} icon={<HelpCircle className="w-6 h-6"/>} colorClass="bg-amber-500" trend="+5%" trendUp={true} />
-                                <StatsCard title="Total eBooks" value={counts.ebooks} icon={<BookOpen className="w-6 h-6"/>} colorClass="bg-emerald-500" trend="+2" trendUp={true} />
-                                <StatsCard title="Total Users" value={counts.users} icon={<Users className="w-6 h-6"/>} colorClass="bg-indigo-500" trend="+8" trendUp={true} />
+                                <StatsCard title="Total Materials" value={counts.materials} icon={<FileText className="w-6 h-6"/>} colorClass="bg-blue-500" trend="Active" trendUp={true} />
+                                <StatsCard title="Total Questions" value={counts.questions} icon={<HelpCircle className="w-6 h-6"/>} colorClass="bg-amber-500" trend="Active" trendUp={true} />
+                                <StatsCard title="Total eBooks" value={counts.ebooks} icon={<BookOpen className="w-6 h-6"/>} colorClass="bg-emerald-500" trend="Active" trendUp={true} />
+                                <StatsCard title="Total Users" value={counts.users} icon={<Users className="w-6 h-6"/>} colorClass="bg-indigo-500" trend="Active" trendUp={true} />
                             </div>
 
-                            {/* 3. MIDDLE SECTION (Grid Layout) */}
+                            {/* 3. MIDDLE SECTION (FIXED: Grid Layout was duplicated, now single and clean) */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Left Column (2/3) */}
+                                {/* Left Column (2/3) - Quick Stats, Updates, Chart */}
                                 <div className="lg:col-span-2 space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <QuickStats />
                                         <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
                                     </div>
-{/* Middle Section (Charts & Updates) */}
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    {/* Left Column (2/3) */}
-    <div className="lg:col-span-2 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <QuickStats />
-            <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
-        </div>
-
-        {/* --- REPLACED PLACEHOLDER WITH REAL CHART --- */}
-        <div className="h-80">
-            <AnalyticsChart />
-        </div>
-    </div>
-
-    {/* Right Column (1/3) */}
-    <div className="lg:col-span-1">
-        <ActivityFeed activities={activities} />
-    </div>
-</div>
+                                    <div className="h-80">
+                                        <AnalyticsChart />
+                                    </div>
                                 </div>
 
-                                {/* Right Column (1/3) */}
+                                {/* Right Column (1/3) - Activity Feed */}
                                 <div className="lg:col-span-1">
-                                    <ActivityFeed activities={activities} />
+                                    <ActivityFeed 
+                                        activities={activities} 
+                                        onViewAll={() => setShowActivityModal(true)} // Opens the modal
+                                    />
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* --- VIEW: MANAGEMENT TABS (Reusing logic) --- */}
+                    {/* --- VIEW: MANAGEMENT TABS --- */}
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
                     
                     {activeTab === 'hierarchy' && (
@@ -242,13 +225,12 @@ export default function AdminDashboard() {
                         <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />
                     )}
 
-                    {/* Content Manager handles Materials, News, eBooks, Updates, Questions based on activeTab prop */}
                     {['materials', 'news', 'ebooks', 'courses', 'questions'].includes(activeTab) && (
                         <ContentManager 
-                            activeTab={activeTab === 'questions' ? 'question' : activeTab} // normalizing 'questions' tab to 'question' type if needed, or update ContentManager to handle it.
+                            activeTab={activeTab === 'questions' ? 'question' : activeTab}
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
-                            showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} // Simplified for brevity
+                            showSuccess={showSuccess} showError={showError} confirmAction={()=>{}}
                             openCategoryModal={() => setActiveTab('categories')}
                         />
                     )}
@@ -256,13 +238,43 @@ export default function AdminDashboard() {
                 </div>
             </main>
 
-            {/* GLOBAL MODAL */}
+            {/* GLOBAL SUCCESS/ERROR MODAL */}
             {modal.isOpen && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
                         <h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3>
                         <p className="text-slate-600 mb-6">{modal.message}</p>
                         <button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button>
+                    </div>
+                </div>
+            )}
+
+            {/* ACTIVITY FEED "VIEW ALL" MODAL (NEW) */}
+            {showActivityModal && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3>
+                            <button onClick={() => setShowActivityModal(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-colors">
+                                <X className="w-5 h-5"/>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                            {activities.map((item, i) => (
+                                <div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${item.type === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                        {item.type === 'user' ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-800">{item.title}</p>
+                                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                            {item.action} • <Clock className="w-3 h-3"/> {new Date(item.created_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            {activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}
+                        </div>
                     </div>
                 </div>
             )}
