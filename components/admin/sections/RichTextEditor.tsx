@@ -17,7 +17,6 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           onChange(newValue);
         }}
         init={{
-          height: 500,
           menubar: true, // Shows File, Edit, View, Insert...
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
