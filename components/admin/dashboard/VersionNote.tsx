@@ -76,7 +76,7 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
                     placeholder="Version (e.g., v2.1.0)"
                 />
                 <Editor
-                    apiKey="YOUR_TINYMCE_API_KEY_HERE" // <--- REMEMBER TO ADD YOUR KEY
+                    apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" // <--- REMEMBER TO ADD YOUR KEY
                     value={content}
                     onEditorChange={(newContent) => setContent(newContent)}
                     init={{
