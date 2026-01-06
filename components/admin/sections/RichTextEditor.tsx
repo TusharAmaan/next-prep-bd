@@ -30,7 +30,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             'removeformat | forecolor backcolor | code', 
           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; background-color: #ffffff; }',
           branding: false, // Hides the "Powered by TinyMCE"
-          resize: false, // Disables the resize handle (height is fixed)
+          resize: true, // Disables the resize handle (height is fixed)
           statusbar: true, // Shows the word count and path at bottom
         }}
       />
