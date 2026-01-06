@@ -1,36 +1,43 @@
-import { ArrowUpRight, ArrowDownRight, MoreHorizontal } from "lucide-react";
+"use client";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  trend?: string;
-  trendUp?: boolean;
+  trend: string;
+  trendUp: boolean;
   icon: React.ReactNode;
-  colorClass: string; // e.g., "bg-blue-500"
+  gradient: string; // New Prop for the color
 }
 
-export default function StatsCard({ title, value, trend, trendUp, icon, colorClass }: StatsCardProps) {
+export default function StatsCard({ title, value, trend, trendUp, icon, gradient }: StatsCardProps) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-xl text-white shadow-lg shadow-black/5 ${colorClass}`}>
+    <div className={`relative overflow-hidden rounded-2xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${gradient} group`}>
+      
+      {/* DECORATIVE BACKGROUND SHAPES */}
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white opacity-10 blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 rounded-full bg-black opacity-5 blur-xl"></div>
+
+      <div className="relative z-10 flex justify-between items-start">
+        <div className="flex flex-col">
+          <p className="text-xs font-bold uppercase tracking-wider text-white/80 mb-1">{title}</p>
+          <h3 className="text-3xl font-black text-white tracking-tight">{value}</h3>
+        </div>
+        
+        {/* ICON CONTAINER */}
+        <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl text-white shadow-inner border border-white/10">
           {icon}
         </div>
-        <button className="text-slate-300 hover:text-slate-600 transition-colors"><MoreHorizontal className="w-5 h-5" /></button>
       </div>
-      <div>
-        <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{title}</h3>
-        <h2 className="text-3xl font-black text-slate-800">{value}</h2>
-      </div>
-      {trend && (
-        <div className={`flex items-center gap-1 mt-3 text-xs font-bold ${trendUp ? 'text-emerald-600' : 'text-red-500'}`}>
+
+      {/* FOOTER TREND */}
+      <div className="relative z-10 mt-4 flex items-center gap-2">
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trendUp ? 'bg-white/20 text-white' : 'bg-red-500/20 text-white'}`}>
           {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-          <span>{trend}</span>
-          <span className="text-slate-400 font-medium ml-1">vs last month</span>
+          {trend}
         </div>
-      )}
-      {/* Decorative Blob */}
-      <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-10 transition-transform group-hover:scale-110 ${colorClass}`}></div>
+        <span className="text-[10px] font-medium text-white/60 uppercase">vs last month</span>
+      </div>
     </div>
   );
 }

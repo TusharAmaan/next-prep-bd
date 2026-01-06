@@ -196,11 +196,40 @@ export default function AdminDashboard() {
                                     <p className="text-slate-500 mt-1">Welcome back, {currentUser?.full_name}</p>
                                 </div>
                             </div>
+{/* 2. STATS ROW (Refined UI) */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatsCard title="Total Materials" value={stats.materials.total} icon={<FileText className="w-6 h-6"/>} colorClass="bg-blue-500" trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} trendUp={stats.materials.trend >= 0} />
-                                <StatsCard title="Total Questions" value={stats.questions.total} icon={<HelpCircle className="w-6 h-6"/>} colorClass="bg-amber-500" trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} trendUp={stats.questions.trend >= 0} />
-                                <StatsCard title="Total eBooks" value={stats.ebooks.total} icon={<BookOpen className="w-6 h-6"/>} colorClass="bg-emerald-500" trend={stats.ebooks.trend > 0 ? `+${stats.ebooks.trend}` : `${stats.ebooks.trend}`} trendUp={stats.ebooks.trend >= 0} />
-                                <StatsCard title="Total Users" value={stats.users.total} icon={<Users className="w-6 h-6"/>} colorClass="bg-indigo-500" trend={stats.users.trend > 0 ? `+${stats.users.trend}` : `${stats.users.trend}`} trendUp={stats.users.trend >= 0} />
+                                <StatsCard 
+                                    title="Total Materials" 
+                                    value={stats.materials.total} 
+                                    icon={<FileText className="w-6 h-6"/>} 
+                                    gradient="bg-gradient-to-br from-blue-600 to-blue-800"
+                                    trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} 
+                                    trendUp={stats.materials.trend >= 0} 
+                                />
+                                <StatsCard 
+                                    title="Total Questions" 
+                                    value={stats.questions.total} 
+                                    icon={<HelpCircle className="w-6 h-6"/>} 
+                                    gradient="bg-gradient-to-br from-amber-500 to-orange-600"
+                                    trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} 
+                                    trendUp={stats.questions.trend >= 0} 
+                                />
+                                <StatsCard 
+                                    title="Total eBooks" 
+                                    value={stats.ebooks.total} 
+                                    icon={<BookOpen className="w-6 h-6"/>} 
+                                    gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+                                    trend={stats.ebooks.trend > 0 ? `+${stats.ebooks.trend}` : `${stats.ebooks.trend}`} 
+                                    trendUp={stats.ebooks.trend >= 0} 
+                                />
+                                <StatsCard 
+                                    title="Total Users" 
+                                    value={stats.users.total} 
+                                    icon={<Users className="w-6 h-6"/>} 
+                                    gradient="bg-gradient-to-br from-violet-600 to-purple-700"
+                                    trend={stats.users.trend > 0 ? `+${stats.users.trend}` : `${stats.users.trend}`} 
+                                    trendUp={stats.users.trend >= 0} 
+                                />
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
