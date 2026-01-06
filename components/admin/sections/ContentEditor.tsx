@@ -1,34 +1,10 @@
 "use client";
-import { useState, memo } from "react";
-import dynamic from 'next/dynamic';
-import 'suneditor/dist/css/suneditor.min.css';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+
+import { useState } from "react";
+import RichTextEditor from "./RichTextEditor"; // <--- Now using TinyMCE
 import SeoInputSection from "../shared/SeoInputSection";
 import ImageInput from "../shared/ImageInput";
 import CategorySelector from "../shared/CategorySelector";
-
-// Load SunEditor dynamically to avoid SSR issues
-const SunEditor = dynamic(() => import("suneditor-react"), { ssr: false });
-
-const editorOptions: any = {
-    minHeight: "600px", height: "auto", placeholder: "Start content creation...",
-    buttonList: [
-        ['undo', 'redo'], ['save', 'template'], ['font', 'fontSize', 'formatBlock'],
-        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'],
-        ['fontColor', 'hiliteColor', 'textStyle'], ['outdent', 'indent'],
-        ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video', 'math'],
-        ['fullScreen', 'showBlocks', 'codeView', 'preview']
-    ],
-    mode: "classic", attributesWhitelist: { all: "style" },
-    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #334155;",
-    resizingBar: true, showPathLabel: true, katex: katex
-};
-
-const MemoizedSunEditor = memo(({ content, onChange }: { content: string, onChange: (c: string) => void }) => {
-    return <SunEditor setContents={content} onChange={onChange} setOptions={editorOptions} />;
-});
-MemoizedSunEditor.displayName = "MemoizedSunEditor";
 
 export default function ContentEditor({
     activeTab,
@@ -42,6 +18,15 @@ export default function ContentEditor({
     groups, selectedGroup, handleGroupClick,
     subjects, selectedSubject, handleSubjectClick
 }: any) {
+
+    // Helper: Fields that need the Rich Editor
+    const needsRichEditor = ['blog', 'question', 'ebook', 'course', 'update', 'news'].includes(
+        activeTab === 'materials' ? type : 
+        (activeTab === 'updates' ? 'update' : 
+        (activeTab === 'courses' ? 'course' : 
+        (activeTab === 'ebooks' ? 'ebook' : 
+        (activeTab === 'news' ? 'news' : ''))))
+    );
 
     return (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden animate-slide-up">
@@ -60,9 +45,12 @@ export default function ContentEditor({
                     <div className="w-full lg:w-[75%] space-y-8">
                         <input className="text-5xl font-black w-full bg-transparent border-b-2 border-gray-100 pb-6 outline-none placeholder-gray-300 text-slate-800 focus:border-indigo-500 transition-colors" placeholder="Type your title here..." value={title} onChange={e => { setTitle(e.target.value); markDirty(); }} />
 
-                        {/* Conditional Editors */}
-                        {['blog', 'question', 'ebook', 'course', 'update', 'news'].includes(activeTab === 'materials' ? type : (activeTab === 'updates' ? 'update' : (activeTab === 'courses' ? 'course' : (activeTab === 'ebooks' ? 'ebook' : (activeTab === 'news' ? 'news' : ''))))) && (
-                            <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm"><MemoizedSunEditor content={content} onChange={(c: string) => { setContent(c); markDirty(); }} /></div>
+                        {/* TINYMCE EDITOR REPLACES SUNEDITOR HERE */}
+                        {needsRichEditor && (
+                            <RichTextEditor 
+                                content={content} 
+                                onChange={(c: string) => { setContent(c); markDirty(); }} 
+                            />
                         )}
 
                         {/* File Inputs for PDF/Video */}
@@ -94,11 +82,11 @@ export default function ContentEditor({
                             {/* Hierarchy */}
                             {['materials', 'updates', 'courses'].includes(activeTab) && (
                                 <div className="space-y-4">
-                                    <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Hierarchy</label><select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}><option value="">Select Segment</option>{segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                    <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Hierarchy</label><select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}><option value="">Select Segment</option>{segments.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                                         {activeTab !== 'updates' && (
                                             <>
-                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }} disabled={!selectedSegment}><option value="">Select Group</option>{groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }} disabled={!selectedGroup}><option value="">Select Subject</option>{subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }} disabled={!selectedSegment}><option value="">Select Group</option>{groups.map((g: any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }} disabled={!selectedGroup}><option value="">Select Subject</option>{subjects.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                                             </>
                                         )}
                                     </div>
