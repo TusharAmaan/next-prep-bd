@@ -3,7 +3,11 @@ export const slugify = (text: string) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+    // Replace spaces with -
+    .replace(/\s+/g, '-')
+    // Remove characters that are NOT letters, numbers, or dashes
+    // The previous regex [^\w\-] removed Bengali. We removed that restriction.
+    .replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '') 
+    // Replace multiple - with single -
+    .replace(/\-\-+/g, '-');
 };
