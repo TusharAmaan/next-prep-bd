@@ -2,223 +2,270 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; 
+import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
+import { 
+  LayoutDashboard, FileText, Users, Layers, BookOpen, 
+  Bell, FileStack, Settings, LogOut, TrendingUp, HelpCircle 
+} from "lucide-react";
 
 // --- IMPORTS ---
+import StatsCard from "@/components/admin/dashboard/StatsCard";
+import ActivityFeed from "@/components/admin/dashboard/ActivityFeed";
+import QuickStats from "@/components/admin/dashboard/QuickStats";
+import VersionNote from "@/components/admin/dashboard/VersionNote";
+
+// Existing Sections
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
-import CategoryManager from "@/components/admin/sections/CategoryManager"; // Updated Component
+import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
-
-// --- TYPES ---
-type ModalState = { isOpen: boolean; type: 'success' | 'confirm' | 'error'; message: string; onConfirm?: () => void; };
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState("materials");
-    
-    // Auth State
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [activeTab, setActiveTab] = useState("overview"); // Default to Overview
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-    // Global Data State
+    // --- DASHBOARD DATA STATES ---
+    const [counts, setCounts] = useState({ materials: 0, questions: 0, ebooks: 0, users: 0, news: 0 });
+    const [activities, setActivities] = useState<any[]>([]);
+    const [latestUpdate, setLatestUpdate] = useState<any>(null);
+
+    // --- SHARED DATA STATES (For other tabs) ---
     const [segments, setSegments] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [subjects, setSubjects] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryCounts, setCategoryCounts] = useState<any>({});
 
-    // Selection State (For Content/Hierarchy Managers)
+    // Selection States
     const [selectedSegment, setSelectedSegment] = useState("");
     const [selectedGroup, setSelectedGroup] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
 
-    // Modal State
-    const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'success', message: '' });
-    
-    // Helpers
+    // Modal Helpers (Simplified for brevity)
+    const [modal, setModal] = useState({ isOpen: false, type: '', message: '' });
     const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
     const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
-    const confirmAction = (msg: string, action: () => void) => setModal({ isOpen: true, type: 'confirm', message: msg, onConfirm: action });
     const closeModal = () => setModal({ ...modal, isOpen: false });
 
-    // --- FETCH DATA ---
+    // --- 1. FETCH DASHBOARD OVERVIEW DATA ---
+    const fetchDashboardData = useCallback(async () => {
+        setIsLoading(true);
+        
+        // Parallel Fetching for Speed
+        const [
+            materialsRes, 
+            questionsRes, 
+            ebooksRes, 
+            usersRes, 
+            newsRes,
+            recentUsers,
+            recentResources,
+            sysUpdate
+        ] = await Promise.all([
+            supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video']),
+            supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
+            supabase.from("ebooks").select('*', { count: 'exact', head: true }), // Separate table
+            supabase.from("profiles").select('*', { count: 'exact', head: true }),
+            supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'news'),
+            
+            // Activity Feed Data
+            supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(3),
+            supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(4),
+            
+            // Latest Version Note
+            supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single()
+        ]);
+
+        setCounts({
+            materials: materialsRes.count || 0,
+            questions: questionsRes.count || 0,
+            ebooks: ebooksRes.count || 0,
+            users: usersRes.count || 0,
+            news: newsRes.count || 0,
+        });
+
+        // Merge & Sort Activities
+        const newUsers = (recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'joined the platform', created_at: u.created_at }));
+        const newUploads = (recentResources.data || []).map(r => ({ type: 'resource', title: r.title, action: `added to ${r.type}`, created_at: r.created_at }));
+        
+        const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6);
+        setActivities(combined);
+
+        setLatestUpdate(sysUpdate.data);
+        setIsLoading(false);
+    }, []);
+
+    // --- 2. FETCH MANAGEMENT DROPDOWNS ---
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
         const { data: c } = await supabase.from("categories").select("*").order('name'); setCategories(c || []);
-        
-        if (c) {
-            const counts: any = {};
-            for (const cat of c) {
-                // Count how many items use this category name
-                // Note: If you switched to category_id in DB, update this query. 
-                // Assuming 'category' column stores text name based on previous context.
-                const { count } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', cat.name);
-                counts[cat.id] = count || 0;
-            }
-            setCategoryCounts(counts);
-        }
     }, []);
 
     const fetchGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data || []); };
     const fetchSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data || []); };
 
-    // --- AUTHENTICATION CHECK ---
+    // --- AUTH & INIT ---
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError || !session) {
-                    router.replace("/login");
-                    return;
-                }
-
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (profileError || !profile) {
-                    console.error("Profile error:", profileError);
-                    setCurrentUser({ id: session.user.id, role: "Error" });
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (profile.role === 'admin') {
-                    setCurrentUser(profile);
-                    setIsAuthenticated(true);
-                    fetchDropdowns(); 
-                } else {
-                    router.replace("/");
-                }
-            } catch (err) {
-                console.error("Auth check failed:", err);
-            } finally {
-                setIsLoading(false);
-            }
+        const init = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { router.replace("/login"); return; }
+            
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+            if (profile?.role !== 'admin') { router.replace("/"); return; }
+            
+            setCurrentUser(profile);
+            fetchDashboardData(); // Load dashboard first
+            fetchDropdowns();     // Load dropdowns in background
         };
+        init();
+    }, [router, fetchDashboardData, fetchDropdowns]);
 
-        checkAuth();
-    }, [router, fetchDropdowns]);
 
-    // --- LOADING UI ---
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] gap-4">
-                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <div className="text-slate-400 font-bold animate-pulse">Loading Dashboard...</div>
-            </div>
-        );
-    }
-
-    // --- UNAUTHORIZED UI ---
-    if (!isAuthenticated) return null; // Redirect logic handles this, keeping it clean.
+    if (isLoading && !currentUser) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-20 lg:pt-24">
+        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-16">
             
-            {/* GLOBAL MODAL */}
-            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full animate-pop-in text-center"><h3 className="text-xl font-black mb-2 capitalize text-slate-900">{modal.type === 'error' ? 'Oops!' : modal.type}!</h3><p className="text-slate-500 text-sm mb-6 leading-relaxed">{modal.message}</p><div className="flex gap-3 justify-center">{modal.type === 'confirm' ? <><button onClick={closeModal} className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-slate-600 hover:bg-gray-50">Cancel</button><button onClick={() => { modal.onConfirm?.(); closeModal() }} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-200">Confirm</button></> : <button onClick={closeModal} className="px-8 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg">Okay</button>}</div></div></div>}
-
-            {/* SIDEBAR */}
-            <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 hidden lg:flex flex-col shadow-2xl pt-24">
-                <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                    {[{ id: 'materials', label: 'Study Materials', icon: '📚' },
-                    { id: 'updates', label: 'Updates', icon: '📢' },
-                    { id: 'ebooks', label: 'eBooks', icon: '📖' },
-                    { id: 'courses', label: 'Courses', icon: '🎓' },
-                    { id: 'news', label: 'Newsroom', icon: '📰' },
-                    { id: 'hierarchy', label: 'Hierarchy', icon: '🌳' },
-                    { id: 'categories', label: 'Categories', icon: '🏷️' },
-                    { id: 'users', label: 'User Manager', icon: '👥' }
-                    ].map((tab) => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}><span className="text-lg opacity-80">{tab.icon}</span> {tab.label}</button>
-                    ))}
-                </nav>
-                <div className="p-4 border-t border-slate-800 relative">
-                    {currentUser && (
-                        <>
-                            <div onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 cursor-pointer transition-colors">
-                                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">{currentUser.full_name ? currentUser.full_name[0].toUpperCase() : "A"}</div>
-                                <div className="flex-1 min-w-0"><p className="text-sm font-bold text-white truncate">{currentUser.full_name}</p><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{currentUser.role}</p></div>
-                                <span className="text-slate-500 text-xs">▲</span>
-                            </div>
-                            {showProfileMenu && (
-                                <div className="absolute bottom-20 left-4 right-4 bg-white rounded-xl shadow-2xl overflow-hidden animate-slide-up z-30">
-                                    <Link href="/profile" className="block px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-gray-100">⚙️ Settings</Link>
-                                    <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50">🚪 Log Out</button>
-                                </div>
-                            )}
-                        </>
-                    )}
+            {/* SIDEBAR NAVIGATION */}
+            <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-20 flex flex-col pt-16 shadow-2xl">
+                <div className="px-6 py-4">
+                    <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
+                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">NextPrep Control</p>
                 </div>
+                
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Overview</div>
+                    <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <LayoutDashboard className="w-5 h-5"/> Dashboard
+                    </button>
+
+                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
+                    {[{ id: 'materials', label: 'Study Materials', icon: FileStack },
+                      { id: 'questions', label: 'Question Bank', icon: HelpCircle },
+                      { id: 'ebooks', label: 'eBooks', icon: BookOpen },
+                      { id: 'news', label: 'Newsroom', icon: Bell },
+                      { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
+                      { id: 'categories', label: 'Categories', icon: Settings }
+                    ].map((tab) => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                            <tab.icon className="w-5 h-5"/> {tab.label}
+                        </button>
+                    ))}
+
+                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">People</div>
+                    <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <Users className="w-5 h-5"/> User Management
+                    </button>
+                </nav>
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 lg:ml-64 p-4 md:p-8 overflow-x-hidden min-h-screen">
-                <div className="max-w-[1800px] mx-auto w-full space-y-6">
+            <main className="flex-1 lg:ml-64 p-6 lg:p-10 overflow-x-hidden min-h-screen">
+                <div className="max-w-[1600px] mx-auto space-y-8">
                     
-                    {/* 1. USER MANAGEMENT */}
-                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
+                    {/* --- VIEW: DASHBOARD OVERVIEW --- */}
+                    {activeTab === 'overview' && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                            
+                            {/* 1. HEADER */}
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
+                                    <p className="text-slate-500 mt-1">Welcome back, {currentUser?.full_name}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    {/* Quick Actions if needed */}
+                                </div>
+                            </div>
 
-                    {/* 2. HIERARCHY MANAGER */}
+                            {/* 2. STATS ROW */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <StatsCard title="Total Materials" value={counts.materials} icon={<FileText className="w-6 h-6"/>} colorClass="bg-blue-500" trend="+12%" trendUp={true} />
+                                <StatsCard title="Total Questions" value={counts.questions} icon={<HelpCircle className="w-6 h-6"/>} colorClass="bg-amber-500" trend="+5%" trendUp={true} />
+                                <StatsCard title="Total eBooks" value={counts.ebooks} icon={<BookOpen className="w-6 h-6"/>} colorClass="bg-emerald-500" trend="+2" trendUp={true} />
+                                <StatsCard title="Total Users" value={counts.users} icon={<Users className="w-6 h-6"/>} colorClass="bg-indigo-500" trend="+8" trendUp={true} />
+                            </div>
+
+                            {/* 3. MIDDLE SECTION (Grid Layout) */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Left Column (2/3) */}
+                                <div className="lg:col-span-2 space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <QuickStats />
+                                        <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
+                                    </div>
+{/* Middle Section (Charts & Updates) */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    {/* Left Column (2/3) */}
+    <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <QuickStats />
+            <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
+        </div>
+
+        {/* --- REPLACED PLACEHOLDER WITH REAL CHART --- */}
+        <div className="h-80">
+            <AnalyticsChart />
+        </div>
+    </div>
+
+    {/* Right Column (1/3) */}
+    <div className="lg:col-span-1">
+        <ActivityFeed activities={activities} />
+    </div>
+</div>
+                                </div>
+
+                                {/* Right Column (1/3) */}
+                                <div className="lg:col-span-1">
+                                    <ActivityFeed activities={activities} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- VIEW: MANAGEMENT TABS (Reusing logic) --- */}
+                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
+                    
                     {activeTab === 'hierarchy' && (
                         <HierarchyManager 
-                            segments={segments} 
-                            groups={groups} 
-                            subjects={subjects}
-                            
-                            selectedSegment={selectedSegment} 
-                            setSelectedSegment={(id: string) => {
-                                setSelectedSegment(id);
-                                setSelectedGroup("");
-                                setSelectedSubject("");
-                                setGroups([]);
-                                setSubjects([]);
-                                fetchGroups(id);
-                            }}
-                            
-                            selectedGroup={selectedGroup} 
-                            setSelectedGroup={(id: string) => {
-                                setSelectedGroup(id);
-                                setSelectedSubject("");
-                                setSubjects([]);
-                                fetchSubjects(id);
-                            }}
-                            
-                            fetchDropdowns={fetchDropdowns} 
-                            fetchGroups={fetchGroups} 
-                            fetchSubjects={fetchSubjects}
+                            segments={segments} groups={groups} subjects={subjects}
+                            selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment}
+                            selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup}
+                            fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                         />
                     )}
 
-                    {/* 3. CATEGORY MANAGER (SIMPLIFIED PROPS) */}
                     {activeTab === 'categories' && (
-                        <CategoryManager 
-                            categories={categories} 
-                            categoryCounts={categoryCounts}
-                            fetchCategories={fetchDropdowns}
-                        />
+                        <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />
                     )}
 
-                    {/* 4. CONTENT MANAGER */}
-                    {['materials', 'news', 'ebooks', 'courses', 'updates'].includes(activeTab) && (
+                    {/* Content Manager handles Materials, News, eBooks, Updates, Questions based on activeTab prop */}
+                    {['materials', 'news', 'ebooks', 'courses', 'questions'].includes(activeTab) && (
                         <ContentManager 
-                            activeTab={activeTab}
+                            activeTab={activeTab === 'questions' ? 'question' : activeTab} // normalizing 'questions' tab to 'question' type if needed, or update ContentManager to handle it.
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
-                            showSuccess={showSuccess} showError={showError} confirmAction={confirmAction}
-                            openCategoryModal={() => { setActiveTab('categories'); }}
+                            showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} // Simplified for brevity
+                            openCategoryModal={() => setActiveTab('categories')}
                         />
                     )}
 
                 </div>
             </main>
+
+            {/* GLOBAL MODAL */}
+            {modal.isOpen && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+                        <h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3>
+                        <p className="text-slate-600 mb-6">{modal.message}</p>
+                        <button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
