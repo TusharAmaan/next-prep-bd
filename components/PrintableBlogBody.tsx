@@ -75,33 +75,9 @@ export default function PrintableBlogBody({
                     NextPrep<span className="text-blue-600">BD</span>
                 </h1>
             </div>
-            <div className="text-right">
-                <p className="text-xs text-gray-500">www.nextprepbd.com</p>
-                <p className="text-[10px] text-gray-400">Printed on {new Date().toLocaleDateString()}</p>
-            </div>
         </div>
 
         {/* === POST HEADER (Title & Meta) === */}
-        {/* We hide the title in print if you prefer the H1 inside the body content to be the only title. 
-            However, usually, the main title stays and H1s in body become H2s. 
-            I will keep it visible but optimized. */}
-        <div className="mb-8 md:mb-10 border-b border-slate-100 pb-8 print:border-none print:mb-4">
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-6 leading-tight print:text-3xl print:text-black print:mb-2">
-                {post.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500 print:text-xs print:text-gray-600">
-                <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-500 print:text-black" />
-                    <span>{formattedDate}</span>
-                </div>
-                <span className="hidden sm:inline text-slate-300 print:hidden">|</span>
-                <div className="flex items-center gap-2 print:hidden">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span>{readTime} min read</span>
-                </div>
-            </div>
-        </div>
 
         {/* === DOWNLOAD SECTION (Hidden on Print) === */}
         <div className="mb-10 print:hidden">
