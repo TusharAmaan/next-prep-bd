@@ -5,27 +5,27 @@ import { useRouter } from "next/navigation";
 import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
-  Bell, FileStack, Settings, HelpCircle, X, Clock 
+  Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare 
 } from "lucide-react";
 
-// --- IMPORTS ---
+// --- DASHBOARD COMPONENTS ---
 import StatsCard from "@/components/admin/dashboard/StatsCard";
 import ActivityFeed from "@/components/admin/dashboard/ActivityFeed";
 import QuickStats from "@/components/admin/dashboard/QuickStats";
 import VersionNote from "@/components/admin/dashboard/VersionNote";
 
-// Existing Sections
+// --- SECTION COMPONENTS ---
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
+import FeedbackManager from "@/components/admin/sections/FeedbackManager"; // New Component
 
 // --- HELPER: Get Date Ranges for Trends ---
 const getMonthRanges = () => {
     const now = new Date();
     const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-    return { startThisMonth, startLastMonth };
+    return { startThisMonth };
 };
 
 export default function AdminDashboard() {
@@ -66,59 +66,60 @@ export default function AdminDashboard() {
     // --- 1. FETCH DASHBOARD OVERVIEW DATA ---
     const fetchDashboardData = useCallback(async () => {
         setIsLoading(true);
-        const { startThisMonth, startLastMonth } = getMonthRanges();
+        const { startThisMonth } = getMonthRanges();
         
-        // Parallel Fetching
-        const [
-            // Totals
-            matTotal, quesTotal, ebookTotal, userTotal,
-            // Last Month Counts (To calculate trend)
-            matLast, quesLast, ebookLast, userLast,
-            // Feeds
-            recentUsers, recentResources, sysUpdate
-        ] = await Promise.all([
-            // 1. TOTALS
-            supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
-            supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
-            supabase.from("ebooks").select('*', { count: 'exact', head: true }),
-            supabase.from("profiles").select('*', { count: 'exact', head: true }),
+        try {
+            // Parallel Fetching
+            const [
+                // Totals (Current)
+                matTotal, quesTotal, ebookTotal, userTotal,
+                // Last Month Snapshot (Created BEFORE this month started)
+                matLast, quesLast, ebookLast, userLast,
+                // Feeds
+                recentUsers, recentResources, sysUpdate
+            ] = await Promise.all([
+                // 1. TOTALS
+                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
+                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
+                supabase.from("ebooks").select('*', { count: 'exact', head: true }),
+                supabase.from("profiles").select('*', { count: 'exact', head: true }),
 
-            // 2. PREVIOUS MONTH SNAPSHOT (Count items created BEFORE this month started)
-            supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).lt('created_at', startThisMonth),
-            supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question').lt('created_at', startThisMonth),
-            supabase.from("ebooks").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
-            supabase.from("profiles").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
+                // 2. PREVIOUS TOTALS (Everything created before 1st of this month)
+                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).lt('created_at', startThisMonth),
+                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question').lt('created_at', startThisMonth),
+                supabase.from("ebooks").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
+                supabase.from("profiles").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
+                
+                // 3. FEEDS
+                supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(5),
+                supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(5),
+                supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single()
+            ]);
+
+            // Helper to calc trend (Total Now - Total Before This Month = Added This Month)
+            const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
+
+            setStats({
+                materials: { total: matTotal.count || 0, trend: calcTrend(matTotal.count || 0, matLast.count || 0) },
+                questions: { total: quesTotal.count || 0, trend: calcTrend(quesTotal.count || 0, quesLast.count || 0) },
+                ebooks: { total: ebookTotal.count || 0, trend: calcTrend(ebookTotal.count || 0, ebookLast.count || 0) },
+                users: { total: userTotal.count || 0, trend: calcTrend(userTotal.count || 0, userLast.count || 0) },
+            });
+
+            const newUsers = (recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'joined the platform', created_at: u.created_at }));
+            const newUploads = (recentResources.data || []).map(r => ({ type: 'resource', title: r.title, action: `added to ${r.type}`, created_at: r.created_at }));
             
-            // 3. FEEDS
-            supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(5),
-            supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(5),
-            supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single()
-        ]);
+            const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            setActivities(combined);
 
-        // Helper to calc trend
-        const calcTrend = (total: number, prevTotal: number) => {
-            const addedThisMonth = total - prevTotal;
-            return addedThisMonth; // Returns raw number added this month (e.g., +5)
-        };
-
-        setStats({
-            materials: { total: matTotal.count || 0, trend: calcTrend(matTotal.count || 0, matLast.count || 0) },
-            questions: { total: quesTotal.count || 0, trend: calcTrend(quesTotal.count || 0, quesLast.count || 0) },
-            ebooks: { total: ebookTotal.count || 0, trend: calcTrend(ebookTotal.count || 0, ebookLast.count || 0) },
-            users: { total: userTotal.count || 0, trend: calcTrend(userTotal.count || 0, userLast.count || 0) },
-        });
-
-        const newUsers = (recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'joined the platform', created_at: u.created_at }));
-        const newUploads = (recentResources.data || []).map(r => ({ type: 'resource', title: r.title, action: `added to ${r.type}`, created_at: r.created_at }));
-        
-        const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setActivities(combined);
-
-        setLatestUpdate(sysUpdate.data);
-        setIsLoading(false);
+            setLatestUpdate(sysUpdate.data);
+        } catch (error) {
+            console.error("Dashboard fetch error:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
-    // ... (Keep existing fetchDropdowns, fetchGroups, fetchSubjects logic same as before) ...
     // --- 2. FETCH DROPDOWNS ---
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
@@ -148,9 +149,9 @@ export default function AdminDashboard() {
     if (isLoading && !currentUser) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32"> {/* <--- FIX 1: Increased padding top */}
+        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32"> {/* Increased Padding Top */}
             
-            {/* SIDEBAR (Added z-index and background to stay above content if needed) */}
+            {/* SIDEBAR */}
             <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl">
                 <div className="px-6 py-4 mb-4">
                     <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
@@ -158,12 +159,13 @@ export default function AdminDashboard() {
                 </div>
                 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+                    {/* OVERVIEW */}
                     <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
-                    {/* ... (Rest of sidebar nav same as before) ... */}
-                    {/* ... keeping the sidebar concise for this snippet ... */}
-                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
+
+                    {/* CONTENT */}
+                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
                     {[{ id: 'materials', label: 'Study Materials', icon: FileStack },
                       { id: 'questions', label: 'Question Bank', icon: HelpCircle },
                       { id: 'ebooks', label: 'eBooks', icon: BookOpen },
@@ -175,17 +177,26 @@ export default function AdminDashboard() {
                             <tab.icon className="w-5 h-5"/> {tab.label}
                         </button>
                     ))}
+
+                    {/* PEOPLE */}
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">People</div>
                     <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <Users className="w-5 h-5"/> User Management
                     </button>
+
+                    {/* NEW SECTION: SUPPORT */}
+                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Support</div>
+                    <button onClick={() => setActiveTab('feedbacks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'feedbacks' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <MessageSquare className="w-5 h-5"/> Feedbacks
+                    </button>
                 </nav>
             </aside>
 
-            {/* MAIN CONTENT */}
+            {/* MAIN CONTENT AREA */}
             <main className="flex-1 lg:ml-64 p-6 lg:p-10 overflow-x-hidden min-h-screen">
                 <div className="max-w-[1600px] mx-auto space-y-8">
                     
+                    {/* DASHBOARD OVERVIEW */}
                     {activeTab === 'overview' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                             
@@ -196,7 +207,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            {/* 2. STATS ROW (With Real Trends) */}
+                            {/* STATS ROW (With Real Trends) */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <StatsCard title="Total Materials" value={stats.materials.total} icon={<FileText className="w-6 h-6"/>} colorClass="bg-blue-500" trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} trendUp={stats.materials.trend >= 0} />
                                 <StatsCard title="Total Questions" value={stats.questions.total} icon={<HelpCircle className="w-6 h-6"/>} colorClass="bg-amber-500" trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} trendUp={stats.questions.trend >= 0} />
@@ -219,18 +230,70 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
-                    {/* ... (Management Tabs - kept same) ... */}
+                    {/* --- TABS --- */}
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
                     {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} />}
                     {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />}
-                    {['materials', 'news', 'ebooks', 'courses', 'questions'].includes(activeTab) && <ContentManager activeTab={activeTab === 'questions' ? 'question' : activeTab} segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={() => setActiveTab('categories')} />}
+                    
+                    {/* CONTENT MANAGER */}
+                    {['materials', 'news', 'ebooks', 'courses', 'questions'].includes(activeTab) && (
+                        <ContentManager 
+                            activeTab={activeTab === 'questions' ? 'question' : activeTab}
+                            segments={segments} groups={groups} subjects={subjects} categories={categories}
+                            fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
+                            showSuccess={showSuccess} showError={showError} confirmAction={()=>{}}
+                            openCategoryModal={() => setActiveTab('categories')}
+                        />
+                    )}
+
+                    {/* NEW TAB: FEEDBACKS */}
+                    {activeTab === 'feedbacks' && (
+                        <FeedbackManager />
+                    )}
+
                 </div>
             </main>
 
-            {/* ... (Modals kept same) ... */}
-            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className="text-slate-600 mb-6">{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button></div></div>}
-            
-            {showActivityModal && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"><div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"><div className="p-6 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3><button onClick={() => setShowActivityModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-red-500"/></button></div><div className="p-6 overflow-y-auto custom-scrollbar space-y-4">{activities.map((item, i) => (<div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${item.type === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>{item.type === 'user' ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}</div><div><p className="text-sm font-bold text-slate-800">{item.title}</p><p className="text-xs text-slate-500 mt-1 flex items-center gap-1">{item.action} • <Clock className="w-3 h-3"/> {new Date(item.created_at).toLocaleDateString()}</p></div></div>))}{activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}</div></div></div>}
+            {/* GLOBAL SUCCESS/ERROR MODAL */}
+            {modal.isOpen && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+                        <h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3>
+                        <p className="text-slate-600 mb-6">{modal.message}</p>
+                        <button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button>
+                    </div>
+                </div>
+            )}
+
+            {/* ACTIVITY FEED "VIEW ALL" MODAL */}
+            {showActivityModal && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3>
+                            <button onClick={() => setShowActivityModal(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-colors">
+                                <X className="w-5 h-5"/>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                            {activities.map((item, i) => (
+                                <div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${item.type === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                        {item.type === 'user' ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-800">{item.title}</p>
+                                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                            {item.action} • <Clock className="w-3 h-3"/> {new Date(item.created_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            {activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
