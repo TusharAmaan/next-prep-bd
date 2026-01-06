@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import ListHeader from "../shared/ListHeader";
 import ContentFilterBar from "../shared/ContentFilterBar";
 import ContentEditor from "./ContentEditor";
-import PostLikersModal from "@/components/PostLikersModal"; // <--- 1. IMPORT MODAL
+import PostLikersModal from "@/components/PostLikersModal";
 
 // Helper for sortable headers
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
@@ -66,18 +66,21 @@ export default function ContentManager({
     const [seoDesc, setSeoDesc] = useState("");
     const [tags, setTags] = useState("");
 
-    // Use these for the EDITOR selection (separate from filters)
+    // EDITOR HIERARCHY STATE
     const [editSeg, setEditSeg] = useState("");
     const [editGrp, setEditGrp] = useState("");
     const [editSub, setEditSub] = useState("");
     
-    // This state was already here, now we will use it!
+    // MODAL STATE
     const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
     
     const markDirty = () => setIsDirty(true);
 
     const resetForms = () => {
-        setEditingId(null); setTitle(""); setContent(""); setLink(""); setType(activeTab === 'updates' ? 'routine' : 'pdf'); setCategory("");
+        setEditingId(null); setTitle(""); setContent(""); setLink(""); 
+        // Set default type based on tab to avoid confusion
+        setType(activeTab === 'segment_updates' ? 'routine' : 'pdf'); 
+        setCategory("");
         setImageMethod('upload'); setImageFile(null); setImageLink(""); setFile(null);
         setAuthor(""); setInstructor(""); setPrice(""); setDiscountPrice(""); setDuration("");
         setSeoTitle(""); setSeoDesc(""); setTags("");
@@ -88,24 +91,28 @@ export default function ContentManager({
     // --- FETCH DATA ---
     const fetchContent = useCallback(async () => {
         let tableName = "";
+        // 1. Map tabs to tables
         if (activeTab === 'materials') tableName = "resources";
         else if (activeTab === 'news') tableName = "news";
         else if (activeTab === 'ebooks') tableName = "ebooks";
         else if (activeTab === 'courses') tableName = "courses";
-        else if (activeTab === 'updates') tableName = "segment_updates";
+        else if (activeTab === 'segment_updates') tableName = "segment_updates"; // Updated name
+
+        if (!tableName) return;
 
         let query = supabase.from(tableName).select("*", { count: 'exact' });
 
-        if (['materials', 'updates', 'courses'].includes(activeTab)) {
+        // 2. Apply Filters
+        if (['materials', 'segment_updates', 'courses'].includes(activeTab)) {
             if (selSub) query = query.eq("subject_id", selSub);
             else if (selGrp) query = query.eq("group_id", selGrp);
             else if (selSeg) query = query.eq("segment_id", selSeg);
         }
 
-        if (activeTab === 'updates' && selSeg) { query = query.eq("segment_id", selSeg); }
+        if (activeTab === 'segment_updates' && selSeg) { query = query.eq("segment_id", selSeg); }
 
         if (activeTab === 'materials' && typeFilter !== 'all') query = query.eq("type", typeFilter);
-        if (activeTab === 'updates' && updateTypeFilter !== 'all') query = query.eq("type", updateTypeFilter);
+        if (activeTab === 'segment_updates' && updateTypeFilter !== 'all') query = query.eq("type", updateTypeFilter);
         if ((activeTab === 'ebooks' || activeTab === 'news') && catFilter !== 'all') query = query.eq("category", catFilter);
         if (search) query = query.ilike("title", `%${search}%`);
 
@@ -119,16 +126,19 @@ export default function ContentManager({
         }
     }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig]);
 
+    // --- CRITICAL FIX: RESET ON TAB CHANGE ---
     useEffect(() => { 
-        setPage(0); 
-        fetchContent(); 
-    }, [activeTab, fetchContent]);
+        setEditorMode(false); // Close editor
+        resetForms();         // Clear form data
+        setPage(0);           // Reset pagination
+        fetchContent();       // Fetch new data
+    }, [activeTab]);          // Only run when tab changes
 
     // --- ACTIONS ---
     const handleAddNew = () => {
         resetForms();
-        if (activeTab === 'materials') setType('pdf');
-        else if (activeTab === 'updates') setType('routine');
+        if (activeTab === 'materials') setType('pdf'); // Default for materials
+        else if (activeTab === 'segment_updates') setType('routine'); // Default for updates
         setEditorMode(true);
     };
 
@@ -151,8 +161,9 @@ export default function ContentManager({
         } else if (activeTab === 'courses') {
             setInstructor(item.instructor); setPrice(item.price); setDiscountPrice(item.discount_price); setDuration(item.duration); setLink(item.enrollment_link); setContent(item.description || ""); setCategory(item.category);
             if (item.thumbnail_url) { setImageLink(item.thumbnail_url); setImageMethod('link'); }
-        } else if (activeTab === 'updates') {
+        } else if (activeTab === 'segment_updates') {
             setType(item.type); setContent(item.content_body || "");
+             if (item.attachment_url) setLink(item.attachment_url);
         }
 
         // Set Hierarchy Selectors
@@ -164,7 +175,7 @@ export default function ContentManager({
     };
 
     const handleDelete = (id: number) => {
-        let table = activeTab === 'materials' ? 'resources' : activeTab === 'updates' ? 'segment_updates' : activeTab;
+        let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
         confirmAction("Delete this item?", async () => {
             await supabase.from(table).delete().eq("id", id);
             fetchContent();
@@ -213,8 +224,7 @@ export default function ContentManager({
             payload.segment_id = editSeg ? Number(editSeg) : null;
             payload.group_id = editGrp ? Number(editGrp) : null;
             payload.subject_id = editSub ? Number(editSub) : null;
-            if (type === 'blog') { payload.content_body = content; payload.content_url = contentUrl; payload.category = category; }
-            else if (type === 'question') { payload.content_body = content; payload.category = category; }
+            if (type === 'blog' || type === 'question') { payload.content_body = content; payload.content_url = contentUrl; payload.category = category; }
             else { payload.content_url = contentUrl; }
         } else if (activeTab === 'news') {
             payload.content = content; payload.category = category;
@@ -226,13 +236,13 @@ export default function ContentManager({
         } else if (activeTab === 'courses') {
             payload.instructor = instructor; payload.price = price; payload.discount_price = discountPrice; payload.duration = duration; payload.enrollment_link = link; payload.description = content; payload.category = category;
             if (coverUrl) payload.thumbnail_url = coverUrl;
-        } else if (activeTab === 'updates') {
+        } else if (activeTab === 'segment_updates') {
             payload.type = type; payload.content_body = content;
             if (contentUrl) payload.attachment_url = contentUrl;
             payload.segment_id = editSeg ? Number(editSeg) : null;
         }
 
-        const table = activeTab === 'materials' ? 'resources' : activeTab === 'updates' ? 'segment_updates' : activeTab;
+        const table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
         let error;
 
         if (editingId) {
@@ -275,7 +285,7 @@ export default function ContentManager({
 
     return (
         <div className="animate-fade-in space-y-6">
-            <ListHeader title={activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
+            <ListHeader title={activeTab === 'segment_updates' ? 'UPDATES' : activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
             
             <ContentFilterBar 
                 activeTab={activeTab}
@@ -288,11 +298,20 @@ export default function ContentManager({
                 updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
                 catFilter={catFilter} setCatFilter={setCatFilter} categories={categories}
                 showHierarchy={['materials', 'courses'].includes(activeTab)}
-                showSegmentOnly={activeTab === 'updates'}
+                showSegmentOnly={activeTab === 'segment_updates'}
                 showType={activeTab === 'materials'}
-                showUpdateType={activeTab === 'updates'}
+                showUpdateType={activeTab === 'segment_updates'}
                 showCategory={activeTab === 'ebooks' || activeTab === 'news'}
-                typeOptions={activeTab === 'materials' ? [{ val: 'blog', label: '✍️ Blogs' }, { val: 'pdf', label: '📄 PDFs' }, { val: 'video', label: '🎬 Videos' }, { val: 'question', label: '❓ Questions' }] : [{ val: 'routine', label: '📅 Routine' }, { val: 'syllabus', label: '📝 Syllabus' }, { val: 'exam_result', label: '🏆 Result' }]}
+                typeOptions={activeTab === 'materials' ? [
+                    { val: 'blog', label: '✍️ Blogs' }, 
+                    { val: 'pdf', label: '📄 PDFs' }, 
+                    { val: 'video', label: '🎬 Videos' }, 
+                    { val: 'question', label: '❓ Questions' } // <--- ADDED QUESTION HERE
+                ] : [
+                    { val: 'routine', label: '📅 Routine' }, 
+                    { val: 'syllabus', label: '📝 Syllabus' }, 
+                    { val: 'exam_result', label: '🏆 Result' }
+                ]}
             />
 
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -300,7 +319,7 @@ export default function ContentManager({
                     <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 border-b border-gray-100 tracking-wider">
                         <tr>
                             <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
-                            {(activeTab === 'materials' || activeTab === 'updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
+                            {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
                             <SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} />
                             <th className="px-6 py-4 text-right font-extrabold text-slate-400">ACTIONS</th>
                         </tr>
@@ -309,10 +328,10 @@ export default function ContentManager({
                         {dataList.map(item => (
                             <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                                 <td className="px-6 py-4 font-bold text-slate-800">{item.title}</td>
-                                {(activeTab === 'materials' || activeTab === 'updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
+                                {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
                                 <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                    {/* 2. ADDED LIKES BUTTON (Only for materials) */}
+                                    {/* LIKES BUTTON (Materials only) */}
                                     {activeTab === 'materials' && (
                                         <button 
                                             onClick={() => setShowLikers({ id: String(item.id), title: item.title })}
@@ -330,7 +349,7 @@ export default function ContentManager({
                 </table>
             </div>
 
-            {/* 3. RENDER MODAL */}
+            {/* LIKERS MODAL */}
             {showLikers && (
                 <PostLikersModal 
                     resourceId={showLikers.id} 
