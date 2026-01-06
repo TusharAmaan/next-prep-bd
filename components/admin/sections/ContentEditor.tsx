@@ -1,135 +1,223 @@
 "use client";
-import { useState, memo } from "react";
-import dynamic from 'next/dynamic';
-import 'suneditor/dist/css/suneditor.min.css';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+
+import { ArrowLeft, Save, Loader2, Link as LinkIcon, FileText, Image as ImageIcon } from "lucide-react";
+import RichTextEditor from "./RichTextEditor"; // <--- Import the new editor
 import SeoInputSection from "../shared/SeoInputSection";
 import ImageInput from "../shared/ImageInput";
 import CategorySelector from "../shared/CategorySelector";
 
-// Load SunEditor dynamically to avoid SSR issues
-const SunEditor = dynamic(() => import("suneditor-react"), { ssr: false });
-
-const editorOptions: any = {
-    minHeight: "600px", height: "auto", placeholder: "Start content creation...",
-    buttonList: [
-        ['undo', 'redo'], ['save', 'template'], ['font', 'fontSize', 'formatBlock'],
-        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'], ['removeFormat'],
-        ['fontColor', 'hiliteColor', 'textStyle'], ['outdent', 'indent'],
-        ['align', 'horizontalRule', 'list', 'lineHeight'], ['table', 'link', 'image', 'video', 'math'],
-        ['fullScreen', 'showBlocks', 'codeView', 'preview']
-    ],
-    mode: "classic", attributesWhitelist: { all: "style" },
-    defaultStyle: "font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #334155;",
-    resizingBar: true, showPathLabel: true, katex: katex
-};
-
-const MemoizedSunEditor = memo(({ content, onChange }: { content: string, onChange: (c: string) => void }) => {
-    return <SunEditor setContents={content} onChange={onChange} setOptions={editorOptions} />;
-});
-MemoizedSunEditor.displayName = "MemoizedSunEditor";
-
-export default function ContentEditor({
+// We define 'any' here to match the massive props passed from ContentManager
+// In a stricter codebase, you would define an interface for all those props
+export default function ContentEditor(props: any) {
+  const {
     activeTab,
-    isDirty, setEditorMode, handleSave, submitting, confirmAction,
-    title, setTitle, content, setContent, link, setLink, type, setType, category, setCategory,
-    imageMethod, setImageMethod, imageFile, setImageFile, imageLink, setImageLink, file, setFile,
-    author, setAuthor, instructor, setInstructor, price, setPrice, discountPrice, setDiscountPrice, duration, setDuration,
-    seoTitle, setSeoTitle, seoDesc, setSeoDesc, tags, setTags, markDirty,
-    categories, openCategoryModal,
+    isDirty,
+    setEditorMode,
+    handleSave,
+    submitting,
+    
+    // Form Values
+    title, setTitle,
+    content, setContent,
+    link, setLink,
+    type, setType,
+    
+    // Hierarchy Props
     segments, selectedSegment, handleSegmentClick,
     groups, selectedGroup, handleGroupClick,
-    subjects, selectedSubject, handleSubjectClick
-}: any) {
+    subjects, selectedSubject, handleSubjectClick,
+    
+    // Other Helpers
+    imageMethod, setImageMethod,
+    imageFile, setImageFile,
+    imageLink, setImageLink,
+    categories, category, setCategory, openCategoryModal
+  } = props;
 
-    return (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden animate-slide-up">
-            {/* TOOLBAR */}
-            <div className="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
-                <button onClick={() => isDirty ? confirmAction("Discard changes?", () => setEditorMode(false)) : setEditorMode(false)} className="text-slate-500 hover:text-slate-800 font-bold text-sm flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-200/50 transition-colors">← Back to List</button>
-                <div className="flex gap-3 items-center">
-                    {isDirty && <span className="text-xs font-bold text-orange-500 uppercase tracking-wide animate-pulse">Unsaved Changes</span>}
-                    <button onClick={handleSave} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all transform active:scale-95">{submitting ? "Saving..." : "Save Content"}</button>
-                </div>
+  // Helper to determine if we need the Rich Editor
+  const showRichEditor = 
+    (activeTab === 'materials' && type === 'blog') || 
+    (activeTab === 'materials' && type === 'question') || 
+    activeTab === 'news' || 
+    activeTab === 'ebooks' || 
+    activeTab === 'courses' ||
+    (activeTab === 'updates' && type === 'routine');
+
+  return (
+    <div className="space-y-6 pb-20">
+      {/* --- TOP BAR --- */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 -mx-4 px-4 py-4 flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setEditorMode(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          </button>
+          <div>
+            <h2 className="font-bold text-slate-800 text-lg leading-tight">
+              {props.editingId ? 'Edit Content' : 'New Content'}
+            </h2>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="uppercase font-bold tracking-wider">{activeTab}</span>
+              {isDirty && <span className="text-amber-600 font-medium">• Unsaved Changes</span>}
             </div>
-
-            <div className="p-10 w-full max-w-[1800px] mx-auto">
-                <div className="flex flex-col lg:flex-row gap-10 w-full">
-                    {/* LEFT: MAIN CONTENT */}
-                    <div className="w-full lg:w-[75%] space-y-8">
-                        <input className="text-5xl font-black w-full bg-transparent border-b-2 border-gray-100 pb-6 outline-none placeholder-gray-300 text-slate-800 focus:border-indigo-500 transition-colors" placeholder="Type your title here..." value={title} onChange={e => { setTitle(e.target.value); markDirty(); }} />
-
-                        {/* Conditional Editors */}
-                        {['blog', 'question', 'ebook', 'course', 'update', 'news'].includes(activeTab === 'materials' ? type : (activeTab === 'updates' ? 'update' : (activeTab === 'courses' ? 'course' : (activeTab === 'ebooks' ? 'ebook' : (activeTab === 'news' ? 'news' : ''))))) && (
-                            <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm"><MemoizedSunEditor content={content} onChange={(c: string) => { setContent(c); markDirty(); }} /></div>
-                        )}
-
-                        {/* File Inputs for PDF/Video */}
-                        {activeTab === 'materials' && (type === 'pdf' || type === 'video') && (
-                            <div className="bg-gray-50/50 p-8 rounded-2xl border border-dashed border-gray-300 hover:border-indigo-300 transition-colors">
-                                <h4 className="text-sm font-bold text-slate-400 uppercase mb-4 tracking-widest">Source Material</h4>
-                                {type === 'pdf' && <div className="p-10 text-center relative cursor-pointer group"><input type="file" onChange={e => { setFile(e.target.files?.[0] || null); markDirty(); }} className="absolute inset-0 opacity-0 cursor-pointer" /><span className="text-4xl block mb-3 group-hover:scale-110 transition-transform">📂</span><p className="text-sm font-bold text-slate-500 group-hover:text-indigo-600 transition-colors">{file ? file.name : "Click to Upload PDF Document"}</p></div>}
-                                {type === 'video' && <input className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} placeholder="Paste YouTube Embed Link..." />}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* RIGHT: SIDEBAR SETTINGS */}
-                    <div className="w-full lg:w-[25%] space-y-6">
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-                            <h4 className="text-xs font-black uppercase text-indigo-900 tracking-widest border-b border-gray-100 pb-4">Configuration</h4>
-
-                            {/* Type Selector */}
-                            {activeTab === 'materials' && <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Content Type</label><select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500" value={type} onChange={e => { setType(e.target.value); markDirty(); }}><option value="pdf">📄 PDF Document</option><option value="video">🎬 Video Lecture</option><option value="question">❓ Question Bank</option><option value="blog">✍️ Class Blog</option></select></div>}
-                            {activeTab === 'updates' && <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Update Type</label><select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500" value={type} onChange={e => { setType(e.target.value); markDirty(); }}><option value="routine">📅 Routine</option><option value="syllabus">📝 Syllabus</option><option value="exam_result">🏆 Exam Result</option></select></div>}
-
-                            {/* Question Category */}
-                            {activeTab === 'materials' && type === 'question' && (
-                                <div className="mt-4 animate-fade-in">
-                                    <CategorySelector label="Question Category" value={category} onChange={setCategory} context="question" categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
-                                </div>
-                            )}
-
-                            {/* Hierarchy */}
-                            {['materials', 'updates', 'courses'].includes(activeTab) && (
-                                <div className="space-y-4">
-                                    <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Hierarchy</label><select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}><option value="">Select Segment</option>{segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                                        {activeTab !== 'updates' && (
-                                            <>
-                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 mb-2 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }} disabled={!selectedSegment}><option value="">Select Group</option>{groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                                                <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }} disabled={!selectedGroup}><option value="">Select Subject</option>{subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Category Selectors */}
-                            {(activeTab === 'news' || activeTab === 'ebooks' || (activeTab === 'materials' && type === 'blog') || activeTab === 'courses') && (
-                                <CategorySelector label="Category" value={category} onChange={setCategory} context={activeTab === 'materials' ? 'blog' : activeTab === 'courses' ? 'course' : activeTab === 'ebooks' ? 'ebook' : 'news'} categories={categories} openModal={openCategoryModal} markDirty={markDirty} />
-                            )}
-
-                            {/* Extra Fields */}
-                            {activeTab === 'ebooks' && (<div className="space-y-4"><div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Author</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={author} onChange={e => { setAuthor(e.target.value); markDirty(); }} /></div><div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">PDF Direct Link</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} /></div></div>)}
-                            {activeTab === 'courses' && (
-                                <div className="space-y-4">
-                                    <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Instructor Name</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={instructor} onChange={e => { setInstructor(e.target.value); markDirty(); }} /></div>
-                                    <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Price (BDT)</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={price} onChange={e => { setPrice(e.target.value); markDirty(); }} /></div><div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Discount</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={discountPrice} onChange={e => { setDiscountPrice(e.target.value); markDirty(); }} /></div></div>
-                                    <div><label className="text-xs font-bold text-slate-500 block mb-2 uppercase">Enrollment Link</label><input className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} /></div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Cover Image */}
-                        {(activeTab === 'news' || activeTab === 'ebooks' || activeTab === 'courses' || (activeTab === 'materials' && type === 'blog')) && (
-                            <ImageInput label={activeTab === 'courses' ? "Thumbnail" : "Cover Image"} method={imageMethod} setMethod={setImageMethod} file={imageFile} setFile={setImageFile} link={imageLink} setLink={setImageLink} markDirty={markDirty} optional={activeTab === 'courses'} />
-                        )}
-
-                        <SeoInputSection title={seoTitle} setTitle={setSeoTitle} tags={tags} setTags={setTags} desc={seoDesc} setDesc={setSeoDesc} markDirty={markDirty} />
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-    );
+        <button 
+          onClick={handleSave} 
+          disabled={submitting}
+          className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-slate-200"
+        >
+          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Save Changes
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* --- LEFT COLUMN (MAIN CONTENT) --- */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* 1. Title Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Title</label>
+            <input 
+              type="text" 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-lg font-bold px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+              placeholder="Enter an engaging title..."
+            />
+          </div>
+
+          {/* 2. Type Selector (Materials/Updates only) */}
+          {(activeTab === 'materials' || activeTab === 'updates') && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase w-full mb-1">Content Type</span>
+              {activeTab === 'materials' ? (
+                 <>
+                   {['pdf', 'blog', 'video', 'question'].map((t) => (
+                     <button key={t} onClick={() => setType(t)} className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all ${type === t ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/50'}`}>{t}</button>
+                   ))}
+                 </>
+              ) : (
+                <>
+                   {['routine', 'syllabus', 'exam_result'].map((t) => (
+                     <button key={t} onClick={() => setType(t)} className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all ${type === t ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/50'}`}>{t.replace('_', ' ')}</button>
+                   ))}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* 3. The Editor OR Link Input */}
+          {showRichEditor ? (
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Body Content</label>
+              <RichTextEditor initialContent={content} onChange={setContent} />
+            </div>
+          ) : (
+            <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4">
+              <div className="flex items-center gap-2 text-blue-800 font-bold">
+                 <LinkIcon className="w-4 h-4" /> <span>External Resource Link</span>
+              </div>
+              <input 
+                type="url" 
+                value={link} 
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://drive.google.com/..."
+                className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:outline-none focus:border-blue-500 bg-white"
+              />
+              {/* Optional File Upload Logic could go here too if you handle direct uploads */}
+            </div>
+          )}
+
+          {/* 4. Course Specifics */}
+          {activeTab === 'courses' && (
+             <div className="grid grid-cols-2 gap-4">
+                <div><label className="text-xs font-bold text-slate-500">Instructor</label><input type="text" value={props.instructor} onChange={e => props.setInstructor(e.target.value)} className="w-full p-2 border rounded-lg mt-1" /></div>
+                <div><label className="text-xs font-bold text-slate-500">Duration</label><input type="text" value={props.duration} onChange={e => props.setDuration(e.target.value)} className="w-full p-2 border rounded-lg mt-1" /></div>
+                <div><label className="text-xs font-bold text-slate-500">Price</label><input type="number" value={props.price} onChange={e => props.setPrice(e.target.value)} className="w-full p-2 border rounded-lg mt-1" /></div>
+                <div><label className="text-xs font-bold text-slate-500">Discount</label><input type="number" value={props.discountPrice} onChange={e => props.setDiscountPrice(e.target.value)} className="w-full p-2 border rounded-lg mt-1" /></div>
+             </div>
+          )}
+        </div>
+
+        {/* --- RIGHT COLUMN (SIDEBAR) --- */}
+        <div className="space-y-6">
+           
+           {/* 1. Hierarchy Selectors */}
+           {['materials', 'courses', 'updates'].includes(activeTab) && (
+             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2"><FileText className="w-4 h-4"/> Classification</h3>
+                
+                <div className="space-y-1">
+                   <label className="text-xs font-bold text-slate-400">Segment</label>
+                   <select value={selectedSegment} onChange={(e) => handleSegmentClick(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                      <option value="">Select Segment...</option>
+                      {segments?.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                   </select>
+                </div>
+
+                {selectedSegment && (
+                  <div className="space-y-1">
+                     <label className="text-xs font-bold text-slate-400">Group</label>
+                     <select value={selectedGroup} onChange={(e) => handleGroupClick(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                        <option value="">Select Group...</option>
+                        {groups?.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
+                     </select>
+                  </div>
+                )}
+
+                {selectedGroup && (
+                  <div className="space-y-1">
+                     <label className="text-xs font-bold text-slate-400">Subject</label>
+                     <select value={selectedSubject} onChange={(e) => handleSubjectClick(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                        <option value="">Select Subject...</option>
+                        {subjects?.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                     </select>
+                  </div>
+                )}
+             </div>
+           )}
+
+           {/* 2. Category */}
+           {['ebooks', 'news', 'materials', 'courses'].includes(activeTab) && (
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                 <CategorySelector 
+                    selected={category} 
+                    onChange={setCategory} 
+                    categories={categories} 
+                    onAddNew={openCategoryModal} 
+                 />
+              </div>
+           )}
+
+           {/* 3. Image Input */}
+           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><ImageIcon className="w-4 h-4"/> {activeTab === 'ebooks' ? 'Cover Image' : 'Featured Image'}</h3>
+              <ImageInput 
+                 method={imageMethod} 
+                 setMethod={setImageMethod}
+                 file={imageFile}
+                 setFile={setImageFile}
+                 link={imageLink}
+                 setLink={setImageLink}
+              />
+           </div>
+
+           {/* 4. SEO */}
+           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <SeoInputSection 
+                 seoTitle={props.seoTitle} 
+                 setSeoTitle={props.setSeoTitle}
+                 seoDesc={props.seoDesc}
+                 setSeoDesc={props.setSeoDesc}
+                 tags={props.tags}
+                 setTags={props.setTags}
+              />
+           </div>
+
+        </div>
+      </div>
+    </div>
+  );
 }
