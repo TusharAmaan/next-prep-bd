@@ -157,16 +157,29 @@ export default function ContentEditor({
                           content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; } .math-tex { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: #6366f1; }`,
                           branding: false,
                           placeholder: 'Write full details... Use the Math button for equations.',
-                          // FIX: Added ': any' to the editor parameter
-                          setup: (editor: any) => {
-                            editor.ui.registry.addButton('insertMath', {
-                              text: 'Σ Math',
-                              tooltip: 'Insert Mathematical Equation (LaTeX)',
-                              onAction: () => {
-                                editor.insertContent('<span class="math-tex">$$ E = mc^2 $$</span>&nbsp;');
-                              }
-                            });
-                          }
+                            // Inside ContentEditor.tsx -> <Editor> -> init={{ ... }}
+
+setup: (editor: any) => {
+  // 1. Inline Math Button (For "a) x = y...")
+  editor.ui.registry.addButton('insertMath', {
+    text: 'Σ Inline',
+    tooltip: 'Insert Inline Math (Inside sentence)',
+    onAction: () => {
+      // CHANGED: Uses \( and \) instead of $$
+      editor.insertContent('<span class="math-tex">\\( P^2 = (169)_n \\)</span>&nbsp;');
+    }
+  });
+
+  // 2. (Optional) Block Math Button (For big centered equations)
+  editor.ui.registry.addButton('insertBlockMath', {
+    text: 'Σ Block',
+    tooltip: 'Insert Centered Equation',
+    onAction: () => {
+      editor.insertContent('<span class="math-tex">$$ E = mc^2 $$</span>&nbsp;');
+    }
+  });
+},
+
                       }}
                   />
                   <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex gap-2">

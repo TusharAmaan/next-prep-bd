@@ -82,14 +82,32 @@ export default function RootLayout({
     >
       <body className={`${GeistSans.className} antialiased`}>
         
-        {/* --- 1. MathJax Script (Required for Math Formulas) --- */}
+        {/* --- 1. MathJax Configuration (MUST BE BEFORE THE MAIN SCRIPT) --- */}
+        {/* This config tells MathJax to treat single $ and \( \) as inline math */}
+        <Script id="mathjax-config" strategy="beforeInteractive">
+          {`
+            window.MathJax = {
+              tex: {
+                inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], 
+                displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+                processEscapes: true,
+              },
+              options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+              }
+            };
+          `}
+        </Script>
+
+        {/* --- 2. MathJax Main Script --- */}
         <Script
           id="mathjax-script"
           src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
           strategy="afterInteractive"
         />
 
-        {/* --- 2. AdSense --- */}
+        {/* --- 3. AdSense --- */}
         <Script
           id="adsbygoogle-init"
           strategy="afterInteractive"
@@ -97,7 +115,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
 
-        {/* --- 3. JSON-LD for SEO --- */}
+        {/* --- 4. JSON-LD for SEO --- */}
         <Script
           id="website-schema"
           type="application/ld+json"

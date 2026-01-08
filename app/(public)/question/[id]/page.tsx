@@ -1,17 +1,19 @@
 import { notFound } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
 import PrintableBlogBody from "@/components/PrintableBlogBody"; 
 import FacebookComments from "@/components/FacebookComments"; 
+import BlogTOC from "@/components/BlogTOC"; 
+// 1. IMPORT THE BUTTON COMPONENT
+import ScrollToTop from "@/components/ScrollToTop"; 
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
-import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// --- 1. INITIALIZE FONT ---
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"], 
@@ -20,28 +22,26 @@ const bengaliFont = Noto_Serif_Bengali({
 
 // --- HELPER: Detect ID vs Slug ---
 function getQueryColumn(param: string) {
-  // Checks if the string contains only numbers
   const isNumeric = /^\d+$/.test(param);
   return isNumeric ? 'id' : 'slug';
 }
 
-// --- 2. METADATA ---
+// --- 1. DYNAMIC METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const column = getQueryColumn(id);
 
-  // Fetch using ID or Slug
   const { data: post } = await supabase
     .from('resources')
     .select('title, seo_title, seo_description, content_url, tags')
     .eq(column, id)
     .single();
 
-  if (!post) return { title: 'Resource Not Found' };
+  if (!post) return { title: 'Question Not Found' };
 
   return {
     title: post.seo_title || post.title, 
-    description: post.seo_description || `View ${post.title} on NextPrepBD.`,
+    description: post.seo_description,
     keywords: post.tags,
     openGraph: {
       title: post.seo_title || post.title,
@@ -52,60 +52,70 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// --- 3. MAIN COMPONENT ---
+// --- 2. MAIN COMPONENT ---
 export default async function SingleQuestionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const column = getQueryColumn(id);
 
-  // --- A. AUTH CHECK ---
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-  const isLoggedIn = !!user; 
+  const isLoggedIn = !!user;
 
-  // --- B. FETCH DATA (Smart Lookup) ---
+  // Fetch using ID or Slug
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
     .eq(column, id)
     .single();
 
-  // If not found, 404
-  if (!post) return notFound();
+  // Filter for question type specifically
+  if (!post || post.type !== 'question') return notFound();
 
-  // Meta for Comments
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/question/${id}`;
-
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+    <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 relative ${bengaliFont.className}`}>
+      
+      {/* 3-COLUMN GRID LAYOUT */}
+      <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
         
-        {/* MAIN CONTENT */}
-        <div className="lg:col-span-8">
+        {/* COL 1: LEFT TOC (2 Cols) - Hidden on mobile/laptop, visible on XL */}
+        <aside className="hidden xl:block xl:col-span-2 relative">
+            <BlogTOC content={post.description || ""} />
+        </aside>
+
+        {/* COL 2: MAIN CONTENT (7 Cols on XL, 8 Cols on LG) */}
+        <main className="xl:col-span-7 lg:col-span-8 col-span-1">
             <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
                 bengaliFontClass={bengaliFont.className} 
-                isLoggedIn={isLoggedIn} 
+                isLoggedIn={isLoggedIn}
                 attachmentUrl={post.content_url} 
             />
-
-            {/* Comments */}
-            <div className="mt-12 comments-section">
+            <div className="mt-12 comments-section print:hidden">
                 <FacebookComments url={absoluteUrl} />
             </div>
-        </div>
+            
+            {/* Mobile/Tablet TOC Bubble */}
+            <div className="xl:hidden">
+                <BlogTOC content={post.description || ""} />
+            </div>
+        </main>
 
-        {/* SIDEBAR */}
-        <aside className="lg:col-span-4 space-y-8">
+        {/* COL 3: RIGHT SIDEBAR (3 Cols on XL, 4 Cols on LG) */}
+        <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
             <Sidebar />
         </aside>
 
       </div>
+
+      {/* 2. ADDED SCROLL TO TOP BUTTON */}
+      <ScrollToTop />
     </div>
   );
 }
