@@ -6,23 +6,23 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --font-geist-sans: "Geist Sans", sans-serif; 
-  --font-geist-mono: "Geist Mono", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
+
 
 /* =========================================
    1. WEB STYLES (For the Browser)
    ========================================= */
 .blog-content {
-  font-family: Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  color: #111827; 
-  /* Default base size for mobile */
+  font-family: var(--font-bangla), var(--font-geist-sans),
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
   font-size: 1rem; 
   line-height: 1.6;
 }
@@ -31,14 +31,13 @@ body {
 @media (min-width: 768px) {
   .blog-content {
     font-size: 1.125rem; /* Increased to 18px for better desktop readability */
-    line-height: 1.8;     /* Increased line-height for better spacing */
   }
 }
 
 /* Headings (Web) */
-.blog-content h1 { font-size: 2.25em; font-weight: 800; color: #000; margin-bottom: 0.75em; line-height: 1.2; }
-.blog-content h2 { font-size: 1.875em; font-weight: 700; color: #000; margin-top: 1.5em; margin-bottom: 0.5em; line-height: 1.3; }
-.blog-content h3 { font-size: 1.5em; font-weight: 600; color: #000; margin-top: 1.25em; margin-bottom: 0.5em; line-height: 1.4; }
+.blog-content h1 { font-size: 2.25em; font-weight: 800; color: #000; margin-bottom: 0.75em; }
+.blog-content h2 { font-size: 1.875em; font-weight: 700; color: #000; margin-top: 1.5em; margin-bottom: 0.5em; }
+.blog-content h3 { font-size: 1.5em; font-weight: 600; color: #000; margin-top: 1.25em; margin-bottom: 0.5em; }
 .blog-content h4 { font-size: 1.25em; font-weight: 600; color: #000; margin-top: 1em; margin-bottom: 0.5em; }
 
 /* Lists (Web) */
@@ -164,12 +163,13 @@ body {
 }
 
     /* Container styles */
-    .question-bank-container {
-        font-family: 'SolaimanLipi', 'Kalpurush', sans-serif;
-        color: #333;
-        max-width: 800px;
-        margin: 0 auto;
-    }
+.question-bank-container {
+  font-family: var(--font-bangla), var(--font-geist-sans),
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #333;
+  max-width: 800px;
+  margin: 0 auto;
+}
     
     /* Header for each exam year */
     .exam-header {
