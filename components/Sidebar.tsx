@@ -79,12 +79,13 @@ const getIconStyle = (type: string) => {
   }
 };
 
-// --- UPDATED LINK GENERATION LOGIC ---
+// --- [FIXED] LINK GENERATION LOGIC ---
 const getLink = (item: any, allSegments: any[]) => {
-  // Use content_url as slug, fallback to ID if missing
-  const identifier = item.content_url || item.id;
+  // CRITICAL FIX: Use slug if available, otherwise fallback to ID.
+  // NEVER use content_url (which is the image/file link) as the identifier path.
+  const identifier = item.slug || item.id;
 
-  // 1. Complex Updates URL: /resources/[segment]/updates/[slug]
+  // 1. Complex Updates URL: /resources/[segment]/updates/[slug-or-id]
   if (item.type === "updates") {
     const seg = allSegments.find((s) => s.id === item.segment_id);
     const segSlug = seg?.slug || seg?.title?.toLowerCase() || "general";
@@ -94,11 +95,12 @@ const getLink = (item: any, allSegments: any[]) => {
   // 2. Standard Internal Types
   if (item.type === "blog") return `/blog/${identifier}`;
   if (item.type === "news") return `/news/${identifier}`;
-  if (item.type === "question") return `/question/${item.id}`; // Questions usually link by ID
+  if (item.type === "question") return `/question/${identifier}`;
   if (item.type === "courses") return `/courses/${identifier}`;
   if (item.type === "ebooks") return `/ebooks/${identifier}`;
 
   // 3. External/Direct Links (PDFs, Videos hosted elsewhere)
+  // Only use content_url if it's strictly a file download or external link
   return item.content_url || "#";
 };
 
@@ -142,7 +144,7 @@ export default function Sidebar() {
       setLoadingMaterials(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, created_at, segment_id")
+        .select("id, title, type, content_url, slug, created_at, segment_id") // Added slug here
         // Added 'updates' and 'news' to the filter list so they appear in sidebar
         .in("type", ["blog", "pdf", "video", "updates", "news"]) 
         .order("created_at", { ascending: false })
@@ -167,7 +169,7 @@ export default function Sidebar() {
       setLoadingQuestions(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, created_at, segment_id")
+        .select("id, title, type, content_url, slug, created_at, segment_id") // Added slug here
         .eq("type", "question")
         .order("created_at", { ascending: false })
         .limit(5);

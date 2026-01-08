@@ -7,7 +7,8 @@ import Image from "next/image";
 import { 
   ChevronRight, Clock, FolderOpen, 
   Calendar, Trophy, FileBarChart, ArrowRight,
-  Sparkles, Layers, PenTool, FileText, PlayCircle
+  Sparkles, Layers, PenTool, FileText, PlayCircle,
+  CalendarDays, BookOpen
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -121,14 +122,12 @@ export default async function SegmentPage({
 
   const [
     { data: groups },
-    { data: updates },
     { data: blogs },
     { data: materials },
     { data: questions },
     { data: questionCats } 
   ] = await Promise.all([
     supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id"),
-    supabase.from("segment_updates").select("id, type, title, created_at").eq("segment_id", segmentData.id).order("created_at", { ascending: false }),
     supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
     supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5),
     supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5),
@@ -136,9 +135,6 @@ export default async function SegmentPage({
   ]);
 
   const availableCategories = Array.from(new Set(questionCats?.map(q => q.category).filter(Boolean)));
-  const routine = updates?.find(u => u.type === 'routine');
-  const syllabus = updates?.find(u => u.type === 'syllabus');
-  const result = updates?.find(u => u.type === 'exam_result');
 
   const getQuestionTag = (q: any) => {
     return Array.isArray(q.subjects) ? q.subjects[0]?.title : (q.subjects?.title || q.category || "General");
@@ -232,58 +228,64 @@ export default async function SegmentPage({
                     </section>
                 )}
 
-                {/* 2. QUICK ACTIONS */}
+                {/* 2. QUICK ACTIONS [REDESIGNED] */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-500 fill-amber-500"/> Quick Updates</h3>
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-500 fill-amber-500"/> Quick Actions</h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                        <Link href={`/resources/${segment_slug}?type=update&category=Routine`} className="relative group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"><Calendar className="w-6 h-6"/></div>
-                                    {routine && (<span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>)}
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {/* ROUTINE CARD */}
+                        <Link href={`/resources/${segment_slug}?type=update&category=Routine`} className="relative group overflow-hidden rounded-2xl p-6 flex flex-col justify-between h-40 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
+                            <div className="absolute right-[-20px] bottom-[-20px] opacity-20 transform rotate-12 group-hover:scale-110 transition-transform duration-500">
+                                <CalendarDays className="w-32 h-32 text-white" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center mb-3">
+                                    <CalendarDays className="w-5 h-5 text-white" />
                                 </div>
-                                <div className="mb-2">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Exam Routine</h4>
-                                    <h3 className={`font-bold text-base leading-tight ${routine ? 'text-slate-800' : 'text-slate-300'} line-clamp-2`}>{routine ? routine.title : "No active routine found"}</h3>
-                                </div>
-                                <div className="mt-auto pt-4 flex items-center text-xs font-bold text-blue-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">View Details <ChevronRight className="w-3 h-3 ml-1"/></div>
+                                <h3 className="text-xl font-bold text-white leading-tight">Exam<br/>Routine</h3>
+                            </div>
+                            <div className="relative z-10 flex items-center gap-2 text-[10px] font-bold text-blue-100 uppercase tracking-wider group-hover:text-white">
+                                View Schedule <ArrowRight className="w-3 h-3" />
                             </div>
                         </Link>
-                        <Link href={`/resources/${segment_slug}?type=update&category=Syllabus`} className="relative group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"><FileBarChart className="w-6 h-6"/></div>
-                                    {syllabus && (<span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span>)}
+
+                        {/* SYLLABUS CARD */}
+                        <Link href={`/resources/${segment_slug}?type=update&category=Syllabus`} className="relative group overflow-hidden rounded-2xl p-6 flex flex-col justify-between h-40 bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
+                            <div className="absolute right-[-20px] bottom-[-20px] opacity-20 transform rotate-12 group-hover:scale-110 transition-transform duration-500">
+                                <BookOpen className="w-32 h-32 text-white" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center mb-3">
+                                    <BookOpen className="w-5 h-5 text-white" />
                                 </div>
-                                <div className="mb-2">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Syllabus</h4>
-                                    <h3 className={`font-bold text-base leading-tight ${syllabus ? 'text-slate-800' : 'text-slate-300'} line-clamp-2`}>{syllabus ? syllabus.title : "No syllabus uploaded"}</h3>
-                                </div>
-                                <div className="mt-auto pt-4 flex items-center text-xs font-bold text-emerald-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">View Details <ChevronRight className="w-3 h-3 ml-1"/></div>
+                                <h3 className="text-xl font-bold text-white leading-tight">Full<br/>Syllabus</h3>
+                            </div>
+                            <div className="relative z-10 flex items-center gap-2 text-[10px] font-bold text-emerald-100 uppercase tracking-wider group-hover:text-white">
+                                Check Topics <ArrowRight className="w-3 h-3" />
                             </div>
                         </Link>
-                        <Link href={`/resources/${segment_slug}?type=update&category=Result`} className="relative group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"><Trophy className="w-6 h-6"/></div>
-                                    {result && (<span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span></span>)}
+
+                        {/* RESULT CARD */}
+                        <Link href={`/resources/${segment_slug}?type=update&category=Result`} className="relative group overflow-hidden rounded-2xl p-6 flex flex-col justify-between h-40 bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20 hover:shadow-xl hover:shadow-violet-500/30 transition-all hover:-translate-y-1">
+                            <div className="absolute right-[-20px] bottom-[-20px] opacity-20 transform rotate-12 group-hover:scale-110 transition-transform duration-500">
+                                <Trophy className="w-32 h-32 text-white" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center mb-3">
+                                    <Trophy className="w-5 h-5 text-white" />
                                 </div>
-                                <div className="mb-2">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Latest Results</h4>
-                                    <h3 className={`font-bold text-base leading-tight ${result ? 'text-slate-800' : 'text-slate-300'} line-clamp-2`}>{result ? result.title : "No results announced"}</h3>
-                                </div>
-                                <div className="mt-auto pt-4 flex items-center text-xs font-bold text-purple-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">View Details <ChevronRight className="w-3 h-3 ml-1"/></div>
+                                <h3 className="text-xl font-bold text-white leading-tight">Latest<br/>Results</h3>
+                            </div>
+                            <div className="relative z-10 flex items-center gap-2 text-[10px] font-bold text-violet-100 uppercase tracking-wider group-hover:text-white">
+                                See Marks <ArrowRight className="w-3 h-3" />
                             </div>
                         </Link>
                     </div>
                 </section>
 
-                {/* 3. LATEST BLOGS */}
+                {/* 3. LATEST BLOGS [UPDATED PERMALINK] */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
                         <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
@@ -292,7 +294,12 @@ export default async function SegmentPage({
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {blogs.map((blog: any) => (
-                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                                <Link 
+                                    key={blog.id} 
+                                    /* PERMALINK UPDATE: Uses slug if available, else ID */
+                                    href={blog.slug ? `/blog/${blog.slug}` : `/blog/${blog.id}`} 
+                                    className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                                >
                                     <div className="h-48 relative overflow-hidden border-b border-slate-100">
                                         {blog.content_url ? (
                                             <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />

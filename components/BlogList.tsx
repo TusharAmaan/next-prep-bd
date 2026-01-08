@@ -85,7 +85,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
           .from("resources")
           .select(
             `
-          id, title, content_body, created_at, content_url, type, seo_description, category,
+          id, title, content_body, created_at, content_url, type, seo_description, category, slug,
           segment_id,
           subjects!left ( 
             title,
@@ -94,7 +94,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
             )
           )
         `,
-            // ^ UPDATED: Added 'slug' to segments select for URL generation
+            // ^ UPDATED: Added 'slug' to top-level selection so we can use it for links
             { count: "exact" }
           )
           .eq("type", "blog")
@@ -114,25 +114,27 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
         if (data) {
           const formatted = data.map((item: any) => {
-            // --- REPLICATE SERVER-SIDE URL LOGIC HERE ---
-            let link = `/blog/${item.id}`; // Default Fallback
+            
+            // --- [FIXED] LINK GENERATION LOGIC ---
+            // 1. Determine Identifier: Prioritize Slug, fallback to ID
+            const identifier = item.slug || item.id;
+            
+            // 2. Default Link
+            let link = `/blog/${identifier}`; 
 
-            if (item.content_url) {
-                if (item.type === 'blog') {
-                    link = `/blog/${item.content_url}`;
-                } else if (item.type === 'news') {
-                    link = `/news/${item.content_url}`;
-                } else if (item.type === 'updates') {
-                    // Extract segment info safely
-                    const seg = item.subjects?.groups?.segments;
-                    const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
-                    link = `/resources/${segmentSlug}/updates/${item.content_url}`;
-                }
+            // 3. Handle specific types (if fetching types other than blog in future)
+            if (item.type === 'news') {
+                link = `/news/${identifier}`;
+            } else if (item.type === 'updates') {
+                // Construct nested URL: resources/[segment]/updates/[slug]
+                const seg = item.subjects?.groups?.segments;
+                const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
+                link = `/resources/${segmentSlug}/updates/${identifier}`;
             }
 
             return {
                 ...item,
-                link, // Attach generated link
+                link, // Attach the correctly generated link
                 badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
             };
           });
@@ -267,7 +269,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
               {blogs.map((blog: any) => (
                   <Link
                     key={blog.id}
-                    /* UPDATED: Uses the smart permalink calculated in fetchData or Server Side */
                     href={blog.link || `/blog/${blog.id}`} 
                     className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
                   >
@@ -302,11 +303,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </span>
                       </div>
                       
-                      {blog.content_url && (
-                        <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
-                            {blog.title}
-                        </h3>
-                      )}
+                      {/* Title is NOT a link here, the parent Card is the link */}
+                      <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+                          {blog.title}
+                      </h3>
                       
                       <p className="text-slate-500 text-sm line-clamp-3 leading-relaxed mb-4 flex-1">
                         {blog.seo_description || blog.content_body?.replace(/<[^>]+>/g, "").substring(0, 120)}
