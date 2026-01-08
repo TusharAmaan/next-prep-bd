@@ -9,7 +9,7 @@ export default function ContentEditor({
   activeTab,
   isDirty, setEditorMode, handleSave, submitting, confirmAction,
   title, setTitle, 
-  slug, setSlug, generateSlug, // <--- Receives slug props
+  slug, setSlug, generateSlug,
   content, setContent, link, setLink, type, setType, category, setCategory,
   imageMethod, setImageMethod, imageFile, setImageFile, imageLink, setImageLink, file, setFile,
   author, setAuthor, instructor, setInstructor, price, setPrice, discountPrice, setDiscountPrice, duration, setDuration,
@@ -20,7 +20,7 @@ export default function ContentEditor({
   subjects, selectedSubject, handleSubjectClick
 }: any) {
 
-  // Filter Categories Logic
+  // --- LOGIC: Filter Categories ---
   const getFilteredCategories = () => {
       if (activeTab === 'news') return categories.filter((c:any) => c.type === 'news');
       if (activeTab === 'ebooks') return categories.filter((c:any) => c.type === 'ebook');
@@ -30,6 +30,31 @@ export default function ContentEditor({
       return categories.filter((c:any) => c.type === 'general' || !c.type);
   };
   const filteredCategories = getFilteredCategories();
+
+  // --- LOGIC: Calculate Dynamic URL Prefix ---
+  const getPermalinkPrefix = () => {
+    // 1. Complex Structure for Segment Updates (e.g., resources/hsc/updates/)
+    if (activeTab === 'segment_updates') {
+      // Find the segment object to get its slug/title
+      const segment = segments.find((s: any) => s.id == selectedSegment);
+      // Fallback to 'general' if no segment is selected yet
+      const segmentSlug = segment?.slug || segment?.title?.toLowerCase() || 'general';
+      return `resources/${segmentSlug}/updates/`;
+    }
+
+    // 2. Specific Tab Structures
+    if (activeTab === 'courses') return 'courses/';
+    if (activeTab === 'ebooks') return 'ebooks/';
+    if (activeTab === 'news') return 'news/';
+
+    // 3. Specific Post Types
+    if (type === 'question') return 'question/';
+    
+    // 4. Default Fallback
+    return 'blog/';
+  };
+
+  const urlPrefix = getPermalinkPrefix();
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
@@ -68,20 +93,51 @@ export default function ContentEditor({
                       placeholder={activeTab === 'courses' ? "Course Title..." : "Type your title here..."}
                       value={title}
                       onChange={e => { setTitle(e.target.value); markDirty(); }}
-                      onBlur={() => { if(!slug) generateSlug(); }} // Auto-generate on blur if empty
+                      onBlur={() => { if(!slug) generateSlug(); }} 
                   />
                   
                   {/* --- PERMALINK (SLUG) FIELD --- */}
-                  <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                      <Globe className="w-4 h-4 text-slate-400 shrink-0"/>
-                      <span className="text-xs font-bold text-slate-500 shrink-0">nextprepbd.com/</span>
-                      <input 
-                        className="bg-transparent text-sm font-bold text-slate-700 w-full outline-none placeholder:text-slate-300"
-                        placeholder="auto-generated-slug"
-                        value={slug}
-                        onChange={e => { setSlug(e.target.value); markDirty(); }}
-                      />
-                      <button onClick={generateSlug} className="text-[10px] font-bold text-indigo-600 hover:underline shrink-0 px-2">Regenerate</button>
+                  <div className="space-y-2">
+                    <div className="flex items-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
+                        {/* Visual Prefix */}
+                        <div className="flex items-center pl-3 pr-2 py-2.5 bg-slate-100 border-r border-slate-200">
+                            <Globe className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0"/>
+                            <span className="text-xs font-bold text-slate-500 whitespace-nowrap select-none">
+                                nextprepbd.com/{urlPrefix}
+                            </span>
+                        </div>
+                        
+                        {/* Slug Input */}
+                        <input 
+                            className="flex-1 bg-transparent text-sm font-bold text-slate-700 px-3 py-2 outline-none placeholder:text-slate-300 min-w-0"
+                            placeholder="auto-generated-slug"
+                            value={slug}
+                            onChange={e => { setSlug(e.target.value); markDirty(); }}
+                        />
+                        
+                        {/* Regenerate Button */}
+                        <button 
+                            onClick={generateSlug} 
+                            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-2.5 border-l border-slate-200 transition-colors whitespace-nowrap"
+                        >
+                            Regenerate
+                        </button>
+                    </div>
+
+                    {/* Live Preview Link */}
+                    {slug && (
+                        <p className="text-[11px] text-slate-400 pl-1">
+                            Preview:{" "}
+                            <a 
+                                href={`https://nextprepbd.com/${urlPrefix}${slug}`}
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-indigo-500 hover:underline break-all"
+                            >
+                                https://nextprepbd.com/{urlPrefix}{slug}
+                            </a>
+                        </p>
+                    )}
                   </div>
               </div>
 
