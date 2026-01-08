@@ -1,348 +1,332 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import ListHeader from "../shared/ListHeader";
-import ContentFilterBar from "../shared/ContentFilterBar";
-import ContentEditor from "./ContentEditor";
-import PostLikersModal from "@/components/PostLikersModal";
+import { 
+  Trash2, Tag, Plus, Filter, RefreshCw, X, 
+  FileText, Calendar, ChevronLeft, ChevronRight, Loader2, ExternalLink
+} from "lucide-react";
 
-const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
-    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
-        <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key === sortKey && currentSort.direction === 'asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key === sortKey && currentSort.direction === 'desc' ? 'text-blue-600' : ''}>▼</span></span></div>
-    </th>
-);
-
-export default function ContentManager({
-    activeTab, 
-    segments, groups, subjects, categories,
-    fetchGroups, fetchSubjects, 
-    showSuccess, showError, confirmAction,
-    openCategoryModal
+export default function CategoryManager({ 
+  categories = [], 
+  search, setSearch, 
+  fetchCategories 
 }: any) {
-    
-    // --- LOCAL STATE ---
-    const [dataList, setDataList] = useState<any[]>([]);
-    const [editorMode, setEditorMode] = useState(false);
-    const [isDirty, setIsDirty] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+  
+  // --- 1. STATE ---
+  const [activeFilter, setActiveFilter] = useState("all");
+  
+  // Creation / Deletion
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatType, setNewCatType] = useState("general");
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
-    // Filters
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(0);
-    const [itemsPerPage, setItemsPerPage] = useState(15);
-    const [totalCount, setTotalCount] = useState(0);
-    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
-    
-    const [dateFilter, setDateFilter] = useState("all");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [typeFilter, setTypeFilter] = useState("all");
-    const [updateTypeFilter, setUpdateTypeFilter] = useState("all");
-    const [catFilter, setCatFilter] = useState("all");
-    
-    const [selSeg, setSelSeg] = useState("");
-    const [selGrp, setSelGrp] = useState("");
-    const [selSub, setSelSub] = useState("");
+  // Counts & Real-time Data
+  const [localCounts, setLocalCounts] = useState<Record<string, number>>({});
+  const [loadingCounts, setLoadingCounts] = useState(false);
 
-    // Form State
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [link, setLink] = useState("");
-    const [type, setType] = useState("pdf");
-    const [category, setCategory] = useState("");
-    const [imageMethod, setImageMethod] = useState<'upload'|'link'>('upload');
-    const [imageFile, setImageFile] = useState<File|null>(null);
-    const [imageLink, setImageLink] = useState("");
-    const [file, setFile] = useState<File|null>(null);
-    const [author, setAuthor] = useState("");
-    const [instructor, setInstructor] = useState("");
-    const [price, setPrice] = useState("");
-    const [discountPrice, setDiscountPrice] = useState("");
-    const [duration, setDuration] = useState("");
-    const [seoTitle, setSeoTitle] = useState("");
-    const [seoDesc, setSeoDesc] = useState("");
-    const [tags, setTags] = useState("");
+  // Viewing Posts (The Popup)
+  const [viewingCategory, setViewingCategory] = useState<any | null>(null);
+  const [linkedPosts, setLinkedPosts] = useState<any[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postPage, setPostPage] = useState(0);
+  const [totalLinked, setTotalLinked] = useState(0);
+  const POSTS_PER_PAGE = 5;
 
-    const [editSeg, setEditSeg] = useState("");
-    const [editGrp, setEditGrp] = useState("");
-    const [editSub, setEditSub] = useState("");
-    
-    const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
-    
-    const markDirty = () => setIsDirty(true);
+  // --- 2. FETCH COUNTS (Fixes the 0 items issue) ---
+  const fetchCounts = useCallback(async () => {
+    if (categories.length === 0) return;
+    setLoadingCounts(true);
+    const newCounts: Record<string, number> = {};
 
-    const resetForms = () => {
-        setEditingId(null); setTitle(""); setContent(""); setLink(""); 
-        setType(activeTab === 'segment_updates' ? 'routine' : 'pdf'); 
-        setCategory("");
-        setImageMethod('upload'); setImageFile(null); setImageLink(""); setFile(null);
-        setAuthor(""); setInstructor(""); setPrice(""); setDiscountPrice(""); setDuration("");
-        setSeoTitle(""); setSeoDesc(""); setTags("");
-        setEditSeg(""); setEditGrp(""); setEditSub("");
-        setIsDirty(false);
-    };
-
-    // --- FETCH DATA (With Fixed Filtering) ---
-    const fetchContent = useCallback(async () => {
-        let tableName = "";
-        if (activeTab === 'materials') tableName = "resources";
-        else if (activeTab === 'news') tableName = "news";
-        else if (activeTab === 'ebooks') tableName = "ebooks";
-        else if (activeTab === 'courses') tableName = "courses";
-        else if (activeTab === 'segment_updates') tableName = "segment_updates";
-
-        if (!tableName) return;
-
-        let query = supabase.from(tableName).select("*", { count: 'exact' });
-
-        // Hierarchy Filters
-        if (['materials', 'segment_updates', 'courses'].includes(activeTab)) {
-            if (selSub) query = query.eq("subject_id", selSub);
-            else if (selGrp) query = query.eq("group_id", selGrp);
-            else if (selSeg) query = query.eq("segment_id", selSeg);
-        }
-
-        // Type Filters (USING ILIKE FOR CASE-INSENSITIVITY)
-        if (activeTab === 'materials' && typeFilter !== 'all') query = query.ilike("type", typeFilter);
-        if (activeTab === 'segment_updates' && updateTypeFilter !== 'all') query = query.ilike("type", updateTypeFilter);
-        if ((activeTab === 'ebooks' || activeTab === 'news') && catFilter !== 'all') query = query.eq("category", catFilter);
+    // We fetch counts for all categories in parallel
+    await Promise.all(categories.map(async (cat: any) => {
+        // NOTE: This assumes your 'resources' table has a 'category' column storing the name
+        // If you use category_id, change .eq('category', cat.name) to .eq('category_id', cat.id)
+        const { count } = await supabase
+            .from('resources')
+            .select('*', { count: 'exact', head: true })
+            .eq('category', cat.name); 
         
-        // Search
-        if (search) query = query.ilike("title", `%${search}%`);
+        newCounts[cat.id] = count || 0;
+    }));
 
-        // Pagination & Sort
-        const from = page * itemsPerPage;
-        const to = from + itemsPerPage - 1;
-        const { data, count, error } = await query.range(from, to).order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
+    setLocalCounts(newCounts);
+    setLoadingCounts(false);
+  }, [categories]);
 
-        if (!error && data) {
-            setDataList(data);
-            if (count !== null) setTotalCount(count);
-        }
-    }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig]);
+  // Load counts when categories change
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
-    useEffect(() => { 
-        setEditorMode(false); 
-        resetForms();         
-        setPage(0);           
-        fetchContent();       
-    }, [activeTab]);
 
-    // --- ACTIONS ---
-    const handleAddNew = () => {
-        resetForms();
-        if (activeTab === 'materials') setType('pdf'); 
-        else if (activeTab === 'segment_updates') setType('routine'); 
-        setEditorMode(true);
-    };
+  // --- 3. FETCH LINKED POSTS (For the Popup) ---
+  const fetchLinkedPosts = async (categoryName: string, page: number) => {
+    setPostsLoading(true);
+    const start = page * POSTS_PER_PAGE;
+    const end = start + POSTS_PER_PAGE - 1;
 
-    const handleEdit = (item: any) => {
-        resetForms();
-        setEditingId(item.id); setTitle(item.title);
-        setSeoTitle(item.seo_title || ""); setSeoDesc(item.seo_description || ""); setTags(item.tags?.join(", ") || "");
+    const { data, count, error } = await supabase
+        .from('resources')
+        .select('*', { count: 'exact' })
+        .eq('category', categoryName)
+        .range(start, end)
+        .order('created_at', { ascending: false });
 
-        if (activeTab === 'materials') {
-            setType(item.type); setLink(item.content_url || "");
-            if (item.type === 'blog' || item.type === 'question') setContent(item.content_body || "");
-            if (item.category) setCategory(item.category);
-            if (item.content_url && item.type === 'blog') { setImageLink(item.content_url); setImageMethod('link'); }
-        } else if (activeTab === 'news') {
-            setContent(item.content || ""); setCategory(item.category);
-            if (item.image_url) { setImageLink(item.image_url); setImageMethod('link'); }
-        } else if (activeTab === 'ebooks') {
-            setAuthor(item.author); setCategory(item.category); setContent(item.description || ""); setLink(item.pdf_url || "");
-            if (item.cover_url) { setImageLink(item.cover_url); setImageMethod('link'); }
-        } else if (activeTab === 'courses') {
-            setInstructor(item.instructor); setPrice(item.price); setDiscountPrice(item.discount_price); setDuration(item.duration); setLink(item.enrollment_link); setContent(item.description || ""); setCategory(item.category);
-            if (item.thumbnail_url) { setImageLink(item.thumbnail_url); setImageMethod('link'); }
-        } else if (activeTab === 'segment_updates') {
-            setType(item.type); setContent(item.content_body || "");
-             if (item.attachment_url) setLink(item.attachment_url);
-        }
-
-        if (item.segment_id) { setEditSeg(String(item.segment_id)); fetchGroups(String(item.segment_id)); }
-        if (item.group_id) { setEditGrp(String(item.group_id)); fetchSubjects(String(item.group_id)); }
-        if (item.subject_id) setEditSub(String(item.subject_id));
-
-        setEditorMode(true);
-    };
-
-    const handleDelete = (id: number) => {
-        let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
-        confirmAction("Delete this item?", async () => {
-            await supabase.from(table).delete().eq("id", id);
-            fetchContent();
-            showSuccess("Deleted!");
-        });
-    };
-
-    const handleSave = async () => {
-        if (!title) return showError("Title is required");
-        setSubmitting(true);
-
-        let payload: any = {
-            title,
-            seo_title: seoTitle || title,
-            seo_description: seoDesc,
-            tags: tags.split(',').map(t => t.trim()).filter(Boolean)
-        };
-
-        let contentUrl: string | null = link; 
-        let coverUrl: string | null = null; 
-
-        if (imageMethod === 'upload' && imageFile) {
-            const name = `img-${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-            const { data } = await supabase.storage.from('materials').upload(name, imageFile);
-            if (data) {
-                const publicUrl = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
-                coverUrl = publicUrl;
-                if (activeTab === 'materials' && type === 'blog') contentUrl = publicUrl;
-                if (activeTab === 'news') payload.image_url = publicUrl;
-            }
-        } else if (imageMethod === 'link' && imageLink) {
-            coverUrl = imageLink;
-            if (activeTab === 'materials' && type === 'blog') contentUrl = imageLink;
-        }
-
-        if (file) {
-            const name = `file-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-            const { data } = await supabase.storage.from('materials').upload(name, file);
-            if (data) contentUrl = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
-        }
-
-        if (activeTab === 'materials') {
-            payload.type = type;
-            payload.segment_id = editSeg ? Number(editSeg) : null;
-            payload.group_id = editGrp ? Number(editGrp) : null;
-            payload.subject_id = editSub ? Number(editSub) : null;
-            if (type === 'blog' || type === 'question') { payload.content_body = content; payload.content_url = contentUrl; payload.category = category; }
-            else { payload.content_url = contentUrl; }
-        } else if (activeTab === 'news') {
-            payload.content = content; payload.category = category;
-            if (coverUrl) payload.image_url = coverUrl;
-        } else if (activeTab === 'ebooks') {
-            payload.author = author; payload.category = category; payload.description = content;
-            payload.pdf_url = contentUrl; 
-            if (coverUrl) payload.cover_url = coverUrl;
-        } else if (activeTab === 'courses') {
-            payload.instructor = instructor; payload.price = price; payload.discount_price = discountPrice; payload.duration = duration; payload.enrollment_link = link; payload.description = content; payload.category = category;
-            if (coverUrl) payload.thumbnail_url = coverUrl;
-        } else if (activeTab === 'segment_updates') {
-            payload.type = type; payload.content_body = content;
-            if (contentUrl) payload.attachment_url = contentUrl;
-            payload.segment_id = editSeg ? Number(editSeg) : null;
-        }
-
-        const table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
-        let error;
-
-        if (editingId) {
-            const res = await supabase.from(table).update(payload).eq('id', editingId);
-            error = res.error;
-        } else {
-            const res = await supabase.from(table).insert([payload]);
-            error = res.error;
-        }
-
-        setSubmitting(false);
-        if (error) showError(error.message);
-        else {
-            setIsDirty(false);
-            setEditorMode(false);
-            fetchContent();
-            showSuccess("Saved Successfully!");
-        }
-    };
-
-    if (editorMode) {
-        return (
-            <ContentEditor 
-                activeTab={activeTab}
-                isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} confirmAction={confirmAction}
-                title={title} setTitle={setTitle} content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
-                imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
-                author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
-                seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDesc={seoDesc} setSeoDesc={setSeoDesc} tags={tags} setTags={setTags} markDirty={markDirty}
-                categories={categories} openCategoryModal={openCategoryModal}
-                segments={segments} selectedSegment={editSeg} 
-                handleSegmentClick={(id: string) => { setEditSeg(id); setEditGrp(""); setEditSub(""); fetchGroups(id); }}
-                groups={groups} selectedGroup={editGrp} 
-                handleGroupClick={(id: string) => { setEditGrp(id); setEditSub(""); fetchSubjects(id); }}
-                subjects={subjects} selectedSubject={editSub} 
-                handleSubjectClick={setEditSub}
-            />
-        );
+    if (!error) {
+        setLinkedPosts(data || []);
+        setTotalLinked(count || 0);
     }
+    setPostsLoading(false);
+  };
 
-    return (
-        <div className="animate-fade-in space-y-6">
-            <ListHeader title={activeTab === 'segment_updates' ? 'UPDATES' : activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
-            
-            <ContentFilterBar 
-                activeTab={activeTab}
-                segments={segments} groups={groups} subjects={subjects}
-                selSeg={selSeg} setSelSeg={setSelSeg} selGrp={selGrp} setSelGrp={setSelGrp} selSub={selSub} setSelSub={setSelSub}
-                onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects}
-                dateFilter={dateFilter} setDateFilter={setDateFilter}
-                startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
-                typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-                updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
-                catFilter={catFilter} setCatFilter={setCatFilter} categories={categories}
-                showHierarchy={['materials', 'courses'].includes(activeTab)}
-                showSegmentOnly={activeTab === 'segment_updates'}
-                showType={activeTab === 'materials'}
-                showUpdateType={activeTab === 'segment_updates'}
-                showCategory={activeTab === 'ebooks' || activeTab === 'news'}
-                typeOptions={activeTab === 'materials' ? [
-                    { val: 'blog', label: '✍️ Blogs' }, 
-                    { val: 'pdf', label: '📄 PDFs' }, 
-                    { val: 'video', label: '🎬 Videos' }, 
-                    { val: 'question', label: '❓ Questions' }
-                ] : [
-                    { val: 'routine', label: '📅 Routine' }, 
-                    { val: 'syllabus', label: '📝 Syllabus' }, 
-                    { val: 'exam_result', label: '🏆 Result' }
-                ]}
-            />
+  const openCategoryDetails = (cat: any) => {
+    setViewingCategory(cat);
+    setPostPage(0);
+    fetchLinkedPosts(cat.name, 0);
+  };
 
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 border-b border-gray-100 tracking-wider">
-                        <tr>
-                            <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
-                            {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
-                            <SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} />
-                            <th className="px-6 py-4 text-right font-extrabold text-slate-400">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {dataList.length > 0 ? dataList.map(item => (
-                            <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="px-6 py-4 font-bold text-slate-800">{item.title}</td>
-                                {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
-                                <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                    {activeTab === 'materials' && (
-                                        <button 
-                                            onClick={() => setShowLikers({ id: String(item.id), title: item.title })}
-                                            className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100"
-                                        >
-                                            Likes
-                                        </button>
-                                    )}
-                                    <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
-                                    <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
-                                </td>
-                            </tr>
-                        )) : (
-                            <tr><td colSpan={4} className="p-8 text-center text-slate-400">No items found matching your filters.</td></tr>
-                        )}
-                    </tbody>
-                </table>
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 0) return;
+    setPostPage(newPage);
+    if (viewingCategory) fetchLinkedPosts(viewingCategory.name, newPage);
+  };
+
+
+  // --- 4. ACTIONS (Create/Delete) ---
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); // Prevent opening the modal
+    if (!confirm("Delete this category? Items linked to it might lose their tag.")) return;
+    setIsDeleting(id);
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    setIsDeleting(null);
+    if (!error) fetchCategories();
+  };
+
+  const handleAdd = async () => {
+    if (!newCatName.trim()) return alert("Name required");
+    const { error } = await supabase
+      .from('categories')
+      .insert([{ name: newCatName.trim(), type: newCatType }]);
+
+    if (!error) {
+        setNewCatName("");
+        setIsCreateModalOpen(false);
+        fetchCategories();
+    } else {
+        alert(error.message);
+    }
+  };
+
+  // Filtering Logic
+  const filteredList = categories.filter((c: any) => {
+      const categoryType = (c.type || 'general').toLowerCase().trim();
+      const currentFilter = activeFilter.toLowerCase().trim();
+      const categoryName = (c.name || '').toLowerCase();
+      const searchTerm = (search || '').toLowerCase();
+      const matchesType = currentFilter === 'all' || categoryType === currentFilter;
+      const matchesSearch = categoryName.includes(searchTerm);
+      return matchesType && matchesSearch;
+  });
+
+  const tabs = ['all', 'general', 'news', 'ebook', 'blog', 'course', 'question'];
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      
+      {/* HEADER TOOLBAR */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col xl:flex-row items-center gap-6 justify-between">
+         
+         {/* Search & Filter */}
+         <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
+            <div className="relative w-full md:w-64">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
+                <input 
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 transition-colors"
+                    placeholder="Search categories..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
             </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar border-b md:border-b-0 border-slate-100">
+                {tabs.map(t => (
+                    <button 
+                        key={t}
+                        onClick={() => setActiveFilter(t)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
+                    >
+                        {t}
+                    </button>
+                ))}
+            </div>
+         </div>
 
-            {showLikers && <PostLikersModal resourceId={showLikers.id} resourceTitle={showLikers.title} onClose={() => setShowLikers(null)} />}
+         {/* Actions */}
+         <div className="flex gap-2 w-full md:w-auto">
+             <button onClick={() => { fetchCategories(); fetchCounts(); }} className="p-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors" title="Refresh Data">
+                <RefreshCw className={`w-4 h-4 ${loadingCounts ? 'animate-spin' : ''}`} />
+             </button>
+             <button onClick={() => setIsCreateModalOpen(true)} className="flex-1 md:flex-none bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                <Plus className="w-4 h-4" /> New Category
+             </button>
+         </div>
+      </div>
+
+      {/* CATEGORY GRID */}
+      {filteredList.length === 0 ? (
+          <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+              <Filter className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No categories found.</p>
+          </div>
+      ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+             {filteredList.map((cat: any) => (
+                <div 
+                    key={cat.id} 
+                    onClick={() => openCategoryDetails(cat)} // CLICKABLE
+                    className="bg-white p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group relative flex flex-col justify-between h-32 cursor-pointer"
+                >
+                    <div className="flex justify-between items-start">
+                        <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider ${
+                            (cat.type || 'general') === 'news' ? 'bg-blue-50 text-blue-600' :
+                            (cat.type || 'general') === 'ebook' ? 'bg-orange-50 text-orange-600' :
+                            (cat.type || 'general') === 'blog' ? 'bg-purple-50 text-purple-600' :
+                            (cat.type || 'general') === 'question' ? 'bg-rose-50 text-rose-600' :
+                            'bg-slate-100 text-slate-500'
+                        }`}>
+                            {cat.type || 'General'}
+                        </span>
+                        <button 
+                            onClick={(e) => handleDelete(e, cat.id)} 
+                            disabled={isDeleting === cat.id}
+                            className="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                        >
+                            {isDeleting === cat.id ? <RefreshCw className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg truncate" title={cat.name}>{cat.name}</h3>
+                        <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1">
+                            <Tag className="w-3 h-3" />
+                            {loadingCounts ? '...' : (localCounts[cat.id] || 0)} items linked
+                        </p>
+                    </div>
+                </div>
+             ))}
+          </div>
+      )}
+
+      {/* --- MODAL: CREATE CATEGORY --- */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                <div className="p-5 border-b bg-slate-50 flex justify-between items-center">
+                    <h3 className="font-bold text-lg text-slate-900">Add Category</h3>
+                    <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Type</label>
+                        <select className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none" value={newCatType} onChange={e => setNewCatType(e.target.value)}>
+                            {tabs.filter(t => t !== 'all').map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Name</label>
+                        <input className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none" placeholder="e.g. Mathematics" value={newCatName} onChange={e => setNewCatName(e.target.value)} />
+                    </div>
+                    <button onClick={handleAdd} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Create Category</button>
+                </div>
+            </div>
         </div>
-    );
+      )}
+
+      {/* --- MODAL: CATEGORY DETAILS & POSTS --- */}
+      {viewingCategory && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                
+                {/* Modal Header */}
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-black uppercase bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded">{viewingCategory.type}</span>
+                            <span className="text-xs text-slate-400 font-bold">ID: {viewingCategory.id}</span>
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800">{viewingCategory.name}</h3>
+                    </div>
+                    <button onClick={() => setViewingCategory(null)} className="p-2 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                        <X className="w-5 h-5"/>
+                    </button>
+                </div>
+
+                {/* Modal Body (Scrollable) */}
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-slate-700 flex items-center gap-2">
+                            Linked Content <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">{totalLinked}</span>
+                        </h4>
+                    </div>
+
+                    {postsLoading ? (
+                        <div className="py-12 flex justify-center text-slate-400"><Loader2 className="w-8 h-8 animate-spin"/></div>
+                    ) : linkedPosts.length === 0 ? (
+                        <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
+                            <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2"/>
+                            <p className="text-slate-500 font-medium">No posts linked to this category yet.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {linkedPosts.map((post) => (
+                                <div key={post.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 hover:border-indigo-200 transition-colors">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${post.type === 'video' ? 'bg-red-50 text-red-500' : post.type === 'pdf' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                        <FileText className="w-5 h-5"/>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h5 className="font-bold text-slate-800 truncate">{post.title}</h5>
+                                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
+                                            <span className="uppercase">{post.type}</span>
+                                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(post.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    {post.content_url && (
+                                        <a href={post.content_url} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-600">
+                                            <ExternalLink className="w-4 h-4"/>
+                                        </a>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Modal Footer (Pagination) */}
+                <div className="p-4 border-t border-slate-100 bg-white flex justify-between items-center">
+                    <button 
+                        disabled={postPage === 0}
+                        onClick={() => handlePageChange(postPage - 1)}
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm disabled:opacity-50 hover:bg-slate-50"
+                    >
+                        <ChevronLeft className="w-4 h-4"/> Prev
+                    </button>
+                    <span className="text-xs font-bold text-slate-400">
+                        Page {postPage + 1} of {Math.max(1, Math.ceil(totalLinked / POSTS_PER_PAGE))}
+                    </span>
+                    <button 
+                        disabled={(postPage + 1) * POSTS_PER_PAGE >= totalLinked}
+                        onClick={() => handlePageChange(postPage + 1)}
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm disabled:opacity-50 hover:bg-slate-50"
+                    >
+                        Next <ChevronRight className="w-4 h-4"/>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+      )}
+
+    </div>
+  );
 }
