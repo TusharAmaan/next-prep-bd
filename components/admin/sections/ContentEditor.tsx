@@ -18,6 +18,22 @@ export default function ContentEditor({
   subjects, selectedSubject, handleSubjectClick
 }: any) {
 
+  // --- HELPER: Filter Categories based on Context ---
+  const getFilteredCategories = () => {
+      if (activeTab === 'news') return categories.filter((c:any) => c.type === 'news');
+      if (activeTab === 'ebooks') return categories.filter((c:any) => c.type === 'ebook');
+      if (activeTab === 'courses') return categories.filter((c:any) => c.type === 'course');
+      
+      // For Study Materials, filter based on the selected Type
+      if (type === 'question') return categories.filter((c:any) => c.type === 'question');
+      if (type === 'blog') return categories.filter((c:any) => c.type === 'blog');
+      
+      // Default / Fallback
+      return categories.filter((c:any) => c.type === 'general' || !c.type);
+  };
+
+  const filteredCategories = getFilteredCategories();
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
        
@@ -81,7 +97,7 @@ export default function ContentEditor({
                             'superscript subscript | removeformat | fullscreen preview code',
                           content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; }`,
                           branding: false,
-                          placeholder: 'Write full course details, curriculum, or content here...'
+                          placeholder: 'Write full content here...'
                       }}
                   />
               </div>
@@ -111,7 +127,7 @@ export default function ContentEditor({
           {/* RIGHT COLUMN: CONFIGURATION */}
           <div className="space-y-6">
               
-              {/* --- COURSE SPECIFIC FIELDS --- */}
+              {/* --- 1. COURSE SPECIFIC DETAILS (Only for Courses) --- */}
               {activeTab === 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 border-l-4 border-l-indigo-500">
                       <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2 flex items-center gap-2">
@@ -133,14 +149,15 @@ export default function ContentEditor({
                               <label className="block text-xs font-bold text-slate-500 mb-1">Duration</label>
                               <div className="relative">
                                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
-                                  <input className="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="e.g. 20 Hours" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
+                                  <input className="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="20 Hours" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
                               </div>
                           </div>
+                          {/* FILTERED CATEGORY SELECTOR FOR COURSES */}
                           <div>
                               <label className="block text-xs font-bold text-slate-500 mb-1">Category</label>
                               <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                                   <option value="">Select...</option>
-                                  {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                  {filteredCategories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                               </select>
                           </div>
                       </div>
@@ -174,12 +191,12 @@ export default function ContentEditor({
                   </div>
               )}
 
-              {/* 1. GENERAL CONFIG CARD (For Non-Course Types) */}
-              {activeTab !== 'courses' && (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                      <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
-                      
-                      {/* CONTENT TYPE SELECTOR */}
+              {/* --- 2. GENERAL CONFIGURATION (For Non-Course Types) --- */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                  <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
+                  
+                  {/* CONTENT TYPE SELECTOR (Hidden for Courses to fix bug) */}
+                  {activeTab !== 'courses' && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">Content Type</label>
                           <select 
@@ -206,48 +223,40 @@ export default function ContentEditor({
                               {activeTab === 'ebooks' && <option value="pdf">📖 eBook (PDF)</option>}
                           </select>
                       </div>
+                  )}
 
-                      {/* FILE UPLOAD (For PDFs, Routines, Results) */}
-                      {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && (
-                          <div>
-                              <label className="block text-xs font-bold text-slate-700 mb-2">
-                                  {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Upload File / Image'}
-                              </label>
-                              <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative">
-                                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); } }} />
-                                  {file ? (
-                                      <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm"><FileText className="w-4 h-4"/> {file.name}</div>
-                                  ) : (
-                                      <div className="space-y-1"><Upload className="w-6 h-6 text-slate-300 mx-auto"/><p className="text-xs text-slate-400 font-bold">Click to upload file</p></div>
-                                  )}
-                              </div>
-                              <input placeholder="Or Paste Link..." className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
+                  {/* FILE UPLOAD (For PDFs, Routines, Results) */}
+                  {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && activeTab !== 'courses' && (
+                      <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-2">
+                              {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Upload File / Image'}
+                          </label>
+                          <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative">
+                              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); } }} />
+                              {file ? (
+                                  <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm"><FileText className="w-4 h-4"/> {file.name}</div>
+                              ) : (
+                                  <div className="space-y-1"><Upload className="w-6 h-6 text-slate-300 mx-auto"/><p className="text-xs text-slate-400 font-bold">Click to upload file</p></div>
+                              )}
                           </div>
-                      )}
+                          <input placeholder="Or Paste Link..." className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
+                      </div>
+                  )}
 
-                      {/* VIDEO URL */}
-                      {type === 'video' && (
-                          <div>
-                              <label className="block text-xs font-bold text-slate-700 mb-2">Video URL</label>
-                              <input className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="https://..." value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
-                          </div>
-                      )}
-                  </div>
-              )}
-
-              {/* 2. TARGET SEGMENT (For Materials, Updates, Courses) */}
-              {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Target Audience</h3>
-                      <div className="space-y-3">
+                  {/* TARGET SEGMENT (For Materials, Updates, Courses) */}
+                  {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
+                      <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-2 mt-4">
+                              Target Segment <span className="text-red-500">*</span>
+                          </label>
                           <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}>
-                              <option value="">Select Segment (Required)</option>
+                              <option value="">Select Segment...</option>
                               {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                           </select>
 
                           {/* Groups/Subjects (Hidden for Segment Updates) */}
                           {activeTab !== 'segment_updates' && selectedSegment && (
-                              <>
+                              <div className="space-y-3 mt-3">
                                   <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
                                       <option value="">Select Group (Optional)</option>
                                       {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
@@ -258,13 +267,14 @@ export default function ContentEditor({
                                           {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                                       </select>
                                   )}
-                              </>
+                              </div>
                           )}
                       </div>
-                  </div>
-              )}
+                  )}
+              </div>
 
-              {/* 3. CATEGORY (For Non-Courses - Courses handles it above) */}
+              {/* --- 3. CATEGORY (For Non-Courses) --- */}
+              {/* Courses handle category in their specific card above. This handles News, eBooks, Blogs etc */}
               {(['ebooks', 'news'].includes(activeTab) || type === 'blog' || type === 'question') && activeTab !== 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
@@ -273,12 +283,13 @@ export default function ContentEditor({
                       </div>
                       <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                           <option value="">Select Category...</option>
-                          {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          {/* USE FILTERED CATEGORIES HERE */}
+                          {filteredCategories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                       </select>
                   </div>
               )}
 
-              {/* 4. COVER IMAGE (Common for all) */}
+              {/* --- 4. COVER IMAGE (Common) --- */}
               {type !== 'question' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">

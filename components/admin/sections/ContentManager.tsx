@@ -16,7 +16,8 @@ export default function ContentManager({
     activeTab, 
     segments, groups, subjects, categories,
     fetchGroups, fetchSubjects, 
-    showSuccess, showError, confirmAction,
+    showSuccess, showError, 
+    // removed confirmAction from here as we will use window.confirm
     openCategoryModal
 }: any) {
     
@@ -133,19 +134,16 @@ export default function ContentManager({
         }
     }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig, dateFilter, startDate, endDate]);
 
-    // 1. RESET EFFECT (Only runs when changing Tabs)
+    // 1. RESET EFFECT
     useEffect(() => { 
         setEditorMode(false); 
         resetForms();
-        // We do NOT fetch here. We reset filters if needed, or keep them.
-        // Usually better to reset filters on tab change:
         setSelSeg(""); setSelGrp(""); setSelSub(""); 
         setTypeFilter("all"); setUpdateTypeFilter("all"); setSearch("");
         setPage(0);
     }, [activeTab]);
 
-    // 2. FETCH EFFECT (Runs when any dependency of fetchContent changes)
-    // This includes: filters, pagination, sorting, search, AND activeTab
+    // 2. FETCH EFFECT
     useEffect(() => {
         fetchContent();
     }, [fetchContent]);
@@ -189,13 +187,28 @@ export default function ContentManager({
         setEditorMode(true);
     };
 
-    const handleDelete = (id: number) => {
+    // --- FIXED DELETE FUNCTION ---
+    const handleDelete = async (id: number) => {
+        // Use browser native confirm instead of the broken confirmAction prop
+        if (!window.confirm("Are you sure you want to delete this item? This cannot be undone.")) {
+            return;
+        }
+
         let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
-        confirmAction("Delete this item?", async () => {
-            await supabase.from(table).delete().eq("id", id);
+        
+        try {
+            const { error } = await supabase.from(table).delete().eq("id", id);
+            
+            if (error) throw error;
+            
+            showSuccess("Deleted Successfully!");
+            // Remove from local list immediately for better UI response
+            setDataList(prev => prev.filter(item => item.id !== id));
+            // Re-fetch to ensure count and data is synced
             fetchContent();
-            showSuccess("Deleted!");
-        });
+        } catch (error: any) {
+            showError("Failed to delete: " + error.message);
+        }
     };
 
     const handleSave = async () => {
@@ -280,7 +293,8 @@ export default function ContentManager({
         return (
             <ContentEditor 
                 activeTab={activeTab}
-                isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} confirmAction={confirmAction}
+                isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
+                confirmAction={(msg: string, cb: any) => { if(window.confirm(msg)) cb(); }} // Fix editor confirm too
                 title={title} setTitle={setTitle} content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
                 imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
                 author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
