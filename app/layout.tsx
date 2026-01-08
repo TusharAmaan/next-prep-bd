@@ -14,7 +14,6 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
-
 const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
   weight: ["400", "700"],
@@ -79,12 +78,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      // FIXED: Use .variable directly from the imported objects
       className={`${GeistSans.variable} ${GeistMono.variable} ${bangla.variable}`}
     >
-      {/* Global default font = Geist Sans */}
       <body className={`${GeistSans.className} antialiased`}>
-        {/* AdSense */}
+        
+        {/* --- 1. MathJax Script (Required for Math Formulas) --- */}
+        <Script
+          id="mathjax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+          strategy="afterInteractive"
+        />
+
+        {/* --- 2. AdSense --- */}
         <Script
           id="adsbygoogle-init"
           strategy="afterInteractive"
@@ -92,7 +97,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
 
-        {/* JSON-LD for sitelinks search box */}
+        {/* --- 3. JSON-LD for SEO --- */}
         <Script
           id="website-schema"
           type="application/ld+json"

@@ -33,24 +33,15 @@ export default function ContentEditor({
 
   // --- LOGIC: Calculate Dynamic URL Prefix ---
   const getPermalinkPrefix = () => {
-    // 1. Complex Structure for Segment Updates (e.g., resources/hsc/updates/)
     if (activeTab === 'segment_updates') {
-      // Find the segment object to get its slug/title
       const segment = segments.find((s: any) => s.id == selectedSegment);
-      // Fallback to 'general' if no segment is selected yet
       const segmentSlug = segment?.slug || segment?.title?.toLowerCase() || 'general';
       return `resources/${segmentSlug}/updates/`;
     }
-
-    // 2. Specific Tab Structures
     if (activeTab === 'courses') return 'courses/';
     if (activeTab === 'ebooks') return 'ebooks/';
     if (activeTab === 'news') return 'news/';
-
-    // 3. Specific Post Types
     if (type === 'question') return 'question/';
-    
-    // 4. Default Fallback
     return 'blog/';
   };
 
@@ -141,7 +132,7 @@ export default function ContentEditor({
                   </div>
               </div>
 
-              {/* RICH TEXT EDITOR */}
+{/* RICH TEXT EDITOR WITH MATH SUPPORT */}
               <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[500px] shadow-inner">
                   <Editor
                       apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
@@ -158,15 +149,30 @@ export default function ContentEditor({
                           ],
                           toolbar: 'undo redo | blocks fontfamily fontsize | ' +
                             'bold italic underline strikethrough forecolor backcolor | ' +
+                            'insertMath | ' + 
                             'alignleft aligncenter alignright alignjustify | ' +
                             'bullist numlist outdent indent | ' +
                             'link image media table charmap codesample | ' +
                             'superscript subscript | removeformat | fullscreen preview code',
-                          content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; }`,
+                          content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; } .math-tex { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: #6366f1; }`,
                           branding: false,
-                          placeholder: 'Write full details...'
+                          placeholder: 'Write full details... Use the Math button for equations.',
+                          // FIX: Added ': any' to the editor parameter
+                          setup: (editor: any) => {
+                            editor.ui.registry.addButton('insertMath', {
+                              text: 'Σ Math',
+                              tooltip: 'Insert Mathematical Equation (LaTeX)',
+                              onAction: () => {
+                                editor.insertContent('<span class="math-tex">$$ E = mc^2 $$</span>&nbsp;');
+                              }
+                            });
+                          }
                       }}
                   />
+                  <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex gap-2">
+                    <span className="font-bold">💡 Tip:</span> 
+                    <span>Use the <b>Σ Math</b> button to insert equations. Replace <code>E = mc^2</code> with your LaTeX code. The website will render it automatically.</span>
+                  </div>
               </div>
 
               {/* SEO SETTINGS */}
