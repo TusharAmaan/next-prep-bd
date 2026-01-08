@@ -18,14 +18,23 @@ const bengaliFont = Noto_Serif_Bengali({
   display: "swap",
 });
 
+// --- HELPER: Detect ID vs Slug ---
+function getQueryColumn(param: string) {
+  // Checks if the string contains only numbers
+  const isNumeric = /^\d+$/.test(param);
+  return isNumeric ? 'id' : 'slug';
+}
+
 // --- 2. METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
+  // Fetch using ID or Slug
   const { data: post } = await supabase
     .from('resources')
     .select('title, seo_title, seo_description, content_url, tags')
-    .eq('id', id)
+    .eq(column, id)
     .single();
 
   if (!post) return { title: 'Resource Not Found' };
@@ -46,18 +55,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // --- 3. MAIN COMPONENT ---
 export default async function SingleQuestionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
-  // --- A. AUTH CHECK (ADDED) ---
+  // --- A. AUTH CHECK ---
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-  const isLoggedIn = !!user; // Converts to true/false
-  // ---------------------------
+  const isLoggedIn = !!user; 
 
-  // Fetch Data 
+  // --- B. FETCH DATA (Smart Lookup) ---
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
-    .eq("id", id)
+    .eq(column, id)
     .single();
 
   // If not found, 404
@@ -81,8 +90,8 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
                 post={post} 
                 formattedDate={formattedDate}
                 bengaliFontClass={bengaliFont.className} 
-                isLoggedIn={isLoggedIn} /* <--- FIXED: Passed the required prop */
-                attachmentUrl={post.content_url} /* <--- OPTIONAL: Added this so questions can have downloads too */
+                isLoggedIn={isLoggedIn} 
+                attachmentUrl={post.content_url} 
             />
 
             {/* Comments */}

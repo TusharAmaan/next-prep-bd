@@ -6,6 +6,17 @@ import ContentFilterBar from "../shared/ContentFilterBar";
 import ContentEditor from "./ContentEditor";
 import PostLikersModal from "@/components/PostLikersModal";
 
+// --- UTILITY: Slugify ---
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
+    .replace(/\-\-+/g, '-');     // Replace multiple - with single -
+};
+
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
     <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
         <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key === sortKey && currentSort.direction === 'asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key === sortKey && currentSort.direction === 'desc' ? 'text-blue-600' : ''}>▼</span></span></div>
@@ -17,7 +28,6 @@ export default function ContentManager({
     segments, groups, subjects, categories,
     fetchGroups, fetchSubjects, 
     showSuccess, showError, 
-    // removed confirmAction from here as we will use window.confirm
     openCategoryModal
 }: any) {
     
@@ -48,6 +58,7 @@ export default function ContentManager({
 
     // Form State
     const [title, setTitle] = useState("");
+    const [slug, setSlug] = useState(""); // <--- NEW SLUG STATE
     const [content, setContent] = useState("");
     const [link, setLink] = useState("");
     const [type, setType] = useState("pdf");
@@ -74,7 +85,7 @@ export default function ContentManager({
     const markDirty = () => setIsDirty(true);
 
     const resetForms = () => {
-        setEditingId(null); setTitle(""); setContent(""); setLink(""); 
+        setEditingId(null); setTitle(""); setSlug(""); setContent(""); setLink(""); 
         setType(activeTab === 'segment_updates' ? 'routine' : 'pdf'); 
         setCategory("");
         setImageMethod('upload'); setImageFile(null); setImageLink(""); setFile(null);
@@ -104,7 +115,7 @@ export default function ContentManager({
             else if (selSeg) query = query.eq("segment_id", selSeg);
         }
 
-        // Type Filters (Using ILIKE for case-insensitivity)
+        // Type Filters
         if (activeTab === 'materials' && typeFilter !== 'all') query = query.ilike("type", typeFilter);
         if (activeTab === 'segment_updates' && updateTypeFilter !== 'all') query = query.ilike("type", updateTypeFilter);
         if ((activeTab === 'ebooks' || activeTab === 'news') && catFilter !== 'all') query = query.eq("category", catFilter);
@@ -134,7 +145,7 @@ export default function ContentManager({
         }
     }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig, dateFilter, startDate, endDate]);
 
-    // 1. RESET EFFECT
+    // Effects
     useEffect(() => { 
         setEditorMode(false); 
         resetForms();
@@ -143,7 +154,6 @@ export default function ContentManager({
         setPage(0);
     }, [activeTab]);
 
-    // 2. FETCH EFFECT
     useEffect(() => {
         fetchContent();
     }, [fetchContent]);
@@ -158,7 +168,9 @@ export default function ContentManager({
 
     const handleEdit = (item: any) => {
         resetForms();
-        setEditingId(item.id); setTitle(item.title);
+        setEditingId(item.id); 
+        setTitle(item.title);
+        setSlug(item.slug || ""); // <--- LOAD SLUG
         setSeoTitle(item.seo_title || ""); setSeoDesc(item.seo_description || ""); setTags(item.tags?.join(", ") || "");
 
         if (activeTab === 'materials') {
@@ -187,24 +199,16 @@ export default function ContentManager({
         setEditorMode(true);
     };
 
-    // --- FIXED DELETE FUNCTION ---
     const handleDelete = async (id: number) => {
-        // Use browser native confirm instead of the broken confirmAction prop
-        if (!window.confirm("Are you sure you want to delete this item? This cannot be undone.")) {
-            return;
-        }
+        if (!window.confirm("Are you sure you want to delete this item? This cannot be undone.")) return;
 
         let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
         
         try {
             const { error } = await supabase.from(table).delete().eq("id", id);
-            
             if (error) throw error;
-            
             showSuccess("Deleted Successfully!");
-            // Remove from local list immediately for better UI response
             setDataList(prev => prev.filter(item => item.id !== id));
-            // Re-fetch to ensure count and data is synced
             fetchContent();
         } catch (error: any) {
             showError("Failed to delete: " + error.message);
@@ -213,10 +217,19 @@ export default function ContentManager({
 
     const handleSave = async () => {
         if (!title) return showError("Title is required");
+        
+        // Auto-generate slug if missing
+        let finalSlug = slug.trim();
+        if (!finalSlug) {
+            finalSlug = slugify(title);
+            setSlug(finalSlug);
+        }
+
         setSubmitting(true);
 
         let payload: any = {
             title,
+            slug: finalSlug, // <--- SAVE SLUG
             seo_title: seoTitle || title,
             seo_description: seoDesc,
             tags: tags.split(',').map(t => t.trim()).filter(Boolean)
@@ -280,8 +293,14 @@ export default function ContentManager({
         }
 
         setSubmitting(false);
-        if (error) showError(error.message);
-        else {
+        if (error) {
+            // Check for duplicate slug error
+            if (error.message.includes("duplicate key")) {
+                showError("This Permalink (slug) is already taken. Please change it.");
+            } else {
+                showError(error.message);
+            }
+        } else {
             setIsDirty(false);
             setEditorMode(false);
             fetchContent();
@@ -294,8 +313,10 @@ export default function ContentManager({
             <ContentEditor 
                 activeTab={activeTab}
                 isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
-                confirmAction={(msg: string, cb: any) => { if(window.confirm(msg)) cb(); }} // Fix editor confirm too
-                title={title} setTitle={setTitle} content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
+                confirmAction={(msg: string, cb: any) => { if(window.confirm(msg)) cb(); }} 
+                title={title} setTitle={setTitle} 
+                slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))} // <--- Pass Slug Props
+                content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
                 imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
                 author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
                 seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDesc={seoDesc} setSeoDesc={setSeoDesc} tags={tags} setTags={setTags} markDirty={markDirty}
@@ -313,7 +334,6 @@ export default function ContentManager({
     return (
         <div className="animate-fade-in space-y-6">
             <ListHeader title={activeTab === 'segment_updates' ? 'UPDATES' : activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
-            
             <ContentFilterBar 
                 activeTab={activeTab}
                 segments={segments} groups={groups} subjects={subjects}
@@ -340,7 +360,6 @@ export default function ContentManager({
                     { val: 'exam_result', label: '🏆 Result' }
                 ]}
             />
-
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm text-slate-600">
                     <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 border-b border-gray-100 tracking-wider">
@@ -354,17 +373,15 @@ export default function ContentManager({
                     <tbody className="divide-y divide-slate-100">
                         {dataList.length > 0 ? dataList.map(item => (
                             <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="px-6 py-4 font-bold text-slate-800">{item.title}</td>
+                                <td className="px-6 py-4">
+                                    <div className="font-bold text-slate-800">{item.title}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">/{item.slug || '-'}</div>
+                                </td>
                                 {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
                                 <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 text-right flex justify-end gap-2">
                                     {activeTab === 'materials' && (
-                                        <button 
-                                            onClick={() => setShowLikers({ id: String(item.id), title: item.title })}
-                                            className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100"
-                                        >
-                                            Likes
-                                        </button>
+                                        <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">Likes</button>
                                     )}
                                     <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
                                     <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
@@ -376,7 +393,6 @@ export default function ContentManager({
                     </tbody>
                 </table>
             </div>
-
             {showLikers && <PostLikersModal resourceId={showLikers.id} resourceTitle={showLikers.title} onClose={() => setShowLikers(null)} />}
         </div>
     );

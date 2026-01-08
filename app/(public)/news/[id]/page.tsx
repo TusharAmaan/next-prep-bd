@@ -7,16 +7,23 @@ import { Metadata } from 'next';
 
 export const dynamic = "force-dynamic";
 
-// --- STEP 4 IMPLEMENTATION: DYNAMIC SEO METADATA ---
-// This function runs on the server BEFORE the page loads to tell Google what this page is about
+// --- HELPER: Detect ID vs Slug ---
+function getQueryColumn(param: string) {
+  // Checks if the string contains only numbers
+  const isNumeric = /^\d+$/.test(param);
+  return isNumeric ? 'id' : 'slug';
+}
+
+// --- DYNAMIC SEO METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const column = getQueryColumn(id);
   
-  // Fetch just the SEO data for this news item
+  // Fetch SEO data using ID or Slug
   const { data: news } = await supabase
     .from('news')
     .select('title, seo_title, seo_description, tags, image_url')
-    .eq('id', id)
+    .eq(column, id)
     .single();
 
   if (!news) {
@@ -24,17 +31,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    // Use the SEO Title if you wrote one, otherwise use the normal Title
     title: news.seo_title || news.title,
-    // Use the SEO Description if available, otherwise cut the title as fallback
     description: news.seo_description || `Read the latest news: ${news.title}`,
-    // Add your tags here
     keywords: news.tags,
-    // This makes the image show up large on Facebook/Twitter/LinkedIn
     openGraph: {
       title: news.seo_title || news.title,
       description: news.seo_description || `Read the latest news: ${news.title}`,
       images: news.image_url ? [news.image_url] : [],
+      type: 'article',
     },
   };
 }
@@ -42,11 +46,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // --- MAIN PAGE COMPONENT ---
 export default async function SingleNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
+  // Fetch News Data (Smart Lookup)
   const { data: post } = await supabase
     .from("news")
     .select("*")
-    .eq("id", id)
+    .eq(column, id)
     .single();
 
   if (!post) return notFound();
@@ -57,7 +63,9 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
 
   return (
-    <div className="min-h-screen bg-white font-sans pb-20">
+    <div className="min-h-screen bg-white font-sans pb-20 pt-20"> {/* Added pt-20 for fixed header */}
+      
+      {/* HERO SECTION */}
       <div className="w-full h-[400px] bg-gray-900 relative">
         {post.image_url && (
             <img src={post.image_url} alt={post.title} className="w-full h-full object-cover opacity-60" />
@@ -73,11 +81,14 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
+      {/* CONTENT BODY */}
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div 
           className="prose prose-lg prose-blue max-w-none text-gray-800"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+        
+        {/* TAGS SECTION */}
         {post.tags && post.tags.length > 0 && (
             <div className="mt-12 pt-8 border-t border-gray-100">
                 <p className="text-xs font-bold text-gray-400 uppercase mb-3">Related Tags:</p>

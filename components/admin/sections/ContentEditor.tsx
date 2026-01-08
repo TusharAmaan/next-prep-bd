@@ -2,13 +2,15 @@
 import { Editor } from "@tinymce/tinymce-react";
 import { 
   ChevronLeft, Save, Upload, Link as LinkIcon, 
-  Image as ImageIcon, FileText, X, DollarSign, Clock, User
+  Image as ImageIcon, FileText, X, DollarSign, Clock, User, Globe
 } from "lucide-react";
 
 export default function ContentEditor({
   activeTab,
   isDirty, setEditorMode, handleSave, submitting, confirmAction,
-  title, setTitle, content, setContent, link, setLink, type, setType, category, setCategory,
+  title, setTitle, 
+  slug, setSlug, generateSlug, // <--- Receives slug props
+  content, setContent, link, setLink, type, setType, category, setCategory,
   imageMethod, setImageMethod, imageFile, setImageFile, imageLink, setImageLink, file, setFile,
   author, setAuthor, instructor, setInstructor, price, setPrice, discountPrice, setDiscountPrice, duration, setDuration,
   seoTitle, setSeoTitle, seoDesc, setSeoDesc, tags, setTags, markDirty,
@@ -18,20 +20,15 @@ export default function ContentEditor({
   subjects, selectedSubject, handleSubjectClick
 }: any) {
 
-  // --- HELPER: Filter Categories based on Context ---
+  // Filter Categories Logic
   const getFilteredCategories = () => {
       if (activeTab === 'news') return categories.filter((c:any) => c.type === 'news');
       if (activeTab === 'ebooks') return categories.filter((c:any) => c.type === 'ebook');
       if (activeTab === 'courses') return categories.filter((c:any) => c.type === 'course');
-      
-      // For Study Materials, filter based on the selected Type
       if (type === 'question') return categories.filter((c:any) => c.type === 'question');
       if (type === 'blog') return categories.filter((c:any) => c.type === 'blog');
-      
-      // Default / Fallback
       return categories.filter((c:any) => c.type === 'general' || !c.type);
   };
-
   const filteredCategories = getFilteredCategories();
 
   return (
@@ -65,13 +62,27 @@ export default function ContentEditor({
           <div className="lg:col-span-2 space-y-6">
               
               {/* Title Input */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                   <input 
                       className="w-full text-3xl font-black text-slate-800 placeholder:text-slate-300 outline-none border-b border-transparent focus:border-indigo-100 pb-2 transition-all" 
                       placeholder={activeTab === 'courses' ? "Course Title..." : "Type your title here..."}
                       value={title}
                       onChange={e => { setTitle(e.target.value); markDirty(); }}
+                      onBlur={() => { if(!slug) generateSlug(); }} // Auto-generate on blur if empty
                   />
+                  
+                  {/* --- PERMALINK (SLUG) FIELD --- */}
+                  <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                      <Globe className="w-4 h-4 text-slate-400 shrink-0"/>
+                      <span className="text-xs font-bold text-slate-500 shrink-0">nextprepbd.com/courses/</span>
+                      <input 
+                        className="bg-transparent text-sm font-bold text-slate-700 w-full outline-none placeholder:text-slate-300"
+                        placeholder="auto-generated-slug"
+                        value={slug}
+                        onChange={e => { setSlug(e.target.value); markDirty(); }}
+                      />
+                      <button onClick={generateSlug} className="text-[10px] font-bold text-indigo-600 hover:underline shrink-0 px-2">Regenerate</button>
+                  </div>
               </div>
 
               {/* RICH TEXT EDITOR */}
@@ -97,7 +108,7 @@ export default function ContentEditor({
                             'superscript subscript | removeformat | fullscreen preview code',
                           content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; }`,
                           branding: false,
-                          placeholder: 'Write full content here...'
+                          placeholder: 'Write full details...'
                       }}
                   />
               </div>
@@ -127,14 +138,12 @@ export default function ContentEditor({
           {/* RIGHT COLUMN: CONFIGURATION */}
           <div className="space-y-6">
               
-              {/* --- 1. COURSE SPECIFIC DETAILS (Only for Courses) --- */}
+              {/* COURSE SPECIFIC DETAILS */}
               {activeTab === 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 border-l-4 border-l-indigo-500">
                       <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2 flex items-center gap-2">
                           <FileText className="w-4 h-4"/> Course Details
                       </h3>
-                      
-                      {/* Instructor */}
                       <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Instructor Name</label>
                           <div className="relative">
@@ -142,8 +151,6 @@ export default function ContentEditor({
                               <input className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500" placeholder="e.g. Abdullah All Masum" value={instructor} onChange={e => {setInstructor(e.target.value); markDirty()}} />
                           </div>
                       </div>
-
-                      {/* Duration & Category */}
                       <div className="grid grid-cols-2 gap-3">
                           <div>
                               <label className="block text-xs font-bold text-slate-500 mb-1">Duration</label>
@@ -152,7 +159,6 @@ export default function ContentEditor({
                                   <input className="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="20 Hours" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
                               </div>
                           </div>
-                          {/* FILTERED CATEGORY SELECTOR FOR COURSES */}
                           <div>
                               <label className="block text-xs font-bold text-slate-500 mb-1">Category</label>
                               <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
@@ -161,8 +167,6 @@ export default function ContentEditor({
                               </select>
                           </div>
                       </div>
-
-                      {/* Pricing */}
                       <div className="grid grid-cols-2 gap-3">
                           <div>
                               <label className="block text-xs font-bold text-slate-500 mb-1">Regular Price</label>
@@ -179,8 +183,6 @@ export default function ContentEditor({
                               </div>
                           </div>
                       </div>
-
-                      {/* Enrollment Link */}
                       <div>
                           <label className="block text-xs font-bold text-emerald-600 mb-1 uppercase">Enrollment Link</label>
                           <div className="relative">
@@ -191,11 +193,10 @@ export default function ContentEditor({
                   </div>
               )}
 
-              {/* --- 2. GENERAL CONFIGURATION (For Non-Course Types) --- */}
+              {/* GENERAL CONFIGURATION (For Non-Course Types) */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
                   
-                  {/* CONTENT TYPE SELECTOR (Hidden for Courses to fix bug) */}
                   {activeTab !== 'courses' && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">Content Type</label>
@@ -225,7 +226,6 @@ export default function ContentEditor({
                       </div>
                   )}
 
-                  {/* FILE UPLOAD (For PDFs, Routines, Results) */}
                   {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && activeTab !== 'courses' && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">
@@ -243,7 +243,6 @@ export default function ContentEditor({
                       </div>
                   )}
 
-                  {/* TARGET SEGMENT (For Materials, Updates, Courses) */}
                   {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2 mt-4">
@@ -254,7 +253,6 @@ export default function ContentEditor({
                               {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                           </select>
 
-                          {/* Groups/Subjects (Hidden for Segment Updates) */}
                           {activeTab !== 'segment_updates' && selectedSegment && (
                               <div className="space-y-3 mt-3">
                                   <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
@@ -273,8 +271,7 @@ export default function ContentEditor({
                   )}
               </div>
 
-              {/* --- 3. CATEGORY (For Non-Courses) --- */}
-              {/* Courses handle category in their specific card above. This handles News, eBooks, Blogs etc */}
+              {/* CATEGORY (For Non-Courses) */}
               {(['ebooks', 'news'].includes(activeTab) || type === 'blog' || type === 'question') && activeTab !== 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
@@ -283,13 +280,12 @@ export default function ContentEditor({
                       </div>
                       <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                           <option value="">Select Category...</option>
-                          {/* USE FILTERED CATEGORIES HERE */}
                           {filteredCategories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                       </select>
                   </div>
               )}
 
-              {/* --- 4. COVER IMAGE (Common) --- */}
+              {/* COVER IMAGE */}
               {type !== 'question' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">

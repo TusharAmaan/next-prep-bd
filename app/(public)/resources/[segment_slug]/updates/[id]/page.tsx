@@ -5,7 +5,8 @@ import Sidebar from "@/components/Sidebar";
 import PrintableBlogBody from "@/components/PrintableBlogBody";
 import { Noto_Serif_Bengali } from "next/font/google"; 
 import { Metadata } from 'next';
-import { createClient } from "@/utils/supabase/server"; // <--- 1. ADD THIS IMPORT
+import { createClient } from "@/utils/supabase/server";
+import FacebookComments from "@/components/FacebookComments";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +17,23 @@ const bengaliFont = Noto_Serif_Bengali({
   display: "swap",
 });
 
-// --- STEP 4 IMPLEMENTATION: DYNAMIC SEO METADATA ---
+// --- HELPER: Detect ID vs Slug ---
+function getQueryColumn(param: string) {
+  // Checks if the string contains only numbers
+  const isNumeric = /^\d+$/.test(param);
+  return isNumeric ? 'id' : 'slug';
+}
+
+// --- DYNAMIC SEO METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
-  // Fetch SEO data for this update
+  // Fetch SEO data using ID or Slug
   const { data: update } = await supabase
     .from('segment_updates')
     .select('title, seo_title, seo_description, tags')
-    .eq('id', id)
+    .eq(column, id)
     .single();
 
   if (!update) {
@@ -46,18 +55,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // --- MAIN PAGE COMPONENT ---
 export default async function UpdateDetailsPage({ params }: { params: Promise<{ segment_slug: string; id: string }> }) {
   const { segment_slug, id } = await params;
+  const column = getQueryColumn(id);
 
-  // --- 2. AUTH CHECK (Added) ---
+  // --- AUTH CHECK ---
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-  const isLoggedIn = !!user; // Converts to true/false
-  // ----------------------------
+  const isLoggedIn = !!user;
 
-  // Fetch data
+  // Fetch data (Smart Lookup)
   const { data: post } = await supabase
     .from("segment_updates")
     .select("*, segments(title)")
-    .eq("id", id)
+    .eq(column, id)
     .single();
 
   if (!post) return notFound();
@@ -66,7 +75,8 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
     day: 'numeric', month: 'long', year: 'numeric'
   });
 
-  const currentUrl = `https://nextprepbd.com/resources/${segment_slug}/updates/${id}`;
+  // Use ID for canonical URL to avoid duplicates if accessing via slug
+  const currentUrl = `https://nextprepbd.com/resources/${segment_slug}/updates/${post.id}`;
 
   const compatiblePost = {
     ...post,
@@ -82,7 +92,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
       
-      {/* Added 'pt-32' to prevent content hiding behind fixed header */}
+      {/* Page Content with Padding for Fixed Header */}
       <section className="max-w-7xl mx-auto px-6 py-12 pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
@@ -92,7 +102,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                     formattedDate={formattedDate}
                     attachmentUrl={post.attachment_url}
                     bengaliFontClass={bengaliFont.className} 
-                    isLoggedIn={isLoggedIn} /* <--- 3. PASS THE PROP HERE */
+                    isLoggedIn={isLoggedIn} 
                 />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 mt-8">
@@ -100,12 +110,7 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                         💬 Discussion
                     </h3>
                     <div className="w-full bg-slate-50 rounded-xl p-4 min-h-[100px] flex justify-center">
-                        <div 
-                            className="fb-comments" 
-                            data-href={currentUrl} 
-                            data-width="100%" 
-                            data-numposts="5">
-                        </div>
+                        <FacebookComments url={currentUrl} />
                     </div>
                 </div>
             </div>

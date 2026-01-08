@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
 import PrintableBlogBody from "@/components/PrintableBlogBody"; 
 import FacebookComments from "@/components/FacebookComments"; 
-import BlogTOC from "@/components/BlogTOC"; // <--- New Left Sidebar
+import BlogTOC from "@/components/BlogTOC"; 
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
@@ -18,10 +18,27 @@ const bengaliFont = Noto_Serif_Bengali({
   display: "swap",
 });
 
+// --- HELPER: Detect ID vs Slug ---
+function getQueryColumn(param: string) {
+  // Checks if the string contains only numbers
+  const isNumeric = /^\d+$/.test(param);
+  return isNumeric ? 'id' : 'slug';
+}
+
+// --- 1. DYNAMIC METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const { data: post } = await supabase.from('resources').select('title, seo_title, seo_description, content_url, tags').eq('id', id).single();
+  const column = getQueryColumn(id);
+
+  // Fetch using ID or Slug
+  const { data: post } = await supabase
+    .from('resources')
+    .select('title, seo_title, seo_description, content_url, tags')
+    .eq(column, id)
+    .single();
+
   if (!post) return { title: 'Post Not Found' };
+
   return {
     title: post.seo_title || post.title, 
     description: post.seo_description,
@@ -35,16 +52,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
+// --- 2. MAIN COMPONENT ---
 export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const column = getQueryColumn(id);
+
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
   const isLoggedIn = !!user;
 
+  // Fetch using ID or Slug
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
-    .eq("id", id)
+    .eq(column, id)
     .single();
 
   if (!post || post.type !== 'blog') return notFound();
@@ -78,7 +99,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                 <FacebookComments url={absoluteUrl} />
             </div>
             
-            {/* Mobile/Tablet TOC Bubble (Logic inside component handles visibility) */}
+            {/* Mobile/Tablet TOC Bubble */}
             <div className="xl:hidden">
                 <BlogTOC content={post.content_body || ""} />
             </div>

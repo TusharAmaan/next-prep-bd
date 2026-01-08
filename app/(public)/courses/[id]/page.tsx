@@ -3,19 +3,27 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
 import { headers } from 'next/headers';
-import { Metadata } from 'next'; // Import Metadata type
+import { Metadata } from 'next';
 
 export const dynamic = "force-dynamic";
 
-// --- STEP 4: DYNAMIC SEO METADATA ---
+// --- HELPER: Detect ID vs Slug ---
+function getQueryColumn(param: string) {
+  // Checks if the string contains only numbers
+  const isNumeric = /^\d+$/.test(param);
+  return isNumeric ? 'id' : 'slug';
+}
+
+// --- 1. DYNAMIC SEO METADATA ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
-  // Fetch SEO data
+  // Fetch SEO data using ID or Slug
   const { data: course } = await supabase
     .from('courses')
     .select('title, seo_title, seo_description, tags, thumbnail_url, instructor')
-    .eq('id', id)
+    .eq(column, id)
     .single();
 
   if (!course) {
@@ -25,12 +33,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: course.seo_title || course.title,
     description: course.seo_description || `Enroll in ${course.title} by ${course.instructor}. Master this subject with expert guidance.`,
-    keywords: course.tags, // SEO tags
+    keywords: course.tags,
     openGraph: {
       title: course.seo_title || course.title,
       description: course.seo_description,
       images: course.thumbnail_url ? [course.thumbnail_url] : [],
-      type: 'website', // Courses are usually 'website' or 'product' schema
+      type: 'website',
     },
   };
 }
@@ -38,12 +46,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // --- MAIN PAGE COMPONENT ---
 export default async function SingleCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const column = getQueryColumn(id);
 
-  // 1. Fetch Course Details
+  // 1. Fetch Course Details (Smart ID/Slug Lookup)
   const { data: course } = await supabase
     .from("courses")
     .select("*")
-    .eq("id", id)
+    .eq(column, id)
     .single();
 
   if (!course) return notFound();
