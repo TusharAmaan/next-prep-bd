@@ -1,8 +1,16 @@
+"use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation"; // <--- 1. Import this
 import MobileAppButtons from "./MobileAppButtons"; 
 
 export default function Footer() {
+  const pathname = usePathname(); // <--- 2. Get current path
   const currentYear = new Date().getFullYear();
+
+  // --- 3. CONDITIONAL RENDER: Hide on Admin Pages ---
+  if (pathname?.startsWith('/admin')) {
+      return null;
+  }
 
   return (
     <footer className="bg-black text-white py-16 border-t border-gray-800 font-sans">

@@ -2,7 +2,7 @@
 import { Editor } from "@tinymce/tinymce-react";
 import { 
   ChevronLeft, Save, Upload, Link as LinkIcon, 
-  Image as ImageIcon, FileText, X 
+  Image as ImageIcon, FileText, X, DollarSign, Clock, User
 } from "lucide-react";
 
 export default function ContentEditor({
@@ -52,13 +52,13 @@ export default function ContentEditor({
               <div className="space-y-2">
                   <input 
                       className="w-full text-3xl font-black text-slate-800 placeholder:text-slate-300 outline-none border-b border-transparent focus:border-indigo-100 pb-2 transition-all" 
-                      placeholder="Type your title here..." 
+                      placeholder={activeTab === 'courses' ? "Course Title..." : "Type your title here..."}
                       value={title}
                       onChange={e => { setTitle(e.target.value); markDirty(); }}
                   />
               </div>
 
-              {/* RICH TEXT EDITOR (Full Functionality) */}
+              {/* RICH TEXT EDITOR */}
               <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[500px] shadow-inner">
                   <Editor
                       apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
@@ -66,34 +66,22 @@ export default function ContentEditor({
                       onEditorChange={(c) => { setContent(c); markDirty(); }}
                       init={{
                           height: 500,
-                          menubar: true, // Show the File/Edit/View menu bar
-                          // Comprehensive Plugin List
+                          menubar: true,
                           plugins: [
                             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
                             'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
                             'autosave', 'codesample', 'directionality', 'visualchars'
                           ],
-                          // Professional Toolbar layout
                           toolbar: 'undo redo | blocks fontfamily fontsize | ' +
                             'bold italic underline strikethrough forecolor backcolor | ' +
                             'alignleft aligncenter alignright alignjustify | ' +
                             'bullist numlist outdent indent | ' +
                             'link image media table charmap codesample | ' +
                             'superscript subscript | removeformat | fullscreen preview code',
-                          content_style: `
-                            body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; }
-                            img { max-width: 100%; height: auto; border-radius: 8px; }
-                          `,
-                          branding: false, // Hides "Powered by Tiny"
-                          placeholder: 'Write your content here... Use $$ LaTeX $$ for math equations.',
-                          // Math / Code Sample config
-                          codesample_languages: [
-                            { text: 'HTML/XML', value: 'markup' },
-                            { text: 'JavaScript', value: 'javascript' },
-                            { text: 'CSS', value: 'css' },
-                            { text: 'LaTeX', value: 'latex' }
-                          ]
+                          content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; }`,
+                          branding: false,
+                          placeholder: 'Write full course details, curriculum, or content here...'
                       }}
                   />
               </div>
@@ -123,161 +111,190 @@ export default function ContentEditor({
           {/* RIGHT COLUMN: CONFIGURATION */}
           <div className="space-y-6">
               
-              {/* 1. CONFIG CARD */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                  <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
-                  
-                  {/* CONTENT TYPE SELECTOR */}
-                  <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-2">Content Type</label>
-                      <select 
-                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 capitalize"
-                          value={type}
-                          onChange={e => { setType(e.target.value); markDirty(); }}
-                      >
-                          {activeTab === 'materials' && (
-                              <>
-                                  <option value="pdf">📄 PDF Document</option>
-                                  <option value="blog">✍️ Blog / Article</option>
-                                  <option value="video">🎬 Video Lesson</option>
-                                  <option value="question">❓ Question Bank</option>
-                              </>
-                          )}
-                          {activeTab === 'segment_updates' && (
-                              <>
-                                  <option value="routine">📅 Exam Routine</option>
-                                  <option value="syllabus">📝 Syllabus</option>
-                                  <option value="exam_result">🏆 Exam Result</option>
-                              </>
-                          )}
-                          {activeTab === 'news' && <option value="news">📰 News Article</option>}
-                          {activeTab === 'ebooks' && <option value="pdf">📖 eBook (PDF)</option>}
-                      </select>
+              {/* --- COURSE SPECIFIC FIELDS --- */}
+              {activeTab === 'courses' && (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 border-l-4 border-l-indigo-500">
+                      <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2 flex items-center gap-2">
+                          <FileText className="w-4 h-4"/> Course Details
+                      </h3>
+                      
+                      {/* Instructor */}
+                      <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">Instructor Name</label>
+                          <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
+                              <input className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500" placeholder="e.g. Abdullah All Masum" value={instructor} onChange={e => {setInstructor(e.target.value); markDirty()}} />
+                          </div>
+                      </div>
+
+                      {/* Duration & Category */}
+                      <div className="grid grid-cols-2 gap-3">
+                          <div>
+                              <label className="block text-xs font-bold text-slate-500 mb-1">Duration</label>
+                              <div className="relative">
+                                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
+                                  <input className="w-full pl-9 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="e.g. 20 Hours" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
+                              </div>
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold text-slate-500 mb-1">Category</label>
+                              <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
+                                  <option value="">Select...</option>
+                                  {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                              </select>
+                          </div>
+                      </div>
+
+                      {/* Pricing */}
+                      <div className="grid grid-cols-2 gap-3">
+                          <div>
+                              <label className="block text-xs font-bold text-slate-500 mb-1">Regular Price</label>
+                              <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                                  <input className="w-full pl-7 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="2500" value={price} onChange={e => {setPrice(e.target.value); markDirty()}} />
+                              </div>
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold text-slate-500 mb-1">Discount Price</label>
+                              <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                                  <input className="w-full pl-7 pr-2 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="1500" value={discountPrice} onChange={e => {setDiscountPrice(e.target.value); markDirty()}} />
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Enrollment Link */}
+                      <div>
+                          <label className="block text-xs font-bold text-emerald-600 mb-1 uppercase">Enrollment Link</label>
+                          <div className="relative">
+                              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500"/>
+                              <input className="w-full pl-9 pr-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-bold text-emerald-700 outline-none focus:border-emerald-500 placeholder:text-emerald-300" placeholder="https://..." value={link} onChange={e => {setLink(e.target.value); markDirty()}} />
+                          </div>
+                      </div>
                   </div>
+              )}
 
-                  {/* 2. TARGET SEGMENT */}
-                  {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
+              {/* 1. GENERAL CONFIG CARD (For Non-Course Types) */}
+              {activeTab !== 'courses' && (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                      <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
+                      
+                      {/* CONTENT TYPE SELECTOR */}
                       <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-2">
-                              Target Segment <span className="text-red-500">*</span>
-                          </label>
+                          <label className="block text-xs font-bold text-slate-700 mb-2">Content Type</label>
                           <select 
-                              className="w-full p-2.5 bg-white border-2 border-indigo-50 rounded-lg text-sm font-medium focus:border-indigo-500 outline-none"
-                              value={selectedSegment}
-                              onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}
+                              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 capitalize"
+                              value={type}
+                              onChange={e => { setType(e.target.value); markDirty(); }}
                           >
-                              <option value="">Select Segment...</option>
-                              {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
-                          </select>
-                      </div>
-                  )}
-
-                  {/* 3. FILE UPLOAD */}
-                  {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && (
-                      <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-2">
-                              {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Attachment (File/Image)'}
-                          </label>
-                          <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative group">
-                              <input 
-                                  type="file" 
-                                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                  onChange={e => { 
-                                      if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); }
-                                  }}
-                              />
-                              {file ? (
-                                  <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm">
-                                      <FileText className="w-4 h-4"/> {file.name}
-                                  </div>
-                              ) : (
-                                  <div className="space-y-1">
-                                      <Upload className="w-6 h-6 text-slate-300 mx-auto group-hover:text-indigo-400 transition-colors"/>
-                                      <p className="text-xs text-slate-400 font-bold">Click to upload file</p>
-                                  </div>
+                              {activeTab === 'materials' && (
+                                  <>
+                                      <option value="pdf">📄 PDF Document</option>
+                                      <option value="blog">✍️ Blog / Article</option>
+                                      <option value="video">🎬 Video Lesson</option>
+                                      <option value="question">❓ Question Bank</option>
+                                  </>
                               )}
-                          </div>
-                          {/* Fallback Link Input */}
-                          <div className="mt-2 flex items-center gap-2">
-                             <div className="h-px bg-slate-100 flex-1"></div>
-                             <span className="text-[10px] text-slate-400 font-bold">OR LINK</span>
-                             <div className="h-px bg-slate-100 flex-1"></div>
-                          </div>
-                          <input 
-                             placeholder="Paste external file URL..." 
-                             className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none focus:border-indigo-300"
-                             value={link}
-                             onChange={e => { setLink(e.target.value); markDirty(); }}
-                          />
-                      </div>
-                  )}
-
-                  {/* VIDEO URL INPUT */}
-                  {type === 'video' && (
-                      <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-2">Video URL (YouTube/Vimeo)</label>
-                          <input 
-                              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                              placeholder="https://..."
-                              value={link}
-                              onChange={e => { setLink(e.target.value); markDirty(); }}
-                          />
-                      </div>
-                  )}
-              </div>
-
-              {/* HIERARCHY SUB-LEVELS (Materials Only) */}
-              {activeTab === 'materials' && selectedSegment && (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filters</h3>
-                      <select className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
-                          <option value="">Select Group...</option>
-                          {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
-                      </select>
-                      {selectedGroup && (
-                          <select className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}>
-                              <option value="">Select Subject...</option>
-                              {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                              {activeTab === 'segment_updates' && (
+                                  <>
+                                      <option value="routine">📅 Exam Routine</option>
+                                      <option value="syllabus">📝 Syllabus</option>
+                                      <option value="exam_result">🏆 Exam Result</option>
+                                  </>
+                              )}
+                              {activeTab === 'news' && <option value="news">📰 News Article</option>}
+                              {activeTab === 'ebooks' && <option value="pdf">📖 eBook (PDF)</option>}
                           </select>
+                      </div>
+
+                      {/* FILE UPLOAD (For PDFs, Routines, Results) */}
+                      {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && (
+                          <div>
+                              <label className="block text-xs font-bold text-slate-700 mb-2">
+                                  {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Upload File / Image'}
+                              </label>
+                              <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative">
+                                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); } }} />
+                                  {file ? (
+                                      <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm"><FileText className="w-4 h-4"/> {file.name}</div>
+                                  ) : (
+                                      <div className="space-y-1"><Upload className="w-6 h-6 text-slate-300 mx-auto"/><p className="text-xs text-slate-400 font-bold">Click to upload file</p></div>
+                                  )}
+                              </div>
+                              <input placeholder="Or Paste Link..." className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
+                          </div>
+                      )}
+
+                      {/* VIDEO URL */}
+                      {type === 'video' && (
+                          <div>
+                              <label className="block text-xs font-bold text-slate-700 mb-2">Video URL</label>
+                              <input className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="https://..." value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
+                          </div>
                       )}
                   </div>
               )}
 
-              {/* 3. CATEGORY CARD (For eBooks, News, Blogs, Questions) */}
-              {(['ebooks', 'news'].includes(activeTab) || type === 'blog' || type === 'question') && (
+              {/* 2. TARGET SEGMENT (For Materials, Updates, Courses) */}
+              {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Target Audience</h3>
+                      <div className="space-y-3">
+                          <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}>
+                              <option value="">Select Segment (Required)</option>
+                              {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                          </select>
+
+                          {/* Groups/Subjects (Hidden for Segment Updates) */}
+                          {activeTab !== 'segment_updates' && selectedSegment && (
+                              <>
+                                  <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
+                                      <option value="">Select Group (Optional)</option>
+                                      {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
+                                  </select>
+                                  {selectedGroup && (
+                                      <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}>
+                                          <option value="">Select Subject (Optional)</option>
+                                          {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                                      </select>
+                                  )}
+                              </>
+                          )}
+                      </div>
+                  </div>
+              )}
+
+              {/* 3. CATEGORY (For Non-Courses - Courses handles it above) */}
+              {(['ebooks', 'news'].includes(activeTab) || type === 'blog' || type === 'question') && activeTab !== 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
                           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Category</h3>
                           <button onClick={openCategoryModal} className="text-[10px] font-bold text-indigo-600 hover:underline">+ New</button>
                       </div>
-                      <select 
-                          className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-indigo-500"
-                          value={category}
-                          onChange={e => { setCategory(e.target.value); markDirty(); }}
-                      >
+                      <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                           <option value="">Select Category...</option>
                           {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                       </select>
                   </div>
               )}
 
-              {/* 4. COVER IMAGE (Optional for most) */}
-              {activeTab !== 'segment_updates' && type !== 'question' && (
+              {/* 4. COVER IMAGE (Common for all) */}
+              {type !== 'question' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cover Image</h3>
-                      {/* Tabs */}
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                          {activeTab === 'courses' ? 'Course Thumbnail' : 'Cover Image'}
+                      </h3>
                       <div className="flex bg-slate-100 p-1 rounded-lg">
                           <button onClick={() => setImageMethod('upload')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='upload' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>Upload</button>
                           <button onClick={() => setImageMethod('link')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='link' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>Link</button>
                       </div>
-
                       {imageMethod === 'upload' ? (
                           <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors relative">
                              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); markDirty(); } }} />
                              {imageFile ? <p className="text-xs font-bold text-indigo-600 truncate">{imageFile.name}</p> : <ImageIcon className="w-6 h-6 text-slate-300 mx-auto"/>}
                           </div>
                       ) : (
-                          <input className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
+                          <input className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
                       )}
                   </div>
               )}
