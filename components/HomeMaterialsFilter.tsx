@@ -47,6 +47,26 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     return activeSegmentData?.title || 'General';
   };
 
+  // --- 4. PERMALINK GENERATOR [NEW] ---
+  const getPostLink = (post: any) => {
+    // Determine the identifier (Slug preferred, ID fallback)
+    const identifier = post.slug || post.id;
+
+    // Logic for different post types (Robustness for future use)
+    if (post.type === 'updates') {
+        const seg = post.subjects?.groups?.segments;
+        const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
+        return `/resources/${segmentSlug}/updates/${identifier}`;
+    }
+    
+    if (post.type === 'news') return `/news/${identifier}`;
+    if (post.type === 'courses') return `/courses/${identifier}`;
+    if (post.type === 'ebooks') return `/ebooks/${identifier}`;
+
+    // Default for 'blog'
+    return `/blog/${identifier}`;
+  };
+
   return (
     <div className="w-full">
       
@@ -85,7 +105,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
           <div className="lg:col-span-7 flex flex-col">
               {latestPost ? (
                   <Link 
-                      href={`/blog/${latestPost.id}`}
+                      href={getPostLink(latestPost)} // <--- Updated Link
                       className="group relative flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 min-h-[350px]"
                   >
                       {/* Cover Image or Black Box Fallback */}
@@ -156,7 +176,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
                   sidePosts.map(post => (
                       <Link 
                           key={post.id}
-                          href={`/blog/${post.id}`}
+                          href={getPostLink(post)} // <--- Updated Link
                           className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group h-full"
                       >
                           {/* Thumbnail */}
@@ -165,7 +185,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
                                    <Image src={post.content_url} alt={post.title} fill className="object-cover group-hover:scale-110 transition-transform"/>
                                ) : (
                                    <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-                                       <Hash className="w-6 h-6" />
+                                        <Hash className="w-6 h-6" />
                                    </div>
                                )}
                           </div>

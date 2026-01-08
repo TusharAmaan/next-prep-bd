@@ -31,7 +31,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   
   // Pagination & View State
   const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(9); // Default to 9 for nice 3-col grid
+  const [itemsPerPage, setItemsPerPage] = useState(9); 
 
   // --- 1. SEGMENT RESOLUTION ---
   useEffect(() => {
@@ -90,10 +90,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
           subjects!left ( 
             title,
             groups!inner (
-              segments!inner ( id, title )
+              segments!inner ( id, title, slug ) 
             )
           )
         `,
+            // ^ UPDATED: Added 'slug' to segments select for URL generation
             { count: "exact" }
           )
           .eq("type", "blog")
@@ -112,10 +113,29 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (error) throw error;
 
         if (data) {
-          const formatted = data.map((item: any) => ({
-            ...item,
-            badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
-          }));
+          const formatted = data.map((item: any) => {
+            // --- REPLICATE SERVER-SIDE URL LOGIC HERE ---
+            let link = `/blog/${item.id}`; // Default Fallback
+
+            if (item.content_url) {
+                if (item.type === 'blog') {
+                    link = `/blog/${item.content_url}`;
+                } else if (item.type === 'news') {
+                    link = `/news/${item.content_url}`;
+                } else if (item.type === 'updates') {
+                    // Extract segment info safely
+                    const seg = item.subjects?.groups?.segments;
+                    const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
+                    link = `/resources/${segmentSlug}/updates/${item.content_url}`;
+                }
+            }
+
+            return {
+                ...item,
+                link, // Attach generated link
+                badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
+            };
+          });
           setBlogs(formatted);
         }
 
@@ -144,7 +164,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   };
 
   // --- 4. TRIGGER FETCH ---
-  // Added itemsPerPage to dependencies
   useEffect(() => {
     if (selectedSegment !== "All" && selectedSegmentId === null) return;
     
@@ -164,7 +183,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
   
   const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       setItemsPerPage(Number(e.target.value));
-      setPage(1); // Reset to page 1 when changing view limit
+      setPage(1);
   };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -198,12 +217,12 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
              </select>
              {selectedSegment !== "All" && availableCategories.length > 0 && (
                 <select 
-                    value={selectedCategory} 
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none animate-in fade-in"
+                   value={selectedCategory} 
+                   onChange={(e) => setSelectedCategory(e.target.value)}
+                   className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none animate-in fade-in"
                 >
-                    <option value="All">All Topics</option>
-                    {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                   <option value="All">All Topics</option>
+                   {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
              )}
           </div>
@@ -219,9 +238,9 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
              <div className="flex items-center gap-2">
                  <label className="text-xs font-bold text-slate-500 hidden sm:block">View:</label>
                  <select 
-                    value={itemsPerPage}
-                    onChange={handleItemsPerPageChange}
-                    className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                   value={itemsPerPage}
+                   onChange={handleItemsPerPageChange}
+                   className="bg-white border border-slate-200 text-xs font-bold text-slate-700 py-1.5 px-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                  >
                      <option value={9}>9 (Grid)</option>
                      <option value={10}>10</option>
@@ -248,7 +267,8 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
               {blogs.map((blog: any) => (
                   <Link
                     key={blog.id}
-                    href={`/blog/${blog.id}`}
+                    /* UPDATED: Uses the smart permalink calculated in fetchData or Server Side */
+                    href={blog.link || `/blog/${blog.id}`} 
                     className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
                   >
                     <div className="h-48 relative overflow-hidden border-b border-slate-100">
@@ -385,7 +405,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
             {/* Dynamic Topics */}
             {selectedSegment !== "All" && (
-                 <div className="bg-white rounded-2xl border border-blue-100 p-6 shadow-sm hidden lg:block animate-in slide-in-from-right-4 fade-in duration-500">
+                  <div className="bg-white rounded-2xl border border-blue-100 p-6 shadow-sm hidden lg:block animate-in slide-in-from-right-4 fade-in duration-500">
                     <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-4">
                         {selectedSegment} Topics
                     </h3>
@@ -402,7 +422,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                     ) : (
                         <p className="text-xs text-slate-400 italic">No topics found.</p>
                     )}
-                 </div>
+                  </div>
             )}
 
             {/* Socials */}
