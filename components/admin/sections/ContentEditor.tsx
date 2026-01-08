@@ -58,18 +58,42 @@ export default function ContentEditor({
                   />
               </div>
 
-              {/* RICH TEXT EDITOR (Hidden for some simple types if needed, but usually always good) */}
-              <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[400px]">
+              {/* RICH TEXT EDITOR (Full Functionality) */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[500px] shadow-inner">
                   <Editor
-                      apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" // <--- ADD KEY HERE
+                      apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
                       value={content}
                       onEditorChange={(c) => { setContent(c); markDirty(); }}
                       init={{
-                          height: 400,
-                          menubar: false,
-                          plugins: 'lists link image table code help wordcount',
-                          toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter | bullist numlist | link',
-                          content_style: 'body { font-family:Inter,sans-serif; font-size:14px }'
+                          height: 500,
+                          menubar: true, // Show the File/Edit/View menu bar
+                          // Comprehensive Plugin List
+                          plugins: [
+                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
+                            'autosave', 'codesample', 'directionality', 'visualchars'
+                          ],
+                          // Professional Toolbar layout
+                          toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+                            'bold italic underline strikethrough forecolor backcolor | ' +
+                            'alignleft aligncenter alignright alignjustify | ' +
+                            'bullist numlist outdent indent | ' +
+                            'link image media table charmap codesample | ' +
+                            'superscript subscript | removeformat | fullscreen preview code',
+                          content_style: `
+                            body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; }
+                            img { max-width: 100%; height: auto; border-radius: 8px; }
+                          `,
+                          branding: false, // Hides "Powered by Tiny"
+                          placeholder: 'Write your content here... Use $$ LaTeX $$ for math equations.',
+                          // Math / Code Sample config
+                          codesample_languages: [
+                            { text: 'HTML/XML', value: 'markup' },
+                            { text: 'JavaScript', value: 'javascript' },
+                            { text: 'CSS', value: 'css' },
+                            { text: 'LaTeX', value: 'latex' }
+                          ]
                       }}
                   />
               </div>
@@ -82,15 +106,15 @@ export default function ContentEditor({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Meta Title</label>
-                          <input className="w-full p-2 bg-white border border-slate-200 rounded text-sm" value={seoTitle} onChange={e => {setSeoTitle(e.target.value); markDirty()}} />
+                          <input className="w-full p-2 bg-white border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" value={seoTitle} onChange={e => {setSeoTitle(e.target.value); markDirty()}} />
                       </div>
                       <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Tags</label>
-                          <input className="w-full p-2 bg-white border border-slate-200 rounded text-sm" placeholder="comma, separated" value={tags} onChange={e => {setTags(e.target.value); markDirty()}} />
+                          <input className="w-full p-2 bg-white border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" placeholder="comma, separated" value={tags} onChange={e => {setTags(e.target.value); markDirty()}} />
                       </div>
                       <div className="md:col-span-2">
                           <label className="block text-xs font-bold text-slate-500 mb-1">Meta Description</label>
-                          <textarea className="w-full p-2 bg-white border border-slate-200 rounded text-sm h-20 resize-none" value={seoDesc} onChange={e => {setSeoDesc(e.target.value); markDirty()}} />
+                          <textarea className="w-full p-2 bg-white border border-slate-200 rounded text-sm h-20 resize-none outline-none focus:border-indigo-500" value={seoDesc} onChange={e => {setSeoDesc(e.target.value); markDirty()}} />
                       </div>
                   </div>
               </div>
@@ -131,16 +155,33 @@ export default function ContentEditor({
                       </select>
                   </div>
 
-                  {/* FILE UPLOAD (For PDFs, Routines, Results) */}
+                  {/* 2. TARGET SEGMENT */}
+                  {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
+                      <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-2">
+                              Target Segment <span className="text-red-500">*</span>
+                          </label>
+                          <select 
+                              className="w-full p-2.5 bg-white border-2 border-indigo-50 rounded-lg text-sm font-medium focus:border-indigo-500 outline-none"
+                              value={selectedSegment}
+                              onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}
+                          >
+                              <option value="">Select Segment...</option>
+                              {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                          </select>
+                      </div>
+                  )}
+
+                  {/* 3. FILE UPLOAD */}
                   {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">
-                              {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Upload File / Image'}
+                              {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Attachment (File/Image)'}
                           </label>
-                          <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative">
+                          <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative group">
                               <input 
                                   type="file" 
-                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                   onChange={e => { 
                                       if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); }
                                   }}
@@ -151,7 +192,7 @@ export default function ContentEditor({
                                   </div>
                               ) : (
                                   <div className="space-y-1">
-                                      <Upload className="w-6 h-6 text-slate-300 mx-auto"/>
+                                      <Upload className="w-6 h-6 text-slate-300 mx-auto group-hover:text-indigo-400 transition-colors"/>
                                       <p className="text-xs text-slate-400 font-bold">Click to upload file</p>
                                   </div>
                               )}
@@ -164,7 +205,7 @@ export default function ContentEditor({
                           </div>
                           <input 
                              placeholder="Paste external file URL..." 
-                             className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs"
+                             className="w-full mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none focus:border-indigo-300"
                              value={link}
                              onChange={e => { setLink(e.target.value); markDirty(); }}
                           />
@@ -176,7 +217,7 @@ export default function ContentEditor({
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">Video URL (YouTube/Vimeo)</label>
                           <input 
-                              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500"
                               placeholder="https://..."
                               value={link}
                               onChange={e => { setLink(e.target.value); markDirty(); }}
@@ -185,46 +226,20 @@ export default function ContentEditor({
                   )}
               </div>
 
-              {/* 2. HIERARCHY CARD */}
-              {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Target Audience</h3>
-                      
-                      <div className="space-y-3">
-                          <select 
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium"
-                              value={selectedSegment}
-                              onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}
-                          >
-                              <option value="">Select Segment (Required)</option>
-                              {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+              {/* HIERARCHY SUB-LEVELS (Materials Only) */}
+              {activeTab === 'materials' && selectedSegment && (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filters</h3>
+                      <select className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
+                          <option value="">Select Group...</option>
+                          {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
+                      </select>
+                      {selectedGroup && (
+                          <select className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-indigo-500" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}>
+                              <option value="">Select Subject...</option>
+                              {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                           </select>
-
-                          {/* Groups & Subjects (Only for Materials/Courses, NOT for Segment Updates usually) */}
-                          {activeTab !== 'segment_updates' && selectedSegment && (
-                              <>
-                                  <select 
-                                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium"
-                                      value={selectedGroup}
-                                      onChange={e => { handleGroupClick(e.target.value); markDirty(); }}
-                                  >
-                                      <option value="">Select Group (Optional)</option>
-                                      {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
-                                  </select>
-
-                                  {selectedGroup && (
-                                      <select 
-                                          className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium"
-                                          value={selectedSubject}
-                                          onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}
-                                      >
-                                          <option value="">Select Subject (Optional)</option>
-                                          {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
-                                      </select>
-                                  )}
-                              </>
-                          )}
-                      </div>
+                      )}
                   </div>
               )}
 
@@ -236,7 +251,7 @@ export default function ContentEditor({
                           <button onClick={openCategoryModal} className="text-[10px] font-bold text-indigo-600 hover:underline">+ New</button>
                       </div>
                       <select 
-                          className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium"
+                          className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-indigo-500"
                           value={category}
                           onChange={e => { setCategory(e.target.value); markDirty(); }}
                       >
@@ -262,7 +277,7 @@ export default function ContentEditor({
                              {imageFile ? <p className="text-xs font-bold text-indigo-600 truncate">{imageFile.name}</p> : <ImageIcon className="w-6 h-6 text-slate-300 mx-auto"/>}
                           </div>
                       ) : (
-                          <input className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
+                          <input className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
                       )}
                   </div>
               )}
