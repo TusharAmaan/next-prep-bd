@@ -12,7 +12,7 @@ import StatsCard from "@/components/admin/dashboard/StatsCard";
 import ActivityFeed from "@/components/admin/dashboard/ActivityFeed";
 import QuickStats from "@/components/admin/dashboard/QuickStats";
 import VersionNote from "@/components/admin/dashboard/VersionNote";
-import AdminHeader from "@/components/admin/AdminHeader"; // <--- IMPORTED
+import AdminHeader from "@/components/admin/AdminHeader"; 
 
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("overview"); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // --- DASHBOARD DATA ---
     const [stats, setStats] = useState({
@@ -41,6 +41,7 @@ export default function AdminDashboard() {
         users: { total: 0, trend: 0 }
     });
     const [activities, setActivities] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]); // <--- NEW STATE
     const [latestUpdate, setLatestUpdate] = useState<any>(null);
     const [showActivityModal, setShowActivityModal] = useState(false);
 
@@ -68,7 +69,8 @@ export default function AdminDashboard() {
             const [
                 matTotal, quesTotal, ebookTotal, userTotal,
                 matLast, quesLast, ebookLast, userLast,
-                recentUsers, recentResources, sysUpdate
+                recentUsers, recentResources, sysUpdate,
+                recentFeedbacks // <--- FETCH FEEDBACKS
             ] = await Promise.all([
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
                 supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
@@ -82,7 +84,8 @@ export default function AdminDashboard() {
                 
                 supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(5),
-                supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single()
+                supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single(),
+                supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10) // Latest 10 feedbacks
             ]);
 
             const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
@@ -97,14 +100,21 @@ export default function AdminDashboard() {
             const newUsers = (recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'joined the platform', created_at: u.created_at }));
             const newUploads = (recentResources.data || []).map(r => ({ type: 'resource', title: r.title, action: `added to ${r.type}`, created_at: r.created_at }));
             const combined = [...newUsers, ...newUploads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            
             setActivities(combined);
             setLatestUpdate(sysUpdate.data);
+            setNotifications(recentFeedbacks.data || []); // Set Notifications
         } catch (error) {
             console.error("Dashboard error:", error);
         } finally {
             setIsLoading(false);
         }
     }, []);
+
+    const markNotificationRead = async (id: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, status: 'read' } : n));
+        await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
+    };
 
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
@@ -139,7 +149,6 @@ export default function AdminDashboard() {
                         <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
                         <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">NextPrep Control</p>
                     </div>
-                    {/* Mobile Close Button */}
                     <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
                 </div>
                 
@@ -149,7 +158,6 @@ export default function AdminDashboard() {
                     </button>
 
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
-                    
                     {[
                       { id: 'materials', label: 'Study Materials', icon: FileStack },
                       { id: 'ebooks', label: 'eBooks', icon: BookOpen },
@@ -179,11 +187,13 @@ export default function AdminDashboard() {
             {/* MAIN CONTENT AREA */}
             <main className="flex-1 lg:ml-64 bg-[#F8FAFC] min-h-screen flex flex-col">
                 
-                {/* 1. ADMIN HEADER (Added Here) */}
+                {/* 1. ADMIN HEADER */}
                 <AdminHeader 
                     user={currentUser} 
                     activeTab={activeTab} 
                     toggleSidebar={() => setIsSidebarOpen(true)} 
+                    notifications={notifications}        // Pass Data
+                    onMarkRead={markNotificationRead}    // Pass Function
                 />
 
                 {/* 2. PAGE CONTENT */}
@@ -231,7 +241,6 @@ export default function AdminDashboard() {
                 </div>
             </main>
 
-            {/* MODALS */}
             {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className="text-slate-600 mb-6">{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button></div></div>}
             
             {showActivityModal && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"><div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95"><div className="p-6 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3><button onClick={() => setShowActivityModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-red-500"/></button></div><div className="p-6 overflow-y-auto custom-scrollbar space-y-4">{activities.map((item, i) => (<div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${item.type === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>{item.type === 'user' ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}</div><div><p className="text-sm font-bold text-slate-800">{item.title}</p><p className="text-xs text-slate-500 mt-1 flex items-center gap-1">{item.action} • <Clock className="w-3 h-3"/> {new Date(item.created_at).toLocaleDateString()}</p></div></div>))}{activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}</div></div></div>}
