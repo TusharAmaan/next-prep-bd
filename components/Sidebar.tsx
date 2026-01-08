@@ -192,63 +192,57 @@ export default function Sidebar() {
         </form>
       </div>
 
-      {/* 2. EXPLORE SECTIONS – MODERN CARD GRID */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
-                <LayoutGrid className="h-4 w-4 text-indigo-500" />
-                Explore Segments
-              </h3>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Jump directly into the resources you care about.
+{/* 2. EXPLORE SECTIONS – reworked for desktop/tablet */}
+<div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-3.5">
+    <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
+      <LayoutGrid className="h-4 w-4 text-indigo-500" />
+      Explore Segments
+    </h3>
+    <p className="mt-1 text-[11px] text-slate-500">
+      Jump directly into the resources you care about.
+    </p>
+  </div>
+
+  {segments.length === 0 ? (
+    <div className="px-4 py-6 text-center text-xs text-slate-400">
+      Loading sections...
+    </div>
+  ) : (
+    <div className="px-3 py-2 md:py-3">
+      {/* vertical list instead of 2‑column grid */}
+      <div className="flex flex-col gap-1.5">
+        {segments.map((seg) => (
+          <Link
+            key={seg.id}
+            href={`/resources/${seg.slug}`}
+            className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white/80 px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:-translate-y-[1px] hover:border-indigo-200 hover:bg-indigo-50/60 hover:shadow-md"
+          >
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ${getSegmentColor(
+                seg.slug
+              )}`}
+            >
+              {getSegmentIcon(seg.slug)}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900">
+                {seg.title}
+              </p>
+              {/* keep subtitle only on md+ so mobile stays clean */}
+              <p className="mt-0.5 hidden text-[11px] text-slate-400 md:block">
+                View resources for {seg.title}
               </p>
             </div>
-          </div>
-        </div>
 
-        {segments.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-slate-400">
-            Loading sections...
-          </div>
-        ) : (
-          <div className="p-3">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {segments.map((seg) => (
-                <Link
-                  key={seg.id}
-                  href={`/resources/${seg.slug}`}
-                  className="group relative flex items-stretch overflow-hidden rounded-xl border border-slate-100 bg-white/80 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:-translate-y-[1px] hover:border-indigo-200 hover:bg-indigo-50/40 hover:shadow-md"
-                >
-                  <div className="flex flex-1 items-center gap-3 p-3">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ${getSegmentColor(
-                        seg.slug
-                      )}`}
-                    >
-                      {getSegmentIcon(seg.slug)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900">
-                        {seg.title}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
-                        View resources for {seg.title}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center pr-3">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-50 text-slate-300 transition-all group-hover:bg-indigo-600 group-hover:text-white">
-                      <ChevronRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-indigo-500" />
+          </Link>
+        ))}
       </div>
+    </div>
+  )}
+</div>
 
       {/* 3. LATEST MATERIALS – MODERN LIST WITH PILL FILTERS */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
