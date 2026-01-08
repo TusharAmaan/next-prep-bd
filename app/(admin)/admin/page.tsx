@@ -145,22 +145,22 @@ export default function AdminDashboard() {
 
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
                     
-                    {/* STUDY MATERIALS (Now includes Questions) */}
                     <button onClick={() => setActiveTab('materials')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'materials' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <FileStack className="w-5 h-5"/> Study Materials
                     </button>
 
-                    {/* EBOOKS */}
                     <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'ebooks' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <BookOpen className="w-5 h-5"/> eBooks
                     </button>
 
-                    {/* SEGMENT UPDATES (Added) */}
                     <button onClick={() => setActiveTab('segment_updates')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'segment_updates' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <RefreshCw className="w-5 h-5"/> Segment Updates
                     </button>
 
-                    {/* NEWSROOM */}
+                    <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'courses' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <BookOpen className="w-5 h-5"/> Courses
+                    </button>
+
                     <button onClick={() => setActiveTab('news')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'news' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <Bell className="w-5 h-5"/> Newsroom
                     </button>
@@ -196,40 +196,11 @@ export default function AdminDashboard() {
                                     <p className="text-slate-500 mt-1">Welcome back, {currentUser?.full_name}</p>
                                 </div>
                             </div>
-{/* 2. STATS ROW (Refined UI) */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatsCard 
-                                    title="Total Materials" 
-                                    value={stats.materials.total} 
-                                    icon={<FileText className="w-6 h-6"/>} 
-                                    gradient="bg-gradient-to-br from-blue-600 to-blue-800"
-                                    trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} 
-                                    trendUp={stats.materials.trend >= 0} 
-                                />
-                                <StatsCard 
-                                    title="Total Questions" 
-                                    value={stats.questions.total} 
-                                    icon={<HelpCircle className="w-6 h-6"/>} 
-                                    gradient="bg-gradient-to-br from-amber-500 to-orange-600"
-                                    trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} 
-                                    trendUp={stats.questions.trend >= 0} 
-                                />
-                                <StatsCard 
-                                    title="Total eBooks" 
-                                    value={stats.ebooks.total} 
-                                    icon={<BookOpen className="w-6 h-6"/>} 
-                                    gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
-                                    trend={stats.ebooks.trend > 0 ? `+${stats.ebooks.trend}` : `${stats.ebooks.trend}`} 
-                                    trendUp={stats.ebooks.trend >= 0} 
-                                />
-                                <StatsCard 
-                                    title="Total Users" 
-                                    value={stats.users.total} 
-                                    icon={<Users className="w-6 h-6"/>} 
-                                    gradient="bg-gradient-to-br from-violet-600 to-purple-700"
-                                    trend={stats.users.trend > 0 ? `+${stats.users.trend}` : `${stats.users.trend}`} 
-                                    trendUp={stats.users.trend >= 0} 
-                                />
+                                <StatsCard title="Total Materials" value={stats.materials.total} icon={<FileText className="w-6 h-6"/>} gradient="bg-gradient-to-br from-blue-600 to-blue-800" trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} trendUp={stats.materials.trend >= 0} />
+                                <StatsCard title="Total Questions" value={stats.questions.total} icon={<HelpCircle className="w-6 h-6"/>} gradient="bg-gradient-to-br from-amber-500 to-orange-600" trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} trendUp={stats.questions.trend >= 0} />
+                                <StatsCard title="Total eBooks" value={stats.ebooks.total} icon={<BookOpen className="w-6 h-6"/>} gradient="bg-gradient-to-br from-emerald-500 to-teal-600" trend={stats.ebooks.trend > 0 ? `+${stats.ebooks.trend}` : `${stats.ebooks.trend}`} trendUp={stats.ebooks.trend >= 0} />
+                                <StatsCard title="Total Users" value={stats.users.total} icon={<Users className="w-6 h-6"/>} gradient="bg-gradient-to-br from-violet-600 to-purple-700" trend={stats.users.trend > 0 ? `+${stats.users.trend}` : `${stats.users.trend}`} trendUp={stats.users.trend >= 0} />
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
@@ -251,10 +222,10 @@ export default function AdminDashboard() {
                     {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />}
                     {activeTab === 'feedbacks' && <FeedbackManager />}
 
-                    {/* CONTENT MANAGER (Handles Materials, eBooks, News, Segment Updates) */}
-                    {['materials', 'news', 'ebooks', 'segment_updates'].includes(activeTab) && (
+                    {/* CONTENT MANAGER (Handles Materials, eBooks, News, Segment Updates, Courses) */}
+                    {['materials', 'news', 'ebooks', 'segment_updates', 'courses'].includes(activeTab) && (
                         <ContentManager 
-                            key={activeTab} // <--- CRITICAL FIX: Forces full reset when tab changes
+                            key={activeTab} // Forces refresh on tab change
                             activeTab={activeTab}
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}

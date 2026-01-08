@@ -13,6 +13,16 @@ import {
 } from "lucide-react";
 
 export default function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // --- 1. CONDITIONAL RENDERING (The Fix) ---
+  // If we are on an admin page, DO NOT render this public header.
+  // The Admin Dashboard has its own Sidebar navigation.
+  if (pathname?.startsWith('/admin')) {
+      return null; 
+  }
+
   // --- STATE ---
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,16 +45,13 @@ export default function Header() {
   const [mobileExpandResources, setMobileExpandResources] = useState(false);
   const [mobileExpandMore, setMobileExpandMore] = useState(false);
 
-  const pathname = usePathname();
-  const router = useRouter();
-  
   // Refs for click outside
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const resourcesRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. DATA FETCHING ---
+  // --- DATA FETCHING ---
   const fetchUserData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) { 
@@ -97,7 +104,7 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- 2. NOTIFICATIONS ---
+  // --- NOTIFICATIONS ---
   const fetchNotifications = async () => {
     const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
     if (data) {
@@ -119,7 +126,7 @@ export default function Header() {
     await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
   };
 
-  // --- 3. ACTIONS ---
+  // --- ACTIONS ---
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -190,8 +197,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-200 group-hover:rotate-3 transition-transform duration-300">N</div>
             <div className="flex flex-col -gap-1">
-                <span className={`text-xl font-black tracking-tight leading-none ${isScrolled ? "text-slate-900" : "text-slate-800"}`}>NextPrep</span>
-                <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Education</span>
+                <span className={`text-xl font-black tracking-tight leading-none ${isScrolled ? "text-slate-900" : "text-slate-800"}`}>NextPrepBD</span>
             </div>
           </Link>
 
@@ -404,7 +410,7 @@ export default function Header() {
             
             {/* 1. Mobile Search */}
             <form onSubmit={handleSearch} className="relative">
-                <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500 transition-all placeholder:font-normal" />
+                <input type="text" placeholder="What do you want to learn?" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500 transition-all placeholder:font-normal" />
                 <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"/>
             </form>
 
