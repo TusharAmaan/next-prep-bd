@@ -35,16 +35,6 @@ export default function PrintableBlogBody({
     documentTitle: `NextPrepBD-${post.title?.replace(/\s+/g, '-')}`,
   });
 
-  // Decide what the "Download" button does:
-  // 1. If there is a direct file URL (e.g. from Supabase Storage), download that.
-  // 2. If not, trigger the Print-to-PDF view of the current page.
-  const handleDownloadClick = (e: React.MouseEvent) => {
-    if (!attachmentUrl) {
-        e.preventDefault();
-        handlePrint();
-    }
-  };
-
   const readTime = Math.ceil((post.content_body?.split(" ").length || 0) / 200);
 
   return (
@@ -78,9 +68,6 @@ export default function PrintableBlogBody({
         </div>
 
         {/* === POST HEADER (Title & Meta) === */}
-        {/* We hide the title in print if you prefer the H1 inside the body content to be the only title. 
-            However, usually, the main title stays and H1s in body become H2s. 
-            I will keep it visible but optimized. */}
         <div className="mb-8 md:mb-10 border-b border-slate-100 pb-8 print:hidden">
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-6 leading-tight ">
                 {post.title}
@@ -112,16 +99,10 @@ export default function PrintableBlogBody({
                       </div>
                   </div>
                   
-                  {/* Logic: If URL exists, go there. Else, print page. */}
-                  {attachmentUrl ? (
-                      <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2">
-                          <Download className="w-4 h-4"/> Download PDF
-                      </a>
-                  ) : (
-                      <button onClick={handlePrint} className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2">
-                          <Download className="w-4 h-4"/> Save as PDF
-                      </button>
-                  )}
+                  {/* FIXED: Always use handlePrint to generate PDF of the content, ignoring attachmentUrl (images) */}
+                  <button onClick={handlePrint} className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2">
+                      <Download className="w-4 h-4"/> Save as PDF
+                  </button>
               </div>
           ) : (
               // LOGGED OUT STATE
