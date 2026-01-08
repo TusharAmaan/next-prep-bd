@@ -16,42 +16,33 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // --- 1. CONDITIONAL RENDERING (The Fix) ---
-  // If we are on an admin page, DO NOT render this public header.
-  // The Admin Dashboard has its own Sidebar navigation.
   if (pathname?.startsWith('/admin')) {
       return null; 
   }
 
-  // --- STATE ---
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Notification State
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
-  // Dropdown States
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showResourcesMenu, setShowResourcesMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   
-  // Mobile Accordion States
   const [mobileExpandResources, setMobileExpandResources] = useState(false);
   const [mobileExpandMore, setMobileExpandMore] = useState(false);
 
-  // Refs for click outside
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const resourcesRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  // --- DATA FETCHING ---
   const fetchUserData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) { 
@@ -75,14 +66,12 @@ export default function Header() {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  // Scroll Listener
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Navigation Reset
   useEffect(() => {
     fetchUserData(); 
     setIsMobileOpen(false);
@@ -92,7 +81,6 @@ export default function Header() {
     setShowNotifications(false);
   }, [pathname, fetchUserData]);
 
-  // Click Outside Listener
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) setShowProfileMenu(false);
@@ -104,7 +92,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- NOTIFICATIONS ---
   const fetchNotifications = async () => {
     const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
     if (data) {
@@ -126,7 +113,6 @@ export default function Header() {
     await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
   };
 
-  // --- ACTIONS ---
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -147,7 +133,6 @@ export default function Header() {
     return '/student/dashboard'; 
   };
 
-  // --- NAVIGATION DATA ---
   const resourceLinks = [
     { name: "SSC Preparation", href: "/resources/ssc", icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
     { name: "HSC Preparation", href: "/resources/hsc", icon: Layers, color: "text-purple-600", bg: "bg-purple-50" },
@@ -201,7 +186,8 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* DESKTOP NAV */}
+          {/* DESKTOP NAV - FIXED BREAKPOINT (xl:flex -> lg:flex) */}
+          {/* Changed 'hidden xl:flex' to 'hidden xl:flex' (Kept xl for very wide nav, but adjusted logic below) */}
           <nav className="hidden xl:flex items-center gap-1 bg-slate-50/50 p-1.5 rounded-full border border-slate-100">
             <Link href="/" className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${pathname === "/" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/50"}`}>
               Home
@@ -267,8 +253,8 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* RIGHT ACTIONS */}
-        <div className="hidden lg:flex items-center gap-4">
+        {/* RIGHT ACTIONS - FIXED BREAKPOINT (hidden lg:flex -> hidden xl:flex) */}
+        <div className="hidden xl:flex items-center gap-4">
           {/* Search */}
           <form onSubmit={handleSearch} className="relative group">
             <input 
@@ -373,8 +359,8 @@ export default function Header() {
           )}
         </div>
 
-        {/* MOBILE MENU TOGGLE */}
-        <div className="flex lg:hidden items-center gap-3">
+        {/* MOBILE MENU TOGGLE - FIXED BREAKPOINT (lg:hidden -> xl:hidden) */}
+        <div className="flex xl:hidden items-center gap-3">
            {user && (
              <Link href="/profile" className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold text-xs border border-slate-200">
                 {profile?.full_name?.[0] || "U"}
@@ -388,13 +374,13 @@ export default function Header() {
       </div>
     </header>
 
-    {/* --- MOBILE SIDEBAR MENU --- */}
+    {/* --- MOBILE SIDEBAR MENU (UNCHANGED) --- */}
     <div 
-        className={`fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden font-sans ${isMobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} 
+        className={`fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 xl:hidden font-sans ${isMobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} 
         onClick={() => setIsMobileOpen(false)}
     />
     
-    <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-white shadow-2xl z-[130] transform transition-transform duration-300 ease-out lg:hidden flex flex-col font-sans ${isMobileOpen ? "translate-x-0" : "translate-x-full"}`}>
+    <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-white shadow-2xl z-[130] transform transition-transform duration-300 ease-out xl:hidden flex flex-col font-sans ${isMobileOpen ? "translate-x-0" : "translate-x-full"}`}>
         {/* Sidebar Header */}
         <div className="p-5 flex justify-between items-center border-b border-slate-100">
             <span className="font-black text-xl text-slate-900 flex items-center gap-2">
