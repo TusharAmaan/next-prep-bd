@@ -74,7 +74,7 @@ export default function ContentEditor({
                   {/* --- PERMALINK (SLUG) FIELD --- */}
                   <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <Globe className="w-4 h-4 text-slate-400 shrink-0"/>
-                      <span className="text-xs font-bold text-slate-500 shrink-0">nextprepbd.com/courses/</span>
+                      <span className="text-xs font-bold text-slate-500 shrink-0">nextprepbd.com/</span>
                       <input 
                         className="bg-transparent text-sm font-bold text-slate-700 w-full outline-none placeholder:text-slate-300"
                         placeholder="auto-generated-slug"
