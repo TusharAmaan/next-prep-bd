@@ -50,10 +50,13 @@ export default function Footer() {
           <ul className="space-y-3 text-sm text-gray-400 font-medium">
             <li><Link href="/find-tutor" className="hover:text-blue-500 transition-colors">Find a Tutor</Link></li>
             <li><Link href="/blog" className="hover:text-blue-500 transition-colors">Class Blogs</Link></li>
-            <li><Link href="/news" className="hover:text-blue-500 transition-colors">Newsroom</Link></li>
+            <li><Link href="/ebooks" className="hover:text-blue-500 transition-colors">Free eBooks</Link></li>
             <li><Link href="/resources/ssc" className="hover:text-blue-500 transition-colors">SSC Guide</Link></li>
             <li><Link href="/resources/hsc" className="hover:text-blue-500 transition-colors">HSC Guide</Link></li>
-            <li><Link href="/ebooks" className="hover:text-blue-500 transition-colors">Free eBooks</Link></li>
+            <li><Link href="/resources/university-admission" className="hover:text-blue-500 transition-colors">University Admission</Link></li>
+            <li><Link href="/resources/university-admission/science/medical-admission" className="hover:text-blue-500 transition-colors">Medical Admission</Link></li>
+            <li><Link href="/resources/master's-admission/mba/iba" className="hover:text-blue-500 transition-colors">IBA MBA</Link></li>
+            <li><Link href="/resources/job-prep" className="hover:text-blue-500 transition-colors">Job Preparation</Link></li>
           </ul>
         </div>
 
