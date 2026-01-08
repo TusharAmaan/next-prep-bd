@@ -51,6 +51,17 @@ export default async function GroupPage({
     return gradients[index % gradients.length];
   };
 
+  // Helper to get Subject Name safely
+  const getSubjectName = (resource: any) => {
+    if (Array.isArray(resource.subjects) && resource.subjects.length > 0) {
+        return resource.subjects[0].title;
+    }
+    if (resource.subjects && typeof resource.subjects === 'object' && resource.subjects.title) {
+        return resource.subjects.title;
+    }
+    return "Common";
+  };
+
   // =========================================================
   //  A. LIST VIEW MODE (Matches SegmentPage Style)
   // =========================================================
@@ -58,9 +69,6 @@ export default async function GroupPage({
       let allItems = [];
 
       if (type === 'update') {
-          // Fetch Updates relative to this group (if any specific group updates exist, usually they are segment wide but let's keep logic consistent)
-          // Note: Often updates are segment-wide. If you want group-specific, you'd need a group_id column in updates or filter differently.
-          // Assuming segment-wide updates are relevant here too:
           const { data: updates } = await supabase
             .from("segment_updates")
             .select("id, title, type, created_at, attachment_url") 
@@ -133,21 +141,18 @@ export default async function GroupPage({
   // Parallel Fetching
   const [
     { data: subjects },
-    { data: updates }, // Segment wide updates are usually relevant for groups
+    { data: updates }, 
     { data: blogs },
     { data: materials },
     { data: questions }
   ] = await Promise.all([
     supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id"),
     supabase.from("segment_updates").select("id, type, title, created_at").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(3),
-    supabase.from("resources").select("*").eq("group_id", groupData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
+    // Updated blogs query to include subjects(title) for the card label
+    supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
     supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5),
     supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5)
   ]);
-
-  const routine = updates?.find(u => u.type === 'routine');
-  const syllabus = updates?.find(u => u.type === 'syllabus');
-  const result = updates?.find(u => u.type === 'exam_result');
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
@@ -178,7 +183,7 @@ export default async function GroupPage({
             
             <div className="lg:col-span-8 space-y-16">
                 
-                {/* 1. SUBJECTS (Modern Cards) */}
+                {/* 1. SUBJECTS */}
                 {subjects && subjects.length > 0 && (
                     <section>
                         <div className="flex items-center gap-3 mb-6">
@@ -213,16 +218,29 @@ export default async function GroupPage({
                 )}
 
 
-                {/* 5. LATEST BLOGS */}
+                {/* 2. LATEST BLOGS */}
                 <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
-                        <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
+                            <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
+                        </div>
+                        <Link 
+                            href={`/blog?segment=${segment_slug}&group=${group_slug}`} 
+                            className="self-start sm:self-auto text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors flex items-center"
+                        >
+                            View All <ChevronRight className="w-4 h-4" />
+                        </Link>
                     </div>
+
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {blogs.map((blog) => (
-                                <Link key={blog.id} href={`/blog/${blog.id}`} className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                            {blogs.map((blog: any) => (
+                                <Link 
+                                    key={blog.id} 
+                                    href={blog.slug ? `/blog/${blog.slug}` : `/blog/${blog.id}`} 
+                                    className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                                >
                                     <div className="h-40 bg-gray-100 relative overflow-hidden border-b border-slate-100">
                                         {blog.content_url ? (
                                             <Image src={blog.content_url} alt={blog.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -231,14 +249,15 @@ export default async function GroupPage({
                                                 <h4 className="text-white font-bold text-xs text-center line-clamp-2 px-2">{blog.title}</h4>
                                             </div>
                                         )}
+                                        {/* Subject Name or 'Common' */}
                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">
-                                            {blog.category || 'Article'}
+                                            {getSubjectName(blog)}
                                         </div>
                                     </div>
                                     <div className="p-5 flex-1 flex flex-col">
                                         <h3 className="font-bold text-base text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
-                                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-400 font-bold border-t border-slate-100">
-                                            <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                                        <div className="mt-auto pt-4 flex items-center justify-end text-xs text-slate-400 font-bold border-t border-slate-100">
+                                            {/* Date Removed */}
                                             <span className="text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">Read <ChevronRight className="w-3 h-3"/></span>
                                         </div>
                                     </div>
@@ -256,20 +275,20 @@ export default async function GroupPage({
                     </div>
                     {materials && materials.length > 0 ? (
                         <div className="space-y-3">
-                            {materials.map((item) => (
+                            {materials.map((item: any) => (
                                 <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-4 group">
                                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${item.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
                                         {item.type === 'pdf' ? <FileText className="w-5 h-5"/> : <PlayCircle className="w-5 h-5"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-slate-800 text-sm md:text-base group-hover:text-indigo-600 transition-colors mb-1 truncate">
-                                            <Link href={`/material/${item.slug || item.id}`} className="block">{item.title}</Link>
+                                            <Link href={item.slug ? `/material/${item.slug}` : `/material/${item.id}`} className="block">{item.title}</Link>
                                         </h3>
                                         <div className="flex items-center gap-3 text-xs text-slate-400 font-bold">
-                                            <span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{Array.isArray(item.subjects) ? item.subjects[0]?.title : 'General'}</span>
+                                            <span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{getSubjectName(item) === 'Common' ? 'General' : getSubjectName(item)}</span>
                                         </div>
                                     </div>
-                                    <Link href={`/material/${item.slug || item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
+                                    <Link href={item.slug ? `/material/${item.slug}` : `/material/${item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
                                         {item.type === 'pdf' ? 'Download' : 'Watch'}
                                     </Link>
                                 </div>
@@ -282,38 +301,35 @@ export default async function GroupPage({
                 <section>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-3">
-                            <span className="p-2 bg-amber-100 text-amber-600 rounded-lg"><HelpCircle className="w-6 h-6" /></span>
-                            <h2 className="text-xl font-bold text-slate-900">Previous Questions</h2>
+                            <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-lg">?</span>
+                            <h2 className="text-xl font-bold text-slate-900">Question Bank</h2>
                         </div>
-                        <Link href={`/resources/${segment_slug}/${group_slug}?type=question`} className="self-start sm:self-auto text-sm font-bold text-amber-600 hover:bg-amber-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                        <Link href={`/resources/${segment_slug}/${group_slug}?type=question`} className="self-start sm:self-auto text-sm font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
                             View All <ChevronRight className="w-4 h-4" />
                         </Link>
                     </div>
-                    {questions && questions.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-3">
-                            {questions.map((q) => (
-                                <Link href={`/question/${q.id}`} key={q.id} className="block bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-amber-300 hover:shadow-md transition-all group">
-                                    <h3 className="font-bold text-slate-800 text-base md:text-lg mb-3 leading-snug group-hover:text-amber-700 transition-colors">
-                                        {q.title}
-                                    </h3>
-                                    <div className="flex items-center justify-between gap-2">
-                                         <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-blue-700 to-slate-900 text-white shadow-sm">
-                                                {Array.isArray(q.subjects) ? q.subjects[0]?.title : 'Question'}
-                                            </span>
-                                         </div>
-                                         <span className="text-xs font-bold text-slate-400 flex items-center gap-1 group-hover:text-amber-600 transition-colors uppercase tracking-wide">
-                                            Solution <ChevronRight className="w-3 h-3" />
-                                         </span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="bg-amber-50/50 p-8 rounded-xl border border-dashed border-amber-200 text-center text-amber-700/50 text-sm font-bold">
-                            No questions available yet.
-                        </div>
-                    )}
+
+                    <div className="bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
+                        {questions && questions.length > 0 ? (
+                            <div className="flex flex-col divide-y divide-slate-100">
+                                {questions.map((q: any) => (
+                                    <Link href={q.slug ? `/question/${q.slug}` : `/question/${q.id}`} key={q.id} className="flex items-center gap-4 p-5 hover:bg-slate-50 transition-all group">
+                                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shrink-0">Q</div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-slate-800 text-sm md:text-base truncate group-hover:text-indigo-600 transition-colors">{q.title}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-[10px] font-black text-white bg-indigo-600 px-2 py-0.5 rounded shadow-sm">{getSubjectName(q)}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(q.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600" />
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-10 text-center text-slate-400 text-sm font-bold">No questions uploaded yet.</div>
+                        )}
+                    </div>
                 </section>
             </div>
 

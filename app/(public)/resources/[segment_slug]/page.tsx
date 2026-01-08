@@ -285,18 +285,27 @@ export default async function SegmentPage({
                     </div>
                 </section>
 
-                {/* 3. LATEST BLOGS [UPDATED PERMALINK] */}
+{/* 3. LATEST BLOGS */}
                 <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
-                        <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
+                    {/* Header with View All Link */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-purple-100 text-purple-600 rounded-lg text-lg">✍️</span>
+                            <h2 className="text-xl font-bold text-slate-900">Latest Articles</h2>
+                        </div>
+                        <Link 
+                            href={`/blog?segment=${segment_slug}`} 
+                            className="self-start sm:self-auto text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors flex items-center"
+                        >
+                            View All <ChevronRight className="w-4 h-4" />
+                        </Link>
                     </div>
+
                     {blogs && blogs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {blogs.map((blog: any) => (
                                 <Link 
                                     key={blog.id} 
-                                    /* PERMALINK UPDATE: Uses slug if available, else ID */
                                     href={blog.slug ? `/blog/${blog.slug}` : `/blog/${blog.id}`} 
                                     className="group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
                                 >
