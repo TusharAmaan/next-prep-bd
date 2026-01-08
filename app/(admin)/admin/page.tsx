@@ -12,6 +12,7 @@ import StatsCard from "@/components/admin/dashboard/StatsCard";
 import ActivityFeed from "@/components/admin/dashboard/ActivityFeed";
 import QuickStats from "@/components/admin/dashboard/QuickStats";
 import VersionNote from "@/components/admin/dashboard/VersionNote";
+import AdminHeader from "@/components/admin/AdminHeader"; // <--- IMPORTED
 
 import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("overview"); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
 
     // --- DASHBOARD DATA ---
     const [stats, setStats] = useState({
@@ -49,11 +51,9 @@ export default function AdminDashboard() {
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryCounts, setCategoryCounts] = useState<any>({});
 
-    // Selection States
     const [selectedSegment, setSelectedSegment] = useState("");
     const [selectedGroup, setSelectedGroup] = useState("");
     
-    // Modal Helpers
     const [modal, setModal] = useState({ isOpen: false, type: '', message: '' });
     const showSuccess = (msg: string) => setModal({ isOpen: true, type: 'success', message: msg });
     const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
@@ -130,72 +130,67 @@ export default function AdminDashboard() {
     if (isLoading && !currentUser) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pt-32">
+        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
             
-            <aside className="w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl">
-                <div className="px-6 py-4 mb-4">
-                    <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
-                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">NextPrep Control</p>
+            {/* SIDEBAR (Responsive) */}
+            <aside className={`w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="px-6 py-4 mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
+                        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">NextPrep Control</p>
+                    </div>
+                    {/* Mobile Close Button */}
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
                 </div>
                 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                    <button onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
 
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
                     
-                    <button onClick={() => setActiveTab('materials')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'materials' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <FileStack className="w-5 h-5"/> Study Materials
-                    </button>
-
-                    <button onClick={() => setActiveTab('ebooks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'ebooks' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <BookOpen className="w-5 h-5"/> eBooks
-                    </button>
-
-                    <button onClick={() => setActiveTab('segment_updates')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'segment_updates' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <RefreshCw className="w-5 h-5"/> Segment Updates
-                    </button>
-
-                    <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'courses' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <BookOpen className="w-5 h-5"/> Courses
-                    </button>
-
-                    <button onClick={() => setActiveTab('news')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'news' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <Bell className="w-5 h-5"/> Newsroom
-                    </button>
+                    {[
+                      { id: 'materials', label: 'Study Materials', icon: FileStack },
+                      { id: 'ebooks', label: 'eBooks', icon: BookOpen },
+                      { id: 'segment_updates', label: 'Segment Updates', icon: RefreshCw },
+                      { id: 'courses', label: 'Courses', icon: BookOpen },
+                      { id: 'news', label: 'Newsroom', icon: Bell }
+                    ].map(item => (
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                            <item.icon className="w-5 h-5"/> {item.label}
+                        </button>
+                    ))}
 
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Configuration</div>
-                    <button onClick={() => setActiveTab('hierarchy')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'hierarchy' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <Layers className="w-5 h-5"/> Hierarchy
-                    </button>
-                    <button onClick={() => setActiveTab('categories')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'categories' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <Settings className="w-5 h-5"/> Categories
-                    </button>
-
-                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">People</div>
-                    <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <Users className="w-5 h-5"/> User Management
-                    </button>
-
-                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Support</div>
-                    <button onClick={() => setActiveTab('feedbacks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'feedbacks' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                        <MessageSquare className="w-5 h-5"/> Feedbacks
-                    </button>
+                    {[
+                      { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
+                      { id: 'categories', label: 'Categories', icon: Settings },
+                      { id: 'users', label: 'User Management', icon: Users },
+                      { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare }
+                    ].map(item => (
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                            <item.icon className="w-5 h-5"/> {item.label}
+                        </button>
+                    ))}
                 </nav>
             </aside>
 
-            <main className="flex-1 lg:ml-64 p-6 lg:p-10 overflow-x-hidden min-h-screen">
-                <div className="max-w-[1600px] mx-auto space-y-8">
+            {/* MAIN CONTENT AREA */}
+            <main className="flex-1 lg:ml-64 bg-[#F8FAFC] min-h-screen flex flex-col">
+                
+                {/* 1. ADMIN HEADER (Added Here) */}
+                <AdminHeader 
+                    user={currentUser} 
+                    activeTab={activeTab} 
+                    toggleSidebar={() => setIsSidebarOpen(true)} 
+                />
+
+                {/* 2. PAGE CONTENT */}
+                <div className="p-6 lg:p-10 max-w-[1600px] mx-auto w-full space-y-8">
                     
                     {activeTab === 'overview' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
-                                    <p className="text-slate-500 mt-1">Welcome back, {currentUser?.full_name}</p>
-                                </div>
-                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <StatsCard title="Total Materials" value={stats.materials.total} icon={<FileText className="w-6 h-6"/>} gradient="bg-gradient-to-br from-blue-600 to-blue-800" trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} trendUp={stats.materials.trend >= 0} />
                                 <StatsCard title="Total Questions" value={stats.questions.total} icon={<HelpCircle className="w-6 h-6"/>} gradient="bg-gradient-to-br from-amber-500 to-orange-600" trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} trendUp={stats.questions.trend >= 0} />
@@ -222,10 +217,9 @@ export default function AdminDashboard() {
                     {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />}
                     {activeTab === 'feedbacks' && <FeedbackManager />}
 
-                    {/* CONTENT MANAGER (Handles Materials, eBooks, News, Segment Updates, Courses) */}
                     {['materials', 'news', 'ebooks', 'segment_updates', 'courses'].includes(activeTab) && (
                         <ContentManager 
-                            key={activeTab} // Forces refresh on tab change
+                            key={activeTab} 
                             activeTab={activeTab}
                             segments={segments} groups={groups} subjects={subjects} categories={categories}
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
@@ -237,6 +231,7 @@ export default function AdminDashboard() {
                 </div>
             </main>
 
+            {/* MODALS */}
             {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className="text-slate-600 mb-6">{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button></div></div>}
             
             {showActivityModal && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"><div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95"><div className="p-6 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3><button onClick={() => setShowActivityModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-red-500"/></button></div><div className="p-6 overflow-y-auto custom-scrollbar space-y-4">{activities.map((item, i) => (<div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${item.type === 'user' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>{item.type === 'user' ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}</div><div><p className="text-sm font-bold text-slate-800">{item.title}</p><p className="text-xs text-slate-500 mt-1 flex items-center gap-1">{item.action} • <Clock className="w-3 h-3"/> {new Date(item.created_at).toLocaleDateString()}</p></div></div>))}{activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}</div></div></div>}

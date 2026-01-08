@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { 
   Trash2, Tag, Plus, Filter, RefreshCw, X, 
-  FileText, Calendar, ChevronLeft, ChevronRight, Loader2, ExternalLink
+  FileText, Calendar, ChevronLeft, ChevronRight, Loader2, ExternalLink,
+  BookOpen, Briefcase, Bell
 } from "lucide-react";
 
 export default function CategoryManager({ 
@@ -33,18 +34,27 @@ export default function CategoryManager({
   const [totalLinked, setTotalLinked] = useState(0);
   const POSTS_PER_PAGE = 5;
 
-  // --- 2. FETCH COUNTS (Fixes the 0 items issue) ---
+  // --- HELPER: GET TABLE NAME ---
+  const getTableForType = (type: string) => {
+      const t = (type || 'general').toLowerCase();
+      if (t === 'ebook') return 'ebooks';
+      if (t === 'course') return 'courses';
+      if (t === 'news') return 'news';
+      return 'resources'; // Default for blog, question, pdf, general
+  };
+
+  // --- 2. FETCH COUNTS (FIXED: Queries correct tables) ---
   const fetchCounts = useCallback(async () => {
     if (categories.length === 0) return;
     setLoadingCounts(true);
     const newCounts: Record<string, number> = {};
 
-    // We fetch counts for all categories in parallel
+    // Parallel fetch for speed
     await Promise.all(categories.map(async (cat: any) => {
-        // NOTE: This assumes your 'resources' table has a 'category' column storing the name
-        // If you use category_id, change .eq('category', cat.name) to .eq('category_id', cat.id)
+        const table = getTableForType(cat.type);
+        
         const { count } = await supabase
-            .from('resources')
+            .from(table)
             .select('*', { count: 'exact', head: true })
             .eq('category', cat.name); 
         
@@ -55,22 +65,22 @@ export default function CategoryManager({
     setLoadingCounts(false);
   }, [categories]);
 
-  // Load counts when categories change
   useEffect(() => {
     fetchCounts();
   }, [fetchCounts]);
 
 
-  // --- 3. FETCH LINKED POSTS (For the Popup) ---
-  const fetchLinkedPosts = async (categoryName: string, page: number) => {
+  // --- 3. FETCH LINKED POSTS (FIXED: Queries correct tables) ---
+  const fetchLinkedPosts = async (category: any, page: number) => {
     setPostsLoading(true);
     const start = page * POSTS_PER_PAGE;
     const end = start + POSTS_PER_PAGE - 1;
+    const table = getTableForType(category.type);
 
     const { data, count, error } = await supabase
-        .from('resources')
+        .from(table)
         .select('*', { count: 'exact' })
-        .eq('category', categoryName)
+        .eq('category', category.name)
         .range(start, end)
         .order('created_at', { ascending: false });
 
@@ -84,24 +94,29 @@ export default function CategoryManager({
   const openCategoryDetails = (cat: any) => {
     setViewingCategory(cat);
     setPostPage(0);
-    fetchLinkedPosts(cat.name, 0);
+    fetchLinkedPosts(cat, 0);
   };
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 0) return;
     setPostPage(newPage);
-    if (viewingCategory) fetchLinkedPosts(viewingCategory.name, newPage);
+    if (viewingCategory) fetchLinkedPosts(viewingCategory, newPage);
   };
 
 
   // --- 4. ACTIONS (Create/Delete) ---
   const handleDelete = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation(); // Prevent opening the modal
+    e.stopPropagation(); 
     if (!confirm("Delete this category? Items linked to it might lose their tag.")) return;
     setIsDeleting(id);
     const { error } = await supabase.from('categories').delete().eq('id', id);
     setIsDeleting(null);
-    if (!error) fetchCategories();
+    if (!error) {
+        fetchCategories();
+        // Optimistic update
+        const remaining = categories.filter((c:any) => c.id !== id);
+        // We rely on parent to refetch, but we can re-trigger counts if needed
+    }
   };
 
   const handleAdd = async () => {
@@ -184,7 +199,7 @@ export default function CategoryManager({
              {filteredList.map((cat: any) => (
                 <div 
                     key={cat.id} 
-                    onClick={() => openCategoryDetails(cat)} // CLICKABLE
+                    onClick={() => openCategoryDetails(cat)} 
                     className="bg-white p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group relative flex flex-col justify-between h-32 cursor-pointer"
                 >
                     <div className="flex justify-between items-start">
@@ -192,6 +207,7 @@ export default function CategoryManager({
                             (cat.type || 'general') === 'news' ? 'bg-blue-50 text-blue-600' :
                             (cat.type || 'general') === 'ebook' ? 'bg-orange-50 text-orange-600' :
                             (cat.type || 'general') === 'blog' ? 'bg-purple-50 text-purple-600' :
+                            (cat.type || 'general') === 'course' ? 'bg-emerald-50 text-emerald-600' :
                             (cat.type || 'general') === 'question' ? 'bg-rose-50 text-rose-600' :
                             'bg-slate-100 text-slate-500'
                         }`}>
@@ -281,18 +297,30 @@ export default function CategoryManager({
                         <div className="space-y-3">
                             {linkedPosts.map((post) => (
                                 <div key={post.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 hover:border-indigo-200 transition-colors">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${post.type === 'video' ? 'bg-red-50 text-red-500' : post.type === 'pdf' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                        <FileText className="w-5 h-5"/>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                        post.type === 'video' ? 'bg-red-50 text-red-500' : 
+                                        post.type === 'pdf' ? 'bg-blue-50 text-blue-500' : 
+                                        viewingCategory.type === 'course' ? 'bg-emerald-50 text-emerald-600' :
+                                        viewingCategory.type === 'ebook' ? 'bg-orange-50 text-orange-600' :
+                                        'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        {viewingCategory.type === 'course' ? <Briefcase className="w-5 h-5"/> : 
+                                         viewingCategory.type === 'ebook' ? <BookOpen className="w-5 h-5"/> : 
+                                         viewingCategory.type === 'news' ? <Bell className="w-5 h-5"/> :
+                                         <FileText className="w-5 h-5"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h5 className="font-bold text-slate-800 truncate">{post.title}</h5>
+                                        {/* Handle different title fields (Courses use 'title', eBooks use 'title', Resources use 'title') */}
+                                        <h5 className="font-bold text-slate-800 truncate">{post.title || "Untitled"}</h5>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
-                                            <span className="uppercase">{post.type}</span>
+                                            <span className="uppercase">{viewingCategory.type === 'general' ? post.type : viewingCategory.type}</span>
                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(post.created_at).toLocaleDateString()}</span>
                                         </div>
                                     </div>
-                                    {post.content_url && (
-                                        <a href={post.content_url} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-600">
+                                    
+                                    {/* Link logic varies by table */}
+                                    {(post.content_url || post.pdf_url || post.enrollment_link) && (
+                                        <a href={post.content_url || post.pdf_url || post.enrollment_link} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-600">
                                             <ExternalLink className="w-4 h-4"/>
                                         </a>
                                     )}
