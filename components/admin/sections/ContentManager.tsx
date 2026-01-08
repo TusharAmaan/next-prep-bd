@@ -83,7 +83,7 @@ export default function ContentManager({
         setIsDirty(false);
     };
 
-    // --- FETCH DATA (With Fixed Filtering) ---
+    // --- FETCH DATA ---
     const fetchContent = useCallback(async () => {
         let tableName = "";
         if (activeTab === 'materials') tableName = "resources";
@@ -103,13 +103,24 @@ export default function ContentManager({
             else if (selSeg) query = query.eq("segment_id", selSeg);
         }
 
-        // Type Filters (USING ILIKE FOR CASE-INSENSITIVITY)
+        // Type Filters (Using ILIKE for case-insensitivity)
         if (activeTab === 'materials' && typeFilter !== 'all') query = query.ilike("type", typeFilter);
         if (activeTab === 'segment_updates' && updateTypeFilter !== 'all') query = query.ilike("type", updateTypeFilter);
         if ((activeTab === 'ebooks' || activeTab === 'news') && catFilter !== 'all') query = query.eq("category", catFilter);
         
         // Search
         if (search) query = query.ilike("title", `%${search}%`);
+
+        // Date Filtering
+        if (dateFilter === 'this_month') {
+            const start = new Date(); start.setDate(1);
+            query = query.gte("created_at", start.toISOString());
+        } else if (dateFilter === 'last_6_months') {
+            const start = new Date(); start.setMonth(start.getMonth() - 6);
+            query = query.gte("created_at", start.toISOString());
+        } else if (startDate && endDate) {
+            query = query.gte("created_at", startDate).lte("created_at", endDate);
+        }
 
         // Pagination & Sort
         const from = page * itemsPerPage;
@@ -120,14 +131,24 @@ export default function ContentManager({
             setDataList(data);
             if (count !== null) setTotalCount(count);
         }
-    }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig]);
+    }, [activeTab, selSeg, selGrp, selSub, search, typeFilter, updateTypeFilter, catFilter, page, itemsPerPage, sortConfig, dateFilter, startDate, endDate]);
 
+    // 1. RESET EFFECT (Only runs when changing Tabs)
     useEffect(() => { 
         setEditorMode(false); 
-        resetForms();         
-        setPage(0);           
-        fetchContent();       
+        resetForms();
+        // We do NOT fetch here. We reset filters if needed, or keep them.
+        // Usually better to reset filters on tab change:
+        setSelSeg(""); setSelGrp(""); setSelSub(""); 
+        setTypeFilter("all"); setUpdateTypeFilter("all"); setSearch("");
+        setPage(0);
     }, [activeTab]);
+
+    // 2. FETCH EFFECT (Runs when any dependency of fetchContent changes)
+    // This includes: filters, pagination, sorting, search, AND activeTab
+    useEffect(() => {
+        fetchContent();
+    }, [fetchContent]);
 
     // --- ACTIONS ---
     const handleAddNew = () => {
@@ -289,7 +310,7 @@ export default function ContentManager({
                 typeFilter={typeFilter} setTypeFilter={setTypeFilter}
                 updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
                 catFilter={catFilter} setCatFilter={setCatFilter} categories={categories}
-                showHierarchy={['materials', 'courses'].includes(activeTab)}
+                showHierarchy={['materials', 'courses', 'segment_updates'].includes(activeTab)}
                 showSegmentOnly={activeTab === 'segment_updates'}
                 showType={activeTab === 'materials'}
                 showUpdateType={activeTab === 'segment_updates'}
