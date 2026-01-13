@@ -61,5 +61,5 @@ export async function createCourse(formData: FormData) {
   if (error) return { error: error.message };
 
   // Redirect to the Course Manager to add Modules/Lessons
-  redirect(`/tutor/dashboard/course/${data.id}`);
+  redirect(`/tutor/dashboard/courses/${data.id}`);
 }
