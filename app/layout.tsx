@@ -14,6 +14,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
+import { Analytics } from "@vercel/analytics/next"
 const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
   weight: ["400", "700"],
@@ -139,7 +140,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
-
+        <Analytics/>
         <SpeedInsights />
         <ScrollToTop />
         <GoogleAnalytics gaId="G-9BGK82JB2D" />

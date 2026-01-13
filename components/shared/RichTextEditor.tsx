@@ -3,35 +3,39 @@
 import { Editor } from "@tinymce/tinymce-react";
 
 interface RichTextEditorProps {
-  content: string;
+  initialValue?: string; // Changed from 'content' to match your parent component
   onChange: (content: string) => void;
 }
 
-export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ initialValue, onChange }: RichTextEditorProps) {
   return (
     <div className="rounded-xl overflow-hidden border border-slate-300 shadow-sm">
       <Editor
-        apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" // Get a free key at tiny.cloud to remove the warning, or leave empty for dev
-        value={content}
+        apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
+        
+        // FIX: Use 'initialValue' instead of 'value'. 
+        // This makes it Uncontrolled (better for performance & prevents cursor jumping)
+        initialValue={initialValue || ""}
+        
         onEditorChange={(newValue, editor) => {
           onChange(newValue);
         }}
+        
         init={{
-          menubar: true, // Shows File, Edit, View, Insert...
+          height: 400, // Fixed height is better for UI consistency
+          menubar: false, // Cleaner look for tutors
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
             'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
           ],
-          toolbar: 'undo redo | blocks fontfamily fontsize | ' +
-            'bold italic underline strikethrough | link image media table mergetags | ' +
-            'alignline alignleft aligncenter alignright alignjustify | ' +
-            'bullist numlist outdent indent | ' +
-            'removeformat | forecolor backcolor | code', 
-          content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; background-color: #ffffff; }',
-          branding: false, // Hides the "Powered by TinyMCE"
-          resize: true, // Disables the resize handle (height is fixed)
-          statusbar: true, // Shows the word count and path at bottom
+          toolbar: 'undo redo | blocks | ' +
+            'bold italic underline | alignleft aligncenter ' +
+            'alignright alignjustify | bullist numlist outdent indent | ' +
+            'link image | removeformat | code',
+          content_style: 'body { font-family:Inter,sans-serif; font-size:16px; color: #334155; }',
+          branding: false,
+          statusbar: true,
         }}
       />
     </div>
