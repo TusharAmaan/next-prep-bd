@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, FileText, PlusCircle, 
-  BarChart3, Settings, LogOut 
+  BarChart3, Settings, LogOut, BookOpen 
 } from "lucide-react";
 // FIX: Import the 'supabase' instance directly
 import { supabase } from "@/lib/supabaseClient"; 
@@ -19,7 +19,9 @@ export default function TutorSidebar() {
 
   const navItems = [
     { label: "Overview", href: "/tutor/dashboard", icon: LayoutDashboard },
-    { label: "My Content", href: "/tutor/dashboard/content", icon: FileText },
+    // NEW: Added Courses Tab
+    { label: "My Courses", href: "/tutor/dashboard/courses", icon: BookOpen },
+    { label: "My Resources", href: "/tutor/dashboard/content", icon: FileText },
     { label: "Create New", href: "/tutor/dashboard/create", icon: PlusCircle },
     { label: "Earnings", href: "/tutor/dashboard/earnings", icon: BarChart3 }, 
     { label: "Settings", href: "/tutor/dashboard/settings", icon: Settings },
@@ -39,7 +41,9 @@ export default function TutorSidebar() {
       {/* Navigation */}
       <nav className="flex-1 py-6 px-3 space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          // Highlight active if path starts with href (handles sub-pages like /courses/123)
+          const isActive = pathname === item.href || (item.href !== '/tutor/dashboard' && pathname.startsWith(item.href));
+          
           return (
             <Link 
               key={item.href} 

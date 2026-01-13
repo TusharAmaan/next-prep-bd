@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Eye, Search, Filter, 
   FileText, Video, BookOpen, HelpCircle, Layers, AlertTriangle
 } from "lucide-react";
-import { toast } from "sonner"; // If installed, else use alert()
+// import { toast } from "sonner"; // Use if you have sonner installed
 
 export default function PendingManager() {
   const supabase = createClient();
@@ -31,7 +31,7 @@ export default function PendingManager() {
     if (activeTab === 'courses') {
       const { data: courses } = await supabase
         .from('courses')
-        .select('*, tutor:tutor_id(email)') // Join to get Tutor Email
+        .select('*, tutor:tutor_id(email)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       data = courses || [];
@@ -59,7 +59,11 @@ export default function PendingManager() {
     const table = activeTab === 'courses' ? 'courses' : 'resources';
     const status = actionType === 'approve' ? 'approved' : 'rejected';
 
-    const updateData: any = { status };
+    const updateData: any = { 
+        status,
+        // Reset rejection date if approved, Set it if rejected
+        rejected_at: actionType === 'reject' ? new Date() : null 
+    };
     
     // Only add feedback if rejected
     if (actionType === 'reject') {
@@ -72,9 +76,8 @@ export default function PendingManager() {
       .eq('id', selectedItem.id);
 
     if (error) {
-      alert("Error updating status");
+      alert("Error updating status: " + error.message);
     } else {
-      // Success
       alert(`Successfully ${status} content!`);
       setSelectedItem(null);
       setFeedback('');
