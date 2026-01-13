@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
-  Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw 
+  Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
+  AlertTriangle 
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -19,6 +20,7 @@ import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
 import FeedbackManager from "@/components/admin/sections/FeedbackManager";
+import PendingManager from "@/components/admin/sections/PendingManager"; // <--- IMPORT THIS
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -41,7 +43,7 @@ export default function AdminDashboard() {
         users: { total: 0, trend: 0 }
     });
     const [activities, setActivities] = useState<any[]>([]);
-    const [notifications, setNotifications] = useState<any[]>([]); // <--- NEW STATE
+    const [notifications, setNotifications] = useState<any[]>([]); 
     const [latestUpdate, setLatestUpdate] = useState<any>(null);
     const [showActivityModal, setShowActivityModal] = useState(false);
 
@@ -70,10 +72,10 @@ export default function AdminDashboard() {
                 matTotal, quesTotal, ebookTotal, userTotal,
                 matLast, quesLast, ebookLast, userLast,
                 recentUsers, recentResources, sysUpdate,
-                recentFeedbacks // <--- FETCH FEEDBACKS
+                recentFeedbacks
             ] = await Promise.all([
-                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
-                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question'),
+                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).eq('status', 'approved'), // Filter Approved
+                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question').eq('status', 'approved'), // Filter Approved
                 supabase.from("ebooks").select('*', { count: 'exact', head: true }),
                 supabase.from("profiles").select('*', { count: 'exact', head: true }),
 
@@ -83,9 +85,9 @@ export default function AdminDashboard() {
                 supabase.from("profiles").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
                 
                 supabase.from("profiles").select('full_name, created_at').order('created_at', { ascending: false }).limit(5),
-                supabase.from("resources").select('title, type, created_at').order('created_at', { ascending: false }).limit(5),
+                supabase.from("resources").select('title, type, created_at').eq('status', 'approved').order('created_at', { ascending: false }).limit(5),
                 supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single(),
-                supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10) // Latest 10 feedbacks
+                supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10)
             ]);
 
             const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
@@ -103,7 +105,7 @@ export default function AdminDashboard() {
             
             setActivities(combined);
             setLatestUpdate(sysUpdate.data);
-            setNotifications(recentFeedbacks.data || []); // Set Notifications
+            setNotifications(recentFeedbacks.data || []); 
         } catch (error) {
             console.error("Dashboard error:", error);
         } finally {
@@ -157,6 +159,11 @@ export default function AdminDashboard() {
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
 
+                    {/* NEW PENDING REVIEWS TAB */}
+                    <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-slate-800 hover:text-white'}`}>
+                        <AlertTriangle className="w-5 h-5"/> Pending Reviews
+                    </button>
+
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
                     {[
                       { id: 'materials', label: 'Study Materials', icon: FileStack },
@@ -192,8 +199,8 @@ export default function AdminDashboard() {
                     user={currentUser} 
                     activeTab={activeTab} 
                     toggleSidebar={() => setIsSidebarOpen(true)} 
-                    notifications={notifications}        // Pass Data
-                    onMarkRead={markNotificationRead}    // Pass Function
+                    notifications={notifications}        
+                    onMarkRead={markNotificationRead}    
                 />
 
                 {/* 2. PAGE CONTENT */}
@@ -221,6 +228,9 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     )}
+
+                    {/* NEW PENDING MANAGER */}
+                    {activeTab === 'pending' && <PendingManager />}
 
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
                     {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} />}
