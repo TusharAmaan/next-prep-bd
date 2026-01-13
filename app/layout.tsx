@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-
+import { Toaster } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -139,6 +139,7 @@ export default function RootLayout({
 
         <Header />
         {children}
+        <Toaster position="top-right" />
         <Footer />
         <Analytics/>
         <SpeedInsights />
