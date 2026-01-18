@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { FileText, HelpCircle } from "lucide-react";
+import { FileText, HelpCircle, Printer } from "lucide-react";
 import PrintableBlogBody from "@/components/PrintableBlogBody";
 import QuizView from "@/components/public/QuizView";
 import { useReactToPrint } from "react-to-print";
@@ -10,7 +10,7 @@ interface WrapperProps {
   post: any;
   questions: any[];
   formattedDate: string;
-  readTime: number; // Added Prop
+  readTime: number;
   bengaliFontClass: string;
   isLoggedIn: boolean;
 }
@@ -18,18 +18,16 @@ interface WrapperProps {
 export default function BlogContentWrapper({ 
   post, 
   questions, 
-  formattedDate,
+  formattedDate, 
   readTime, 
   bengaliFontClass, 
   isLoggedIn 
 }: WrapperProps) {
   const [activeTab, setActiveTab] = useState<'article' | 'quiz'>('article');
   
-  // Refs for Printing
   const articleRef = useRef<HTMLDivElement>(null);
   const quizRef = useRef<HTMLDivElement>(null);
 
-  // Print Handling (Passed down to Green Button)
   const handlePrint = useReactToPrint({
     contentRef: activeTab === 'article' ? articleRef : quizRef,
     documentTitle: `${post.title} - ${activeTab === 'article' ? 'Article' : 'Practice Questions'}`,
@@ -38,7 +36,7 @@ export default function BlogContentWrapper({
   return (
     <div className="space-y-6">
       
-      {/* 1. TAB SWITCHER (Only if questions exist) */}
+      {/* 1. TAB SWITCHER */}
       {questions && questions.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex gap-2 shadow-sm sticky top-24 z-30 mx-4 md:mx-0 print:hidden">
           <button
@@ -67,9 +65,7 @@ export default function BlogContentWrapper({
         </div>
       )}
 
-      {/* REMOVED THE TOP ACTIONS BAR (Print Buttons) AS REQUESTED */}
-
-      {/* 3. CONTENT AREA */}
+      {/* 2. CONTENT AREA */}
       <div className="min-h-[500px]">
         
         {/* ARTICLE TAB */}
@@ -78,11 +74,10 @@ export default function BlogContentWrapper({
              <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
-                readTime={readTime} // Pass the calculated time
+                readTime={readTime}
                 bengaliFontClass={bengaliFontClass} 
                 isLoggedIn={isLoggedIn}
                 attachmentUrl={post.content_url} 
-                // We pass the function so the Green Button inside can use it
                 onPrintTrigger={handlePrint} 
              />
           </div>
@@ -91,11 +86,17 @@ export default function BlogContentWrapper({
         {/* QUIZ TAB */}
         {activeTab === 'quiz' && (
           <div ref={quizRef} className="print:p-8">
-             <div className="mb-6 print:block hidden text-center border-b pb-4">
+             <div className="mb-6 print:hidden text-center border-b pb-4">
                 <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
                 <p className="text-sm text-slate-500">Practice Questions</p>
              </div>
-             <QuizView questions={questions} />
+             
+             {/* FIXED: Added 'title' prop */}
+             <QuizView 
+                questions={questions} 
+                isLoggedIn={isLoggedIn} 
+                title={post.title} 
+             />
           </div>
         )}
 

@@ -57,6 +57,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
   const { data: { user } } = await supabaseServer.auth.getUser();
   const isLoggedIn = !!user;
 
+  // 1. Fetch Question/Post Data
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
@@ -65,7 +66,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
 
   if (!post || post.type !== 'question') return notFound();
 
-  // Fetch Linked Questions
+  // 2. Fetch Linked Questions (Ensures Tabs Appear)
   const { data: linkedQuestions } = await supabase
     .from('resource_questions')
     .select(`
@@ -84,11 +85,10 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
 
   const questions = linkedQuestions?.map(lq => lq.question).filter(q => q !== null) || [];
 
-  // --- CALCULATION FIX ---
-  // Calculate read time based on word count (approx 200 words/min)
+  // 3. Calc Read Time (User Facing)
   const wordCount = post.content_body ? post.content_body.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
-  const readTime = Math.max(1, Math.ceil(wordCount / 200)); 
-  
+  const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
   const formattedDate = new Date(post.created_at).toLocaleDateString();
   const headersList = await headers();
   const host = headersList.get("host") || "";
@@ -98,30 +98,39 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
   return (
     <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 relative ${bengaliFont.className}`}>
       <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
+        
+        {/* LEFT TOC */}
         <aside className="hidden xl:block xl:col-span-2 relative">
             <BlogTOC content={post.content_body || ""} />
         </aside>
 
+        {/* MAIN CONTENT */}
         <main className="xl:col-span-7 lg:col-span-8 col-span-1">
+            
+            {/* WRAPPER (Handles Tabs + Quiz + PDF Security) */}
             <BlogContentWrapper 
                 post={post} 
                 questions={questions}
                 formattedDate={formattedDate}
-                readTime={readTime} // <--- PASSED HERE
+                readTime={readTime}
                 bengaliFontClass={bengaliFont.className} 
                 isLoggedIn={isLoggedIn}
             />
+
             <div className="mt-12 comments-section print:hidden">
                 <FacebookComments url={absoluteUrl} />
             </div>
+            
             <div className="xl:hidden">
                 <BlogTOC content={post.content_body || ""} />
             </div>
         </main>
 
+        {/* RIGHT SIDEBAR */}
         <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
             <Sidebar />
         </aside>
+
       </div>
       <ScrollToTop />
     </div>

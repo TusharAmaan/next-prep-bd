@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle, XCircle, Eye, EyeOff, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { CheckCircle, XCircle, HelpCircle, Lock, ChevronRight, Download, FileQuestion, FileCheck } from "lucide-react";
+import Link from "next/link";
+import { useReactToPrint } from "react-to-print";
 
 interface Option {
   option_text: string;
@@ -11,141 +13,214 @@ interface Option {
 interface Question {
   id: string;
   question_text: string;
-  question_type: 'mcq' | 'descriptive' | 'passage';
+  question_type: string;
   marks: number;
   explanation: string;
-  options?: Option[]; // For MCQs
-  sub_questions?: Question[]; // For Passages
+  options: Option[];
 }
 
 interface QuizViewProps {
   questions: Question[];
+  isLoggedIn: boolean;
+  title: string; // Needed for PDF Header
 }
 
-export default function QuizView({ questions }: QuizViewProps) {
-  return (
-    <div className="space-y-8 py-6">
-      {questions.map((q, index) => (
-        <div key={q.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Question Header / Body */}
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase">
-                Question {index + 1}
-              </span>
-              <span className="text-xs font-medium text-slate-400 uppercase">
-                {q.question_type} • {q.marks} Marks
-              </span>
-            </div>
-            
-            <div 
-              className="prose prose-slate max-w-none font-medium text-slate-800"
-              dangerouslySetInnerHTML={{ __html: q.question_text }}
-            />
-          </div>
+export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps) {
+  const [revealed, setRevealed] = useState<{ [key: string]: boolean }>({});
+  const [selectedOpts, setSelectedOpts] = useState<{ [key: string]: number }>({});
+  
+  // PRINT STATE: 'solved' = Expand All, 'blank' = Hide All, null = Interactive Mode
+  const [printMode, setPrintMode] = useState<'solved' | 'blank' | null>(null);
+  
+  const componentRef = useRef<HTMLDivElement>(null);
 
-          {/* RENDER BASED ON TYPE */}
-          <div className="px-6 pb-6">
-            {q.question_type === 'mcq' && <MCQRenderer question={q} />}
-            
-            {q.question_type === 'descriptive' && <DescriptiveRenderer question={q} />}
-            
-            {q.question_type === 'passage' && q.sub_questions && (
-              <div className="mt-4 pl-4 border-l-4 border-indigo-100 space-y-6">
-                {q.sub_questions.map((sub, i) => (
-                  <div key={sub.id} className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-sm font-bold text-slate-700 mb-2">Q{index+1}.{i+1}: <span dangerouslySetInnerHTML={{__html: sub.question_text}} /></p>
-                    {sub.question_type === 'mcq' ? (
-                      <MCQRenderer question={sub} />
-                    ) : (
-                      <DescriptiveRenderer question={sub} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+  // --- PRINT HANDLER ---
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: `${title.replace(/\s+/g, '-')}-Quiz`,
+    onAfterPrint: () => setPrintMode(null), // Reset after printing
+  });
 
-// --- SUB-COMPONENTS FOR INTERACTION ---
-
-function MCQRenderer({ question }: { question: Question }) {
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
-
-  // Helper to determine style based on selection & correctness
-  const getOptionStyle = (idx: number, isCorrect: boolean) => {
-    if (selectedIdx === null) return "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"; // Default
-    
-    if (idx === selectedIdx) {
-      return isCorrect 
-        ? "border-green-500 bg-green-50 ring-1 ring-green-500" // Correct Selection
-        : "border-red-500 bg-red-50 ring-1 ring-red-500"; // Wrong Selection
-    }
-    
-    if (isCorrect && selectedIdx !== null) return "border-green-500 bg-green-50/50"; // Show correct answer if wrong selected
-    return "border-slate-100 opacity-50"; // Dim others
+  // Helper to trigger specific print modes
+  const triggerPrint = (mode: 'solved' | 'blank') => {
+    setPrintMode(mode);
+    // We need a tiny timeout to allow React to render the expanded/collapsed state
+    // before the print dialog grabs the content.
+    setTimeout(() => {
+        handlePrint();
+    }, 100);
   };
 
+  const handleOptionClick = (qId: string, optIndex: number) => {
+    setSelectedOpts(prev => ({ ...prev, [qId]: optIndex }));
+    setRevealed(prev => ({ ...prev, [qId]: true }));
+  };
+
+  if (!questions || questions.length === 0) return <div className="p-8 text-center text-slate-400">No practice questions available.</div>;
+
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2">
-        {question.options?.map((opt, idx) => (
-          <button
-            key={idx}
-            disabled={selectedIdx !== null} // Lock after picking
-            onClick={() => {
-              setSelectedIdx(idx);
-              setShowExplanation(true);
-            }}
-            className={`w-full text-left p-3 rounded-lg border transition-all flex items-center justify-between group ${getOptionStyle(idx, opt.is_correct)}`}
-          >
-            <span className="text-sm font-medium">{opt.option_text}</span>
-            {selectedIdx === idx && (
-              opt.is_correct 
-                ? <CheckCircle className="w-5 h-5 text-green-600" />
-                : <XCircle className="w-5 h-5 text-red-500" />
-            )}
-          </button>
-        ))}
+    <div className="w-full">
+      
+      {/* === DOWNLOAD OPTIONS SECTION === */}
+      <div className="mb-8 print:hidden">
+        {isLoggedIn ? (
+            // LOGGED IN: Show Options
+            <div className="bg-green-50/50 border border-green-200 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center shrink-0"><Download className="w-5 h-5" /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-900 text-sm md:text-base">Download Practice PDF</h4>
+                        <p className="text-xs text-slate-600">Select a format to download.</p>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* BUTTON 1: Questions Only */}
+                    <button 
+                        onClick={() => triggerPrint('blank')}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-green-100 text-green-700 font-bold rounded-xl hover:bg-green-600 hover:text-white hover:border-green-600 transition-all text-sm"
+                    >
+                        <FileQuestion size={18}/> Questions Only
+                    </button>
+
+                    {/* BUTTON 2: With Solutions */}
+                    <button 
+                        onClick={() => triggerPrint('solved')}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-200 transition-all text-sm"
+                    >
+                        <FileCheck size={18}/> With Answers & Explanations
+                    </button>
+                </div>
+            </div>
+        ) : (
+            // NOT LOGGED IN: Locked State
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-start gap-4 opacity-60">
+                    <div className="w-10 h-10 bg-slate-200 text-slate-500 rounded-xl flex items-center justify-center shrink-0"><Lock className="w-5 h-5" /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-900 text-sm md:text-base">PDF Downloads Locked</h4>
+                        <p className="text-xs text-slate-500">Login to download questions.</p>
+                    </div>
+                </div>
+                <Link href="/login" className="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors">Login</Link>
+            </div>
+        )}
       </div>
 
-      {/* Explanation Reveal */}
-      {showExplanation && question.explanation && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg animate-in fade-in slide-in-from-top-2">
-          <p className="text-xs font-bold text-blue-600 uppercase mb-1 flex items-center gap-1">
-            <FileText size={14}/> Explanation
-          </p>
-          <p className="text-sm text-slate-700">{question.explanation}</p>
+      {/* === PRINTABLE CONTENT === */}
+      <div ref={componentRef} className="space-y-8 max-w-3xl mx-auto print:p-8">
+        
+        {/* Print Header (Title) */}
+        <div className="hidden print:block border-b-2 border-black pb-4 mb-8 text-center">
+            <h1 className="text-2xl font-black text-black mb-2">{title}</h1>
+            <p className="text-sm text-gray-500 uppercase tracking-widest">{printMode === 'blank' ? 'Practice Sheet' : 'Solution Key'}</p>
         </div>
-      )}
-    </div>
-  );
-}
 
-function DescriptiveRenderer({ question }: { question: Question }) {
-  const [isOpen, setIsOpen] = useState(false);
+        {questions.map((q, idx) => {
+            // LOGIC: Should we show the answer/explanation?
+            // If printMode is 'solved': YES (Force Show)
+            // If printMode is 'blank': NO (Force Hide)
+            // If printMode is null: Use interactive state (revealed[q.id])
+            const showAnswer = printMode === 'solved' ? true : (printMode === 'blank' ? false : revealed[q.id]);
+            
+            // LOGIC: Selection State
+            // If printing, remove red/green colors for a cleaner look (unless 'solved')
+            const isPrinting = printMode !== null;
 
-  return (
-    <div className="mt-2">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="text-sm font-bold text-indigo-600 flex items-center gap-2 hover:underline"
-      >
-        {isOpen ? <EyeOff size={16}/> : <Eye size={16}/>}
-        {isOpen ? "Hide Answer" : "Show Answer"}
-      </button>
-      
-      {isOpen && (
-        <div className="mt-3 p-4 bg-slate-100 rounded-lg border-l-4 border-indigo-500 animate-in fade-in">
-          <p className="text-xs font-bold text-slate-500 uppercase mb-1">Model Answer:</p>
-          <p className="text-sm text-slate-800 whitespace-pre-wrap">{question.explanation || "No explanation provided."}</p>
-        </div>
-      )}
+            return (
+                <div key={q.id} className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow ${isPrinting ? 'break-inside-avoid border-none shadow-none p-0 mb-8' : ''}`}>
+                
+                {/* Question Header */}
+                <div className="flex gap-4 mb-4">
+                    <span className="flex-shrink-0 w-8 h-8 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm print:border print:border-black print:text-black print:bg-transparent">
+                    {idx + 1}
+                    </span>
+                    <div>
+                    <h3 className="text-lg font-bold text-slate-800 leading-relaxed print:text-black" dangerouslySetInnerHTML={{ __html: q.question_text }}></h3>
+                    <div className="flex gap-2 mt-2 print:hidden">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
+                            {q.question_type}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded">
+                            {q.marks} Mark{q.marks > 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    </div>
+                </div>
+
+                {/* Options Grid */}
+                <div className="space-y-3 pl-12">
+                    {q.options?.map((opt, i) => {
+                    const isSelected = selectedOpts[q.id] === i;
+                    const isCorrect = opt.is_correct;
+                    
+                    // Determine Style
+                    let styleClass = "border-slate-200 hover:bg-slate-50"; // Default
+                    
+                    if (isPrinting) {
+                        // Print Styles (Clean)
+                        if (printMode === 'solved' && isCorrect) styleClass = "border-black font-bold bg-gray-100"; // Highlight correct
+                        else styleClass = "border-gray-300";
+                    } else {
+                        // Interactive Styles
+                        if (showAnswer) {
+                            if (isCorrect) styleClass = "bg-green-50 border-green-500 text-green-700 font-bold";
+                            else if (isSelected) styleClass = "bg-red-50 border-red-500 text-red-700 opacity-60";
+                            else styleClass = "border-slate-100 text-slate-400 opacity-50";
+                        }
+                    }
+
+                    return (
+                        <button
+                        key={i}
+                        disabled={showAnswer || isPrinting}
+                        onClick={() => handleOptionClick(q.id, i)}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${styleClass} print:p-2 print:border print:text-sm`}
+                        >
+                        <span className="text-sm">{opt.option_text}</span>
+                        {/* Icons: Show only in interactive or solved print mode */}
+                        {showAnswer && isCorrect && <CheckCircle className="w-5 h-5 text-green-600 print:text-black" />}
+                        {showAnswer && isSelected && !isCorrect && !isPrinting && <XCircle className="w-5 h-5 text-red-600" />}
+                        </button>
+                    );
+                    })}
+                </div>
+
+                {/* Explanation Section */}
+                {showAnswer && (
+                    <div className="mt-6 pl-12 animate-in fade-in slide-in-from-top-2 print:mt-4">
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-5 relative overflow-hidden print:border print:border-gray-300 print:bg-transparent print:p-4">
+                        <h4 className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-2 print:text-black">
+                        <HelpCircle className="w-4 h-4" /> Explanation
+                        </h4>
+                        
+                        {isLoggedIn ? (
+                        <div className="text-sm text-slate-700 leading-relaxed print:text-black">
+                            {q.explanation || "No explanation provided."}
+                        </div>
+                        ) : (
+                        // Locked State (Only visible interactively, never prints because we filter logic above)
+                        <div className="flex flex-col items-center justify-center py-4 text-center space-y-3 print:hidden">
+                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                <Lock className="w-5 h-5 text-amber-500" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-800">Explanation Hidden</p>
+                                <p className="text-xs text-slate-500 mb-3">Please login to view the detailed solution.</p>
+                                <Link href="/login" className="inline-flex items-center gap-1 text-xs font-bold bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+                                    Login Now <ChevronRight className="w-3 h-3" />
+                                </Link>
+                            </div>
+                        </div>
+                        )}
+                    </div>
+                    </div>
+                )}
+
+                </div>
+            );
+        })}
+      </div>
     </div>
   );
 }
