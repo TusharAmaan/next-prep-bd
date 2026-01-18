@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -180,7 +181,13 @@ export default function Header() {
         {/* LOGO AREA */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-200 group-hover:rotate-3 transition-transform duration-300">N</div>
+            <Image 
+              src="/icon.png" 
+              alt="NextPrepBD Logo" 
+              width={40} 
+              height={40} 
+              className="w-10 h-10 rounded-xl shadow-lg shadow-indigo-200 group-hover:rotate-3 transition-transform duration-300"
+            />
             <div className="flex flex-col -gap-1">
                 <span className={`text-xl font-black tracking-tight leading-none ${isScrolled ? "text-slate-900" : "text-slate-800"}`}>NextPrepBD</span>
             </div>
@@ -384,7 +391,7 @@ export default function Header() {
         {/* Sidebar Header */}
         <div className="p-5 flex justify-between items-center border-b border-slate-100">
             <span className="font-black text-xl text-slate-900 flex items-center gap-2">
-                <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-sm">N</span> NextPrep
+                <Image src="/icon.png" alt="Logo" width={32} height={32} className="w-8 h-8 rounded-lg" /> NextPrep
             </span>
             <button onClick={() => setIsMobileOpen(false)} className="p-2 bg-slate-50 rounded-full text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors">
                 <X className="w-5 h-5" />
