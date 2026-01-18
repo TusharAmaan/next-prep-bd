@@ -67,7 +67,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
   if (!post || post.type !== 'question') return notFound();
 
   // 2. Fetch Linked Questions (Ensures Tabs Appear)
-  const { data: linkedQuestions } = await supabase
+  const { data: linkedQuestions, error: questionError } = await supabase
     .from('resource_questions')
     .select(`
       order_index,
@@ -83,13 +83,21 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
     .eq('resource_id', post.id)
     .order('order_index');
 
+  if (questionError) {
+      console.error("Error fetching linked questions:", questionError);
+  }
+
+  // Filter out nulls to ensure accurate count for the Tab Badge
   const questions = linkedQuestions?.map(lq => lq.question).filter(q => q !== null) || [];
 
-  // 3. Calc Read Time (User Facing)
+  // 3. Calc Read Time (User Facing - Estimated)
+  // Standard logic: 200 words per minute. Defaults to 1 min if empty.
   const wordCount = post.content_body ? post.content_body.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
+  // 4. Format Date
   const formattedDate = new Date(post.created_at).toLocaleDateString();
+  
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -107,7 +115,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
         {/* MAIN CONTENT */}
         <main className="xl:col-span-7 lg:col-span-8 col-span-1">
             
-            {/* WRAPPER (Handles Tabs + Quiz + PDF Security) */}
+            {/* WRAPPER: Handles Tabs, Quiz Logic, PDF Security, and Printing */}
             <BlogContentWrapper 
                 post={post} 
                 questions={questions}
@@ -121,6 +129,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
                 <FacebookComments url={absoluteUrl} />
             </div>
             
+            {/* Mobile TOC */}
             <div className="xl:hidden">
                 <BlogTOC content={post.content_body || ""} />
             </div>
