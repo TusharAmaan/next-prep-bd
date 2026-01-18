@@ -68,16 +68,15 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   if (!post || post.type !== 'blog') return notFound();
 
-  // 2. Fetch Linked Questions (NEW)
-  // We fetch the linker table, then join the question details + options + sub-questions
-  const { data: linkedQuestions } = await supabase
+// 2. Fetch Linked Questions
+  const { data: linkedQuestions, error: questionError } = await supabase
     .from('resource_questions')
     .select(`
       order_index,
-      question:question_bank (
+      question:question_bank!question_id (
         id, question_text, question_type, marks, explanation,
         options:question_options(option_text, is_correct),
-        sub_questions:question_bank(
+        sub_questions:question_bank!parent_id(
            id, question_text, question_type, marks, explanation,
            options:question_options(option_text, is_correct)
         )
@@ -85,6 +84,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
     `)
     .eq('resource_id', post.id)
     .order('order_index');
+
+  if (questionError) {
+      console.error("Error fetching questions:", questionError);
+  }
 
   // Clean up data structure for the frontend
   const questions = linkedQuestions?.map(lq => lq.question) || [];
@@ -94,6 +97,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/blog/${id}`;
   const formattedDate = new Date(post.created_at).toLocaleDateString();
+// DEBUGGING LOG
+console.log("Resource ID:", post.id);
+console.log("Linked Questions Found:", linkedQuestions?.length);
+console.log("First Question Data:", linkedQuestions?.[0]);
 
   return (
     <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 ${bengaliFont.className}`}>
