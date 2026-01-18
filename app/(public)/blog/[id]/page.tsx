@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
-import PrintableBlogBody from "@/components/PrintableBlogBody"; 
 import FacebookComments from "@/components/FacebookComments"; 
 import BlogTOC from "@/components/BlogTOC"; 
+import BlogContentWrapper from "@/components/public/BlogContentWrapper"; // Import new wrapper
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
@@ -20,7 +20,6 @@ const bengaliFont = Noto_Serif_Bengali({
 
 // --- HELPER: Detect ID vs Slug ---
 function getQueryColumn(param: string) {
-  // Checks if the string contains only numbers
   const isNumeric = /^\d+$/.test(param);
   return isNumeric ? 'id' : 'slug';
 }
@@ -30,7 +29,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const column = getQueryColumn(id);
 
-  // Fetch using ID or Slug
   const { data: post } = await supabase
     .from('resources')
     .select('title, seo_title, seo_description, content_url, tags')
@@ -61,7 +59,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const { data: { user } } = await supabaseServer.auth.getUser();
   const isLoggedIn = !!user;
 
-  // Fetch using ID or Slug
+  // 1. Fetch Blog Post
   const { data: post } = await supabase
     .from("resources")
     .select("*, subjects(title, groups(title, segments(title)))")
@@ -69,6 +67,27 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
     .single();
 
   if (!post || post.type !== 'blog') return notFound();
+
+  // 2. Fetch Linked Questions (NEW)
+  // We fetch the linker table, then join the question details + options + sub-questions
+  const { data: linkedQuestions } = await supabase
+    .from('resource_questions')
+    .select(`
+      order_index,
+      question:question_bank (
+        id, question_text, question_type, marks, explanation,
+        options:question_options(option_text, is_correct),
+        sub_questions:question_bank(
+           id, question_text, question_type, marks, explanation,
+           options:question_options(option_text, is_correct)
+        )
+      )
+    `)
+    .eq('resource_id', post.id)
+    .order('order_index');
+
+  // Clean up data structure for the frontend
+  const questions = linkedQuestions?.map(lq => lq.question) || [];
 
   const headersList = await headers();
   const host = headersList.get("host") || "";
@@ -81,20 +100,23 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
       {/* 3-COLUMN GRID LAYOUT */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
         
-        {/* COL 1: LEFT TOC (2 Cols) - Hidden on mobile/laptop, visible on XL */}
+        {/* COL 1: LEFT TOC */}
         <aside className="hidden xl:block xl:col-span-2 relative">
             <BlogTOC content={post.content_body || ""} />
         </aside>
 
-        {/* COL 2: MAIN CONTENT (7 Cols on XL, 8 Cols on LG) */}
+        {/* COL 2: MAIN CONTENT */}
         <main className="xl:col-span-7 lg:col-span-8 col-span-1">
-            <PrintableBlogBody 
-                post={post} 
-                formattedDate={formattedDate}
-                bengaliFontClass={bengaliFont.className} 
-                isLoggedIn={isLoggedIn}
-                attachmentUrl={post.content_url} 
+            
+            {/* REPLACED PrintableBlogBody with Wrapper */}
+            <BlogContentWrapper 
+               post={post}
+               questions={questions}
+               formattedDate={formattedDate}
+               bengaliFontClass={bengaliFont.className}
+               isLoggedIn={isLoggedIn}
             />
+
             <div className="mt-12 comments-section print:hidden">
                 <FacebookComments url={absoluteUrl} />
             </div>
@@ -105,7 +127,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
             </div>
         </main>
 
-        {/* COL 3: RIGHT SIDEBAR (3 Cols on XL, 4 Cols on LG) */}
+        {/* COL 3: RIGHT SIDEBAR */}
         <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
             <Sidebar />
         </aside>

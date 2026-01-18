@@ -6,7 +6,7 @@ import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle 
+  AlertTriangle, Database // Added Database icon for Question Bank
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -20,7 +20,8 @@ import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
 import FeedbackManager from "@/components/admin/sections/FeedbackManager";
-import PendingManager from "@/components/admin/sections/PendingManager"; // <--- IMPORT THIS
+import PendingManager from "@/components/admin/sections/PendingManager";
+import QuestionBankManager from "@/components/admin/sections/QuestionBankManager"; // <--- IMPORT THIS
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -74,8 +75,8 @@ export default function AdminDashboard() {
                 recentUsers, recentResources, sysUpdate,
                 recentFeedbacks
             ] = await Promise.all([
-                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).eq('status', 'approved'), // Filter Approved
-                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question').eq('status', 'approved'), // Filter Approved
+                supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).eq('status', 'approved'),
+                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('type', 'question').eq('status', 'approved'),
                 supabase.from("ebooks").select('*', { count: 'exact', head: true }),
                 supabase.from("profiles").select('*', { count: 'exact', head: true }),
 
@@ -116,6 +117,21 @@ export default function AdminDashboard() {
     const markNotificationRead = async (id: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, status: 'read' } : n));
         await supabase.from('feedbacks').update({ status: 'read' }).eq('id', id);
+    };
+
+    // --- NEW: DELETE NOTIFICATION HANDLER ---
+    const deleteNotification = async (id: string) => {
+        // Optimistic update: Remove from UI immediately
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        // Delete from Database
+        const { error } = await supabase.from('feedbacks').delete().eq('id', id);
+        if (error) {
+            console.error("Error deleting notification:", error);
+            // Optionally revert UI if error occurs (usually not needed for simple deletes)
+            showError("Failed to delete notification.");
+        } else {
+            showSuccess("Notification deleted.");
+        }
     };
 
     const fetchDropdowns = useCallback(async () => {
@@ -159,7 +175,11 @@ export default function AdminDashboard() {
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
 
-                    {/* NEW PENDING REVIEWS TAB */}
+                    {/* NEW: QUESTION BANK TAB */}
+                    <button onClick={() => { setActiveTab('question_bank'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'question_bank' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <Database className="w-5 h-5"/> Question Bank
+                    </button>
+
                     <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-slate-800 hover:text-white'}`}>
                         <AlertTriangle className="w-5 h-5"/> Pending Reviews
                     </button>
@@ -200,7 +220,8 @@ export default function AdminDashboard() {
                     activeTab={activeTab} 
                     toggleSidebar={() => setIsSidebarOpen(true)} 
                     notifications={notifications}        
-                    onMarkRead={markNotificationRead}    
+                    onMarkRead={markNotificationRead}
+                    onDelete={deleteNotification} // <--- PASSED THE DELETE HANDLER
                 />
 
                 {/* 2. PAGE CONTENT */}
@@ -228,6 +249,9 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     )}
+
+                    {/* NEW QUESTION BANK MANAGER */}
+                    {activeTab === 'question_bank' && <QuestionBankManager />}
 
                     {/* NEW PENDING MANAGER */}
                     {activeTab === 'pending' && <PendingManager />}

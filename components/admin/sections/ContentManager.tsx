@@ -327,6 +327,7 @@ export default function ContentManager({
                 handleGroupClick={(id: string) => { setEditGrp(id); setEditSub(""); fetchSubjects(id); }}
                 subjects={subjects} selectedSubject={editSub} 
                 handleSubjectClick={setEditSub}
+                resourceId={editingId}
             />
         );
     }
