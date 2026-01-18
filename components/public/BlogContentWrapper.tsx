@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { FileText, HelpCircle, Printer } from "lucide-react";
+import { FileText, HelpCircle } from "lucide-react";
 import PrintableBlogBody from "@/components/PrintableBlogBody";
 import QuizView from "@/components/public/QuizView";
 import { useReactToPrint } from "react-to-print";
@@ -10,6 +10,7 @@ interface WrapperProps {
   post: any;
   questions: any[];
   formattedDate: string;
+  readTime: number; // Added Prop
   bengaliFontClass: string;
   isLoggedIn: boolean;
 }
@@ -17,7 +18,8 @@ interface WrapperProps {
 export default function BlogContentWrapper({ 
   post, 
   questions, 
-  formattedDate, 
+  formattedDate,
+  readTime, 
   bengaliFontClass, 
   isLoggedIn 
 }: WrapperProps) {
@@ -27,7 +29,7 @@ export default function BlogContentWrapper({
   const articleRef = useRef<HTMLDivElement>(null);
   const quizRef = useRef<HTMLDivElement>(null);
 
-  // Print Handling
+  // Print Handling (Passed down to Green Button)
   const handlePrint = useReactToPrint({
     contentRef: activeTab === 'article' ? articleRef : quizRef,
     documentTitle: `${post.title} - ${activeTab === 'article' ? 'Article' : 'Practice Questions'}`,
@@ -36,9 +38,9 @@ export default function BlogContentWrapper({
   return (
     <div className="space-y-6">
       
-      {/* 1. TAB SWITCHER (Only show if actual questions exist) */}
+      {/* 1. TAB SWITCHER (Only if questions exist) */}
       {questions && questions.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex gap-2 shadow-sm sticky top-24 z-30 mx-4 md:mx-0">
+        <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex gap-2 shadow-sm sticky top-24 z-30 mx-4 md:mx-0 print:hidden">
           <button
             onClick={() => setActiveTab('article')}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
@@ -65,16 +67,7 @@ export default function BlogContentWrapper({
         </div>
       )}
 
-      {/* 2. ACTIONS BAR (Print) */}
-      <div className="flex justify-end px-2 print:hidden">
-        <button 
-          onClick={() => handlePrint()}
-          className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <Printer size={14} /> 
-          {activeTab === 'article' ? 'Print Article' : 'Print Questions'}
-        </button>
-      </div>
+      {/* REMOVED THE TOP ACTIONS BAR (Print Buttons) AS REQUESTED */}
 
       {/* 3. CONTENT AREA */}
       <div className="min-h-[500px]">
@@ -85,9 +78,12 @@ export default function BlogContentWrapper({
              <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
+                readTime={readTime} // Pass the calculated time
                 bengaliFontClass={bengaliFontClass} 
                 isLoggedIn={isLoggedIn}
                 attachmentUrl={post.content_url} 
+                // We pass the function so the Green Button inside can use it
+                onPrintTrigger={handlePrint} 
              />
           </div>
         </div>

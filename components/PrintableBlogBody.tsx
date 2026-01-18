@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { useReactToPrint } from "react-to-print";
 import { 
   FileText, Calendar, Clock, ChevronRight, 
   Lock, Download, Check
@@ -13,29 +12,25 @@ import BlogContent from "@/components/BlogContent";
 interface PrintableBlogBodyProps {
   post: any;
   formattedDate: string;
+  readTime?: number; // Calculated Estimate passed from Parent
   attachmentUrl?: string;
   bengaliFontClass?: string;
   isLoggedIn: boolean;
+  onPrintTrigger?: () => void; // The "Remote Control" to trigger Parent's print function
 }
 
 export default function PrintableBlogBody({ 
   post, 
   formattedDate, 
+  readTime, 
   attachmentUrl,
   bengaliFontClass,
-  isLoggedIn
+  isLoggedIn,
+  onPrintTrigger
 }: PrintableBlogBodyProps) {
   
+  // This ref wraps the content so the printer knows exactly what to capture
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // This function triggers the browser's print dialog
-  // Users will select "Save as PDF" from there
-  const handlePrint = useReactToPrint({
-    contentRef,
-    documentTitle: `NextPrepBD-${post.title?.replace(/\s+/g, '-')}`,
-  });
-
-  const readTime = Math.ceil((post.content_body?.split(" ").length || 0) / 200);
 
   return (
     <div className="w-full">
@@ -58,7 +53,7 @@ export default function PrintableBlogBody({
         className={`bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-12 relative print:shadow-none print:border-none print:p-0 ${bengaliFontClass}`}
       >
         
-        {/* === PRINT ONLY HEADER (Visible ONLY when printing) === */}
+        {/* === PRINT ONLY HEADER (Visible ONLY on Paper) === */}
         <div className="hidden print:flex justify-between items-end border-b-2 border-black pb-4 mb-8">
             <div>
                 <h1 className="text-3xl font-black tracking-tighter text-black">
@@ -78,18 +73,23 @@ export default function PrintableBlogBody({
                     <Calendar className="w-4 h-4 text-blue-500" />
                     <span>{formattedDate}</span>
                 </div>
-                <span className="hidden sm:inline text-slate-300">|</span>
-                <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span>{readTime} min read</span>
-                </div>
+                {/* Shows "X min read" based on word count prediction */}
+                {readTime && readTime > 0 && (
+                    <>
+                        <span className="hidden sm:inline text-slate-300">|</span>
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            <span>{readTime} min read</span>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
 
-        {/* === DOWNLOAD SECTION (Hidden on Print) === */}
+        {/* === DOWNLOAD SECTION (Strict Login Check) === */}
         <div className="mb-10 print:hidden">
           {isLoggedIn ? (
-              // LOGGED IN STATE
+              // SCENARIO 1: USER IS LOGGED IN -> Show Green Button
               <div className="bg-green-50/50 border border-green-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                       <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center shrink-0"><Check className="w-5 h-5" /></div>
@@ -99,13 +99,16 @@ export default function PrintableBlogBody({
                       </div>
                   </div>
                   
-                  {/* FIXED: Always use handlePrint to generate PDF of the content, ignoring attachmentUrl (images) */}
-                  <button onClick={handlePrint} className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2">
+                  {/* Clicking this calls the PARENT'S print function */}
+                  <button 
+                    onClick={onPrintTrigger} 
+                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2"
+                  >
                       <Download className="w-4 h-4"/> Save as PDF
                   </button>
               </div>
           ) : (
-              // LOGGED OUT STATE
+              // SCENARIO 2: USER IS GUEST -> Show Locked Box
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-start gap-4 opacity-60">
                       <div className="w-10 h-10 bg-slate-200 text-slate-500 rounded-xl flex items-center justify-center shrink-0"><Lock className="w-5 h-5" /></div>
@@ -122,7 +125,7 @@ export default function PrintableBlogBody({
         {/* === CONTENT BODY === */}
         <BlogContent content={post.content_body || ""} className="print:text-sm print:leading-relaxed text-lg" />
 
-        {/* === PRINT FOOTER (Visible only on Print) === */}
+        {/* === PRINT FOOTER (Visible only on Paper) === */}
         <div className="hidden print:flex flex-row justify-center items-center text-gray-400 mt-8 pt-4 border-t border-gray-200">
             <p className="text-[10px] uppercase tracking-widest">© {new Date().getFullYear()} NextPrepBD</p>
         </div>
