@@ -27,7 +27,7 @@ export default function BlogContentWrapper({
   const articleRef = useRef<HTMLDivElement>(null);
   const quizRef = useRef<HTMLDivElement>(null);
 
-  // Print Handling (Supports React-to-Print v7+)
+  // Print Handling
   const handlePrint = useReactToPrint({
     contentRef: activeTab === 'article' ? articleRef : quizRef,
     documentTitle: `${post.title} - ${activeTab === 'article' ? 'Article' : 'Practice Questions'}`,
@@ -36,8 +36,8 @@ export default function BlogContentWrapper({
   return (
     <div className="space-y-6">
       
-      {/* 1. TAB SWITCHER (Only show if questions exist) */}
-      {questions.length > 0 && (
+      {/* 1. TAB SWITCHER (Only show if actual questions exist) */}
+      {questions && questions.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex gap-2 shadow-sm sticky top-24 z-30 mx-4 md:mx-0">
           <button
             onClick={() => setActiveTab('article')}
@@ -82,7 +82,6 @@ export default function BlogContentWrapper({
         {/* ARTICLE TAB */}
         <div className={activeTab === 'article' ? 'block' : 'hidden'}>
           <div ref={articleRef} className="print:p-8">
-             {/* FIXED: Passing the correct full props instead of just 'content' */}
              <PrintableBlogBody 
                 post={post} 
                 formattedDate={formattedDate}
