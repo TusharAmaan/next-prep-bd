@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
 import FacebookComments from "@/components/FacebookComments"; 
 import BlogTOC from "@/components/BlogTOC"; 
-import BlogContentWrapper from "@/components/public/BlogContentWrapper"; // Import new wrapper
+import BlogContentWrapper from "@/components/public/BlogContentWrapper"; 
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
@@ -68,7 +68,8 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   if (!post || post.type !== 'blog') return notFound();
 
-// 2. Fetch Linked Questions
+  // 2. Fetch Linked Questions
+  // We use explicit foreign key syntax (!question_id) to be safe
   const { data: linkedQuestions, error: questionError } = await supabase
     .from('resource_questions')
     .select(`
@@ -89,18 +90,16 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
       console.error("Error fetching questions:", questionError);
   }
 
-  // Clean up data structure for the frontend
-  const questions = linkedQuestions?.map(lq => lq.question) || [];
+  // CRITICAL FIX: Filter out nulls so the length check is accurate
+  const questions = linkedQuestions
+    ?.map(lq => lq.question)
+    .filter(q => q !== null) || [];
 
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/blog/${id}`;
   const formattedDate = new Date(post.created_at).toLocaleDateString();
-// DEBUGGING LOG
-console.log("Resource ID:", post.id);
-console.log("Linked Questions Found:", linkedQuestions?.length);
-console.log("First Question Data:", linkedQuestions?.[0]);
 
   return (
     <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 ${bengaliFont.className}`}>
@@ -115,10 +114,9 @@ console.log("First Question Data:", linkedQuestions?.[0]);
         {/* COL 2: MAIN CONTENT */}
         <main className="xl:col-span-7 lg:col-span-8 col-span-1">
             
-            {/* REPLACED PrintableBlogBody with Wrapper */}
             <BlogContentWrapper 
                post={post}
-               questions={questions}
+               questions={questions} // This is now a clean array
                formattedDate={formattedDate}
                bengaliFontClass={bengaliFont.className}
                isLoggedIn={isLoggedIn}
