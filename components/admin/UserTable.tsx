@@ -1,4 +1,4 @@
-import { Eye, Trash2, Clock, CheckCircle, ChevronLeft, ChevronRight, Ban, Star, FileText, Shield, GraduationCap, BookOpen, Mail } from "lucide-react";
+import { Eye, Trash2, Clock, CheckCircle, ChevronLeft, ChevronRight, Ban, Star, FileText, Shield, GraduationCap, BookOpen, Mail, Crown, Zap, Building } from "lucide-react";
 
 export default function UserTable({ 
   activeTab, users, invites, loading, 
@@ -6,8 +6,6 @@ export default function UserTable({
   onDeleteUser, onRevokeInvite, onSelectUser 
 }: any) {
   
-  // LOGIC FIX: 'invitations' is the only tab that shows invites. 
-  // 'active', 'pending', and 'suspended' all show the Users list.
   const isUserView = activeTab !== 'invitations';
 
   const getRoleBadge = (role: string, isFeatured: boolean) => {
@@ -21,11 +19,19 @@ export default function UserTable({
             {isFeatured && <Star className="w-3 h-3 fill-amber-500 text-amber-500 ml-1" />}
           </span>
         );
+      case 'institute': 
+        return <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[10px] font-black uppercase border border-indigo-100"><Building className="w-3 h-3"/> Institute</span>;
       case 'student': 
         return <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-black uppercase border border-blue-100"><GraduationCap className="w-3 h-3"/> Student</span>;
       default: 
         return <span className="bg-slate-100 border border-slate-200 px-2 py-1 rounded text-[10px] font-black uppercase text-slate-600">{role}</span>;
     }
+  };
+
+  const getPlanBadge = (plan: string) => {
+      if (plan === 'pro') return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100"><Crown className="w-3 h-3 fill-amber-500"/> PRO</span>;
+      if (plan === 'trial') return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100"><Zap className="w-3 h-3 fill-blue-500"/> TRIAL</span>;
+      return <span className="text-[10px] font-bold text-slate-400">FREE</span>;
   };
 
   return (
@@ -42,6 +48,7 @@ export default function UserTable({
                 <tr>
                 <th className="px-6 py-4">{isUserView ? 'User Identity' : 'Invited Email'}</th>
                 <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Plan</th> {/* NEW COLUMN */}
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Joined / Sent</th>
                 <th className="px-6 py-4 text-right">Actions</th>
@@ -72,6 +79,11 @@ export default function UserTable({
                     {/* ROLE */}
                     <td className="px-6 py-4">
                         {getRoleBadge(user.role, user.is_featured)}
+                    </td>
+
+                    {/* PLAN (NEW) */}
+                    <td className="px-6 py-4">
+                        {(user.role === 'tutor' || user.role === 'institute') ? getPlanBadge(user.subscription_plan) : <span className="text-slate-300">-</span>}
                     </td>
 
                     {/* STATUS */}
@@ -116,6 +128,7 @@ export default function UserTable({
                     <td className="px-6 py-4">
                         <span className="bg-slate-100 border border-slate-200 px-2 py-1 rounded text-[10px] font-black uppercase text-slate-600">{invite.role}</span>
                     </td>
+                    <td className="px-6 py-4"><span className="text-slate-300">-</span></td>
                     <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-600 uppercase tracking-wide">
                             <Clock className="w-3 h-3"/> Invited
@@ -135,7 +148,7 @@ export default function UserTable({
                 {/* EMPTY STATE */}
                 {((isUserView && users.length === 0) || (!isUserView && invites.length === 0)) && (
                 <tr>
-                    <td colSpan={5} className="text-center py-20">
+                    <td colSpan={6} className="text-center py-20">
                         <div className="flex flex-col items-center justify-center text-slate-400">
                             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                 <Shield className="w-8 h-8 text-slate-200" />

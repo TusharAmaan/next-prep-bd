@@ -1,10 +1,13 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { 
   Trash2, KeyRound, Activity, Phone, 
   Building, Mail, GraduationCap, BookOpen, 
   Shield, User, CheckCircle2, MapPin, 
   Heart, ExternalLink, Loader2, 
-  Ban, AlertTriangle, FileText, Star, Briefcase, Calendar
+  Ban, AlertTriangle, FileText, Star, Briefcase, Calendar,
+  CreditCard, Check, X, Clock, Smartphone
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
@@ -16,9 +19,10 @@ export default function UserDetailView({
 }: any) {
   
   // --- 1. STATE & HOOKS ---
-  const [activeTab, setActiveTab] = useState<'profile' | 'likes'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'likes' | 'billing'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
-  const [loadingLikes, setLoadingLikes] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]); // New: Transactions
+  const [loadingData, setLoadingData] = useState(false);
   
   // Local Management State
   const [status, setStatus] = useState(user?.status || 'pending');
@@ -28,7 +32,6 @@ export default function UserDetailView({
   const [isSaving, setIsSaving] = useState(false);
 
   // --- 1.5 SYNC STATE ON PROP CHANGE ---
-  // This ensures if the parent updates the user (e.g. via optimistic update), this view reflects it
   useEffect(() => {
     if (user) {
       setStatus(user.status || 'pending');
@@ -38,62 +41,62 @@ export default function UserDetailView({
     }
   }, [user]);
 
-  // --- 2. FETCH ACTIVITY ---
+  // --- 2. FETCH DATA (Activity & Billing) ---
   useEffect(() => {
-    if (activeTab === 'likes' && user?.id) {
-      const fetchUserLikes = async () => {
-        setLoadingLikes(true);
-        const { data } = await supabase
-          .from('likes')
-          .select(`created_at, resources (id, title, type, subjects(title))`)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-        if (data) setLikesData(data);
-        setLoadingLikes(false);
-      };
-      fetchUserLikes();
+    if (user?.id) {
+        const loadData = async () => {
+            setLoadingData(true);
+            
+            // 1. Likes
+            if (activeTab === 'likes') {
+                const { data } = await supabase
+                    .from('likes')
+                    .select(`created_at, resources (id, title, type, subjects(title))`)
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+                if (data) setLikesData(data);
+            }
+
+            // 2. Billing (For Tutors/Institutes)
+            if (activeTab === 'billing' || (role === 'tutor' || role === 'institute')) {
+                const { data } = await supabase
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+                if (data) setTransactions(data);
+            }
+            setLoadingData(false);
+        };
+        loadData();
     }
-  }, [activeTab, user?.id]);
+  }, [activeTab, user?.id, role]);
 
   if (!user) return null;
 
-  // --- 3. CORE ACTIONS (SYNCHRONIZED) ---
+  // --- 3. CORE ACTIONS ---
   
   const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
-    
-    // 1. Optimistic Update Local State
+    // Optimistic Update
     if(field === 'status') setStatus(value);
     if(field === 'role') setRole(value);
     if(field === 'is_featured') setIsFeatured(value);
 
     try {
-        // 2. PARENT SYNC vs LOCAL DB UPDATE
-        if (field === 'role') {
-            // Call Parent to sync Table + DB
-            await onRoleUpdate(user.id, value);
-        } 
+        if (field === 'role') await onRoleUpdate(user.id, value);
         else if (field === 'status') {
-            // Call Parent based on status choice
             if (value === 'active') await onApproveUser(user.id);
             else if (value === 'suspended') await onSuspendUser(user.id);
-            else {
-                 // Fallback for 'pending' if no specific parent handler exists
-                 // This ensures the DB updates even if the parent doesn't have a 'make pending' prop
-                 await supabase.from('profiles').update({ status: 'pending' }).eq('id', user.id);
-            }
+            else await supabase.from('profiles').update({ status: 'pending' }).eq('id', user.id);
         } 
         else if (field === 'is_featured') {
-            // Featured status is local to this view/tutors, so we update DB directly here
-            const { error } = await supabase
-                .from('profiles')
-                .update({ is_featured: value })
-                .eq('id', user.id);
+            const { error } = await supabase.from('profiles').update({ is_featured: value }).eq('id', user.id);
             if (error) throw error;
         }
     } catch (error: any) {
         alert(`❌ Update Failed: ${error.message}`);
-        // Revert State on Error
+        // Revert
         if(field === 'status') setStatus(user.status);
         if(field === 'role') setRole(user.role);
         if(field === 'is_featured') setIsFeatured(user.is_featured);
@@ -102,7 +105,6 @@ export default function UserDetailView({
     }
   };
 
-  // Save Notes (Debounced/Blur)
   const saveNotes = async () => {
       if (notes === user.admin_notes) return;
       setIsSaving(true);
@@ -111,15 +113,25 @@ export default function UserDetailView({
       setIsSaving(false);
   };
 
-  // --- 4. FORMATTERS & ICONS ---
+  // --- NEW: Approve/Reject Transaction ---
+  const handleTransaction = async (id: number, action: 'approved' | 'rejected') => {
+      if(!confirm(`Are you sure you want to ${action} this payment?`)) return;
+      
+      const { error } = await supabase.from('transactions').update({ status: action }).eq('id', id);
+      
+      if (!error) {
+          alert(`Transaction ${action}`);
+          // Refresh list
+          const { data } = await supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+          if(data) setTransactions(data);
+      } else {
+          alert("Error: " + error.message);
+      }
+  };
+
+  // --- FORMATTERS ---
   const formatGoal = (slug: string) => {
       if (!slug) return "Not Set";
-      if (slug.includes('ssc')) return "SSC Preparation";
-      if (slug.includes('hsc')) return "HSC Preparation";
-      if (slug.includes('medical')) return "Medical Admission";
-      if (slug.includes('university')) return "University Admission";
-      if (slug.includes('mba')) return "IBA / MBA";
-      if (slug.includes('job')) return "Job Preparation";
       return slug.replace('/resources/', '').replace(/-/g, ' '); 
   };
 
@@ -127,21 +139,18 @@ export default function UserDetailView({
     switch (r) {
       case 'student': return <GraduationCap className="w-4 h-4"/>;
       case 'tutor': return <BookOpen className="w-4 h-4"/>;
+      case 'institute': return <Building className="w-4 h-4"/>;
       case 'admin': return <Shield className="w-4 h-4"/>;
       case 'editor': return <Briefcase className="w-4 h-4"/>;
       default: return <User className="w-4 h-4"/>;
     }
   };
 
-  const likesByType = likesData.reduce((acc: any, item: any) => {
-    const type = item.resources?.type || 'Other';
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
-  
+  const pendingTrx = transactions.find(t => t.status === 'pending');
+
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
         
         {/* HEADER */}
         <div className="bg-white p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
@@ -152,8 +161,13 @@ export default function UserDetailView({
              <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button onClick={() => setActiveTab('profile')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Overview</button>
                 <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                    <Heart className="w-3 h-3" /> Activity <span className="bg-slate-200 text-slate-600 px-1.5 rounded-full text-[10px]">{likesData.length || 0}</span>
+                    <Heart className="w-3 h-3" /> Activity
                 </button>
+                {(role === 'tutor' || role === 'institute') && (
+                    <button onClick={() => setActiveTab('billing')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'billing' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <CreditCard className="w-3 h-3" /> Billing {pendingTrx && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
+                    </button>
+                )}
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold transition-colors">✕</button>
@@ -174,7 +188,6 @@ export default function UserDetailView({
                             <Mail className="w-3.5 h-3.5"/> {user.email}
                         </p>
                       </div>
-                      {/* SAVING INDICATOR */}
                       {isSaving && <span className="text-xs font-bold text-indigo-600 flex items-center animate-pulse"><Loader2 className="w-3 h-3 mr-1 animate-spin"/> Syncing...</span>}
                   </div>
                   
@@ -190,6 +203,7 @@ export default function UserDetailView({
                           >
                               <option value="student">Student</option>
                               <option value="tutor">Tutor</option>
+                              <option value="institute">Institute</option>
                               <option value="editor">Editor</option>
                               <option value="admin">Admin</option>
                           </select>
@@ -217,8 +231,8 @@ export default function UserDetailView({
                           </div>
                       </div>
 
-                      {/* 3. FEATURED TOGGLE (Tutor Only) */}
-                      {role === 'tutor' && (
+                      {/* 3. FEATURED TOGGLE */}
+                      {(role === 'tutor' || role === 'institute') && (
                           <button 
                             onClick={() => handleUpdateProfile('is_featured', !isFeatured)} 
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all shadow-sm ${
@@ -228,7 +242,7 @@ export default function UserDetailView({
                             }`}
                           >
                               <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} /> 
-                              {isFeatured ? "Featured Tutor" : "Promote to Featured"}
+                              {isFeatured ? "Featured" : "Promote"}
                           </button>
                       )}
                   </div>
@@ -240,9 +254,35 @@ export default function UserDetailView({
               {activeTab === 'profile' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in">
                       
-                      {/* LEFT COLUMN: DETAILS */}
+                      {/* LEFT: INFO & NOTES */}
                       <div className="md:col-span-7 space-y-6">
                           
+                          {/* PENDING PAYMENT ALERT (If any) */}
+                          {pendingTrx && (
+                              <div className="bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-lg shadow-indigo-100 animate-pulse">
+                                  <div className="flex items-start justify-between">
+                                      <div className="flex gap-3">
+                                          <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600"><CreditCard className="w-5 h-5"/></div>
+                                          <div>
+                                              <h4 className="font-bold text-slate-800 text-sm">Payment Verification Needed</h4>
+                                              <p className="text-xs text-slate-500 mt-1">
+                                                  Sent <b>৳{pendingTrx.amount}</b> via <span className="capitalize font-bold">{pendingTrx.payment_method}</span>
+                                              </p>
+                                              <div className="mt-2 flex items-center gap-2 text-xs font-mono bg-slate-50 w-fit px-2 py-1 rounded border">
+                                                  <Smartphone className="w-3 h-3"/> {pendingTrx.sender_number}
+                                                  <span className="text-slate-300">|</span>
+                                                  TRX: {pendingTrx.transaction_id}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="flex gap-2">
+                                          <button onClick={() => handleTransaction(pendingTrx.id, 'approved')} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-md transition-transform active:scale-95" title="Approve"><Check className="w-4 h-4"/></button>
+                                          <button onClick={() => handleTransaction(pendingTrx.id, 'rejected')} className="p-2 bg-red-100 text-red-500 rounded-lg hover:bg-red-200 transition-colors" title="Reject"><X className="w-4 h-4"/></button>
+                                      </div>
+                                  </div>
+                              </div>
+                          )}
+
                           {/* Admin Notes */}
                           <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -251,111 +291,53 @@ export default function UserDetailView({
                               <textarea 
                                   className="w-full bg-white border border-amber-200 rounded-xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-amber-200 outline-none resize-none placeholder:text-slate-400"
                                   rows={3}
-                                  placeholder="Write notes here (only visible to admins). Click outside to save."
+                                  placeholder="Write notes here. Click outside to save."
                                   value={notes}
                                   onChange={(e) => setNotes(e.target.value)}
                                   onBlur={saveNotes}
                               />
-                              <p className="text-[10px] text-amber-700/60 mt-1.5 text-right italic">Changes save automatically on blur</p>
                           </div>
 
-                          {/* Dynamic Info Card */}
+                          {/* Info Card */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                  <GraduationCap className="w-4 h-4"/> {role.charAt(0).toUpperCase() + role.slice(1)} Profile
+                                  <User className="w-4 h-4"/> Profile Details
                               </h5>
                               
-                              {/* 1. Common Info */}
                               <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
-                                  <div>
-                                      <p className="text-xs text-slate-400 font-bold uppercase mb-1">Phone</p>
-                                      <p className="font-bold text-slate-800">{user.phone || "—"}</p>
-                                  </div>
-                                  <div>
-                                      <p className="text-xs text-slate-400 font-bold uppercase mb-1">Institution</p>
-                                      <p className="font-bold text-slate-800">{user.institution || "—"}</p>
-                                  </div>
+                                  <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Phone</p><p className="font-bold text-slate-800">{user.phone || "—"}</p></div>
+                                  <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Institution</p><p className="font-bold text-slate-800">{user.institution || "—"}</p></div>
                               </div>
 
-                              {/* 2. STUDENT SPECIFIC */}
-                              {role === 'student' && (
-                                  <div className="space-y-4">
-                                      <div>
-                                          <p className="text-xs text-slate-400 font-bold uppercase mb-1">Target Goal</p>
-                                          <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-sm font-bold border border-blue-100">
-                                              {formatGoal(user.current_goal || user.goal)}
+                              {/* TUTOR/INSTITUTE SUBSCRIPTION DETAILS */}
+                              {(role === 'tutor' || role === 'institute') && (
+                                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                      <div className="flex justify-between items-center mb-3">
+                                          <p className="text-xs font-bold text-slate-500 uppercase">Subscription Status</p>
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                              user.subscription_plan === 'pro' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                                              user.subscription_plan === 'trial' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                              'bg-slate-200 text-slate-600'
+                                          }`}>
+                                              {user.subscription_plan}
                                           </span>
                                       </div>
-                                      {user.date_of_birth && (
+                                      <div className="grid grid-cols-2 gap-4 text-sm">
                                           <div>
-                                              <p className="text-xs text-slate-400 font-bold uppercase mb-1">Date of Birth</p>
-                                              <div className="flex items-center gap-2 text-slate-700 font-bold text-sm">
-                                                  <Calendar className="w-4 h-4 text-slate-400" />
-                                                  {new Date(user.date_of_birth).toLocaleDateString()}
-                                              </div>
+                                              <p className="text-slate-400 text-xs">Expires</p>
+                                              <p className="font-bold text-slate-800">{user.subscription_expiry ? new Date(user.subscription_expiry).toLocaleDateString() : 'N/A'}</p>
                                           </div>
-                                      )}
-                                  </div>
-                              )}
-
-                              {/* 3. TUTOR SPECIFIC */}
-                              {role === 'tutor' && (
-                                  <div className="space-y-5">
-                                      <div>
-                                          <p className="text-xs text-slate-400 font-bold uppercase mb-2">Interested Segments</p>
-                                          <div className="flex flex-wrap gap-2">
-                                              {user.interested_segments && user.interested_segments.length > 0 ? (
-                                                  user.interested_segments.map((seg:string, i:number) => (
-                                                      <span key={i} className="text-[11px] font-bold bg-purple-50 text-purple-700 px-2.5 py-1 rounded border border-purple-100">{seg}</span>
-                                                  ))
-                                              ) : <span className="text-sm text-slate-400 italic">No segments selected</span>}
-                                          </div>
-                                      </div>
-                                      
-                                      {user.academic_records && user.academic_records.length > 0 && (
                                           <div>
-                                              <p className="text-xs text-slate-400 font-bold uppercase mb-2">Academic Records</p>
-                                              <div className="space-y-2">
-                                                  {user.academic_records.map((rec:any, i:number) => (
-                                                      <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                                          <div className="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">{i+1}</div>
-                                                          <div>
-                                                              <p className="text-xs font-bold text-slate-800">{rec.degree}</p>
-                                                              <p className="text-[10px] text-slate-500">{rec.institute}</p>
-                                                          </div>
-                                                      </div>
-                                                  ))}
-                                              </div>
+                                              <p className="text-slate-400 text-xs">Usage (Month)</p>
+                                              <p className="font-bold text-slate-800">{user.monthly_question_count || 0} / {user.max_questions || 50}</p>
                                           </div>
-                                      )}
-                                  </div>
-                              )}
-
-                              {/* 4. EDITOR SPECIFIC */}
-                              {role === 'editor' && user.skills && (
-                                  <div>
-                                      <p className="text-xs text-slate-400 font-bold uppercase mb-2">Skills</p>
-                                      <div className="flex flex-wrap gap-2">
-                                          {user.skills.map((sk:string, i:number) => (
-                                              <span key={i} className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded border border-emerald-100">{sk}</span>
-                                          ))}
                                       </div>
                                   </div>
                               )}
-                          </div>
-
-                          {/* Location Card */}
-                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-                              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><MapPin className="w-6 h-6" /></div>
-                              <div>
-                                  <p className="text-xs font-bold text-slate-400 uppercase">Last Known Location</p>
-                                  <p className="text-lg font-bold text-slate-900">{user.city || "Unknown / Not Shared"}</p>
-                                  {user.location_updated_at && <p className="text-[10px] text-slate-400 mt-0.5">Updated: {new Date(user.location_updated_at).toLocaleString()}</p>}
-                              </div>
                           </div>
                       </div>
 
-                      {/* RIGHT COLUMN: ACTIONS */}
+                      {/* RIGHT: SECURITY & ACTIONS */}
                       <div className="md:col-span-5 space-y-6">
                           <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
                               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Security & Access</h5>
@@ -370,83 +352,58 @@ export default function UserDetailView({
                                 </button>
                               </div>
                           </div>
-                          
-                          {status === 'suspended' && (
-                              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4 animate-in slide-in-from-right-2">
-                                  <div className="bg-red-100 p-2 rounded-full"><AlertTriangle className="w-6 h-6 text-red-600" /></div>
-                                  <div>
-                                      <h5 className="text-sm font-bold text-red-800">Account Suspended</h5>
-                                      <p className="text-xs text-red-600 mt-1 leading-relaxed">This user cannot log in or access any materials. Set status to 'Active' to restore access.</p>
-                                  </div>
-                              </div>
-                          )}
                       </div>
                   </div>
               )}
 
-              {/* === TAB 2: ACTIVITY (ROBUST) === */}
-              {activeTab === 'likes' && (
-                  <div className="animate-in fade-in space-y-6">
-                      {loadingLikes ? (
-                          <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
-                              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" /> 
-                              <p className="text-xs font-bold uppercase tracking-wider">Loading Activity...</p>
-                          </div>
-                      ) : likesData.length === 0 ? (
-                          <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><Heart className="w-8 h-8 text-slate-300" /></div>
-                              <h4 className="text-slate-900 font-bold text-lg">No Activity Yet</h4>
-                              <p className="text-slate-500 text-sm mt-1">This user hasn't liked any resources.</p>
-                          </div>
-                      ) : (
-                          <>
-                              {/* Summary Cards */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-2xl shadow-lg text-white">
-                                      <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">Total Likes</p>
-                                      <p className="text-3xl font-black mt-1">{likesData.length}</p>
-                                  </div>
-                                  {Object.entries(likesByType).map(([type, count]: any) => (
-                                      <div key={type} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{type}s</p>
-                                          <p className="text-3xl font-black text-slate-800 mt-1">{count}</p>
-                                      </div>
-                                  ))}
-                              </div>
-
-                              {/* Detailed List */}
-                              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                                  <div className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
-                                      <h5 className="font-bold text-slate-700 text-xs uppercase tracking-wide">Recent Interactions</h5>
-                                  </div>
-                                  <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                      {likesData.map((like) => (
-                                          <div key={like.created_at} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
-                                              <div className="flex items-center gap-4 overflow-hidden">
-                                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg ${
-                                                      like.resources?.type === 'video' ? 'bg-red-50 text-red-500' : 
-                                                      like.resources?.type === 'pdf' ? 'bg-orange-50 text-orange-500' : 
-                                                      'bg-blue-50 text-blue-500'
+              {/* === TAB 3: BILLING HISTORY (Admin View) === */}
+              {activeTab === 'billing' && (
+                  <div className="animate-in fade-in">
+                      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                          <table className="w-full text-sm text-left">
+                              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-xs">
+                                  <tr>
+                                      <th className="px-6 py-4">Date</th>
+                                      <th className="px-6 py-4">Plan</th>
+                                      <th className="px-6 py-4">Amount</th>
+                                      <th className="px-6 py-4">Method</th>
+                                      <th className="px-6 py-4 text-right">Status</th>
+                                      <th className="px-6 py-4 text-right">Action</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                  {transactions.length === 0 ? (
+                                      <tr><td colSpan={6} className="p-8 text-center text-slate-400 italic">No transactions found.</td></tr>
+                                  ) : (
+                                      transactions.map(t => (
+                                          <tr key={t.id} className="hover:bg-slate-50">
+                                              <td className="px-6 py-4 text-slate-600">{new Date(t.created_at).toLocaleDateString()}</td>
+                                              <td className="px-6 py-4 font-bold text-slate-800 capitalize">{t.plan_type.replace('pro_', '')}</td>
+                                              <td className="px-6 py-4 text-slate-600 font-mono">৳{t.amount}</td>
+                                              <td className="px-6 py-4 capitalize font-bold text-slate-700">{t.payment_method}</td>
+                                              <td className="px-6 py-4 text-right">
+                                                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
+                                                      t.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                                      t.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                      'bg-yellow-100 text-yellow-700'
                                                   }`}>
-                                                      {like.resources?.type === 'video' ? '▶' : like.resources?.type === 'pdf' ? '📄' : '📝'}
-                                                  </div>
-                                                  <div className="min-w-0">
-                                                      <p className="text-sm font-bold text-slate-800 truncate">{like.resources?.title || "Unknown Resource"}</p>
-                                                      <div className="flex items-center gap-2 mt-0.5">
-                                                          <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase">{like.resources?.type}</span>
-                                                          <span className="text-[10px] text-slate-400">• {new Date(like.created_at).toLocaleDateString()}</span>
+                                                      {t.status}
+                                                  </span>
+                                              </td>
+                                              <td className="px-6 py-4 text-right">
+                                                  {t.status === 'pending' && (
+                                                      <div className="flex justify-end gap-2">
+                                                          <button onClick={() => handleTransaction(t.id, 'approved')} className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200" title="Approve"><Check className="w-4 h-4"/></button>
+                                                          <button onClick={() => handleTransaction(t.id, 'rejected')} className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Reject"><X className="w-4 h-4"/></button>
                                                       </div>
-                                                  </div>
-                                              </div>
-                                              <Link href={`/${like.resources?.type === 'question' ? 'question' : 'blog'}/${like.resources?.id}`} target="_blank" className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all">
-                                                  <ExternalLink className="w-4 h-4" />
-                                              </Link>
-                                          </div>
-                                      ))}
-                                  </div>
-                              </div>
-                          </>
-                      )}
+                                                  )}
+                                              </td>
+                                          </tr>
+                                      ))
+                                  )}
+                              </tbody>
+                          </table>
+                      </div>
                   </div>
               )}
            </div>
