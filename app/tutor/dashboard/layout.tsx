@@ -1,53 +1,69 @@
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
-import { Search } from 'lucide-react';
-import TutorSidebar from '@/components/tutor/TutorSidebar'; // Import the dedicated sidebar
+"use client";
+import { useState, useEffect } from "react";
+import { Menu, X, LogOut } from "lucide-react";
+import TutorSidebar from "@/components/tutor/TutorSidebar";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
-export default async function TutorLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export default function TutorDashboardLayout({ children }: { children: React.ReactNode }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const supabase = createClient();
 
-  if (!user) redirect('/login');
+  useEffect(() => {
+    const protectRoute = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== 'tutor' && profile?.role !== 'admin') {
+        router.replace("/student/dashboard"); // Redirect unauthorized
+      }
+      setLoading(false);
+    };
+    protectRoute();
+  }, [router, supabase]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-600 rounded-full animate-spin border-t-transparent"></div></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      {/* 1. USE THE DEDICATED COMPONENT */}
-      <TutorSidebar />
+    <div className="min-h-screen bg-[#F8FAFC] font-sans flex">
+      
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white fixed inset-y-0 z-20">
+        <TutorSidebar />
+      </aside>
 
-      {/* 2. MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden lg:ml-64"> 
-        {/* ^ Added lg:ml-64 to push content right because Sidebar is fixed */}
-        
-        {/* Top Header */}
-        <header className="bg-white border-b h-16 flex items-center justify-between px-8 shadow-sm">
-          <h1 className="text-xl font-bold text-gray-800">Tutor Dashboard</h1>
-          
-          <div className="flex items-center gap-4">
-            <div className="relative hidden md:block text-gray-400 focus-within:text-indigo-600">
-              <Search className="absolute left-3 top-2.5" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="pl-10 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64 transition-all"
-              />
-            </div>
-            
-            <div className="flex items-center gap-3 pl-4 border-l">
-              <div className="h-9 w-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
-                {user.email?.[0].toUpperCase()}
-              </div>
-              <div className="hidden md:block">
-                <p className="text-sm font-medium text-gray-700 leading-none">{user.email?.split('@')[0]}</p>
-                <p className="text-xs text-gray-500 mt-1">Instructor</p>
-              </div>
-            </div>
-          </div>
-        </header>
+      {/* MOBILE HEADER */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 p-4 z-30 flex justify-between items-center">
+        <span className="font-black text-slate-800">Tutor Panel</span>
+        <button onClick={() => setIsMobileOpen(true)}><Menu className="w-6 h-6 text-slate-600"/></button>
+      </div>
 
-        {/* Dynamic Page Content */}
-        <div className="flex-1 overflow-auto p-8">
-          {children}
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileOpen(false)}>
+            <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl" onClick={e => e.stopPropagation()}>
+                <TutorSidebar toggleMobile={() => setIsMobileOpen(false)} />
+            </div>
+            <button className="absolute top-4 right-4 p-2 bg-white rounded-full text-slate-900" onClick={() => setIsMobileOpen(false)}>
+                <X className="w-6 h-6" />
+            </button>
         </div>
+      )}
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 lg:ml-64 w-full p-6 pt-20 lg:p-8 lg:pt-8 overflow-x-hidden">
+        {children}
       </main>
     </div>
   );
