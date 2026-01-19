@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Plus, Trash2, Save, CheckCircle, 
   ChevronDown, ChevronRight, FileText, 
   HelpCircle, BookOpen, AlertCircle,
-  Search, Filter, X, ChevronLeft, Edit3 
+  Search, Filter, X, ChevronLeft, Edit3,
+  MoreHorizontal, LayoutGrid, List as ListIcon,
+  Tag, Layers, Hash
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 
@@ -27,6 +29,10 @@ interface Question {
   explanation: string;
   options: Option[];
   parent_id?: string;
+  topic_tag?: string;
+  segment_id?: number;
+  group_id?: number;
+  subject_id?: number;
 }
 
 // --- CUSTOM MODAL COMPONENT ---
@@ -77,12 +83,48 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   );
 }
 
+// --- TAG INPUT COMPONENT ---
+const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (val: string) => void, suggestions: string[] }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const filtered = suggestions.filter(s => s.toLowerCase().includes(value.toLowerCase()) && s !== value);
+
+    return (
+        <div className="relative">
+            <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                <div className="pl-3 text-slate-400"><Tag size={16}/></div>
+                <input 
+                    className="w-full p-2.5 text-sm outline-none font-medium text-slate-700 placeholder:text-slate-400"
+                    placeholder="e.g. Algebra, Newton's Laws..."
+                    value={value}
+                    onChange={e => { onChange(e.target.value); setIsOpen(true); }}
+                    onFocus={() => setIsOpen(true)}
+                    onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                />
+            </div>
+            {isOpen && filtered.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
+                    {filtered.map(tag => (
+                        <button 
+                            key={tag} 
+                            onClick={() => onChange(tag)}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        >
+                            {tag}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function QuestionBankManager() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'list' | 'create'>('list');
   const [questions, setQuestions] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // For filter sidebar
 
   // --- MODAL STATE ---
   const [modalState, setModalState] = useState<{
@@ -102,17 +144,19 @@ export default function QuestionBankManager() {
   const [filterSegment, setFilterSegment] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
-  const [filterTopic, setFilterTopic] = useState(""); // NEW: Topic Filter
+  const [filterTopic, setFilterTopic] = useState(""); // Powerful Topic Filter
+  const [filterType, setFilterType] = useState<string>("all"); // MCQ/Descriptive etc.
   
-  const [itemsPerPage, setItemsPerPage] = useState(10); // NEW: Pagination Control
+  const [itemsPerPage, setItemsPerPage] = useState(20); // Default to 20 for density
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   // --- DROPDOWN DATA ---
   const [segments, setSegments] = useState<any[]>([]);
   const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
   const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
-  const [uniqueTags, setUniqueTags] = useState<string[]>([]); // NEW: Unique Tags List
+  const [uniqueTags, setUniqueTags] = useState<string[]>([]);
 
   // Creation Dropdowns
   const [createGroupsList, setCreateGroupsList] = useState<any[]>([]);
@@ -144,12 +188,12 @@ export default function QuestionBankManager() {
   // --- INITIAL LOAD ---
   useEffect(() => { 
       fetchSegments(); 
-      fetchUniqueTags(); // Fetch tags on load
+      fetchUniqueTags(); 
   }, []);
   
   useEffect(() => { 
       fetchQuestions(); 
-  }, [page, itemsPerPage, filterSegment, filterGroup, filterSubject, filterTopic, searchQuery]);
+  }, [page, itemsPerPage, filterSegment, filterGroup, filterSubject, filterTopic, filterType, searchQuery]);
 
   // --- FETCHERS ---
   const fetchQuestions = async () => {
@@ -159,7 +203,8 @@ export default function QuestionBankManager() {
     if (filterSegment) query = query.eq('segment_id', filterSegment);
     if (filterGroup) query = query.eq('group_id', filterGroup);
     if (filterSubject) query = query.eq('subject_id', filterSubject);
-    if (filterTopic) query = query.eq('topic_tag', filterTopic); // Apply Topic Filter
+    if (filterTopic) query = query.eq('topic_tag', filterTopic);
+    if (filterType !== 'all') query = query.eq('question_type', filterType);
     
     if (searchQuery) query = query.or(`question_text.ilike.%${searchQuery}%,topic_tag.ilike.%${searchQuery}%`);
     
@@ -168,17 +213,19 @@ export default function QuestionBankManager() {
     
     query = query.range(from, to);
     const { data, count, error } = await query;
-    if (!error) { setQuestions(data || []); setHasMore((count || 0) > to + 1); }
+    if (!error) { 
+        setQuestions(data || []); 
+        setTotalCount(count || 0);
+        setHasMore((count || 0) > to + 1); 
+    }
     setLoading(false);
   };
 
   const fetchSegments = async () => { const { data } = await supabase.from('segments').select('id, title'); if (data) setSegments(data); };
   
-  // NEW: Fetch all unique tags for the dropdown
   const fetchUniqueTags = async () => {
       const { data } = await supabase.from('question_bank').select('topic_tag').not('topic_tag', 'is', null);
       if (data) {
-          // Extract unique tags using Set
           const tags = Array.from(new Set(data.map(item => item.topic_tag).filter(Boolean)));
           setUniqueTags(tags as string[]);
       }
@@ -234,7 +281,7 @@ export default function QuestionBankManager() {
         } else {
             setQuestions(questions.filter(q => q.id !== id));
             showModal('success', "Question deleted successfully.");
-            fetchUniqueTags(); // Refresh tags if one was deleted
+            fetchUniqueTags(); 
         }
         setLoading(false);
         closeModal();
@@ -322,7 +369,7 @@ export default function QuestionBankManager() {
             closeModal(); 
             setView('list'); 
             fetchQuestions(); 
-            fetchUniqueTags(); // Refresh tags list
+            fetchUniqueTags(); 
         });
 
     } catch (err: any) {
@@ -344,29 +391,36 @@ export default function QuestionBankManager() {
     setSubQType('mcq');
   };
 
-  // --- RENDER FORM HELPER (Optimized UI) ---
+  // --- RENDER FORM HELPER (With Rich Text Editor & Auto Height) ---
   const renderQuestionForm = (isSub: boolean = false) => (
     <div className={`space-y-6 ${isSub ? 'bg-indigo-50/50 p-6 rounded-xl border border-indigo-100' : ''}`}>
        
        {/* 1. TYPE SELECTOR */}
-       <div className="flex gap-3">
+       <div className="flex justify-between items-center">
           {(!isSub || view === 'create') && (
              <div className="flex bg-slate-100 p-1 rounded-lg">
                 {!isSub && (
-                    <button onClick={() => setQType('passage')} className={`px-4 py-1.5 text-sm font-bold rounded-md transition ${qType === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500'}`}>Passage</button>
+                    <button onClick={() => setQType('passage')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500'}`}>Passage</button>
                 )}
-                <button onClick={() => setQType('mcq')} className={`px-4 py-1.5 text-sm font-bold rounded-md transition ${qType === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>MCQ</button>
-                <button onClick={() => setQType('descriptive')} className={`px-4 py-1.5 text-sm font-bold rounded-md transition ${qType === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>Descriptive</button>
+                <button onClick={() => setQType('mcq')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>MCQ</button>
+                <button onClick={() => setQType('descriptive')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>Descriptive</button>
              </div>
+          )}
+          
+          {/* Topic Tag in Editor */}
+          {!isSub && (
+              <div className="w-64">
+                  <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
+              </div>
           )}
        </div>
 
-       {/* 2. QUESTION INPUT (Reduced height) */}
-       <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">
-             {qType === 'passage' && !isSub ? 'Passage / Story Text' : 'Question Text'}
+       {/* 2. QUESTION EDITOR */}
+       <div className="space-y-2">
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
+             {qType === 'passage' && !isSub ? 'Passage Content' : 'Question Content'}
           </label>
-          <div className="h-40 overflow-y-auto border rounded-lg bg-white"> 
+          <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow"> 
               {qType === 'passage' && !isSub ? (
                  <RichTextEditor key="passage-main" initialValue={passageText} onChange={setPassageText} />
               ) : (
@@ -384,7 +438,7 @@ export default function QuestionBankManager() {
                     type="number" 
                     value={marks} 
                     onChange={e => setMarks(Number(e.target.value))} 
-                    className="w-full border border-slate-200 p-3 rounded-lg text-lg font-bold text-center focus:ring-2 focus:ring-indigo-200 outline-none" 
+                    className="w-full border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" 
                   />
               </div>
           )}
@@ -396,71 +450,87 @@ export default function QuestionBankManager() {
              <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
              <div className="grid grid-cols-1 gap-3">
                  {options.map((opt, i) => (
-                    <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200">
+                    <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                        <button onClick={() => {
-                            const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts);
-                          }} className={`p-2 rounded-lg border transition ${opt.is_correct ? 'bg-green-100 border-green-400 text-green-700' : 'bg-slate-50 border-slate-200 text-slate-300'}`}>
-                          <CheckCircle size={20} />
+                           const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts);
+                         }} className={`p-2 rounded-lg border transition ${opt.is_correct ? 'bg-green-100 border-green-400 text-green-700' : 'bg-slate-50 border-slate-200 text-slate-300'}`}>
+                          <CheckCircle size={18} />
                        </button>
                        <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium" placeholder={`Option ${i+1}`} />
-                       <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500"><Trash2 size={18}/></button>
+                       <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2"><Trash2 size={16}/></button>
                     </div>
                  ))}
              </div>
-             <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2"><Plus size={14}/> Add Option</button>
+             <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
           </div>
        )}
 
-       {/* 4. EXPLANATION (Increased size & Full Width) */}
+       {/* 4. EXPLANATION */}
        {(qType !== 'passage' || isSub) && (
-          <div className="pt-2">
-             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Detailed Explanation</label>
-             <textarea 
-                value={explanation} 
-                onChange={e => setExplanation(e.target.value)} 
-                className="w-full border border-slate-200 p-4 rounded-xl text-sm min-h-[200px] focus:ring-2 focus:ring-indigo-100 outline-none resize-y shadow-sm" 
-                placeholder="Write a detailed explanation here. Include steps, formulas, or reasoning." 
-             />
+          <div className="space-y-2">
+             <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
+             <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
+                <RichTextEditor initialValue={explanation} onChange={setExplanation} />
+             </div>
           </div>
        )}
 
        {/* 5. SUB-QUESTION ACTIONS */}
        {isSub && (
           <div className="flex justify-end gap-2 pt-4 border-t border-indigo-200">
-             <button onClick={() => setIsAddingSub(false)} className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-             <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all">Add Question to Passage</button>
+             <button onClick={() => setIsAddingSub(false)} className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg transition-colors text-xs">Cancel</button>
+             <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all text-xs">Add to Passage</button>
           </div>
        )}
     </div>
   );
 
+  // --- RENDER COMPONENT ---
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full">
        <CustomModal isOpen={modalState.isOpen} type={modalState.type} message={modalState.message} onConfirm={modalState.onConfirm} onCancel={closeModal} />
 
-       {/* HEADER */}
-       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div><h2 className="text-2xl font-bold text-slate-800">Question Bank</h2><p className="text-sm text-slate-500">Manage {questions.length}+ questions</p></div>
+       {/* HEADER BAR */}
+       <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-200">
+          <div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Question Bank</h2>
+              <p className="text-xs font-medium text-slate-500 mt-1">
+                  {totalCount} Questions • {page + 1} of {Math.ceil(totalCount / itemsPerPage) || 1} Pages
+              </p>
+          </div>
           {view === 'list' ? (
-             <button onClick={() => { resetAll(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-transform active:scale-95">
-                <Plus size={20}/> Create New
-             </button>
+             <div className="flex gap-3">
+                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+                     <Filter size={16}/> {isSidebarOpen ? 'Hide Filters' : 'Show Filters'}
+                 </button>
+                 <button onClick={() => { resetAll(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-transform active:scale-95 text-sm">
+                    <Plus size={18}/> New Question
+                 </button>
+             </div>
           ) : (
-             <button onClick={() => { setView('list'); resetAll(); }} className="text-slate-500 font-bold hover:text-slate-800">Cancel</button>
+             <button onClick={() => { setView('list'); resetAll(); }} className="text-slate-500 font-bold hover:text-slate-800 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
           )}
        </div>
 
        {/* CREATE VIEW */}
        {view === 'create' && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in">
-             <div className="bg-slate-50 p-6 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-slate-100">
-                <select className="border p-2 rounded-lg text-sm" onChange={e => handleCreateSegmentChange(e.target.value)} value={selSegment}><option value="">Select Segment...</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                <select className="border p-2 rounded-lg text-sm" onChange={e => handleCreateGroupChange(e.target.value)} disabled={!selSegment} value={selGroup}><option value="">Select Group...</option>{createGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                <select className="border p-2 rounded-lg text-sm" onChange={e => setSelSubject(e.target.value)} disabled={!selGroup} value={selSubject}><option value="">Select Subject...</option>{createSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                <input placeholder="Topic Tag (e.g. Algebra)" className="border p-2 rounded-lg text-sm" value={topicTag} onChange={e => setTopicTag(e.target.value)} />
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-4">
+             <div className="bg-slate-50 p-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-slate-100">
+                <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => handleCreateSegmentChange(e.target.value)} value={selSegment}><option value="">Select Segment...</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Group</label>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => handleCreateGroupChange(e.target.value)} disabled={!selSegment} value={selGroup}><option value="">Select Group...</option>{createGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => setSelSubject(e.target.value)} disabled={!selGroup} value={selSubject}><option value="">Select Subject...</option>{createSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                </div>
              </div>
 
-             <div className="p-8">
+             <div className="p-8 max-w-5xl mx-auto">
                 {/* Main Form */}
                 {!isAddingSub && renderQuestionForm(false)}
 
@@ -470,36 +540,39 @@ export default function QuestionBankManager() {
                       <div className="flex justify-between items-center mb-6">
                           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><BookOpen size={20} className="text-purple-600"/>Passage Questions</h3>
                           {!isAddingSub && (
-                              <button onClick={() => { 
-                                  setIsAddingSub(true); 
-                                  setQType('mcq'); 
-                                  setQText(''); 
-                                  setExplanation('');
-                                  setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
-                              }} className="px-4 py-2 border-2 border-dashed border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 flex items-center gap-2 text-xs transition-colors"><Plus size={16}/> Add Question</button>
+                             <button onClick={() => { 
+                                 setIsAddingSub(true); 
+                                 setQType('mcq'); 
+                                 setQText(''); 
+                                 setExplanation('');
+                                 setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
+                             }} className="px-4 py-2 border-2 border-dashed border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 flex items-center gap-2 text-xs transition-colors"><Plus size={16}/> Add Question</button>
                           )}
                       </div>
                       
                       <div className="space-y-3 mb-6">
                          {subQuestions.length === 0 && !isAddingSub && <div className="text-center p-8 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-sm italic">No questions added to this passage yet.</div>}
                          {subQuestions.map((sq, idx) => (
-                            <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex justify-between items-start hover:shadow-md transition-shadow">
-                               <div>
-                                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${sq.question_type === 'mcq' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{sq.question_type}</span>
-                                  <p className="font-bold text-slate-800 mt-1 line-clamp-1" dangerouslySetInnerHTML={{__html: sq.question_text}}></p>
+                            <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex justify-between items-start hover:shadow-md transition-shadow group">
+                               <div className="flex gap-3">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-xs font-bold text-slate-500">{idx + 1}</span>
+                                  <div>
+                                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${sq.question_type === 'mcq' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{sq.question_type}</span>
+                                     <p className="font-bold text-slate-800 mt-1 line-clamp-1 text-sm" dangerouslySetInnerHTML={{__html: sq.question_text}}></p>
+                                  </div>
                                </div>
                                <button onClick={() => { 
-                                   showModal('confirm', "Delete this sub-question?", () => {
-                                      const newSub = [...subQuestions]; newSub.splice(idx, 1); setSubQuestions(newSub); closeModal();
-                                   });
-                               }} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={18}/></button>
+                                  showModal('confirm', "Delete this sub-question?", () => {
+                                     const newSub = [...subQuestions]; newSub.splice(idx, 1); setSubQuestions(newSub); closeModal();
+                                  });
+                               }} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16}/></button>
                             </div>
                          ))}
                       </div>
 
                       {isAddingSub && (
-                         <div className="animate-in fade-in slide-in-from-bottom-4">
-                            <h4 className="font-bold text-indigo-900 mb-4 px-2">New Sub-Question Editor</h4>
+                         <div className="animate-in fade-in slide-in-from-bottom-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100">
+                            <h4 className="font-bold text-indigo-900 mb-4 px-2">New Sub-Question</h4>
                             {renderQuestionForm(true)}
                          </div>
                       )}
@@ -507,97 +580,157 @@ export default function QuestionBankManager() {
                 )}
              </div>
              
-             <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-end">
-                <button onClick={handleSaveToBank} disabled={loading || isAddingSub} className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95">
-                    {loading ? "Saving..." : (editingId ? "Update Question" : "Save to Question Bank")}
+             <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center sticky bottom-0 z-10">
+                <div className="text-xs text-slate-400 font-medium italic">
+                    {editingId ? `Editing Question ID: ${editingId}` : "Drafting New Question"}
+                </div>
+                <button onClick={handleSaveToBank} disabled={loading || isAddingSub} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95 text-sm flex items-center gap-2">
+                   {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
+                   {editingId ? "Update Question" : "Save to Bank"}
                 </button>
              </div>
           </div>
        )}
 
-       {/* LIST VIEW */}
+       {/* LIST VIEW (Data Grid) */}
        {view === 'list' && (
-          <div className="space-y-4 animate-in fade-in">
-             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
-                    <input className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 outline-none" placeholder="Search text or topic..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0 items-center">
-                    {/* FILTERS */}
-                    <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterSegment} onChange={(e) => handleFilterSegmentChange(e.target.value)}><option value="">All Segments</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                    <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterGroup} onChange={(e) => handleFilterGroupChange(e.target.value)} disabled={!filterSegment}><option value="">All Groups</option>{filterGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                    <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterSubject} onChange={(e) => { setFilterSubject(e.target.value); setPage(0); }} disabled={!filterGroup}><option value="">All Subjects</option>{filterSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                    
-                    {/* NEW: TOPIC FILTER */}
-                    <select 
-                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" 
-                        value={filterTopic} 
-                        onChange={(e) => { setFilterTopic(e.target.value); setPage(0); }}
-                    >
-                        <option value="">All Topics</option>
-                        {uniqueTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-                    </select>
+          <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-200px)]">
+             
+             {/* FILTERS SIDEBAR */}
+             {isSidebarOpen && (
+                 <div className="w-full md:w-64 flex-shrink-0 bg-white border border-slate-200 rounded-xl shadow-sm p-4 overflow-y-auto space-y-6 animate-in slide-in-from-left-4 h-full">
+                     <div>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Hierarchy</h3>
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500">Segment</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterSegment} onChange={(e) => handleFilterSegmentChange(e.target.value)}><option value="">All Segments</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500">Group</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterGroup} onChange={(e) => handleFilterGroupChange(e.target.value)} disabled={!filterSegment}><option value="">All Groups</option>{filterGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500">Subject</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterSubject} onChange={(e) => { setFilterSubject(e.target.value); setPage(0); }} disabled={!filterGroup}><option value="">All Subjects</option>{filterSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                            </div>
+                        </div>
+                     </div>
 
-                    {(filterSegment || searchQuery || filterTopic) && <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Clear Filters"><X size={18} /></button>}
-                </div>
-             </div>
+                     <div>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Attributes</h3>
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500">Topic</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterTopic} onChange={(e) => { setFilterTopic(e.target.value); setPage(0); }}>
+                                    <option value="">All Topics</option>
+                                    {uniqueTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500">Type</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(0); }}>
+                                    <option value="all">All Types</option>
+                                    <option value="mcq">MCQ</option>
+                                    <option value="passage">Passage</option>
+                                    <option value="descriptive">Descriptive</option>
+                                </select>
+                            </div>
+                        </div>
+                     </div>
 
-             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                 <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold">
-                       <tr><th className="px-6 py-4">Content</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Subject</th><th className="px-6 py-4 text-right">Action</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                       {loading ? (
-                          <tr><td colSpan={4} className="p-12 text-center text-slate-400">Loading questions...</td></tr>
-                       ) : questions.length === 0 ? (
-                          <tr><td colSpan={4} className="p-12 text-center text-slate-400"><p className="font-bold text-slate-600 mb-1">No questions found.</p><p className="text-xs">Try adjusting your filters.</p></td></tr>
-                       ) : (
-                          questions.map((q) => (
-                             <tr key={q.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 max-w-lg">
-                                   <div className="font-bold text-slate-800 line-clamp-1" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
-                                   <div className="flex gap-2 mt-1.5">
-                                       {q.topic_tag && <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{q.topic_tag}</span>}
-                                       {q.question_type === 'passage' && <span className="text-[10px] bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded text-purple-600 flex items-center gap-1"><BookOpen size={10} /> Reading Passage</span>}
-                                   </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                   <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${q.question_type === 'passage' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{q.question_type}</span>
-                                </td>
-                                <td className="px-6 py-4 text-slate-500">{q.subjects?.title || '-'}</td>
-                                <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                    <button onClick={() => handleEdit(q)} className="text-indigo-600 font-bold hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><Edit3 size={14} /> Edit</button>
-                                    <button onClick={() => handleDelete(q.id)} className="text-red-600 font-bold hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><Trash2 size={14} /> Delete</button>
-                                </td>
-                             </tr>
-                          ))
-                       )}
-                    </tbody>
-                 </table>
-             </div>
+                     <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); setFilterType('all'); }} className="w-full py-2 text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                        Reset Filters
+                     </button>
+                 </div>
+             )}
 
-             <div className="flex justify-between items-center px-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Rows per page:</span>
-                    <select 
-                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs bg-white outline-none"
-                        value={itemsPerPage}
-                        onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}
-                    >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                    </select>
-                </div>
+             {/* MAIN TABLE AREA */}
+             <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-full">
+                 {/* Toolbar */}
+                 <div className="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+                        <input className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 outline-none bg-white" placeholder="Search question text..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <select 
+                            className="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white outline-none font-medium text-slate-600"
+                            value={itemsPerPage}
+                            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}
+                        >
+                            <option value={20}>20 Rows</option>
+                            <option value={50}>50 Rows</option>
+                            <option value={100}>100 Rows</option>
+                        </select>
+                    </div>
+                 </div>
 
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50"><ChevronLeft size={16} /> Previous</button>
-                    <span className="text-xs font-medium text-slate-400">Page {page + 1}</span>
-                    <button onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50">Next <ChevronRight size={16} /></button>
-                </div>
+                 {/* Table */}
+                 <div className="flex-1 overflow-auto relative">
+                     <table className="w-full text-left text-sm border-collapse">
+                        <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                           <tr>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase w-10">#</th>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase w-[50%]">Question</th>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Topic</th>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Type</th>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Subject</th>
+                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase text-right">Actions</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                           {loading ? (
+                              <tr><td colSpan={6} className="p-20 text-center text-slate-400">Loading data...</td></tr>
+                           ) : questions.length === 0 ? (
+                              <tr><td colSpan={6} className="p-20 text-center text-slate-400 flex flex-col items-center"><LayoutGrid size={48} className="mb-4 opacity-20"/>No questions match your criteria.</td></tr>
+                           ) : (
+                              questions.map((q, i) => (
+                                 <tr key={q.id} className="hover:bg-indigo-50/30 transition-colors group">
+                                    <td className="px-4 py-3 text-xs text-slate-400 font-mono">{page * itemsPerPage + i + 1}</td>
+                                    <td className="px-4 py-3">
+                                       <div className="font-medium text-slate-800 line-clamp-2 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       {q.topic_tag ? (
+                                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                               {q.topic_tag}
+                                           </span>
+                                       ) : <span className="text-slate-300 text-xs">-</span>}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                                           q.question_type === 'passage' ? 'bg-purple-50 text-purple-700 border-purple-100' : 
+                                           q.question_type === 'mcq' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                           'bg-amber-50 text-amber-700 border-amber-100'
+                                       }`}>
+                                           {q.question_type}
+                                       </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-xs text-slate-500 font-medium truncate max-w-[150px]" title={q.subjects?.title}>
+                                        {q.subjects?.title || '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleEdit(q)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit"><Edit3 size={16}/></button>
+                                            <button onClick={() => handleDelete(q.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete"><Trash2 size={16}/></button>
+                                        </div>
+                                    </td>
+                                 </tr>
+                              ))
+                           )}
+                        </tbody>
+                     </table>
+                 </div>
+
+                 {/* Pagination Footer */}
+                 <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                    <span className="text-xs text-slate-500 font-medium">Page {page + 1}</span>
+                    <div className="flex gap-2">
+                        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50">Previous</button>
+                        <button onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50">Next</button>
+                    </div>
+                 </div>
              </div>
           </div>
        )}
