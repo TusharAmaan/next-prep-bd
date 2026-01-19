@@ -5,9 +5,9 @@ import Sidebar from "@/components/Sidebar";
 import ResourceFilterView from "@/components/ResourceFilterView"; 
 import Image from "next/image";
 import { 
-  BookOpen, FileText, PlayCircle, HelpCircle, 
-  PenTool, ChevronRight, ArrowLeft, Clock, 
-  Calendar, FileBarChart, Trophy, Sparkles, ArrowRight
+  ChevronRight, ArrowLeft, Clock, 
+  CalendarDays, BookOpen, Trophy, Sparkles, ArrowRight,
+  PenTool, FileText, PlayCircle, FolderOpen
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,8 @@ export default async function GroupPage({
 
   const { data: groupData } = await supabase.from("groups").select("id, title, slug").eq("slug", group_slug).eq("segment_id", segmentData.id).single();
   if (!groupData) return notFound();
+
+  const { data: allSegments } = await supabase.from("segments").select("id, title, slug").order("id");
 
   // Helper Config
   const getPageTitle = () => {
@@ -51,7 +53,6 @@ export default async function GroupPage({
     return gradients[index % gradients.length];
   };
 
-  // Helper to get Subject Name safely
   const getSubjectName = (resource: any) => {
     if (Array.isArray(resource.subjects) && resource.subjects.length > 0) {
         return resource.subjects[0].title;
@@ -63,7 +64,7 @@ export default async function GroupPage({
   };
 
   // =========================================================
-  //  A. LIST VIEW MODE (Matches SegmentPage Style)
+  //  A. LIST VIEW MODE
   // =========================================================
   if (type) {
       let allItems = [];
@@ -73,7 +74,7 @@ export default async function GroupPage({
             .from("segment_updates")
             .select("id, title, type, created_at, attachment_url") 
             .eq("segment_id", segmentData.id) 
-            .eq("status", "approved")
+            // If segment_updates table has a status column, add .eq("status", "approved") here too
             .order("created_at", { ascending: false });
           
           allItems = updates?.map(u => ({
@@ -90,6 +91,7 @@ export default async function GroupPage({
             .select("*, subjects(id, title)")
             .eq("group_id", groupData.id) // Filter by Group
             .eq("type", type)
+            .eq("status", "approved") // <--- CRITICAL FIX
             .order("created_at", { ascending: false });
           allItems = resources || [];
       }
@@ -139,34 +141,88 @@ export default async function GroupPage({
   //  B. DASHBOARD VIEW MODE
   // =========================================================
 
-  // Parallel Fetching
   const [
     { data: subjects },
-    { data: updates }, 
     { data: blogs },
     { data: materials },
-    { data: questions }
+    { data: questions },
+    { data: questionCats } 
   ] = await Promise.all([
+    // 1. Subjects
     supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id"),
-    supabase.from("segment_updates").select("id, type, title, created_at").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(3),
-    // Updated blogs query to include subjects(title) for the card label
-    supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
-    supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5),
-    supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5)
+    
+    // 2. Blogs (Approved Only & Group Specific)
+    supabase.from("resources")
+      .select("*, subjects(title)")
+      .eq("group_id", groupData.id)
+      .eq("type", "blog")
+      .eq("status", "approved") // <--- FIX
+      .order("created_at", { ascending: false })
+      .limit(4),
+    
+    // 3. Materials (Approved Only & Group Specific)
+    supabase.from("resources")
+      .select("*, subjects(title)")
+      .eq("group_id", groupData.id)
+      .in("type", ["pdf", "video"])
+      .eq("status", "approved") // <--- FIX
+      .order("created_at", { ascending: false })
+      .limit(5),
+    
+    // 4. Questions (Approved Only & Group Specific)
+    supabase.from("resources")
+      .select("*, subjects(title)")
+      .eq("group_id", groupData.id)
+      .eq("type", "question")
+      .eq("status", "approved") // <--- FIX
+      .order("created_at", { ascending: false })
+      .limit(5),
+    
+    // 5. Question Categories (Approved Only)
+    supabase.from("resources")
+      .select("category")
+      .eq("group_id", groupData.id)
+      .eq("type", "question")
+      .eq("status", "approved") // <--- FIX
   ]);
+
+  const availableCategories = Array.from(new Set(questionCats?.map(q => q.category).filter(Boolean)));
+
+  const getQuestionTag = (q: any) => {
+    return Array.isArray(q.subjects) ? q.subjects[0]?.title : (q.subjects?.title || q.category || "General");
+  };
+
+  const getGroupStyle = (index: number) => {
+    const styles = [
+      { bg: "bg-blue-50", iconBg: "bg-blue-600", text: "text-blue-900", accent: "border-blue-100" },
+      { bg: "bg-indigo-50", iconBg: "bg-indigo-600", text: "text-indigo-900", accent: "border-indigo-100" },
+      { bg: "bg-emerald-50", iconBg: "bg-emerald-600", text: "text-emerald-900", accent: "border-emerald-100" },
+      { bg: "bg-purple-50", iconBg: "bg-purple-600", text: "text-purple-900", accent: "border-purple-100" },
+    ];
+    return styles[index % styles.length];
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       
-      {/* HERO SECTION */}
+      {/* DASHBOARD HERO */}
       <section className="bg-slate-900 text-white pt-32 pb-24 px-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[150px] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto relative z-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                     <Link href="/" className="hover:text-white transition-colors">Home</Link> / 
-                    <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> /
+                    <Link href={`/resources/${segment_slug}`} className="hover:text-white transition-colors">{segmentData.title}</Link> / 
                     <span className="text-indigo-400">{groupData.title}</span>
+                </div>
+                
+                {/* Switcher */}
+                <div className="hidden md:flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-sm">
+                    {allSegments?.slice(0, 5).map(s => (
+                        <Link key={s.id} href={`/resources/${s.slug}`} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${s.slug === segment_slug ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                            {s.title}
+                        </Link>
+                    ))}
                 </div>
             </div>
 
@@ -174,10 +230,19 @@ export default async function GroupPage({
                 {groupData.title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Hub</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed">
-                Access all subject-specific resources, notes, and question banks for {groupData.title}.
+                Centralized resources, real-time updates, and study materials for {groupData.title} students.
             </p>
         </div>
       </section>
+
+      {/* MOBILE SWITCHER */}
+      <div className="md:hidden bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar py-3 px-4 flex gap-2 sticky top-[60px] z-30 shadow-sm">
+         {allSegments?.map(s => (
+             <Link key={s.id} href={`/resources/${s.slug}`} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${s.slug === segment_slug ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                 {s.title}
+             </Link>
+         ))}
+      </div>
 
       <section className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -250,7 +315,6 @@ export default async function GroupPage({
                                                 <h4 className="text-white font-bold text-xs text-center line-clamp-2 px-2">{blog.title}</h4>
                                             </div>
                                         )}
-                                        {/* Subject Name or 'Common' */}
                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">
                                             {getSubjectName(blog)}
                                         </div>
@@ -258,7 +322,6 @@ export default async function GroupPage({
                                     <div className="p-5 flex-1 flex flex-col">
                                         <h3 className="font-bold text-base text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
                                         <div className="mt-auto pt-4 flex items-center justify-end text-xs text-slate-400 font-bold border-t border-slate-100">
-                                            {/* Date Removed */}
                                             <span className="text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">Read <ChevronRight className="w-3 h-3"/></span>
                                         </div>
                                     </div>
@@ -298,17 +361,30 @@ export default async function GroupPage({
                     ) : <div className="bg-slate-50 p-8 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-sm font-bold">No materials available.</div>}
                 </section>
 
-                {/* 4. PREVIOUS QUESTIONS */}
-                <section>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
-                        <div className="flex items-center gap-3">
-                            <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-lg">?</span>
-                            <h2 className="text-xl font-bold text-slate-900">Question Bank</h2>
+                {/* 4. QUESTION BANK */}
+                <section id="question-bank">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">?</div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">Question Bank</h2>
+                            <p className="text-xs text-slate-500 font-bold uppercase">Browse by Category</p>
                         </div>
-                        <Link href={`/resources/${segment_slug}/${group_slug}?type=question`} className="self-start sm:self-auto text-sm font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
-                            View All <ChevronRight className="w-4 h-4" />
-                        </Link>
                     </div>
+
+                    {availableCategories.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                            {availableCategories.map((cat: any) => (
+                                <Link 
+                                    key={cat} 
+                                    href={`/resources/${segment_slug}/${group_slug}?type=question&category=${encodeURIComponent(cat)}`}
+                                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all text-center group"
+                                >
+                                    <FolderOpen className="w-6 h-6 text-indigo-400 mx-auto mb-2 group-hover:text-indigo-600 transition-colors" />
+                                    <h4 className="text-xs font-bold text-slate-700 group-hover:text-indigo-900 line-clamp-1">{cat}</h4>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
                         {questions && questions.length > 0 ? (
@@ -326,6 +402,9 @@ export default async function GroupPage({
                                         <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600" />
                                     </Link>
                                 ))}
+                                <Link href={`/resources/${segment_slug}/${group_slug}?type=question`} className="text-center py-4 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-b-xl transition-colors uppercase tracking-wide">
+                                    View All Questions →
+                                </Link>
                             </div>
                         ) : (
                             <div className="p-10 text-center text-slate-400 text-sm font-bold">No questions uploaded yet.</div>

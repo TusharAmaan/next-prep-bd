@@ -56,6 +56,8 @@ export default async function SegmentPage({
             .from("segment_updates")
             .select("id, title, type, created_at, attachment_url") 
             .eq("segment_id", segmentData.id)
+            // Note: If 'segment_updates' has a status column, filter here too. 
+            // Assuming updates are direct admin posts for now. If Tutors post updates, ADD .eq('status', 'approved')
             .order("created_at", { ascending: false });
           
           allItems = updates?.map(u => ({
@@ -71,7 +73,7 @@ export default async function SegmentPage({
             .select("*, subjects(id, title)")
             .eq("segment_id", segmentData.id)
             .eq("type", type)
-            .eq("status", "approved")
+            .eq("status", "approved") // <--- CRITICAL FIX: Only show approved resources in List View
             .order("created_at", { ascending: false });
           allItems = resources || [];
       }
@@ -129,10 +131,18 @@ export default async function SegmentPage({
     { data: questionCats } 
   ] = await Promise.all([
     supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id"),
-    supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
-    supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(5),
-    supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").order("created_at", { ascending: false }).limit(5),
-    supabase.from("resources").select("category").eq("segment_id", segmentData.id).eq("type", "question")
+    
+    // Blogs: Add .eq('status', 'approved')
+    supabase.from("resources").select("*").eq("segment_id", segmentData.id).eq("type", "blog").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
+    
+    // Materials: Add .eq('status', 'approved')
+    supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).eq("status", "approved").order("created_at", { ascending: false }).limit(5),
+    
+    // Questions: Add .eq('status', 'approved')
+    supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(5),
+    
+    // Categories: Add .eq('status', 'approved') (Optional but cleaner)
+    supabase.from("resources").select("category").eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved")
   ]);
 
   const availableCategories = Array.from(new Set(questionCats?.map(q => q.category).filter(Boolean)));

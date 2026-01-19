@@ -53,15 +53,33 @@ export default async function SubjectPage({
   // =========================================================
   if (type) {
       // Fetch Resources for this Subject
-      const { data: resources } = await supabase
-        .from("resources")
-        .select("*, subjects(id, title)")
-        .eq("subject_id", subject.id)
-        .eq("type", type)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
-      
-      const allItems = resources || [];
+      let allItems = [];
+
+      // [FIX] Added status check for updates if applicable, otherwise for resources
+      if (type === 'update') {
+         const { data: updates } = await supabase
+            .from("segment_updates")
+            .select("id, title, type, created_at, attachment_url") 
+            .eq("segment_id", segmentData.id)
+            // .eq("status", "approved") // Uncomment if your updates table has a status column
+            .order("created_at", { ascending: false });
+         
+         allItems = updates?.map(u => ({
+             ...u,
+             category: u.type === 'exam_result' ? 'Result' : (u.type === 'routine' ? 'Routine' : 'Syllabus'),
+             subjects: null, 
+             slug: null 
+         })) || [];
+      } else {
+         const { data: resources } = await supabase
+            .from("resources")
+            .select("*, subjects(id, title)")
+            .eq("subject_id", subject.id)
+            .eq("type", type)
+            .eq("status", "approved") // <--- CONFIRMING THIS FILTER IS HERE
+            .order("created_at", { ascending: false });
+         allItems = resources || [];
+      }
 
       return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
@@ -116,9 +134,32 @@ export default async function SubjectPage({
     { data: materials },
     { data: questions }
   ] = await Promise.all([
-    supabase.from("resources").select("*").eq("subject_id", subject.id).eq("type", "blog").order("created_at", { ascending: false }).limit(4),
-    supabase.from("resources").select("*, subjects(title)").eq("subject_id", subject.id).in("type", ["pdf", "video"]).order("created_at", { ascending: false }).limit(6),
-    supabase.from("resources").select("*, subjects(title)").eq("subject_id", subject.id).eq("type", "question").order("created_at", { ascending: false }).limit(5)
+    // 1. Blogs [FIXED]
+    supabase.from("resources")
+      .select("*")
+      .eq("subject_id", subject.id)
+      .eq("type", "blog")
+      .eq("status", "approved") // <--- ADDED FILTER
+      .order("created_at", { ascending: false })
+      .limit(4),
+
+    // 2. Study Materials [FIXED]
+    supabase.from("resources")
+      .select("*, subjects(title)")
+      .eq("subject_id", subject.id)
+      .in("type", ["pdf", "video"])
+      .eq("status", "approved") // <--- ADDED FILTER
+      .order("created_at", { ascending: false })
+      .limit(6),
+
+    // 3. Questions [FIXED]
+    supabase.from("resources")
+      .select("*, subjects(title)")
+      .eq("subject_id", subject.id)
+      .eq("type", "question")
+      .eq("status", "approved") // <--- ADDED FILTER
+      .order("created_at", { ascending: false })
+      .limit(5)
   ]);
 
   return (

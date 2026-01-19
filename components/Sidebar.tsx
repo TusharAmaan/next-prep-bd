@@ -79,37 +79,29 @@ const getIconStyle = (type: string) => {
   }
 };
 
-// --- [FIXED] LINK GENERATION LOGIC ---
+// --- LINK GENERATION LOGIC ---
 const getLink = (item: any, allSegments: any[]) => {
-  // CRITICAL FIX: Use slug if available, otherwise fallback to ID.
-  // NEVER use content_url (which is the image/file link) as the identifier path.
   const identifier = item.slug || item.id;
 
-  // 1. Complex Updates URL: /resources/[segment]/updates/[slug-or-id]
   if (item.type === "updates") {
     const seg = allSegments.find((s) => s.id === item.segment_id);
     const segSlug = seg?.slug || seg?.title?.toLowerCase() || "general";
     return `/resources/${segSlug}/updates/${identifier}`;
   }
 
-  // 2. Standard Internal Types
   if (item.type === "blog") return `/blog/${identifier}`;
   if (item.type === "news") return `/news/${identifier}`;
   if (item.type === "question") return `/question/${identifier}`;
   if (item.type === "courses") return `/courses/${identifier}`;
   if (item.type === "ebooks") return `/ebooks/${identifier}`;
 
-  // 3. External/Direct Links (PDFs, Videos hosted elsewhere)
-  // Only use content_url if it's strictly a file download or external link
   return item.content_url || "#";
 };
 
 const getTarget = (item: any) => {
-  // Internal navigation uses _self
   if (["blog", "question", "news", "updates", "courses"].includes(item.type)) {
     return "_self";
   }
-  // PDFs and External Videos open in new tab
   return "_blank";
 };
 
@@ -138,15 +130,15 @@ export default function Sidebar() {
     fetchSegments();
   }, []);
 
-  // 2. FETCH MATERIALS
+  // 2. FETCH MATERIALS (Status: Approved Only)
   useEffect(() => {
     const fetchMaterials = async () => {
       setLoadingMaterials(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, slug, created_at, segment_id") // Added slug here
-        // Added 'updates' and 'news' to the filter list so they appear in sidebar
-        .in("type", ["blog", "pdf", "video", "updates", "news"]) 
+        .select("id, title, type, content_url, slug, created_at, segment_id")
+        .in("type", ["blog", "pdf", "video", "updates", "news"])
+        .eq("status", "approved") // <--- STRICT FILTER
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -163,14 +155,15 @@ export default function Sidebar() {
     if (segments.length > 0 || materialFilter === "All") fetchMaterials();
   }, [materialFilter, segments]);
 
-  // 3. FETCH QUESTIONS
+  // 3. FETCH QUESTIONS (Status: Approved Only)
   useEffect(() => {
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       let query = supabase
         .from("resources")
-        .select("id, title, type, content_url, slug, created_at, segment_id") // Added slug here
+        .select("id, title, type, content_url, slug, created_at, segment_id")
         .eq("type", "question")
+        .eq("status", "approved") // <--- STRICT FILTER
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -198,14 +191,14 @@ export default function Sidebar() {
   // --- UI ---
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans text-slate-800">
       {/* 1. SEARCH WIDGET */}
       <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 focus-within:border-indigo-300 focus-within:ring-4 focus-within:ring-indigo-50 transition-all">
         <form onSubmit={handleSearch} className="relative group">
           <input
             type="text"
             placeholder="Search resources, blog, questions..."
-            className="w-full bg-slate-50 text-slate-900 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold placeholder:text-slate-400 outline-none transition-colors"
+            className="w-full bg-slate-50 text-slate-900 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold placeholder:text-slate-400 outline-none transition-colors font-sans"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -218,17 +211,17 @@ export default function Sidebar() {
       {/* 2. EXPLORE SECTIONS */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-3.5">
-          <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
+          <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
             <LayoutGrid className="h-4 w-4 text-indigo-500" />
             Explore Segments
           </h3>
-          <p className="mt-1 text-[11px] text-slate-500">
+          <p className="mt-1 text-[11px] text-slate-500 font-sans">
             Jump directly into the resources you care about.
           </p>
         </div>
 
         {segments.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-slate-400">
+          <div className="px-4 py-6 text-center text-xs text-slate-400 font-sans">
             Loading sections...
           </div>
         ) : (
@@ -249,10 +242,10 @@ export default function Sidebar() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900">
+                    <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900 font-sans">
                       {seg.title}
                     </p>
-                    <p className="mt-0.5 hidden text-[11px] text-slate-400 md:block">
+                    <p className="mt-0.5 hidden text-[11px] text-slate-400 md:block font-sans">
                       View resources for {seg.title}
                     </p>
                   </div>
@@ -270,11 +263,11 @@ export default function Sidebar() {
         <div className="border-b border-slate-100 bg-slate-50/70 px-4 pt-3.5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
+              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
                 <FileText className="h-4 w-4 text-blue-500" />
                 Latest Materials
               </h3>
-              <p className="mt-1 text-[11px] text-slate-500">
+              <p className="mt-1 text-[11px] text-slate-500 font-sans">
                 Fresh PDFs, videos & blogs for your study.
               </p>
             </div>
@@ -293,7 +286,7 @@ export default function Sidebar() {
                   type="button"
                   onClick={() => setMaterialFilter(label)}
                   className={[
-                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors font-sans",
                     isActive
                       ? "border-blue-500 bg-blue-600 text-white shadow-sm"
                       : "border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:bg-blue-50/60",
@@ -321,10 +314,10 @@ export default function Sidebar() {
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-300">
                 <FileText className="h-5 w-5" />
               </div>
-              <p className="text-xs font-semibold text-slate-600">
+              <p className="text-xs font-semibold text-slate-600 font-sans">
                 No materials found
               </p>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400 font-sans">
                 Try a different segment or check back later.
               </p>
             </div>
@@ -333,7 +326,6 @@ export default function Sidebar() {
               {materials.map((item) => (
                 <Link
                   key={item.id}
-                  /* UPDATED: Pass segments to getLink for dynamic routing */
                   href={getLink(item, segments)}
                   target={getTarget(item)}
                   className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-slate-50/80"
@@ -346,11 +338,11 @@ export default function Sidebar() {
                     {getIcon(item.type)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 group-hover:text-blue-600">
+                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 group-hover:text-blue-600 font-sans">
                       {item.title}
                     </p>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 font-sans">
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(item.created_at).toLocaleDateString(
                           undefined,
@@ -358,7 +350,7 @@ export default function Sidebar() {
                         )}
                       </span>
                       {materialFilter === "All" && item.segment_id && (
-                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-blue-500">
+                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-blue-500 font-sans">
                           {segments.find((s) => s.id === item.segment_id)
                             ?.title || ""}
                         </span>
@@ -375,7 +367,7 @@ export default function Sidebar() {
         <div className="border-t border-slate-100 bg-slate-50/60">
           <Link
             href="/blog"
-            className="block px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+            className="block px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 font-sans"
           >
             View All Materials
           </Link>
@@ -387,11 +379,11 @@ export default function Sidebar() {
         <div className="border-b border-slate-100 bg-amber-50/60 px-4 pt-3.5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
+              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
                 <HelpCircle className="h-4 w-4 text-amber-500" />
                 Recent Questions
               </h3>
-              <p className="mt-1 text-[11px] text-slate-600">
+              <p className="mt-1 text-[11px] text-slate-600 font-sans">
                 Practice problems & past questions by segment.
               </p>
             </div>
@@ -410,7 +402,7 @@ export default function Sidebar() {
                   type="button"
                   onClick={() => setQuestionFilter(label)}
                   className={[
-                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors font-sans",
                     isActive
                       ? "border-amber-500 bg-amber-500 text-white shadow-sm"
                       : "border-amber-100 bg-amber-50/70 text-amber-700 hover:border-amber-300 hover:bg-amber-100",
@@ -438,10 +430,10 @@ export default function Sidebar() {
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-300">
                 <HelpCircle className="h-5 w-5" />
               </div>
-              <p className="text-xs font-semibold text-slate-700">
+              <p className="text-xs font-semibold text-slate-700 font-sans">
                 No questions found
               </p>
-              <p className="mt-1 text-[11px] text-slate-500">
+              <p className="mt-1 text-[11px] text-slate-500 font-sans">
                 Try another segment or come back later.
               </p>
             </div>
@@ -450,7 +442,6 @@ export default function Sidebar() {
               {questions.map((item) => (
                 <Link
                   key={item.id}
-                  /* UPDATED: Pass segments here too */
                   href={getLink(item, segments)}
                   target={getTarget(item)}
                   className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-amber-50/60"
@@ -459,11 +450,11 @@ export default function Sidebar() {
                     <HelpCircle className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 group-hover:text-amber-700">
+                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 group-hover:text-amber-700 font-sans">
                       {item.title}
                     </p>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 font-sans">
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(item.created_at).toLocaleDateString(
                           undefined,
@@ -471,7 +462,7 @@ export default function Sidebar() {
                         )}
                       </span>
                       {questionFilter === "All" && item.segment_id && (
-                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-amber-700">
+                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-amber-700 font-sans">
                           {segments.find((s) => s.id === item.segment_id)
                             ?.title || ""}
                         </span>
@@ -489,10 +480,10 @@ export default function Sidebar() {
       {/* 5. SOCIAL MEDIA */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 bg-slate-50 px-4 py-3.5">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-700">
+          <h3 className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
             Stay Connected
           </h3>
-          <p className="mt-1 text-[11px] text-slate-500">
+          <p className="mt-1 text-[11px] text-slate-500 font-sans">
             Follow us for tips, updates & new content.
           </p>
         </div>
@@ -509,10 +500,10 @@ export default function Sidebar() {
               <Facebook className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900">
+              <p className="text-xs font-semibold text-slate-900 font-sans">
                 Join our Facebook community
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600">
+              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600 font-sans">
                 Discuss questions, get tips & stay motivated.
               </p>
             </div>
@@ -529,10 +520,10 @@ export default function Sidebar() {
               <Youtube className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900">
+              <p className="text-xs font-semibold text-slate-900 font-sans">
                 Subscribe on YouTube
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600">
+              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600 font-sans">
                 Watch video lessons, explanations & strategy.
               </p>
             </div>

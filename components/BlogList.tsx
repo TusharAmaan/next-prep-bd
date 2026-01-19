@@ -94,10 +94,10 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
             )
           )
         `,
-            // ^ UPDATED: Added 'slug' to top-level selection so we can use it for links
             { count: "exact" }
           )
           .eq("type", "blog")
+          .eq("status", "approved") // <--- CRITICAL FIX: Ensure Client Side also filters pending
           .order("created_at", { ascending: false });
 
         if (searchTerm) query = query.ilike("title", `%${searchTerm}%`);
@@ -115,18 +115,14 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
         if (data) {
           const formatted = data.map((item: any) => {
             
-            // --- [FIXED] LINK GENERATION LOGIC ---
-            // 1. Determine Identifier: Prioritize Slug, fallback to ID
+            // --- LINK GENERATION LOGIC ---
             const identifier = item.slug || item.id;
             
-            // 2. Default Link
             let link = `/blog/${identifier}`; 
 
-            // 3. Handle specific types (if fetching types other than blog in future)
             if (item.type === 'news') {
                 link = `/news/${identifier}`;
             } else if (item.type === 'updates') {
-                // Construct nested URL: resources/[segment]/updates/[slug]
                 const seg = item.subjects?.groups?.segments;
                 const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
                 link = `/resources/${segmentSlug}/updates/${identifier}`;
@@ -134,7 +130,7 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
 
             return {
                 ...item,
-                link, // Attach the correctly generated link
+                link, 
                 badgeTitle: item.subjects?.title || item.subjects?.groups?.segments?.title || "General",
             };
           });
@@ -171,8 +167,11 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
     
     fetchData(page, debouncedSearch, selectedSegmentId, selectedCategory, itemsPerPage);
     
-    if (page > 1) {
-        document.getElementById("blog-grid-top")?.scrollIntoView({ behavior: "smooth" });
+    // Only scroll if it's not the initial load or if searching
+    if (page > 1 || debouncedSearch) {
+        // Optional: Check if element exists before scrolling to prevent errors
+        const gridTop = document.getElementById("blog-grid-top");
+        if (gridTop) gridTop.scrollIntoView({ behavior: "smooth" });
     }
   }, [page, selectedSegmentId, selectedSegment, selectedCategory, debouncedSearch, itemsPerPage, fetchData]); 
 
@@ -303,7 +302,6 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         </span>
                       </div>
                       
-                      {/* Title is NOT a link here, the parent Card is the link */}
                       <h3 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
                           {blog.title}
                       </h3>

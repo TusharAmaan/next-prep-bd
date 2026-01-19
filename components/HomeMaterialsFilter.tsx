@@ -16,10 +16,13 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     }
   }, [segments, activeTab]);
 
-  // --- 1. FILTERING LOGIC (BLOGS ONLY) ---
+  // --- 1. FILTERING LOGIC (BLOGS ONLY & APPROVED ONLY) ---
   const filteredResources = resources.filter((res) => {
     // STRICTLY BLOGS
     if (res.type !== 'blog') return false;
+    
+    // <--- CRITICAL FIX: Ensure only APPROVED posts are shown
+    if (res.status !== 'approved') return false; 
     
     // Segment Filter
     if (!activeTab) return true;
@@ -47,12 +50,10 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     return activeSegmentData?.title || 'General';
   };
 
-  // --- 4. PERMALINK GENERATOR [NEW] ---
+  // --- 4. PERMALINK GENERATOR ---
   const getPostLink = (post: any) => {
-    // Determine the identifier (Slug preferred, ID fallback)
     const identifier = post.slug || post.id;
 
-    // Logic for different post types (Robustness for future use)
     if (post.type === 'updates') {
         const seg = post.subjects?.groups?.segments;
         const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
@@ -63,7 +64,6 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     if (post.type === 'courses') return `/courses/${identifier}`;
     if (post.type === 'ebooks') return `/ebooks/${identifier}`;
 
-    // Default for 'blog'
     return `/blog/${identifier}`;
   };
 
@@ -105,7 +105,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
           <div className="lg:col-span-7 flex flex-col">
               {latestPost ? (
                   <Link 
-                      href={getPostLink(latestPost)} // <--- Updated Link
+                      href={getPostLink(latestPost)} 
                       className="group relative flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 min-h-[350px]"
                   >
                       {/* Cover Image or Black Box Fallback */}
@@ -165,7 +165,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
               ) : (
                   <div className="h-64 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center p-6">
                       <div className="text-3xl mb-2 opacity-30">✍️</div>
-                      <p className="text-slate-500 text-sm font-medium">No blogs posted yet.</p>
+                      <p className="text-slate-500 text-sm font-medium">No approved blogs in this segment.</p>
                   </div>
               )}
           </div>
@@ -176,7 +176,7 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
                   sidePosts.map(post => (
                       <Link 
                           key={post.id}
-                          href={getPostLink(post)} // <--- Updated Link
+                          href={getPostLink(post)}
                           className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group h-full"
                       >
                           {/* Thumbnail */}
