@@ -2,75 +2,77 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
-  LayoutDashboard, FileText, PlusCircle, 
-  BarChart3, Settings, LogOut, BookOpen 
+  LayoutDashboard, FileText, BookOpen, 
+  User, LogOut, FileStack, PlusCircle, Hammer // <--- NEW ICON
 } from "lucide-react";
-// FIX: Import the 'supabase' instance directly
-import { supabase } from "@/lib/supabaseClient"; 
+import { supabase } from "@/lib/supabaseClient";
 
-export default function TutorSidebar() {
+export default function TutorSidebar({ toggleMobile }: { toggleMobile?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handleSignOut = async () => {
+  const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  const navItems = [
+  const menuItems = [
     { label: "Overview", href: "/tutor/dashboard", icon: LayoutDashboard },
-    // NEW: Added Courses Tab
+    { label: "Question Builder", href: "/tutor/dashboard/question-builder", icon: Hammer }, // <--- NEW ITEM
+    { label: "My Content", href: "/tutor/dashboard/content", icon: FileStack },
     { label: "My Courses", href: "/tutor/dashboard/courses", icon: BookOpen },
-    { label: "My Resources", href: "/tutor/dashboard/content", icon: FileText },
-    { label: "Create New", href: "/tutor/dashboard/create", icon: PlusCircle },
-    { label: "Earnings", href: "/tutor/dashboard/earnings", icon: BarChart3 }, 
-    { label: "Settings", href: "/tutor/dashboard/settings", icon: Settings },
+    { label: "Profile", href: "/profile", icon: User },
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-white min-h-screen flex-col hidden lg:flex fixed left-0 top-0 border-r border-slate-800 z-50">
-      
-      {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800">
-        <Link href="/" className="font-black text-xl tracking-tight flex items-center gap-2">
-          <span className="text-indigo-500">Next</span>Prep<span className="text-indigo-500">.</span>
-          <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full ml-2">TUTOR</span>
-        </Link>
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
+      <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
+            T
+        </div>
+        <div>
+            <h2 className="font-bold text-slate-800 leading-none">Tutor Panel</h2>
+            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Instructor Zone</p>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
-        {navItems.map((item) => {
-          // Highlight active if path starts with href (handles sub-pages like /courses/123)
-          const isActive = pathname === item.href || (item.href !== '/tutor/dashboard' && pathname.startsWith(item.href));
-          
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <Link 
+            href="/tutor/dashboard/create" 
+            onClick={toggleMobile}
+            className="flex items-center gap-3 px-4 py-3 mb-6 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+        >
+            <PlusCircle className="w-5 h-5" /> Create New
+        </Link>
+
+        {menuItems.map((item) => {
+          const isActive = pathname === item.href;
           return (
-            <Link 
-              key={item.href} 
+            <Link
+              key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              onClick={toggleMobile}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                 isActive 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" 
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                  ? "bg-slate-900 text-white shadow-md" 
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-500 group-hover:text-white"}`} />
+              <item.icon className={`w-5 h-5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer / User Profile */}
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-slate-100">
         <button 
-          onClick={handleSignOut}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
         >
-          <LogOut className="w-5 h-5" />
-          Sign Out
+            <LogOut className="w-5 h-5" /> Sign Out
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

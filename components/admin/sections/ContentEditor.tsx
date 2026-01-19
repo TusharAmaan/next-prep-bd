@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react"; // Added useState for local tabs
+import { useState } from "react"; 
 import { Editor } from "@tinymce/tinymce-react";
 import { 
   ChevronLeft, Save, Upload, Link as LinkIcon, 
   Image as ImageIcon, FileText, X, DollarSign, Clock, User, Globe,
   HelpCircle, Edit3 // Icons for Tabs
 } from "lucide-react";
-import QuestionLinker from "@/components/admin/sections/QuestionLinker"; // <--- Import Question Linker
+import QuestionLinker from "@/components/admin/sections/QuestionLinker"; 
 
 export default function ContentEditor({
   activeTab,
@@ -17,31 +17,48 @@ export default function ContentEditor({
   imageMethod, setImageMethod, imageFile, setImageFile, imageLink, setImageLink, file, setFile,
   author, setAuthor, instructor, setInstructor, price, setPrice, discountPrice, setDiscountPrice, duration, setDuration,
   seoTitle, setSeoTitle, seoDesc, setSeoDesc, tags, setTags, markDirty,
-  categories, openCategoryModal,
+  categories = [], // Default to empty array to prevent crash
+  openCategoryModal,
   segments, selectedSegment, handleSegmentClick,
   groups, selectedGroup, handleGroupClick,
   subjects, selectedSubject, handleSubjectClick,
-  resourceId // <--- Need resourceId to link questions (Make sure parent passes this if editing)
+  resourceId 
 }: any) {
 
   // --- NEW STATE: Editor Tabs ---
   const [editorTab, setEditorTab] = useState<'content' | 'questions'>('content');
 
-  // --- LOGIC: Filter Categories ---
+  // --- LOGIC: Filter Categories (ROBUST VERSION) ---
   const getFilteredCategories = () => {
+      if (!categories || categories.length === 0) return [];
+
+      // 1. Strict Types
       if (activeTab === 'news') return categories.filter((c:any) => c.type === 'news');
       if (activeTab === 'ebooks') return categories.filter((c:any) => c.type === 'ebook');
       if (activeTab === 'courses') return categories.filter((c:any) => c.type === 'course');
-      if (type === 'question') return categories.filter((c:any) => c.type === 'question');
-      if (type === 'blog') return categories.filter((c:any) => c.type === 'blog');
+      
+      // 2. Resource Types (Blog, Question, Video, PDF)
+      // These usually share the 'resource' or 'general' category type
+      if (activeTab === 'materials') {
+          return categories.filter((c:any) => 
+              c.type === 'resource' || 
+              c.type === 'general' || 
+              c.type === 'blog' || 
+              c.type === 'question' || 
+              !c.type
+          );
+      }
+
+      // Default Fallback
       return categories.filter((c:any) => c.type === 'general' || !c.type);
   };
+  
   const filteredCategories = getFilteredCategories();
 
   // --- LOGIC: Calculate Dynamic URL Prefix ---
   const getPermalinkPrefix = () => {
     if (activeTab === 'segment_updates') {
-      const segment = segments.find((s: any) => s.id == selectedSegment);
+      const segment = segments?.find((s: any) => s.id == selectedSegment);
       const segmentSlug = segment?.slug || segment?.title?.toLowerCase() || 'general';
       return `resources/${segmentSlug}/updates/`;
     }
@@ -84,7 +101,7 @@ export default function ContentEditor({
           {/* LEFT COLUMN: MAIN EDITOR */}
           <div className="lg:col-span-2 space-y-6">
               
-              {/* NEW: TAB SWITCHER (Content vs Questions) */}
+              {/* TAB SWITCHER (Content vs Questions) */}
               <div className="flex border-b border-slate-200">
                   <button 
                     onClick={() => setEditorTab('content')}
@@ -119,23 +136,18 @@ export default function ContentEditor({
                         {/* --- PERMALINK (SLUG) FIELD --- */}
                         <div className="space-y-2">
                             <div className="flex items-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
-                                {/* Visual Prefix */}
                                 <div className="flex items-center pl-3 pr-2 py-2.5 bg-slate-100 border-r border-slate-200">
                                     <Globe className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0"/>
                                     <span className="text-xs font-bold text-slate-500 whitespace-nowrap select-none">
                                         nextprepbd.com/{urlPrefix}
                                     </span>
                                 </div>
-                                
-                                {/* Slug Input */}
                                 <input 
                                     className="flex-1 bg-transparent text-sm font-bold text-slate-700 px-3 py-2 outline-none placeholder:text-slate-300 min-w-0"
                                     placeholder="auto-generated-slug"
                                     value={slug}
                                     onChange={e => { setSlug(e.target.value); markDirty(); }}
                                 />
-                                
-                                {/* Regenerate Button */}
                                 <button 
                                     onClick={generateSlug} 
                                     className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-2.5 border-l border-slate-200 transition-colors whitespace-nowrap"
@@ -143,25 +155,10 @@ export default function ContentEditor({
                                     Regenerate
                                 </button>
                             </div>
-
-                            {/* Live Preview Link */}
-                            {slug && (
-                                <p className="text-[11px] text-slate-400 pl-1">
-                                    Preview:{" "}
-                                    <a 
-                                        href={`https://nextprepbd.com/${urlPrefix}${slug}`}
-                                        target="_blank" 
-                                        rel="noreferrer"
-                                        className="text-indigo-500 hover:underline break-all"
-                                    >
-                                        https://nextprepbd.com/{urlPrefix}{slug}
-                                    </a>
-                                </p>
-                            )}
                         </div>
                     </div>
 
-                    {/* RICH TEXT EDITOR WITH MATH SUPPORT */}
+                    {/* RICH TEXT EDITOR */}
                     <div className="rounded-xl border border-slate-200 overflow-hidden min-h-[500px] shadow-inner">
                         <Editor
                             apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
@@ -178,7 +175,7 @@ export default function ContentEditor({
                                 ],
                                 toolbar: 'undo redo | blocks fontfamily fontsize | ' +
                                 'bold italic underline strikethrough forecolor backcolor | ' +
-                                'insertMath | ' + 
+                                'insertMath insertBlockMath | ' + 
                                 'alignleft aligncenter alignright alignjustify | ' +
                                 'bullist numlist outdent indent | ' +
                                 'link image media table charmap codesample | ' +
@@ -187,15 +184,13 @@ export default function ContentEditor({
                                 branding: false,
                                 placeholder: 'Write full details... Use the Math button for equations.',
                                 setup: (editor: any) => {
-                                    // 1. Inline Math Button
                                     editor.ui.registry.addButton('insertMath', {
                                         text: 'Σ Inline',
                                         tooltip: 'Insert Inline Math',
                                         onAction: () => {
-                                            editor.insertContent('<span class="math-tex">\\( P^2 = (169)_n \\)</span>&nbsp;');
+                                            editor.insertContent('<span class="math-tex">\\( x^2 \\)</span>&nbsp;');
                                         }
                                     });
-                                    // 2. Block Math Button
                                     editor.ui.registry.addButton('insertBlockMath', {
                                         text: 'Σ Block',
                                         tooltip: 'Insert Centered Equation',
@@ -206,10 +201,6 @@ export default function ContentEditor({
                                 },
                             }}
                         />
-                        <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex gap-2">
-                            <span className="font-bold">💡 Tip:</span> 
-                            <span>Use the <b>Σ Math</b> button to insert equations. Replace <code>E = mc^2</code> with your LaTeX code.</span>
-                        </div>
                     </div>
 
                     {/* SEO SETTINGS */}
@@ -253,7 +244,7 @@ export default function ContentEditor({
           {/* RIGHT COLUMN: CONFIGURATION */}
           <div className="space-y-6">
               
-              {/* COURSE SPECIFIC DETAILS */}
+              {/* COURSE DETAILS (If Course) */}
               {activeTab === 'courses' && (
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 border-l-4 border-l-indigo-500">
                       <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2 flex items-center gap-2">
@@ -308,7 +299,7 @@ export default function ContentEditor({
                   </div>
               )}
 
-              {/* GENERAL CONFIGURATION (For Non-Course Types) */}
+              {/* GENERAL CONFIGURATION (For Non-Courses) */}
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Configuration</h3>
                   
@@ -341,6 +332,7 @@ export default function ContentEditor({
                       </div>
                   )}
 
+                  {/* FILE UPLOAD LOGIC */}
                   {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && activeTab !== 'courses' && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2">
@@ -358,6 +350,7 @@ export default function ContentEditor({
                       </div>
                   )}
 
+                  {/* SEGMENT/GROUP/SUBJECT SELECTOR */}
                   {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
                       <div>
                           <label className="block text-xs font-bold text-slate-700 mb-2 mt-4">
