@@ -8,8 +8,7 @@ const WINDOW_MS = 60 * 1000; // 1 Minute
 
 export async function middleware(request: NextRequest) {
   
-  // --- LAYER 1: RATE LIMITING ---
-  // Only check rate limit for API and Admin routes to keep the site fast
+  // --- LAYER 1: RATE LIMITING (Existing) ---
   if (request.nextUrl.pathname.startsWith('/api') || request.nextUrl.pathname.startsWith('/admin')) {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     const now = Date.now();
@@ -31,12 +30,9 @@ export async function middleware(request: NextRequest) {
     ipCache.set(ip, record);
   }
 
-  // --- LAYER 2: SUPABASE AUTHENTICATION ---
-  // This part ensures your login cookies are handled correctly
+  // --- LAYER 2: SUPABASE SETUP ---
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
   const supabase = createServerClient(
@@ -61,18 +57,54 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // 1. Get the User
   const { data: { user } } = await supabase.auth.getUser()
 
-  // --- LAYER 3: ROUTE PROTECTION ---
+  // --- LAYER 3: ROUTE & ROLE PROTECTION (Updated) ---
   
-  // 1. If trying to access Admin but NOT logged in -> Go to Login
-  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+  const path = request.nextUrl.pathname;
+  const isAdminRoute = path.startsWith('/admin');
+  const isTutorRoute = path.startsWith('/tutor');
+  const isAuthRoute = path.startsWith('/login') || path.startsWith('/register');
+
+  // A. Protect Private Routes (Admin/Tutor)
+  if ((isAdminRoute || isTutorRoute) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 2. If trying to access Login but ALREADY logged in -> Go to Admin
-  if (request.nextUrl.pathname.startsWith('/login') && user) {
-    return NextResponse.redirect(new URL('/admin', request.url))
+  // B. Role-Based Access Control (RBAC)
+  if (user) {
+    // Fetch Role from Metadata or DB (DB is safer for critical checks)
+    let role = user.user_metadata?.role;
+    
+    // If role isn't in metadata, fetch it securely from profiles
+    if (!role) {
+       const { data: profile } = await supabase
+         .from('profiles')
+         .select('role')
+         .eq('id', user.id)
+         .single();
+       role = profile?.role;
+    }
+
+    // Rule 1: Admin Dashboard -> Only 'admin'
+    if (isAdminRoute && role !== 'admin') {
+      // Kick unauthorized users to student dashboard
+      return NextResponse.redirect(new URL('/student/dashboard', request.url)); 
+    }
+
+    // Rule 2: Tutor Dashboard -> 'tutor' OR 'admin'
+    if (isTutorRoute && role !== 'tutor' && role !== 'admin') {
+      return NextResponse.redirect(new URL('/student/dashboard', request.url));
+    }
+
+    // Rule 3: Smart Login Redirect
+    // If logged in & accessing /login, send to their correct dashboard
+    if (isAuthRoute) {
+        if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url));
+        if (role === 'tutor') return NextResponse.redirect(new URL('/tutor/dashboard', request.url));
+        return NextResponse.redirect(new URL('/student/dashboard', request.url));
+    }
   }
 
   return response
@@ -80,7 +112,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match everything EXCEPT static files (images, fonts, etc.)
+    // Include /tutor in the matcher now
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
