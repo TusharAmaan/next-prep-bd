@@ -12,9 +12,9 @@ const slugify = (text: string) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')        // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
-    .replace(/\-\-+/g, '-');     // Replace multiple - with single -
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
 };
 
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
@@ -37,7 +37,7 @@ export default function ContentManager({
     const [isDirty, setIsDirty] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [currentUser, setCurrentUser] = useState<any>(null); // To track current user
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     // Filters
     const [search, setSearch] = useState("");
@@ -84,7 +84,6 @@ export default function ContentManager({
     const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
     
     // --- CATEGORY FILTER LOGIC ---
-    // This ensures only relevant categories appear in the dropdowns
     const filteredCategories = useMemo(() => {
         if (!categories) return [];
         return categories.filter((c: any) => {
@@ -92,7 +91,7 @@ export default function ContentManager({
             if (activeTab === 'news') return c.type === 'news';
             if (activeTab === 'courses') return c.type === 'course';
             if (activeTab === 'materials') return c.type === 'resource' || c.type === 'general' || !c.type;
-            return true; // Show all for other tabs if any
+            return true;
         });
     }, [categories, activeTab]);
 
@@ -109,7 +108,6 @@ export default function ContentManager({
         setIsDirty(false);
     };
 
-    // Get current user on mount
     useEffect(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -132,10 +130,9 @@ export default function ContentManager({
         let query = supabase.from(tableName).select("*", { count: 'exact' });
 
         // --- FILTER PENDING POSTS ---
-        // Hide 'pending' status unless it's the current user's own post (optional, but requested to hide pending generally)
-        // Strictly hiding all 'pending' posts from this view as requested.
-        // If you want to see YOUR pending posts, we'd need OR logic which is tricky with basic chaining.
-        // For now, adhering to "Neither of them should show the pending post here."
+        // This ensures the "Content Manager" view only shows Published/Approved content.
+        // Pending content from tutors lives in the "Pending Reviews" section.
+        // Admin's own posts are typically auto-approved, so they appear here.
         if (tableName === 'resources' || tableName === 'courses') {
              query = query.neq('status', 'pending');
         }
@@ -183,7 +180,7 @@ export default function ContentManager({
         resetForms();
         setSelSeg(""); setSelGrp(""); setSelSub(""); 
         setTypeFilter("all"); setUpdateTypeFilter("all"); setSearch("");
-        setCatFilter("all"); // Reset category filter on tab change
+        setCatFilter("all"); 
         setPage(0);
     }, [activeTab]);
 
@@ -210,7 +207,7 @@ export default function ContentManager({
             setType(item.type); setLink(item.content_url || "");
             if (item.type === 'blog' || item.type === 'question') setContent(item.content_body || "");
             if (item.category) setCategory(item.category);
-            if (item.content_url && item.type === 'blog') { setImageLink(item.content_url); setImageMethod('link'); }
+            if (item.content_url && (item.type === 'blog' || item.type === 'question')) { setImageLink(item.content_url); setImageMethod('link'); }
         } else if (activeTab === 'news') {
             setContent(item.content || ""); setCategory(item.category);
             if (item.image_url) { setImageLink(item.image_url); setImageMethod('link'); }
@@ -260,20 +257,16 @@ export default function ContentManager({
 
         setSubmitting(true);
 
+        // --- PAYLOAD CONSTRUCTION ---
         let payload: any = {
             title,
             slug: finalSlug, 
             seo_title: seoTitle || title,
             seo_description: seoDesc,
             tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-            // Ensure admin posts are automatically approved if creating new
-            // But if we are editing, we usually preserve status unless explicitly changed.
-            // For new posts by admin, status should be 'approved'.
-            ...(editingId ? {} : { status: 'approved' }) 
         };
         
-        // If the user is admin, force status to approved on create.
-        // (Assuming this component is only used by admins)
+        // Admin posts are approved by default
         if (!editingId) {
              payload.status = 'approved';
         }
@@ -281,6 +274,7 @@ export default function ContentManager({
         let contentUrl: string | null = link; 
         let coverUrl: string | null = null; 
 
+        // Image Handling
         if (imageMethod === 'upload' && imageFile) {
             const name = `img-${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
             const { data } = await supabase.storage.from('materials').upload(name, imageFile);
@@ -295,31 +289,59 @@ export default function ContentManager({
             if (activeTab === 'materials' && type === 'blog') contentUrl = imageLink;
         }
 
+        // File Handling
         if (file) {
             const name = `file-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
             const { data } = await supabase.storage.from('materials').upload(name, file);
             if (data) contentUrl = supabase.storage.from('materials').getPublicUrl(name).data.publicUrl;
         }
 
+        // Tab Specific Payloads
         if (activeTab === 'materials') {
             payload.type = type;
             payload.segment_id = editSeg ? Number(editSeg) : null;
             payload.group_id = editGrp ? Number(editGrp) : null;
             payload.subject_id = editSub ? Number(editSub) : null;
-            if (type === 'blog' || type === 'question') { payload.content_body = content; payload.content_url = contentUrl; payload.category = category; }
-            else { payload.content_url = contentUrl; }
+            
+            // For Blog/Question, content_body handles HTML, content_url handles Images
+            if (type === 'blog' || type === 'question') { 
+                payload.content_body = content; 
+                payload.content_url = contentUrl; // Image header
+                payload.category = category; 
+            } else { 
+                // For PDF/Video, content_url is the file/link
+                payload.content_url = contentUrl; 
+                // We also save to specific columns for clarity if needed
+                if(type === 'pdf') payload.pdf_url = contentUrl;
+                if(type === 'video') payload.video_url = contentUrl;
+            }
+            if(coverUrl) payload.cover_url = coverUrl;
+
         } else if (activeTab === 'news') {
-            payload.content = content; payload.category = category;
+            payload.content = content; 
+            payload.category = category;
             if (coverUrl) payload.image_url = coverUrl;
+
         } else if (activeTab === 'ebooks') {
-            payload.author = author; payload.category = category; payload.description = content;
+            payload.author = author; 
+            payload.category = category; 
+            payload.description = content;
             payload.pdf_url = contentUrl; 
             if (coverUrl) payload.cover_url = coverUrl;
+
         } else if (activeTab === 'courses') {
-            payload.instructor = instructor; payload.price = price; payload.discount_price = discountPrice; payload.duration = duration; payload.enrollment_link = link; payload.description = content; payload.category = category;
+            payload.instructor = instructor; 
+            payload.price = price; 
+            payload.discount_price = discountPrice; 
+            payload.duration = duration; 
+            payload.enrollment_link = link; 
+            payload.description = content; 
+            payload.category = category;
             if (coverUrl) payload.thumbnail_url = coverUrl;
+
         } else if (activeTab === 'segment_updates') {
-            payload.type = type; payload.content_body = content;
+            payload.type = type; 
+            payload.content_body = content;
             if (contentUrl) payload.attachment_url = contentUrl;
             payload.segment_id = editSeg ? Number(editSeg) : null;
         }
@@ -331,9 +353,8 @@ export default function ContentManager({
             const res = await supabase.from(table).update(payload).eq('id', editingId);
             error = res.error;
         } else {
-            // When creating, we might need to attach author_id if RLS requires it or for tracking
-            // For admins, usually handled by default or trigger, but good to be explicit if needed
-            // payload.author_id = currentUser?.id; 
+            // For admins, we assume they are the author if creating here.
+            if(currentUser) payload.author_id = currentUser.id;
             const res = await supabase.from(table).insert([payload]);
             error = res.error;
         }
