@@ -3,18 +3,18 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
-  CheckCircle, XCircle, Eye, Search, Filter, 
-  FileText, Video, BookOpen, HelpCircle, Layers, AlertTriangle
+  CheckCircle, XCircle, Search, 
+  FileText, Video, BookOpen, HelpCircle, Layers, AlertTriangle, Eye, Loader2
 } from "lucide-react";
-// import { toast } from "sonner"; // Use if you have sonner installed
 
 export default function PendingManager() {
   const supabase = createClient();
   
   // --- STATE ---
-  const [activeTab, setActiveTab] = useState<'courses' | 'resources'>('resources');
+  const [activeTab, setActiveTab] = useState<'resources' | 'courses'>('resources');
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null); // New Error State
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -26,26 +26,44 @@ export default function PendingManager() {
   // --- FETCH DATA ---
   const fetchPending = async () => {
     setLoading(true);
-    let data = [];
+    setErrorMsg(null);
     
-    if (activeTab === 'courses') {
-      const { data: courses } = await supabase
-        .from('courses')
-        .select('*, tutor:tutor_id(email)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      data = courses || [];
-    } else {
-      const { data: resources } = await supabase
-        .from('resources')
-        .select('*, author:author_id(email), subjects(title), segments(title)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      data = resources || [];
+    try {
+        let result;
+        
+        if (activeTab === 'courses') {
+            // Courses Query
+            result = await supabase
+                .from('courses')
+                .select('*, tutor:tutor_id(email, full_name)') // Fetch tutor details
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+        } else {
+            // Resources Query
+            // Note: We use !inner on joins if we wanted to enforce existence, but here standard join is fine.
+            result = await supabase
+                .from('resources')
+                .select(`
+                    *, 
+                    author:author_id(email, full_name), 
+                    subjects(title), 
+                    segments(title)
+                `)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+        }
+
+        if (result.error) throw result.error;
+        
+        console.log("Fetched Pending Items:", result.data); // Debug log
+        setItems(result.data || []);
+
+    } catch (err: any) {
+        console.error("Error fetching pending items:", err);
+        setErrorMsg(err.message || "Failed to load data. Check RLS policies.");
+    } finally {
+        setLoading(false);
     }
-    
-    setItems(data);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -61,11 +79,9 @@ export default function PendingManager() {
 
     const updateData: any = { 
         status,
-        // Reset rejection date if approved, Set it if rejected
-        rejected_at: actionType === 'reject' ? new Date() : null 
+        rejected_at: actionType === 'reject' ? new Date().toISOString() : null 
     };
     
-    // Only add feedback if rejected
     if (actionType === 'reject') {
         updateData.admin_feedback = feedback;
     }
@@ -78,17 +94,16 @@ export default function PendingManager() {
     if (error) {
       alert("Error updating status: " + error.message);
     } else {
-      alert(`Successfully ${status} content!`);
       setSelectedItem(null);
       setFeedback('');
       setActionType(null);
-      fetchPending(); // Refresh list
+      fetchPending(); // Refresh list immediately
     }
   };
 
   // --- FILTERING LOGIC ---
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (item.title || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
     return matchesSearch && matchesType;
   });
@@ -150,6 +165,14 @@ export default function PendingManager() {
         </div>
       </div>
 
+      {/* ERROR MESSAGE DISPLAY */}
+      {errorMsg && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {errorMsg}
+          </div>
+      )}
+
       {/* TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
          <table className="w-full text-left text-sm">
@@ -164,17 +187,19 @@ export default function PendingManager() {
             </thead>
             <tbody className="divide-y divide-slate-100">
                {loading ? (
-                 <tr><td colSpan={5} className="p-8 text-center text-slate-400">Loading pending items...</td></tr>
+                 <tr><td colSpan={5} className="p-12 text-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2"/>Loading pending items...</td></tr>
                ) : filteredItems.length === 0 ? (
-                 <tr><td colSpan={5} className="p-8 text-center text-slate-400">No pending items found.</td></tr>
+                 <tr><td colSpan={5} className="p-12 text-center text-slate-400">No items waiting for review.</td></tr>
                ) : (
                  filteredItems.map((item) => (
                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-bold text-slate-800 max-w-xs truncate">
                         {item.title}
+                        {item.subjects?.title && <div className="text-[10px] text-slate-400 font-normal">{item.subjects.title}</div>}
                       </td>
                       <td className="px-6 py-4 text-slate-600">
-                        {activeTab === 'courses' ? item.tutor?.email : item.author?.email}
+                        <div className="font-bold">{activeTab === 'courses' ? item.tutor?.full_name : item.author?.full_name || 'Unknown'}</div>
+                        <div className="text-xs text-slate-400">{activeTab === 'courses' ? item.tutor?.email : item.author?.email}</div>
                       </td>
                       <td className="px-6 py-4 capitalize flex items-center gap-2">
                         {getIcon(item.type || 'course')}
@@ -200,7 +225,7 @@ export default function PendingManager() {
 
       {/* --- REVIEW MODAL --- */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in zoom-in-95">
               
               {/* Modal Header */}
@@ -212,7 +237,7 @@ export default function PendingManager() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-6 max-h-[60vh] overflow-y-auto space-y-6">
+              <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
                  
                  {/* 1. Item Details */}
                  <div className="space-y-4">
@@ -236,25 +261,31 @@ export default function PendingManager() {
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Content Preview</label>
                        
-                       {selectedItem.content_body && (
-                         <div className="prose prose-sm max-w-none max-h-40 overflow-y-auto bg-white p-3 rounded border border-slate-100 mb-3" dangerouslySetInnerHTML={{__html: selectedItem.content_body}} />
+                       {/* Blog/Question Body Preview */}
+                       {(selectedItem.type === 'blog' || selectedItem.type === 'question') && selectedItem.content_body && (
+                         <div className="prose prose-sm max-w-none max-h-40 overflow-y-auto bg-white p-3 rounded border border-slate-100 mb-3 text-slate-600" dangerouslySetInnerHTML={{__html: selectedItem.content_body}} />
                        )}
 
-                       <div className="flex gap-2">
+                       {/* Course Description Preview */}
+                       {activeTab === 'courses' && selectedItem.description && (
+                         <div className="prose prose-sm max-w-none max-h-40 overflow-y-auto bg-white p-3 rounded border border-slate-100 mb-3 text-slate-600" dangerouslySetInnerHTML={{__html: selectedItem.description}} />
+                       )}
+
+                       <div className="flex flex-wrap gap-2">
                           {selectedItem.video_url && (
-                            <a href={selectedItem.video_url} target="_blank" className="flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 border border-blue-200">
+                            <a href={selectedItem.video_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 border border-blue-200">
                                <Video size={14}/> Open Video Link
                             </a>
                           )}
-                          {selectedItem.pdf_url && (
-                            <a href={selectedItem.pdf_url} target="_blank" className="flex items-center gap-2 text-xs font-bold text-red-600 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 border border-red-200">
-                               <FileText size={14}/> View PDF
+                          {(selectedItem.pdf_url || selectedItem.content_url) && (
+                            <a href={selectedItem.pdf_url || selectedItem.content_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-red-600 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 border border-red-200">
+                               <FileText size={14}/> View File / Link
                             </a>
                           )}
                           {/* Course Preview Link */}
                           {activeTab === 'courses' && (
-                             <a href={`/tutor/dashboard/course/${selectedItem.id}`} target="_blank" className="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 border border-indigo-200">
-                                <Eye size={14}/> View Full Course Structure
+                             <a href={`/courses/${selectedItem.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 border border-indigo-200">
+                                <Eye size={14}/> View Full Course Page
                              </a>
                           )}
                        </div>

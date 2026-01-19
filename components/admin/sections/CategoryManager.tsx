@@ -19,7 +19,7 @@ export default function CategoryManager({
   // Creation / Deletion
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState("");
-  const [newCatType, setNewCatType] = useState("general");
+  const [newCatType, setNewCatType] = useState("resource"); // Changed default to 'resource' (most common)
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   // Counts & Real-time Data
@@ -40,16 +40,15 @@ export default function CategoryManager({
       if (t === 'ebook') return 'ebooks';
       if (t === 'course') return 'courses';
       if (t === 'news') return 'news';
-      return 'resources'; // Default for blog, question, pdf, general
+      return 'resources'; // Default for blog, question, pdf, general, resource
   };
 
-  // --- 2. FETCH COUNTS (FIXED: Queries correct tables) ---
+  // --- 2. FETCH COUNTS ---
   const fetchCounts = useCallback(async () => {
     if (categories.length === 0) return;
     setLoadingCounts(true);
     const newCounts: Record<string, number> = {};
 
-    // Parallel fetch for speed
     await Promise.all(categories.map(async (cat: any) => {
         const table = getTableForType(cat.type);
         
@@ -70,7 +69,7 @@ export default function CategoryManager({
   }, [fetchCounts]);
 
 
-  // --- 3. FETCH LINKED POSTS (FIXED: Queries correct tables) ---
+  // --- 3. FETCH LINKED POSTS ---
   const fetchLinkedPosts = async (category: any, page: number) => {
     setPostsLoading(true);
     const start = page * POSTS_PER_PAGE;
@@ -113,14 +112,15 @@ export default function CategoryManager({
     setIsDeleting(null);
     if (!error) {
         fetchCategories();
-        // Optimistic update
-        const remaining = categories.filter((c:any) => c.id !== id);
-        // We rely on parent to refetch, but we can re-trigger counts if needed
     }
   };
 
   const handleAdd = async () => {
     if (!newCatName.trim()) return alert("Name required");
+    
+    // Ensure we are saving the correct type string
+    // This fixes the issue where categories might get saved with a generic type 
+    // and then filter out of specific dropdowns.
     const { error } = await supabase
       .from('categories')
       .insert([{ name: newCatName.trim(), type: newCatType }]);
@@ -140,12 +140,16 @@ export default function CategoryManager({
       const currentFilter = activeFilter.toLowerCase().trim();
       const categoryName = (c.name || '').toLowerCase();
       const searchTerm = (search || '').toLowerCase();
+      
+      // Match type exactly unless filter is 'all'
+      // Note: 'general' often overlaps with 'resource', so check your DB schema
       const matchesType = currentFilter === 'all' || categoryType === currentFilter;
       const matchesSearch = categoryName.includes(searchTerm);
       return matchesType && matchesSearch;
   });
 
-  const tabs = ['all', 'general', 'news', 'ebook', 'blog', 'course', 'question'];
+  // Updated Tabs list to match your likely DB schema for types
+  const tabs = ['all', 'resource', 'news', 'ebook', 'course'];
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -171,7 +175,7 @@ export default function CategoryManager({
                         onClick={() => setActiveFilter(t)}
                         className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
                     >
-                        {t}
+                        {t === 'resource' ? 'Study Materials' : t}
                     </button>
                 ))}
             </div>
@@ -192,7 +196,7 @@ export default function CategoryManager({
       {filteredList.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
               <Filter className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No categories found.</p>
+              <p className="text-slate-500 font-medium">No categories found for this type.</p>
           </div>
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -206,12 +210,11 @@ export default function CategoryManager({
                         <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider ${
                             (cat.type || 'general') === 'news' ? 'bg-blue-50 text-blue-600' :
                             (cat.type || 'general') === 'ebook' ? 'bg-orange-50 text-orange-600' :
-                            (cat.type || 'general') === 'blog' ? 'bg-purple-50 text-purple-600' :
+                            (cat.type || 'general') === 'resource' ? 'bg-purple-50 text-purple-600' :
                             (cat.type || 'general') === 'course' ? 'bg-emerald-50 text-emerald-600' :
-                            (cat.type || 'general') === 'question' ? 'bg-rose-50 text-rose-600' :
                             'bg-slate-100 text-slate-500'
                         }`}>
-                            {cat.type || 'General'}
+                            {cat.type === 'resource' ? 'Study' : cat.type || 'General'}
                         </span>
                         <button 
                             onClick={(e) => handleDelete(e, cat.id)} 
@@ -244,22 +247,37 @@ export default function CategoryManager({
                 </div>
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Type</label>
-                        <select className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none" value={newCatType} onChange={e => setNewCatType(e.target.value)}>
-                            {tabs.filter(t => t !== 'all').map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Category Type</label>
+                        <select 
+                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
+                            value={newCatType} 
+                            onChange={e => setNewCatType(e.target.value)}
+                        >
+                            <option value="resource">Study Materials (Blog/PDF/Video)</option>
+                            <option value="ebook">eBook</option>
+                            <option value="course">Course</option>
+                            <option value="news">News</option>
                         </select>
+                        <p className="text-[10px] text-slate-400 mt-1">This ensures the category appears in the correct editor dropdown.</p>
                     </div>
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Name</label>
-                        <input className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none" placeholder="e.g. Mathematics" value={newCatName} onChange={e => setNewCatName(e.target.value)} />
+                        <input 
+                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
+                            placeholder="e.g. Mathematics" 
+                            value={newCatName} 
+                            onChange={e => setNewCatName(e.target.value)} 
+                        />
                     </div>
-                    <button onClick={handleAdd} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Create Category</button>
+                    <button onClick={handleAdd} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-colors">
+                        Create Category
+                    </button>
                 </div>
             </div>
         </div>
       )}
 
-      {/* --- MODAL: CATEGORY DETAILS & POSTS --- */}
+      {/* --- MODAL: CATEGORY DETAILS & POSTS (Popup Logic Unchanged) --- */}
       {viewingCategory && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -278,7 +296,7 @@ export default function CategoryManager({
                     </button>
                 </div>
 
-                {/* Modal Body (Scrollable) */}
+                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
                     <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-slate-700 flex items-center gap-2">
@@ -310,15 +328,12 @@ export default function CategoryManager({
                                          <FileText className="w-5 h-5"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        {/* Handle different title fields (Courses use 'title', eBooks use 'title', Resources use 'title') */}
                                         <h5 className="font-bold text-slate-800 truncate">{post.title || "Untitled"}</h5>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
                                             <span className="uppercase">{viewingCategory.type === 'general' ? post.type : viewingCategory.type}</span>
                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(post.created_at).toLocaleDateString()}</span>
                                         </div>
                                     </div>
-                                    
-                                    {/* Link logic varies by table */}
                                     {(post.content_url || post.pdf_url || post.enrollment_link) && (
                                         <a href={post.content_url || post.pdf_url || post.enrollment_link} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-600">
                                             <ExternalLink className="w-4 h-4"/>
@@ -330,7 +345,7 @@ export default function CategoryManager({
                     )}
                 </div>
 
-                {/* Modal Footer (Pagination) */}
+                {/* Modal Footer */}
                 <div className="p-4 border-t border-slate-100 bg-white flex justify-between items-center">
                     <button 
                         disabled={postPage === 0}
