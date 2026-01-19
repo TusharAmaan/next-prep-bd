@@ -166,7 +166,7 @@ export default function TutorDashboard() {
                           <ChevronRight className="w-4 h-4 text-slate-300 ml-auto group-hover:text-blue-400"/>
                       </Link>
 
-                      <Link href="/tutor/dashboard/subscription" className={`flex items-center gap-4 p-4 rounded-2xl border transition-all group ${isPro ? 'bg-amber-50 border-amber-100 hover:border-amber-300' : 'bg-slate-50 border-slate-100 hover:border-slate-300'}`}>
+                      <Link href="/tutor/subscription" className={`flex items-center gap-4 p-4 rounded-2xl border transition-all group ${isPro ? 'bg-amber-50 border-amber-100 hover:border-amber-300' : 'bg-slate-50 border-slate-100 hover:border-slate-300'}`}>
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform ${isPro ? 'bg-amber-100 text-amber-600' : 'bg-white text-slate-600'}`}>
                               {isPro ? <Crown className="w-5 h-5"/> : <Zap className="w-5 h-5"/>}
                           </div>
