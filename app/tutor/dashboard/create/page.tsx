@@ -4,215 +4,131 @@ import ContentEditor from "@/components/admin/sections/ContentEditor";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
-export default function CreateContentPage() {
+export default function CreateResourcePage() {
   const router = useRouter();
   
-  // --- 1. DROPDOWN DATA ---
-  const [segments, setSegments] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-
-  // --- 2. FORM STATE ---
+  // State
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
-  const [type, setType] = useState("pdf"); // Default
-  const [link, setLink] = useState("");
+  const [type, setType] = useState("pdf"); 
   const [category, setCategory] = useState("");
+  const [link, setLink] = useState(""); // For external links
+  const [file, setFile] = useState<File|null>(null); // For PDF upload
   
-  // Images/Files
-  const [imageMethod, setImageMethod] = useState<'upload'|'link'>('upload');
-  const [imageFile, setImageFile] = useState<File|null>(null);
-  const [imageLink, setImageLink] = useState("");
-  const [file, setFile] = useState<File|null>(null);
-  
-  // Course Specifics
-  const [instructor, setInstructor] = useState("");
-  const [price, setPrice] = useState("");
-  const [discountPrice, setDiscountPrice] = useState("");
-  const [duration, setDuration] = useState("");
-  
-  // SEO
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDesc, setSeoDesc] = useState("");
-  const [tags, setTags] = useState("");
+  // Dropdowns
+  const [segments, setSegments] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   
   // Hierarchy
   const [selectedSegment, setSelectedSegment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [groups, setGroups] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
 
-  // --- 3. FETCH INITIAL DATA ---
   useEffect(() => {
     const fetchData = async () => {
-        const { data: segs } = await supabase.from('segments').select('id, title, slug');
-        const { data: cats } = await supabase.from('categories').select('*');
+        const { data: segs } = await supabase.from('segments').select('*');
+        const { data: cats } = await supabase.from('categories').select('*').neq('type', 'course'); // Exclude course cats
         if(segs) setSegments(segs);
         if(cats) setCategories(cats);
     };
     fetchData();
   }, []);
 
-  // --- 4. HIERARCHY HANDLERS ---
-  const handleSegmentClick = async (segId: string) => {
-      setSelectedSegment(segId);
-      const { data } = await supabase.from('groups').select('*').eq('segment_id', segId);
+  const handleSegmentClick = async (id: string) => {
+      setSelectedSegment(id);
+      const { data } = await supabase.from('groups').select('*').eq('segment_id', id);
       setGroups(data || []);
-      setSelectedGroup(""); setSelectedSubject(""); // Reset children
   };
-
-  const handleGroupClick = async (grpId: string) => {
-      setSelectedGroup(grpId);
-      const { data } = await supabase.from('subjects').select('*').eq('group_id', grpId);
+  const handleGroupClick = async (id: string) => {
+      setSelectedGroup(id);
+      const { data } = await supabase.from('subjects').select('*').eq('group_id', id);
       setSubjects(data || []);
-      setSelectedSubject("");
   };
 
-  const handleSubjectClick = (subId: string) => {
-      setSelectedSubject(subId);
-  };
-
-  // --- 5. THE MISSING PIECE: ACTUAL SAVE LOGIC ---
+  // --- ROBUST SAVE LOGIC ---
   const handleSave = async () => {
-      // A. Get Current User
+      if(!title) return alert("Title is required");
+      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be logged in.");
+      if (!user) return alert("Session expired.");
 
-      // B. Handle File Uploads (If any)
       let contentUrl = link;
-      let coverUrl = imageMethod === 'link' ? imageLink : null;
 
-      // Upload Cover Image
-      if (imageMethod === 'upload' && imageFile) {
-          const name = `cover-${Date.now()}-${imageFile.name.replace(/[^a-z0-9.]/gi, '_')}`;
-          const { data, error } = await supabase.storage.from('materials').upload(name, imageFile);
-          if (error) throw error;
-          const { data: publicUrl } = supabase.storage.from('materials').getPublicUrl(name);
-          coverUrl = publicUrl.publicUrl;
-      }
-
-      // Upload File (PDF/Doc)
+      // Upload File if present
       if (file) {
           const name = `file-${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
           const { data, error } = await supabase.storage.from('materials').upload(name, file);
-          if (error) throw error;
+          if (error) {
+              console.error("Upload Error", error);
+              return alert("File upload failed: " + error.message);
+          }
           const { data: publicUrl } = supabase.storage.from('materials').getPublicUrl(name);
           contentUrl = publicUrl.publicUrl;
       }
 
-      // C. Construct Payload
-      const commonPayload = {
+      const payload = {
           title,
-          slug: slug || title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
-          status: 'pending', // ALWAYS PENDING for Tutors
-          created_at: new Date(),
+          slug: slug || title.toLowerCase().replace(/ /g, '-'),
+          author_id: user.id,
+          type,
+          category,
+          status: 'pending', // Always pending
+          content_body: type === 'blog' ? content : null,
+          content_url: contentUrl,
+          pdf_url: type === 'pdf' ? contentUrl : null,
+          video_url: type === 'video' ? contentUrl : null,
           segment_id: selectedSegment ? parseInt(selectedSegment) : null,
           group_id: selectedGroup ? parseInt(selectedGroup) : null,
           subject_id: selectedSubject ? parseInt(selectedSubject) : null,
-          category,
-          seo_title: seoTitle || title,
-          seo_description: seoDesc,
-          tags: tags ? tags.split(',').map(t => t.trim()) : [],
+          created_at: new Date()
       };
 
-      let table = 'resources';
-      let finalPayload: any = {};
+      console.log("Saving Resource:", payload);
 
-      if (type === 'course') { // Logic for Courses (if you switch to 'courses' tab)
-          table = 'courses';
-          finalPayload = {
-              ...commonPayload,
-              tutor_id: user.id, // Linked to Tutor
-              description: content,
-              thumbnail_url: coverUrl,
-              instructor,
-              price: price ? parseFloat(price) : 0,
-              discount_price: discountPrice ? parseFloat(discountPrice) : 0,
-              duration,
-              enrollment_link: contentUrl
-          };
-      } else { // Logic for Resources
-          table = 'resources';
-          finalPayload = {
-              ...commonPayload,
-              author_id: user.id, // Linked to Tutor
-              type,
-              content_body: content, // HTML Content
-              content_url: contentUrl, // File/Video Link
-              pdf_url: type === 'pdf' ? contentUrl : null,
-              video_url: type === 'video' ? contentUrl : null,
-              cover_url: coverUrl
-          };
-      }
-
-      // D. Insert into Database
-      console.log(`Inserting into ${table}:`, finalPayload); // Debug Log
-      const { error } = await supabase.from(table).insert([finalPayload]);
+      const { error } = await supabase.from('resources').insert([payload]);
 
       if (error) {
-          console.error("Supabase Insert Error:", error);
-          throw error; // Pass to ContentEditor's error handler
+          alert("Database Error: " + error.message);
+      } else {
+          alert("Success! Your post is pending review.");
+          router.push('/tutor/dashboard/content');
       }
-
-      // E. Success Redirect
-      setTimeout(() => {
-          if (table === 'courses') router.push('/tutor/dashboard/courses');
-          else router.push('/tutor/dashboard/content');
-      }, 1000);
   };
 
   return (
     <div className="space-y-6">
         <div>
-            <h1 className="text-2xl font-black text-slate-800">Create New Content</h1>
-            <p className="text-slate-500">Share your knowledge. All posts are reviewed before publishing.</p>
+            <h1 className="text-2xl font-black text-slate-800">Post Study Material</h1>
+            <p className="text-slate-500">Upload notes, videos, or blogs.</p>
         </div>
 
         <ContentEditor 
-            activeTab="materials" // Default view
+            activeTab="materials"
             isDirty={!!title}
             setEditorMode={() => router.back()}
-            handleSave={handleSave} // Now points to the REAL logic above
+            handleSave={handleSave}
             
-            // --- State Passing ---
             title={title} setTitle={setTitle}
             slug={slug} setSlug={setSlug} generateSlug={() => setSlug(title.toLowerCase().replace(/ /g, '-'))}
             content={content} setContent={setContent}
             type={type} setType={setType}
-            link={link} setLink={setLink}
             category={category} setCategory={setCategory}
-            
-            imageMethod={imageMethod} setImageMethod={setImageMethod}
-            imageFile={imageFile} setImageFile={setImageFile}
-            imageLink={imageLink} setImageLink={setImageLink}
+            link={link} setLink={setLink}
             file={file} setFile={setFile}
             
-            instructor={instructor} setInstructor={setInstructor}
-            price={price} setPrice={setPrice}
-            discountPrice={discountPrice} setDiscountPrice={setDiscountPrice}
-            duration={duration} setDuration={setDuration}
+            segments={segments} categories={categories} groups={groups} subjects={subjects}
+            selectedSegment={selectedSegment} handleSegmentClick={handleSegmentClick}
+            selectedGroup={selectedGroup} handleGroupClick={handleGroupClick}
+            selectedSubject={selectedSubject} handleSubjectClick={setSelectedSubject}
             
-            seoTitle={seoTitle} setSeoTitle={setSeoTitle}
-            seoDesc={seoDesc} setSeoDesc={setSeoDesc}
-            tags={tags} setTags={setTags}
-            markDirty={() => {}} 
-
-            // --- Data Passing ---
-            categories={categories}
-            segments={segments}
-            groups={groups}
-            subjects={subjects}
-            
-            selectedSegment={selectedSegment}
-            selectedGroup={selectedGroup}
-            selectedSubject={selectedSubject}
-            
-            handleSegmentClick={handleSegmentClick}
-            handleGroupClick={handleGroupClick}
-            handleSubjectClick={handleSubjectClick}
-            
-            openCategoryModal={() => alert("Please contact admin to request new categories.")}
+            // Dummy props for unused features in this mode
+            imageMethod="upload" setImageMethod={()=>{}} imageFile={null} setImageFile={()=>{}} imageLink="" setImageLink={()=>{}}
+            instructor="" setInstructor={()=>{}} price="" setPrice={()=>{}} discountPrice="" setDiscountPrice={()=>{}} duration="" setDuration={()=>{}}
+            seoTitle="" setSeoTitle={()=>{}} seoDesc="" setSeoDesc={()=>{}} tags="" setTags={()=>{}}
+            markDirty={()=>{}} confirmAction={()=>{}} openCategoryModal={()=>{}}
         />
     </div>
   );
