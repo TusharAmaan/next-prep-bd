@@ -58,6 +58,7 @@ export default async function SubjectPage({
         .select("*, subjects(id, title)")
         .eq("subject_id", subject.id)
         .eq("type", type)
+        .eq("status", "approved")
         .order("created_at", { ascending: false });
       
       const allItems = resources || [];

@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .from('resources')
     .select('title, seo_title, seo_description, content_url, tags')
     .eq(column, id)
+    .eq("status", "approved")
     .single();
 
   if (!post) return { title: 'Question Not Found' };

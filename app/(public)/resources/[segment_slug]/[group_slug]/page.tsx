@@ -73,6 +73,7 @@ export default async function GroupPage({
             .from("segment_updates")
             .select("id, title, type, created_at, attachment_url") 
             .eq("segment_id", segmentData.id) 
+            .eq("status", "approved")
             .order("created_at", { ascending: false });
           
           allItems = updates?.map(u => ({

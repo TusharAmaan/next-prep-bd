@@ -28,6 +28,7 @@ export default async function CategoryListPage({ params, searchParams }: Props) 
     .from("segments")
     .select("id, title")
     .eq("slug", segment_slug)
+    .eq("status", "approved")
     .single();
 
   if (!segmentData) return notFound();

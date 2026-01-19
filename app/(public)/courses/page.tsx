@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles, Star } from "lucide-react";
+import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +9,7 @@ export default async function CoursesPage() {
   const { data: courses, error } = await supabase
     .from("courses")
     .select("*")
+    .eq("status", "approved") // <--- CRITICAL FIX: Only show live, approved courses
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -96,7 +97,7 @@ export default async function CoursesPage() {
 
                       {/* CONTENT AREA */}
                       <div className="p-6 flex-1 flex flex-col relative">
-                          {/* Category Tag (Optional - placeholder logic) */}
+                          {/* Category Tag */}
                           <div className="mb-3">
                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                                 Course
@@ -131,13 +132,13 @@ export default async function CoursesPage() {
                               <div className="flex flex-col">
                                   {course.discount_price ? (
                                       <>
-                                        <div className="flex items-center gap-2">
-                                           <span className="text-lg font-extrabold text-slate-900">৳{course.discount_price}</span>
-                                           <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                             -{getDiscountPercent(course.price, course.discount_price)}%
-                                           </span>
-                                        </div>
-                                        <span className="text-xs text-slate-400 line-through font-medium">Original: ৳{course.price}</span>
+                                          <div className="flex items-center gap-2">
+                                             <span className="text-lg font-extrabold text-slate-900">৳{course.discount_price}</span>
+                                             <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                               -{getDiscountPercent(course.price, course.discount_price)}%
+                                             </span>
+                                          </div>
+                                          <span className="text-xs text-slate-400 line-through font-medium">Original: ৳{course.price}</span>
                                       </>
                                   ) : (
                                       <span className="text-lg font-extrabold text-slate-900">

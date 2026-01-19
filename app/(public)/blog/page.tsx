@@ -13,19 +13,20 @@ export default async function BlogListPage() {
   const segmentsList = ["All", ...(segmentsData?.map(s => s.title) || [])];
 
   // 2. Fetch Initial Blogs (Page 1)
-  // UPDATED: Added 'slug' to the nested segments query to help build proper URLs if needed
   const { data: blogs, count } = await supabase
     .from("resources")
     .select(`
         id, title, content_body, created_at, content_url, type, seo_description,
         segment_id,
+        status, -- Useful for debugging, though we filter by it
         subjects (
           groups (
             segments ( title, slug ) 
           )
         )
     `, { count: "exact" })
-    .eq("type", "blog") // Currently only fetching blogs
+    .eq("type", "blog")      // 1. Only Blogs
+    .eq("status", "approved") // 2. <--- CRITICAL FIX: Only show Approved/Admin content
     .order("created_at", { ascending: false })
     .range(0, ITEMS_PER_PAGE - 1);
 
@@ -33,8 +34,7 @@ export default async function BlogListPage() {
   const safeBlogs = blogs?.map((blog: any) => {
     
     // --- LINK GENERATION LOGIC ---
-    // We pre-calculate the full URL here so the UI component doesn't have to guess.
-    let link = `/blog/${blog.id}`; // Safe fallback to ID if no slug exists
+    let link = `/blog/${blog.id}`; // Safe fallback
 
     if (blog.content_url) {
         if (blog.type === 'blog') {
@@ -42,19 +42,17 @@ export default async function BlogListPage() {
         } else if (blog.type === 'news') {
             link = `/news/${blog.content_url}`;
         } else if (blog.type === 'updates') {
-            // For updates, we reconstruct the complex path: resources/[segment]/updates/[slug]
             const segmentSlug = blog.subjects?.groups?.segments?.slug || 
                                 blog.subjects?.groups?.segments?.title?.toLowerCase() || 
                                 'general';
             link = `/resources/${segmentSlug}/updates/${blog.content_url}`;
         }
-        // Add other types (ebooks, courses) here if you expand this page later
     }
 
     return {
         ...blog,
         segmentTitle: blog.subjects?.groups?.segments?.title || "General",
-        link: link, // <--- The BlogList component should use this property for the href
+        link: link,
     };
   }) || [];
 

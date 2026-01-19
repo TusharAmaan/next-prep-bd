@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .from('segment_updates')
     .select('title, seo_title, seo_description, tags')
     .eq(column, id)
+    .eq("status", "approved")
     .single();
 
   if (!update) {

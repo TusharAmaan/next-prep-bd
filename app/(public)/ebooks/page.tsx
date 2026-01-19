@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import EbookFilters from "@/components/EbookFilters"; // Adjust path as needed
-import { BookOpen, Calendar, User, Search } from "lucide-react"; // npm i lucide-react
+import EbookFilters from "@/components/EbookFilters"; 
+import { BookOpen, Calendar, User, Search } from "lucide-react"; 
+
 export const dynamic = "force-dynamic";
 
 type Props = {
@@ -20,7 +21,7 @@ export default async function EbooksPage({ searchParams }: Props) {
   const currentPage = Math.max(1, parseInt(page) || 1);
   const itemsPerPage = Math.max(1, parseInt(limit) || 20);
 
-  // 1. Fetch Categories for Filter (Optimized)
+  // 1. Fetch Categories for Filter
   const { data: catData } = await supabase.from("ebooks").select("category");
   const uniqueCategories = Array.from(new Set(catData?.map((b) => b.category))).filter(Boolean).sort();
 
@@ -28,9 +29,10 @@ export default async function EbooksPage({ searchParams }: Props) {
   let query = supabase
     .from("ebooks")
     .select("id, title, author, category, cover_url, created_at, tags, description", { count: "exact" })
+    .eq("status", "approved") // <--- CRITICAL FIX: Only show approved eBooks
     .order("created_at", { ascending: false });
 
-  if (q) query = query.or(`title.ilike.%${q}%,author.ilike.%${q}%,tags.cs.{${q}}`); // improved search
+  if (q) query = query.or(`title.ilike.%${q}%,author.ilike.%${q}%,tags.cs.{${q}}`); 
   if (category !== "All") query = query.eq("category", category);
 
   // 3. Pagination Logic
@@ -105,7 +107,7 @@ export default async function EbooksPage({ searchParams }: Props) {
                     <span className="truncate">{book.author}</span>
                   </div>
 
-                  {/* Tags (Optional) */}
+                  {/* Tags */}
                   {book.tags && book.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-4 mt-auto">
                       {book.tags.slice(0, 2).map((t: string) => (
@@ -162,13 +164,11 @@ export default async function EbooksPage({ searchParams }: Props) {
               label="←"
             />
             
-            {/* Page Numbers Logic (Simplified for brevity) */}
+            {/* Page Numbers */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-               // Logic to center the current page
                let pNum = i + 1;
                if (totalPages > 5 && currentPage > 3) {
                  pNum = currentPage - 2 + i;
-                 // Cap at totalPages
                  if (pNum > totalPages) pNum = totalPages - (4 - i);
                }
                return pNum;

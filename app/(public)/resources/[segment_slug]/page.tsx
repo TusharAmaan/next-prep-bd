@@ -71,6 +71,7 @@ export default async function SegmentPage({
             .select("*, subjects(id, title)")
             .eq("segment_id", segmentData.id)
             .eq("type", type)
+            .eq("status", "approved")
             .order("created_at", { ascending: false });
           allItems = resources || [];
       }
