@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import ListHeader from "../shared/ListHeader";
 import ContentFilterBar from "../shared/ContentFilterBar";
@@ -58,7 +58,7 @@ export default function ContentManager({
 
     // Form State
     const [title, setTitle] = useState("");
-    const [slug, setSlug] = useState(""); // <--- NEW SLUG STATE
+    const [slug, setSlug] = useState(""); 
     const [content, setContent] = useState("");
     const [link, setLink] = useState("");
     const [type, setType] = useState("pdf");
@@ -82,6 +82,19 @@ export default function ContentManager({
     
     const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
     
+    // --- CATEGORY FILTER LOGIC (THE FIX) ---
+    // This ensures only relevant categories appear in the dropdowns
+    const filteredCategories = useMemo(() => {
+        if (!categories) return [];
+        return categories.filter((c: any) => {
+            if (activeTab === 'ebooks') return c.type === 'ebook';
+            if (activeTab === 'news') return c.type === 'news';
+            if (activeTab === 'courses') return c.type === 'course';
+            if (activeTab === 'materials') return c.type === 'resource' || c.type === 'general' || !c.type;
+            return true; // Show all for other tabs if any
+        });
+    }, [categories, activeTab]);
+
     const markDirty = () => setIsDirty(true);
 
     const resetForms = () => {
@@ -151,6 +164,7 @@ export default function ContentManager({
         resetForms();
         setSelSeg(""); setSelGrp(""); setSelSub(""); 
         setTypeFilter("all"); setUpdateTypeFilter("all"); setSearch("");
+        setCatFilter("all"); // Reset category filter on tab change
         setPage(0);
     }, [activeTab]);
 
@@ -170,7 +184,7 @@ export default function ContentManager({
         resetForms();
         setEditingId(item.id); 
         setTitle(item.title);
-        setSlug(item.slug || ""); // <--- LOAD SLUG
+        setSlug(item.slug || "");
         setSeoTitle(item.seo_title || ""); setSeoDesc(item.seo_description || ""); setTags(item.tags?.join(", ") || "");
 
         if (activeTab === 'materials') {
@@ -229,7 +243,7 @@ export default function ContentManager({
 
         let payload: any = {
             title,
-            slug: finalSlug, // <--- SAVE SLUG
+            slug: finalSlug, 
             seo_title: seoTitle || title,
             seo_description: seoDesc,
             tags: tags.split(',').map(t => t.trim()).filter(Boolean)
@@ -294,7 +308,6 @@ export default function ContentManager({
 
         setSubmitting(false);
         if (error) {
-            // Check for duplicate slug error
             if (error.message.includes("duplicate key")) {
                 showError("This Permalink (slug) is already taken. Please change it.");
             } else {
@@ -315,12 +328,13 @@ export default function ContentManager({
                 isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
                 confirmAction={(msg: string, cb: any) => { if(window.confirm(msg)) cb(); }} 
                 title={title} setTitle={setTitle} 
-                slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))} // <--- Pass Slug Props
+                slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))}
                 content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
                 imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
                 author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
                 seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDesc={seoDesc} setSeoDesc={setSeoDesc} tags={tags} setTags={setTags} markDirty={markDirty}
-                categories={categories} openCategoryModal={openCategoryModal}
+                // --- PASS FILTERED CATEGORIES TO EDITOR ---
+                categories={filteredCategories} openCategoryModal={openCategoryModal}
                 segments={segments} selectedSegment={editSeg} 
                 handleSegmentClick={(id: string) => { setEditSeg(id); setEditGrp(""); setEditSub(""); fetchGroups(id); }}
                 groups={groups} selectedGroup={editGrp} 
@@ -344,7 +358,8 @@ export default function ContentManager({
                 startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
                 typeFilter={typeFilter} setTypeFilter={setTypeFilter}
                 updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
-                catFilter={catFilter} setCatFilter={setCatFilter} categories={categories}
+                // --- PASS FILTERED CATEGORIES TO FILTER BAR ---
+                catFilter={catFilter} setCatFilter={setCatFilter} categories={filteredCategories}
                 showHierarchy={['materials', 'courses', 'segment_updates'].includes(activeTab)}
                 showSegmentOnly={activeTab === 'segment_updates'}
                 showType={activeTab === 'materials'}

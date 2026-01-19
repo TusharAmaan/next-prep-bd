@@ -77,8 +77,6 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   );
 }
 
-const ITEMS_PER_PAGE = 10;
-
 export default function QuestionBankManager() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -104,6 +102,9 @@ export default function QuestionBankManager() {
   const [filterSegment, setFilterSegment] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
+  const [filterTopic, setFilterTopic] = useState(""); // NEW: Topic Filter
+  
+  const [itemsPerPage, setItemsPerPage] = useState(10); // NEW: Pagination Control
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
@@ -111,6 +112,9 @@ export default function QuestionBankManager() {
   const [segments, setSegments] = useState<any[]>([]);
   const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
   const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
+  const [uniqueTags, setUniqueTags] = useState<string[]>([]); // NEW: Unique Tags List
+
+  // Creation Dropdowns
   const [createGroupsList, setCreateGroupsList] = useState<any[]>([]);
   const [createSubjectsList, setCreateSubjectsList] = useState<any[]>([]);
 
@@ -138,19 +142,30 @@ export default function QuestionBankManager() {
   const [isAddingSub, setIsAddingSub] = useState(false);
 
   // --- INITIAL LOAD ---
-  useEffect(() => { fetchSegments(); }, []);
-  useEffect(() => { fetchQuestions(); }, [page, filterSegment, filterGroup, filterSubject, searchQuery]);
+  useEffect(() => { 
+      fetchSegments(); 
+      fetchUniqueTags(); // Fetch tags on load
+  }, []);
+  
+  useEffect(() => { 
+      fetchQuestions(); 
+  }, [page, itemsPerPage, filterSegment, filterGroup, filterSubject, filterTopic, searchQuery]);
 
   // --- FETCHERS ---
   const fetchQuestions = async () => {
     setLoading(true);
     let query = supabase.from('question_bank').select('*, subjects(title)', { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false });
+    
     if (filterSegment) query = query.eq('segment_id', filterSegment);
     if (filterGroup) query = query.eq('group_id', filterGroup);
     if (filterSubject) query = query.eq('subject_id', filterSubject);
+    if (filterTopic) query = query.eq('topic_tag', filterTopic); // Apply Topic Filter
+    
     if (searchQuery) query = query.or(`question_text.ilike.%${searchQuery}%,topic_tag.ilike.%${searchQuery}%`);
-    const from = page * ITEMS_PER_PAGE;
-    const to = from + ITEMS_PER_PAGE - 1;
+    
+    const from = page * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+    
     query = query.range(from, to);
     const { data, count, error } = await query;
     if (!error) { setQuestions(data || []); setHasMore((count || 0) > to + 1); }
@@ -158,6 +173,17 @@ export default function QuestionBankManager() {
   };
 
   const fetchSegments = async () => { const { data } = await supabase.from('segments').select('id, title'); if (data) setSegments(data); };
+  
+  // NEW: Fetch all unique tags for the dropdown
+  const fetchUniqueTags = async () => {
+      const { data } = await supabase.from('question_bank').select('topic_tag').not('topic_tag', 'is', null);
+      if (data) {
+          // Extract unique tags using Set
+          const tags = Array.from(new Set(data.map(item => item.topic_tag).filter(Boolean)));
+          setUniqueTags(tags as string[]);
+      }
+  };
+
   const loadGroups = async (segId: string, setFn: Function) => { const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId); setFn(data || []); };
   const loadSubjects = async (grpId: string, setFn: Function) => { const { data } = await supabase.from('subjects').select('id, title').eq('group_id', grpId); setFn(data || []); };
 
@@ -167,7 +193,6 @@ export default function QuestionBankManager() {
   const handleCreateSegmentChange = (val: string) => { setSelSegment(val); setSelGroup(''); setSelSubject(''); if(val) loadGroups(val, setCreateGroupsList); };
   const handleCreateGroupChange = (val: string) => { setSelGroup(val); setSelSubject(''); if(val) loadSubjects(val, setCreateSubjectsList); };
 
-  // --- EDIT HANDLER ---
   const handleEdit = async (q: any) => {
     setEditingId(q.id);
     setLoading(true);
@@ -199,7 +224,6 @@ export default function QuestionBankManager() {
     setView('create');
   };
 
-  // --- DELETE HANDLER ---
   const handleDelete = (id: string) => {
     showModal('confirm', "Are you sure you want to delete this question? This cannot be undone.", async () => {
         setLoading(true);
@@ -210,13 +234,13 @@ export default function QuestionBankManager() {
         } else {
             setQuestions(questions.filter(q => q.id !== id));
             showModal('success', "Question deleted successfully.");
+            fetchUniqueTags(); // Refresh tags if one was deleted
         }
         setLoading(false);
         closeModal();
     });
   };
 
-  // --- SUB-QUESTION LOGIC ---
   const handleAddSubQuestion = () => {
     if (!qText) return showModal('error', "Please enter a question.");
     
@@ -235,7 +259,6 @@ export default function QuestionBankManager() {
     setIsAddingSub(false); 
   };
 
-  // --- SAVE HANDLER ---
   const handleSaveToBank = async () => {
     const mainContent = qType === 'passage' ? passageText : qText;
     if (!mainContent && !isAddingSub) return showModal('error', "Please enter content text.");
@@ -294,12 +317,12 @@ export default function QuestionBankManager() {
             }
         }
         
-        // --- SUCCESS MODAL & REDIRECT ---
         showModal('success', editingId ? "Question updated!" : "Saved to Question Bank!", () => {
             resetAll();
-            closeModal(); // Close success modal
-            setView('list'); // Switch back to list view
-            fetchQuestions(); // Refresh list data
+            closeModal(); 
+            setView('list'); 
+            fetchQuestions(); 
+            fetchUniqueTags(); // Refresh tags list
         });
 
     } catch (err: any) {
@@ -321,7 +344,7 @@ export default function QuestionBankManager() {
     setSubQType('mcq');
   };
 
-  // --- RENDER FORM HELPER ---
+  // --- RENDER FORM HELPER (Optimized UI) ---
   const renderQuestionForm = (isSub: boolean = false) => (
     <div className={`space-y-6 ${isSub ? 'bg-indigo-50/50 p-6 rounded-xl border border-indigo-100' : ''}`}>
        
@@ -338,25 +361,24 @@ export default function QuestionBankManager() {
           )}
        </div>
 
-       {/* 2. QUESTION & MARKS ROW (Compact Layout) */}
-       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-          {/* Question Text (Takes 3 cols) */}
-          <div className="md:col-span-3">
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                 {qType === 'passage' && !isSub ? 'Passage / Story Text' : 'Question Text'}
-              </label>
-              <div className="h-48 overflow-y-auto border rounded-lg"> {/* Fixed Height for Compactness */}
-                  {qType === 'passage' && !isSub ? (
-                     <RichTextEditor key="passage-main" initialValue={passageText} onChange={setPassageText} />
-                  ) : (
-                     <RichTextEditor key={isSub ? "sub-q-editor" : "main-q-editor"} initialValue={qText} onChange={setQText} />
-                  )}
-              </div>
+       {/* 2. QUESTION INPUT (Reduced height) */}
+       <div>
+          <label className="block text-sm font-bold text-slate-700 mb-2">
+             {qType === 'passage' && !isSub ? 'Passage / Story Text' : 'Question Text'}
+          </label>
+          <div className="h-40 overflow-y-auto border rounded-lg bg-white"> 
+              {qType === 'passage' && !isSub ? (
+                 <RichTextEditor key="passage-main" initialValue={passageText} onChange={setPassageText} />
+              ) : (
+                 <RichTextEditor key={isSub ? "sub-q-editor" : "main-q-editor"} initialValue={qText} onChange={setQText} />
+              )}
           </div>
+       </div>
 
-          {/* Marks (Takes 1 col) */}
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Marks */}
           {(qType !== 'passage' || isSub) && (
-              <div className="md:col-span-1">
+              <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
                   <input 
                     type="number" 
@@ -368,11 +390,11 @@ export default function QuestionBankManager() {
           )}
        </div>
 
-       {/* 3. MCQ OPTIONS (Only for MCQ) */}
+       {/* 3. MCQ OPTIONS */}
        {qType === 'mcq' && (
           <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
              <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 gap-3">
                  {options.map((opt, i) => (
                     <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200">
                        <button onClick={() => {
@@ -389,15 +411,15 @@ export default function QuestionBankManager() {
           </div>
        )}
 
-       {/* 4. EXPLANATION (Full Width & Larger) */}
+       {/* 4. EXPLANATION (Increased size & Full Width) */}
        {(qType !== 'passage' || isSub) && (
-          <div>
+          <div className="pt-2">
              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Detailed Explanation</label>
              <textarea 
                 value={explanation} 
                 onChange={e => setExplanation(e.target.value)} 
-                className="w-full border border-slate-200 p-4 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-indigo-100 outline-none resize-y" 
-                placeholder="Write a detailed explanation here. This will be shown to students after they answer." 
+                className="w-full border border-slate-200 p-4 rounded-xl text-sm min-h-[200px] focus:ring-2 focus:ring-indigo-100 outline-none resize-y shadow-sm" 
+                placeholder="Write a detailed explanation here. Include steps, formulas, or reasoning." 
              />
           </div>
        )}
@@ -439,11 +461,10 @@ export default function QuestionBankManager() {
              </div>
 
              <div className="p-8">
-                
-                {/* Main Form: Hide if adding sub-question to avoid confusion */}
+                {/* Main Form */}
                 {!isAddingSub && renderQuestionForm(false)}
 
-                {/* Passage Sub-Questions Section */}
+                {/* Passage Sub-Questions */}
                 {qType === 'passage' && (
                    <div className="mt-8 border-t border-slate-100 pt-8">
                       <div className="flex justify-between items-center mb-6">
@@ -451,7 +472,7 @@ export default function QuestionBankManager() {
                           {!isAddingSub && (
                               <button onClick={() => { 
                                   setIsAddingSub(true); 
-                                  setQType('mcq'); // Reset Sub Type default
+                                  setQType('mcq'); 
                                   setQText(''); 
                                   setExplanation('');
                                   setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
@@ -476,7 +497,6 @@ export default function QuestionBankManager() {
                          ))}
                       </div>
 
-                      {/* Add Sub-Question Wrapper */}
                       {isAddingSub && (
                          <div className="animate-in fade-in slide-in-from-bottom-4">
                             <h4 className="font-bold text-indigo-900 mb-4 px-2">New Sub-Question Editor</h4>
@@ -487,7 +507,6 @@ export default function QuestionBankManager() {
                 )}
              </div>
              
-             {/* Footer Actions */}
              <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-end">
                 <button onClick={handleSaveToBank} disabled={loading || isAddingSub} className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95">
                     {loading ? "Saving..." : (editingId ? "Update Question" : "Save to Question Bank")}
@@ -504,11 +523,23 @@ export default function QuestionBankManager() {
                     <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                     <input className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 outline-none" placeholder="Search text or topic..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+                <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0 items-center">
+                    {/* FILTERS */}
                     <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterSegment} onChange={(e) => handleFilterSegmentChange(e.target.value)}><option value="">All Segments</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                     <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterGroup} onChange={(e) => handleFilterGroupChange(e.target.value)} disabled={!filterSegment}><option value="">All Groups</option>{filterGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
                     <select className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" value={filterSubject} onChange={(e) => { setFilterSubject(e.target.value); setPage(0); }} disabled={!filterGroup}><option value="">All Subjects</option>{filterSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                    {(filterSegment || searchQuery) && <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setSearchQuery(''); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Clear Filters"><X size={18} /></button>}
+                    
+                    {/* NEW: TOPIC FILTER */}
+                    <select 
+                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:bg-white outline-none min-w-[140px]" 
+                        value={filterTopic} 
+                        onChange={(e) => { setFilterTopic(e.target.value); setPage(0); }}
+                    >
+                        <option value="">All Topics</option>
+                        {uniqueTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                    </select>
+
+                    {(filterSegment || searchQuery || filterTopic) && <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Clear Filters"><X size={18} /></button>}
                 </div>
              </div>
 
@@ -548,9 +579,25 @@ export default function QuestionBankManager() {
              </div>
 
              <div className="flex justify-between items-center px-2">
-                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50"><ChevronLeft size={16} /> Previous</button>
-                <span className="text-xs font-medium text-slate-400">Page {page + 1}</span>
-                <button onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50">Next <ChevronRight size={16} /></button>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">Rows per page:</span>
+                    <select 
+                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs bg-white outline-none"
+                        value={itemsPerPage}
+                        onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50"><ChevronLeft size={16} /> Previous</button>
+                    <span className="text-xs font-medium text-slate-400">Page {page + 1}</span>
+                    <button onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading} className="flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-50">Next <ChevronRight size={16} /></button>
+                </div>
              </div>
           </div>
        )}
