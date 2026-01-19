@@ -37,6 +37,7 @@ export default function ContentManager({
     const [isDirty, setIsDirty] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null); // To track current user
 
     // Filters
     const [search, setSearch] = useState("");
@@ -82,7 +83,7 @@ export default function ContentManager({
     
     const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
     
-    // --- CATEGORY FILTER LOGIC (THE FIX) ---
+    // --- CATEGORY FILTER LOGIC ---
     // This ensures only relevant categories appear in the dropdowns
     const filteredCategories = useMemo(() => {
         if (!categories) return [];
@@ -108,6 +109,15 @@ export default function ContentManager({
         setIsDirty(false);
     };
 
+    // Get current user on mount
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        getUser();
+    }, []);
+
     // --- FETCH DATA ---
     const fetchContent = useCallback(async () => {
         let tableName = "";
@@ -120,6 +130,15 @@ export default function ContentManager({
         if (!tableName) return;
 
         let query = supabase.from(tableName).select("*", { count: 'exact' });
+
+        // --- FILTER PENDING POSTS ---
+        // Hide 'pending' status unless it's the current user's own post (optional, but requested to hide pending generally)
+        // Strictly hiding all 'pending' posts from this view as requested.
+        // If you want to see YOUR pending posts, we'd need OR logic which is tricky with basic chaining.
+        // For now, adhering to "Neither of them should show the pending post here."
+        if (tableName === 'resources' || tableName === 'courses') {
+             query = query.neq('status', 'pending');
+        }
 
         // Hierarchy Filters
         if (['materials', 'segment_updates', 'courses'].includes(activeTab)) {
@@ -246,8 +265,18 @@ export default function ContentManager({
             slug: finalSlug, 
             seo_title: seoTitle || title,
             seo_description: seoDesc,
-            tags: tags.split(',').map(t => t.trim()).filter(Boolean)
+            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+            // Ensure admin posts are automatically approved if creating new
+            // But if we are editing, we usually preserve status unless explicitly changed.
+            // For new posts by admin, status should be 'approved'.
+            ...(editingId ? {} : { status: 'approved' }) 
         };
+        
+        // If the user is admin, force status to approved on create.
+        // (Assuming this component is only used by admins)
+        if (!editingId) {
+             payload.status = 'approved';
+        }
 
         let contentUrl: string | null = link; 
         let coverUrl: string | null = null; 
@@ -302,6 +331,9 @@ export default function ContentManager({
             const res = await supabase.from(table).update(payload).eq('id', editingId);
             error = res.error;
         } else {
+            // When creating, we might need to attach author_id if RLS requires it or for tracking
+            // For admins, usually handled by default or trigger, but good to be explicit if needed
+            // payload.author_id = currentUser?.id; 
             const res = await supabase.from(table).insert([payload]);
             error = res.error;
         }
