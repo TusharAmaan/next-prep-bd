@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Trash2, CheckCircle, Mail, Clock, AlertCircle, Loader2, MessageSquare } from "lucide-react";
+import { Trash2, CheckCircle, Mail, Clock, Loader2, MessageSquare } from "lucide-react";
 
 export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void }) {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
@@ -11,15 +11,26 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
   // FETCH FEEDBACKS
   const fetchFeedbacks = async () => {
     setLoading(true);
-    // Join with profiles if you want user details, assuming user_id exists
-    // If feedback is anonymous, rely on columns like 'name' or 'email' in the feedbacks table
+    
+    // We select all columns from feedbacks.
+    // We also attempt to fetch related profile data.
+    // If user_id is null, profiles will just be null, which is fine.
     const { data, error } = await supabase
       .from("feedbacks")
-      .select("*, profiles(full_name, email)") 
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          email
+        )
+      `)
       .order("created_at", { ascending: false });
 
-    if (error) console.error("Error fetching feedbacks:", error);
-    else setFeedbacks(data || []);
+    if (error) {
+      console.error("Error fetching feedbacks:", error);
+    } else {
+      setFeedbacks(data || []);
+    }
     setLoading(false);
   };
 
@@ -29,18 +40,30 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
 
   // ACTIONS
   const markAsRead = async (id: string) => {
+    // Optimistic update
+    setFeedbacks(prev => prev.map(f => f.id === id ? { ...f, status: "read" } : f));
+    
     const { error } = await supabase.from("feedbacks").update({ status: "read" }).eq("id", id);
-    if (!error) {
-      setFeedbacks(prev => prev.map(f => f.id === id ? { ...f, status: "read" } : f));
-      if (onUpdate) onUpdate(); // Refresh global notification counts if needed
+    if (error) {
+        console.error("Error marking as read:", error);
+        // Revert if error (optional, but good practice)
+    } else {
+      if (onUpdate) onUpdate(); // Refresh global notification counts
     }
   };
 
   const deleteFeedback = async (id: string) => {
     if (!confirm("Are you sure you want to delete this feedback?")) return;
+    
+    // Optimistic update
+    setFeedbacks(prev => prev.filter(f => f.id !== id));
+
     const { error } = await supabase.from("feedbacks").delete().eq("id", id);
-    if (!error) {
-      setFeedbacks(prev => prev.filter(f => f.id !== id));
+    if (error) {
+        console.error("Error deleting feedback:", error);
+        // Fetch again to revert state if delete failed
+        fetchFeedbacks();
+    } else {
       if (onUpdate) onUpdate();
     }
   };
@@ -93,7 +116,15 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
             </div>
         ) : (
             <div className="divide-y divide-slate-100">
-                {filteredFeedbacks.map((item) => (
+                {filteredFeedbacks.map((item) => {
+                    // RESOLVE USER DETAILS:
+                    // Priority 1: Linked Profile Data
+                    // Priority 2: Direct columns on feedback table (full_name, email) - standard fallback
+                    // Priority 3: "Anonymous" / "No email"
+                    const displayName = item.profiles?.full_name || item.full_name || "Anonymous";
+                    const displayEmail = item.profiles?.email || item.email || "No email";
+
+                    return (
                     <div 
                         key={item.id} 
                         className={`p-6 transition-colors hover:bg-slate-50 flex flex-col md:flex-row gap-4 ${item.status !== 'read' ? 'bg-indigo-50/30' : ''}`}
@@ -111,15 +142,18 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
                         <div className="flex-1 space-y-2">
                             <div className="flex flex-wrap justify-between items-start gap-2">
                                 <div>
+                                    {/* Subject / Category display */}
                                     <h4 className="font-bold text-slate-900 text-base">
-                                        {item.subject || "No Subject"}
+                                        {item.category ? <span className="uppercase text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded mr-2">{item.category}</span> : null}
+                                        {/* If you have a 'subject' column, use it. Otherwise, show preview of message */}
+                                        {item.subject || "Feedback Message"}
                                     </h4>
                                     <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                                         <span className="font-bold text-indigo-600">
-                                            {item.profiles?.full_name || item.name || "Anonymous"}
+                                            {displayName}
                                         </span>
                                         <span>•</span>
-                                        <span>{item.profiles?.email || item.email || "No email"}</span>
+                                        <span>{displayEmail}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 text-xs font-medium text-slate-400 bg-white border border-slate-100 px-2 py-1 rounded-md shadow-sm">
@@ -128,7 +162,7 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
                                 </div>
                             </div>
 
-                            <p className="text-slate-600 text-sm leading-relaxed bg-white/50 p-3 rounded-lg border border-slate-100/50">
+                            <p className="text-slate-600 text-sm leading-relaxed bg-white/50 p-3 rounded-lg border border-slate-100/50 whitespace-pre-wrap">
                                 {item.message}
                             </p>
                         </div>
@@ -153,7 +187,7 @@ export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void })
                             </button>
                         </div>
                     </div>
-                ))}
+                )})}
             </div>
         )}
       </div>
