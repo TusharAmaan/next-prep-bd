@@ -23,15 +23,17 @@ import {
   Clock,
   ChevronRight,
   FileClock,
-  UserCheck, // Added for Tutor Icon
-  Star // Added for Rating Icon
+  UserCheck,
+  Star,
+  ShieldCheck,
+  PlayCircle
 } from "lucide-react";
 
 export const revalidate = 0; 
 
 export default async function HomePage() {
   
-  // 2. FETCH DATA
+  // 1. FETCH DATA
   const [segmentsData, latestResources, latestNews, ebooksData] = await Promise.all([
     supabase.from("segments").select("*").order("id"),
     supabase.from("resources")
@@ -52,20 +54,20 @@ export default async function HomePage() {
 
   const getQuestionText = (slug: string) => {
     const s = slug.toLowerCase();
-    if (s.includes('ssc')) return "All board questions.";
-    if (s.includes('hsc')) return "Board & college tests.";
+    if (s.includes('ssc')) return "All board questions & solutions.";
+    if (s.includes('hsc')) return "Board & college test papers.";
     if (s.includes('admission')) return "DU, BUET, Medical papers.";
-    if (s.includes('job')) return "BCS & Bank exams.";
+    if (s.includes('job')) return "BCS & Bank exam archive.";
     return `Archive of ${slug.replace(/-/g, ' ')}.`;
   };
 
   const goalCards = [
-    { title: "SSC", desc: "Science, Arts & Commerce guide.", link: "/resources/ssc", bg: "bg-gradient-to-br from-blue-600 to-indigo-700", icon: School },
-    { title: "HSC", desc: "Notes & college admission prep.", link: "/resources/hsc", bg: "bg-gradient-to-br from-purple-600 to-fuchsia-700", icon: GraduationCap },
-    { title: "University Admission", desc: "Varsity & Engineering prep.", link: "/resources/university-admission", bg: "bg-gradient-to-br from-rose-500 to-orange-600", icon: BookOpen },
-    { title: "Medical Prep", desc: "MBBS & Dental admission guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-gradient-to-br from-emerald-500 to-teal-700", icon: Stethoscope },
-    { title: "IBA - MBA", desc: "BBA/MBA admission tests.", link: "/resources/master's-admission/mba/iba", bg: "bg-gradient-to-br from-slate-700 to-black", icon: TrendingUp },
-    { title: "Job Preparation", desc: "BCS, Bank Jobs & NTRCA.", link: "/resources/job-prep", bg: "bg-gradient-to-br from-cyan-500 to-blue-700", icon: Briefcase }
+    { title: "SSC", desc: "Science, Arts & Commerce guide.", link: "/resources/ssc", bg: "bg-blue-600", icon: School },
+    { title: "HSC", desc: "Notes & college admission prep.", link: "/resources/hsc", bg: "bg-indigo-600", icon: GraduationCap },
+    { title: "University", desc: "Varsity & Engineering prep.", link: "/resources/university-admission", bg: "bg-fuchsia-600", icon: BookOpen },
+    { title: "Medical", desc: "MBBS & Dental admission guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-rose-500", icon: Stethoscope },
+    { title: "IBA - MBA", desc: "BBA/MBA admission tests.", link: "/resources/master's-admission/mba/iba", bg: "bg-slate-800", icon: TrendingUp },
+    { title: "Job Prep", desc: "BCS, Bank Jobs & NTRCA.", link: "/resources/job-prep", bg: "bg-emerald-600", icon: Briefcase }
   ];
 
   return (
@@ -73,7 +75,6 @@ export default async function HomePage() {
       
       {/* 1. HERO SECTION */}
       <section className="relative bg-[#0f172a] text-white pt-36 pb-32 px-6 overflow-hidden">
-        {/* ... (Hero Code Remains Same) ... */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/30 rounded-full blur-[120px]"></div>
             <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
@@ -107,7 +108,7 @@ export default async function HomePage() {
 
       {/* 2. STATS BAR */}
       <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-16 md:-mt-20">
-        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-10">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-10">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 <div className="flex flex-col items-center text-center group">
                     <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -134,30 +135,36 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 3. CHOOSE YOUR GOAL */}
+      {/* 3. REDESIGNED: CHOOSE YOUR GOAL */}
       <section className="pt-24 pb-12 max-w-7xl mx-auto px-4 md:px-6">
-        <div className="text-center mb-12 space-y-3">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-              Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Goal</span>
-            </h2>
-            <div className="w-16 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div className="space-y-2">
+                <span className="text-blue-600 font-bold tracking-widest uppercase text-sm">Pathways</span>
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                    Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Goal</span>
+                </h2>
+            </div>
+            <p className="text-slate-500 font-medium max-w-md">
+                Tailored study materials and curated paths to help you clear your next big milestone.
+            </p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
             {goalCards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                    <Link href={card.link} key={idx} className={`group relative flex flex-col justify-between p-5 rounded-[1.5rem] ${card.bg} shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-2 overflow-hidden border border-white/10 min-h-[160px]`}>
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-white/20 transition-all duration-500"></div>
-                        <div className="relative z-10">
-                            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3 shadow-inner border border-white/20">
-                                <Icon className="w-5 h-5 text-white" />
+                    <Link href={card.link} key={idx} className="group relative">
+                        <div className={`absolute inset-0 rounded-[2rem] opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 -z-10 ${card.bg}`}></div>
+                        <div className="h-full bg-white border border-slate-200 group-hover:border-transparent p-6 rounded-[2rem] transition-all duration-300 group-hover:-translate-y-2 flex flex-col shadow-sm group-hover:shadow-2xl">
+                            <div className={`w-14 h-14 rounded-2xl ${card.bg} flex items-center justify-center mb-6 shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+                                <Icon className="w-7 h-7 text-white" />
                             </div>
-                            <h3 className="font-extrabold text-sm md:text-lg text-white tracking-wide leading-tight mb-1">{card.title}</h3>
-                            <p className="hidden md:block text-xs font-medium text-white/90 leading-snug line-clamp-2">{card.desc}</p>
-                        </div>
-                        <div className="relative z-10 flex items-center justify-between text-white/90 group-hover:text-white mt-auto pt-3 border-t border-white/10">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Explore</span>
-                            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                            <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{card.title}</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed mb-6">{card.desc}</p>
+                            <div className="mt-auto flex items-center text-blue-600 font-bold text-xs uppercase tracking-wider gap-2">
+                                <span>Explore</span>
+                                <div className="w-6 h-[2px] bg-blue-100 group-hover:w-10 group-hover:bg-blue-600 transition-all duration-300"></div>
+                            </div>
                         </div>
                     </Link>
                 );
@@ -165,51 +172,36 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. PREVIOUS YEAR QUESTIONS */}
-      <section className="py-20 bg-white border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-12 space-y-3">
-                <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-                  Previous Year <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Questions</span>
-                </h2>
-                <div className="w-16 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
-                <p className="text-slate-500 font-medium pt-2">Access our extensive archive of past board questions.</p>
+      {/* 4. REDESIGNED: PREVIOUS YEAR QUESTIONS */}
+      <section className="py-24 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-100/40 skew-x-12 translate-x-1/2 -z-0"></div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-16">
+                <div className="inline-block px-4 py-1.5 bg-blue-600 text-white text-[10px] font-bold uppercase rounded-full mb-4">The Archive</div>
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Previous Year <span className="text-blue-600">Questions</span></h2>
+                <p className="text-slate-500 max-w-2xl mx-auto">Instant access to over 10 years of board and competitive exam papers with verified solutions.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {segments.map((seg: any) => (
                     <Link 
                         href={`/resources/${seg.slug}?type=question`} 
                         key={seg.id}
-                        className="
-                           group relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950
-                           rounded-2xl p-5 border border-slate-700/50 shadow-lg
-                           hover:shadow-xl hover:shadow-blue-500/10 
-                           transition-all duration-300 hover:-translate-y-1 flex flex-col
-                        "
+                        className="group flex items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300"
                     >
-                        <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
-
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                                <FileClock className="w-5 h-5" />
-                            </div>
-                            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-700">
-                                Archive
-                            </span>
+                        <div className="w-16 h-16 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
+                            <FileClock className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
                         </div>
-                        
-                        <h4 className="font-bold text-lg text-white mb-1 group-hover:text-blue-300 transition-colors">
-                            {seg.title}
-                        </h4>
-                        
-                        <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
-                            {getQuestionText(seg.slug)}
-                        </p>
-
-                        <div className="mt-auto pt-3 border-t border-white/5 flex items-center gap-2 text-xs font-bold text-blue-400 group-hover:text-blue-300 transition-colors uppercase tracking-wide">
-                            <span>View Questions</span>
-                            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                        <div className="ml-5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">{seg.title}</h4>
+                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">NEW</span>
+                            </div>
+                            <p className="text-sm text-slate-500 line-clamp-1 mb-2">{getQuestionText(seg.slug)}</p>
+                            <div className="flex items-center gap-4">
+                                <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400"><Users className="w-3 h-3" /> 12k+ Solved</span>
+                                <span className="flex items-center gap-1 text-[11px] font-bold text-blue-600">Practice Now <ChevronRight className="w-3 h-3" /></span>
+                            </div>
                         </div>
                     </Link>
                 ))}
@@ -246,118 +238,95 @@ export default async function HomePage() {
                 <HomeMaterialsFilter segments={segments} resources={resources} />
             </div>
 
-            {/* RIGHT COLUMN: SIDEBAR */}
-            <div className="lg:col-span-4 space-y-6">
+            {/* REDESIGNED RIGHT COLUMN: SIDEBAR */}
+            <div className="lg:col-span-4 space-y-8">
                 
-                {/* 1. SOCIAL WIDGETS */}
-                <div className="space-y-4">
-                    <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" rel="noopener noreferrer" 
-                       className="flex items-center gap-4 bg-[#1877F2] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            <Facebook className="w-6 h-6 fill-current" />
+                {/* 1. TUTOR PROMO: THE "TRUST" DESIGN */}
+                <div className="relative group p-[1px] rounded-[2.5rem] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-2xl overflow-hidden">
+                    <div className="bg-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden h-full">
+                        <div className="absolute -right-4 -top-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <Users className="w-32 h-32 text-white" />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold leading-tight">Join Community</span>
-                            <span className="text-xs font-medium opacity-90">Facebook Page</span>
-                        </div>
-                    </a>
-
-                    <a href="https://youtube.com/@nextprepbd" target="_blank" rel="noopener noreferrer" 
-                       className="flex items-center gap-4 bg-[#FF0000] text-white p-4 rounded-2xl shadow-lg hover:brightness-110 hover:-translate-y-1 transition-all group w-full">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                            <Youtube className="w-6 h-6" fill="currentColor" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold leading-tight">Watch Classes</span>
-                            <span className="text-xs font-medium opacity-90">YouTube Channel</span>
-                        </div>
-                    </a>
-                </div>
-
-                {/* 2. REFINED "FIND TUTOR" PROMO (NEW & ROBUST) */}
-                <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl group cursor-pointer">
-                    {/* Background Graphic */}
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/30 rounded-full blur-3xl group-hover:bg-indigo-500/50 transition-all duration-700"></div>
-                    <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                    
-                    <div className="relative z-20 p-6 flex flex-col h-full min-h-[220px]">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 rounded-lg p-2">
-                                <UserCheck className="w-6 h-6" />
+                        <div className="relative z-10">
+                            <div className="flex gap-2 mb-6">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center -ml-3 first:ml-0 overflow-hidden">
+                                        <Image src={`https://i.pravatar.cc/100?img=${i+10}`} alt="tutor" width={40} height={40} />
+                                    </div>
+                                ))}
+                                <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-indigo-600 flex items-center justify-center -ml-3 text-[10px] font-bold text-white">+50</div>
                             </div>
-                            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-indigo-600/20">
-                                <Star className="w-3 h-3 fill-current" /> Verified Tutors
-                            </span>
-                        </div>
-
-                        <div className="mt-auto">
-                            <h3 className="text-2xl font-black tracking-tight mb-2 leading-tight">
-                                Find Your <br/><span className="text-indigo-400">Perfect Mentor</span>
-                            </h3>
-                            <p className="text-sm text-slate-300 font-medium mb-5 line-clamp-2">
-                                Connect with expert tutors for 1-on-1 guidance in Math, Physics & more.
-                            </p>
-                            
+                            <h3 className="text-3xl font-black text-white leading-tight mb-4">Learn from the <span className="text-indigo-400">Best Minds.</span></h3>
+                            <p className="text-slate-400 text-sm font-medium mb-8 leading-relaxed">Personalized 1-on-1 coaching for Physics, Math & Admission prep.</p>
                             <Link href="/find-tutor">
-                                <button className="w-full bg-white text-slate-900 py-3 rounded-xl font-bold text-sm hover:bg-indigo-50 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 group-hover:gap-3">
-                                    Browse Tutors <ArrowRight className="w-4 h-4" />
+                                <button className="w-full bg-white hover:bg-indigo-400 hover:text-white text-slate-900 py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
+                                    FIND A TUTOR <ArrowRight className="w-5 h-5" />
                                 </button>
                             </Link>
+                            <p className="text-center text-[10px] text-slate-500 mt-4 font-bold uppercase tracking-widest">Verified & Top Rated Mentors</p>
                         </div>
+                    </div>
+                </div>
+
+                {/* 2. COMMUNITY WIDGET */}
+                <div className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm">
+                    <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> Join Our Community
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-blue-50 border border-blue-100 hover:bg-blue-600 hover:text-white transition-all group">
+                            <Facebook className="w-6 h-6 mb-2 text-blue-600 group-hover:text-white" />
+                            <span className="text-[10px] font-black uppercase">Follow Us</span>
+                        </a>
+                        <a href="https://youtube.com/@nextprepbd" target="_blank" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-red-50 border border-red-100 hover:bg-red-600 hover:text-white transition-all group">
+                            <Youtube className="w-6 h-6 mb-2 text-red-600 group-hover:text-white" />
+                            <span className="text-[10px] font-black uppercase">Watch</span>
+                        </a>
                     </div>
                 </div>
 
                 {/* 3. NOTICE BOARD */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="bg-[#0f172a] text-white px-5 py-4 flex justify-between items-center">
-                        <h3 className="font-bold text-sm flex items-center gap-2"><Bell className="w-4 h-4" /> Notice Board</h3>
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="font-bold text-slate-900 flex items-center gap-2"><Bell className="w-4 h-4 text-blue-600" /> Notices</h3>
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
                     </div>
-                    <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto custom-scrollbar">
-                          {news.map((n: any) => (
-                             <Link href={`/news/${n.id}`} key={n.id} className="block p-4 hover:bg-slate-50 transition group">
-                                 <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded mb-1 inline-block uppercase">{n.category || 'Update'}</span>
-                                 <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">{n.title}</h4>
-                                 <p className="text-[10px] text-slate-400 mt-1.5 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(n.created_at).toLocaleDateString()}</p>
-                             </Link>
-                          ))}
+                    <div className="p-2 max-h-[350px] overflow-y-auto">
+                        {news.map((n: any) => (
+                            <Link href={`/news/${n.id}`} key={n.id} className="block p-4 rounded-2xl hover:bg-slate-50 transition-colors group">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase">{n.category || 'Update'}</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <h4 className="font-bold text-sm text-slate-800 group-hover:text-blue-600 leading-snug">{n.title}</h4>
+                            </Link>
+                        ))}
                     </div>
-                    <Link href="/news" className="block text-center py-3 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 border-t border-slate-100 transition-colors">View All Notices →</Link>
+                    <Link href="/news" className="block text-center py-4 bg-slate-50 text-xs font-bold text-slate-500 hover:text-blue-600 border-t border-slate-100 uppercase tracking-widest">View All Updates</Link>
                 </div>
 
                 {/* 4. POPULAR EBOOKS */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-purple-600" />
-                        <h3 className="font-bold text-slate-900">Popular eBooks</h3>
+                <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="font-bold text-slate-900 flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-600" /> eBook Library</h3>
                     </div>
-                    <div className="p-2">
-                        {ebooks.length > 0 ? (
-                             <div className="space-y-1">
-                                {ebooks.map((book: any) => (
-                                    <Link href={`/ebooks/${book.id}`} key={book.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition group border border-transparent hover:border-slate-100">
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                                                <FileText className="w-4 h-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">
-                                                    {book.title}
-                                                </h4>
-                                                <p className="text-[10px] text-slate-400">{book.author || book.category}</p>
-                                            </div>
-                                        </div>
-                                        <span className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                            <Download className="w-4 h-4" />
-                                        </span>
-                                    </Link>
-                                ))}
-                             </div>
-                        ) : (
-                            <div className="p-4 text-center text-slate-400 text-xs font-medium">No eBooks available.</div>
-                        )}
+                    <div className="p-3">
+                        {ebooks.map((book: any) => (
+                            <Link href={`/ebooks/${book.id}`} key={book.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition group border border-transparent hover:border-slate-100">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">{book.title}</h4>
+                                        <p className="text-[10px] text-slate-400">{book.category}</p>
+                                    </div>
+                                </div>
+                                <span className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Download className="w-4 h-4" /></span>
+                            </Link>
+                        ))}
                     </div>
-                    <Link href="/ebooks" className="block text-center py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 bg-white border-t border-slate-100 transition-colors">Browse eBook Library →</Link>
+                    <Link href="/ebooks" className="block text-center py-4 bg-purple-50 text-xs font-bold text-purple-600 hover:bg-purple-100 transition-colors uppercase tracking-widest">Browse All eBooks</Link>
                 </div>
 
             </div>
