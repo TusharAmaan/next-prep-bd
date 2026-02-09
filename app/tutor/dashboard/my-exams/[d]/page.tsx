@@ -86,26 +86,35 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
+        const { data: prof } = await supabase.from('profiles')
+            .select('subscription_plan, institute_name, subscription_status')
+            .eq('id', user.id)
+            .single();
         
         if (prof) {
-            // ROBUST PERMISSION CHECK
-            // We convert to lower case and check if it INCLUDES 'pro' or 'trial' to be safe against spaces/casing
-            const plan = (prof.subscription_plan || '').toLowerCase();
-            const hasAccess = plan.includes('pro') || plan.includes('trial');
+            // --- ROBUST ACCESS CHECK (FIXED) ---
+            const plan = (prof.subscription_plan || '').toLowerCase().trim();
+            const status = (prof.subscription_status || '').toLowerCase().trim();
+
+            // Grant access if:
+            // 1. Plan contains 'pro' OR 'trial'
+            // 2. OR Status is 'active' (Approved payment)
+            const hasAccess = plan.includes('pro') || plan.includes('trial') || status === 'active';
             
             setIsPro(hasAccess);
             
-            // Set Institute Name logic (only override default if we aren't editing an existing paper)
+            // Set Institute Name (Only override default if user has one AND we aren't editing)
             if(prof.institute_name && !isEditMode) {
                  setInstituteName(prof.institute_name);
             }
         }
       }
       
+      // Load Metadata
       const { data: segs } = await supabase.from('segments').select('id, title');
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
+      // Load Exam Data (Edit Mode)
       if (isEditMode) {
           const { data: exam } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
           if (exam) {
@@ -200,14 +209,13 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ADVANCED PRINTING ENGINE (FIXED) ---
+  // --- 4. ADVANCED PRINTING ENGINE ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
     const isLandscape = printFormat === 'landscape';
 
-    // --- FIX: DEFINING HEADER HTML HERE ---
     const headerHtml = `
       <div class="header-block">
           <h1>${instituteName}</h1>
@@ -221,7 +229,6 @@ function BuilderContent() {
       </div>
     `;
 
-    // Generate Question HTML
     const questionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
           ? `<div class="options-grid">
@@ -248,7 +255,6 @@ function BuilderContent() {
       
       @page {
           size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
-          /* OPTIMIZED MARGINS: 8mm bottom to reduce waste */
           margin: 10mm 10mm 8mm 10mm;
       }
       
@@ -259,17 +265,15 @@ function BuilderContent() {
           -webkit-print-color-adjust: exact;
       }
 
-      /* --- LAYOUT LOGIC --- */
       .content-wrapper {
           ${isLandscape ? 'column-count: 2; column-gap: 30px;' : ''}
           width: 100%;
       }
 
-      /* --- HEADER STYLES --- */
       .header-block {
           text-align: center;
           margin-bottom: 15px;
-          break-inside: avoid; 
+          break-inside: avoid;
       }
       h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
       h2 { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
@@ -288,23 +292,20 @@ function BuilderContent() {
       }
       .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
 
-      /* --- QUESTION BLOCK STYLES --- */
       .question-block {
           margin-bottom: 12px;
           display: block; 
           position: relative;
-          padding-left: 25px; /* Indent for Q Number */
-          break-inside: auto; /* Allow breaking naturally */
+          padding-left: 25px;
+          break-inside: auto; 
       }
 
-      /* Marks Floated Right */
       .q-marks {
           float: right;
           font-family: 'Inter', sans-serif; 
           font-weight: 700; 
           font-size: 13px; 
           margin-left: 8px;
-          background: #fff;
           padding-left: 5px;
       }
 
@@ -316,7 +317,7 @@ function BuilderContent() {
       .q-text { 
           font-size: 13px; 
           line-height: 1.5; 
-          text-align: justify; /* Justify Text */
+          text-align: justify;
           text-justify: inter-word;
       }
       .q-text p { margin: 0; display: inline; }
@@ -447,9 +448,8 @@ function BuilderContent() {
       {/* --- MAIN WORKSPACE --- */}
       <div className="flex flex-1 overflow-hidden">
           
-          {/* SIDEBAR: FILTERS & QUESTIONS */}
+          {/* SIDEBAR */}
           <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
-              {/* Robust Filters always visible */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
@@ -497,11 +497,12 @@ function BuilderContent() {
               </div>
           </div>
 
-          {/* CENTER: PAPER CANVAS */}
-          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 md:p-6 flex justify-center relative">
-              <div className="bg-white shadow-xl w-full max-w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
+          {/* CENTER: PAPER CANVAS - WIDER VIEW */}
+          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-2 md:p-4 flex justify-center relative">
+              {/* WIDTH INCREASED: max-w-7xl for a comfortable editing experience */}
+              <div className="bg-white shadow-xl w-full max-w-7xl min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* HEADER (Editable) */}
+                  {/* HEADER */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
                       <input 
                         className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 

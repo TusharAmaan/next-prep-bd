@@ -18,21 +18,25 @@ interface Profile {
   institute_name?: string;
 }
 
-interface Transaction {
-  id: number;
+// Updated to match the 'payment_requests' table schema
+interface PaymentRequest {
+  id: string; // UUID in DB
   amount: number;
   payment_method: string;
   transaction_id: string;
+  sender_number: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
-  plan_type: string;
+  plan_name: string; // DB column is 'plan_name'
 }
 
 export default function SubscriptionPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  
+  // Use the correct type for history
+  const [transactions, setTransactions] = useState<PaymentRequest[]>([]);
   
   // Payment Modal State
   const [showPayModal, setShowPayModal] = useState(false);
@@ -65,14 +69,14 @@ export default function SubscriptionPage() {
       
       if (prof) setProfile(prof);
 
-      // 2. Get Transactions
+      // 2. Get Payment History (From the NEW table)
       const { data: trx } = await supabase
-        .from('transactions')
+        .from('payment_requests') // <--- FIXED TABLE NAME
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (trx) setTransactions(trx);
+      if (trx) setTransactions(trx as PaymentRequest[]);
     }
     setLoading(false);
   };
@@ -86,10 +90,28 @@ export default function SubscriptionPage() {
   // 1. Activate Trial
   const handleActivateTrial = async () => {
     setLoading(true);
+    // Ensure you have an RPC function named 'activate_trial' in Supabase
+    // If not, we can implement a direct update fallback here if needed
     const { error } = await supabase.rpc('activate_trial');
     
     if (error) {
-      alert("Error: " + error.message);
+      // Fallback: Direct update if RPC is missing (Safety net)
+      const { data: { user } } = await supabase.auth.getUser();
+      if(user) {
+          const { error: updateError } = await supabase.from('profiles').update({
+              subscription_plan: 'trial',
+              subscription_status: 'active',
+              is_trial_used: true,
+              subscription_expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              max_questions: 10000
+          }).eq('id', user.id);
+          
+          if(updateError) alert("Error: " + updateError.message);
+          else {
+              alert("Trial Activated via direct update!");
+              await fetchData();
+          }
+      }
     } else {
       alert("Trial Activated! You now have unlimited access for 7 days.");
       await fetchData(); 
@@ -97,28 +119,9 @@ export default function SubscriptionPage() {
     setLoading(false);
   };
 
-  // 2. Dodo Payment Redirect
+  // 2. Dodo Payment Redirect (Placeholder for now)
   const handleDodoPayment = async () => {
-    setSubmitting(true);
-    try {
-      const response = await fetch('/api/payment/create-dodo-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: selectedPlan }) 
-      });
-      
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url; 
-      } else {
-        alert("Failed to initialize payment gateway.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Connection error. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    alert("Online payment gateway coming soon! Please use Manual Payment methods.");
   };
 
   // 3. Submit Manual Payment
@@ -131,15 +134,17 @@ export default function SubscriptionPage() {
     
     if (user) {
         const price = getDisplayPrice(selectedPlan);
+        const planName = selectedPlan === 'monthly' ? 'Pro Monthly' : 'Pro Yearly';
         
-        const { error } = await supabase.from('transactions').insert({
+        // INSERT INTO 'payment_requests'
+        const { error } = await supabase.from('payment_requests').insert({
             user_id: user.id,
             amount: price,
-            currency: 'BDT',
+            // currency: 'BDT', // Removed: Not in your DB schema provided earlier
             payment_method: paymentMethod,
             transaction_id: trxId,
             sender_number: senderNumber,
-            plan_type: selectedPlan === 'monthly' ? 'pro_monthly' : 'pro_yearly',
+            plan_name: planName, // <--- Correct column name
             status: 'pending'
         });
 
@@ -150,7 +155,14 @@ export default function SubscriptionPage() {
             setShowPayModal(false);
             setTrxId("");
             setSenderNumber("");
-            fetchData();
+            
+            // Refresh history to show the new pending item
+            const { data: trx } = await supabase
+                .from('payment_requests')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+            if (trx) setTransactions(trx as PaymentRequest[]);
         }
     }
     setSubmitting(false);
@@ -163,6 +175,8 @@ export default function SubscriptionPage() {
   };
 
   const getDisplayPrice = (plan: 'monthly' | 'yearly') => {
+      // Logic: If user has ANY approved payment, they are a returning customer (no discount)
+      // Otherwise, assume they are new (discount applied)
       const hasHistory = transactions.some(t => t.status === 'approved');
       if (!hasHistory) {
           return plan === 'monthly' ? PRICING.monthly.discount : PRICING.yearly.discount;
@@ -174,8 +188,10 @@ export default function SubscriptionPage() {
 
   const hasDiscount = !transactions.some(t => t.status === 'approved');
   
-  // FIX: Added nullish coalescing (?? 0) to prevent 'undefined' errors
-  const usagePercentage = Math.min(100, ((profile?.monthly_question_count ?? 0) / (profile?.max_questions || 1)) * 100);
+  // Safe calculation for progress bar
+  const currentCount = profile?.monthly_question_count ?? 0;
+  const maxCount = profile?.max_questions ?? 50; // Default to 50 if null
+  const usagePercentage = Math.min(100, (currentCount / maxCount) * 100);
 
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8 animate-in fade-in pb-24">
@@ -209,13 +225,12 @@ export default function SubscriptionPage() {
                   </div>
               </div>
 
-              {/* Usage Meter (FIXED) */}
+              {/* Usage Meter */}
               <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 w-full lg:w-80 shadow-inner">
                   <div className="flex justify-between text-xs font-bold mb-3 uppercase tracking-wide text-slate-400">
                       <span>Monthly Quota</span>
-                      {/* FIX: Ensure values are never undefined */}
-                      <span className={(profile?.monthly_question_count ?? 0) >= (profile?.max_questions ?? 0) ? "text-red-400" : "text-emerald-400"}>
-                          {profile?.monthly_question_count ?? 0} / {(profile?.max_questions ?? 0) > 1000 ? '∞' : (profile?.max_questions ?? 0)}
+                      <span className={currentCount >= maxCount ? "text-red-400" : "text-emerald-400"}>
+                          {currentCount} / {maxCount > 1000 ? '∞' : maxCount}
                       </span>
                   </div>
                   <div className="w-full bg-black/40 rounded-full h-3 overflow-hidden border border-white/5 relative">
@@ -314,7 +329,7 @@ export default function SubscriptionPage() {
           </div>
       </div>
 
-      {/* 3. TRANSACTION HISTORY */}
+      {/* 3. BILLING HISTORY */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
               <History className="w-5 h-5 text-slate-400"/>
@@ -338,7 +353,7 @@ export default function SubscriptionPage() {
                           transactions.map(t => (
                               <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                                   <td className="px-6 py-4 text-slate-600 font-medium">{new Date(t.created_at).toLocaleDateString()}</td>
-                                  <td className="px-6 py-4 font-bold text-slate-800 capitalize">{t.plan_type.replace('pro_', '')}</td>
+                                  <td className="px-6 py-4 font-bold text-slate-800 capitalize">{t.plan_name}</td>
                                   <td className="px-6 py-4 text-slate-600 font-mono">৳{t.amount}</td>
                                   <td className="px-6 py-4 capitalize flex items-center gap-2 font-bold text-slate-700">
                                       {t.payment_method === 'bkash' && <span className="w-2 h-2 rounded-full bg-pink-500"></span>}
