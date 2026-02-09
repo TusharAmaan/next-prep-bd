@@ -86,14 +86,14 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name, subscription_status').eq('id', user.id).single();
+        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
         
         if (prof) {
-            // ROBUST PERMISSION CHECK
-            const plan = (prof.subscription_plan || '').toLowerCase().trim();
-            const status = (prof.subscription_status || '').toLowerCase().trim();
+            console.log("Profile Data:", prof); // Debugging
 
-            // Allow if Plan is 'pro' OR 'trial'
+            const plan = (prof.subscription_plan || '').toLowerCase().trim();
+            
+            // SIMPLIFIED CHECK: If plan is 'pro' or 'trial', grant access.
             const hasAccess = (plan === 'pro' || plan === 'trial');
             
             setIsPro(hasAccess);
@@ -202,28 +202,12 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ROBUST PRINTING ENGINE (WORD-LIKE LAYOUT) ---
+  // --- 4. ADVANCED PRINTING ENGINE (REFINED LAYOUT) ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const isLandscape = printFormat === 'landscape';
-
-    // -- HEADER COMPONENT --
-    const headerHtml = `
-      <div class="header-block">
-          <h1>${instituteName}</h1>
-          <h2>${paperTitle}</h2>
-          <div class="meta-bar">
-              <span>Time: ${duration} Mins</span>
-              <span>Total Marks: ${totalMarks}</span>
-          </div>
-          ${showInstructions ? `<div class="instructions">${instructions}</div>` : ''}
-          <div class="separator"></div>
-      </div>
-    `;
-
-    // -- QUESTIONS LOOP --
+    // Generate Question HTML
     const questionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
           ? `<div class="options-grid">
@@ -233,26 +217,33 @@ function BuilderContent() {
              </div>` 
           : '';
         
+        // Structure: Mark FIRST (floated right), then Number, then Text
+        // This ensures text wraps AROUND the mark instead of overlapping it.
         return `
             <div class="question-block">
-                <div class="q-meta">
-                    <span class="q-num">${idx + 1}.</span>
-                    <span class="q-marks">[${q.marks}]</span>
-                </div>
-                <div class="q-body">
-                    <div class="q-text">${q.question_text}</div>
+                <div class="q-marks">[${q.marks}]</div>
+                <div class="q-num">${idx + 1}.</div>
+                <div class="q-text">
+                    ${q.question_text}
                     ${optionsHtml}
                 </div>
             </div>
         `;
     }).join('');
 
+    const instructionsHtml = showInstructions 
+        ? `<div class="instructions">${instructions}</div>` 
+        : '';
+
+    const isLandscape = printFormat === 'landscape';
+    
     const cssStyles = `
       @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
       
       @page {
           size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
-          margin: 10mm; /* Narrow margins for better fit */
+          /* TIGHTER MARGINS: 10mm sides, 8mm bottom to save paper */
+          margin: 10mm 10mm 8mm 10mm;
       }
       
       body { 
@@ -263,18 +254,17 @@ function BuilderContent() {
       }
 
       /* --- LAYOUT LOGIC --- */
-      /* This wrapper handles the columns. */
       .content-wrapper {
-          ${isLandscape ? 'column-count: 2; column-gap: 25px;' : ''}
+          ${isLandscape ? 'column-count: 2; column-gap: 30px;' : ''}
           width: 100%;
       }
 
       /* --- HEADER STYLES --- */
       .header-block {
           text-align: center;
-          margin-bottom: 15px;
-          break-inside: avoid; /* Keep header intact */
-          /* In Landscape, this stays in Column 1 naturally */
+          margin-bottom: 10px;
+          break-inside: avoid; 
+          /* In Landscape, this becomes the top of Col 1 */
       }
       h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
       h2 { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
@@ -287,53 +277,53 @@ function BuilderContent() {
       }
 
       .instructions { 
-          font-size: 12px; font-style: italic; margin-bottom: 10px; 
+          font-size: 12px; font-style: italic; margin-bottom: 15px; 
           text-align: left; background: #f9f9f9; padding: 5px;
           line-height: 1.3;
       }
       .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
 
-      /* --- QUESTION STYLES --- */
+      /* --- QUESTION BLOCK STYLES --- */
       .question-block {
-          margin-bottom: 12px;
+          margin-bottom: 10px;
           display: block;
-          /* allow breaking to prevent gaps, similar to Word */
-          break-inside: auto; 
           position: relative;
-          padding-left: 25px; /* Space for number */
+          padding-left: 25px; /* Indent for Q Number */
+          /* break-inside: auto (default) allows splitting across columns to save space */
       }
 
-      .q-meta {
-          position: absolute;
-          left: 0; top: 0; width: 100%;
-          height: 0; /* Ghost height to not affect flow */
+      /* FLOAT THE MARK RIGHT so text wraps around it safely */
+      .q-marks {
+          float: right;
+          font-family: 'Inter', sans-serif; 
+          font-weight: 700; 
+          font-size: 13px; 
+          margin-left: 8px; /* Buffer between text and mark */
+          background: #fff; /* Ensure it covers lines if needed */
+          padding-left: 5px;
       }
+
       .q-num {
           position: absolute; left: 0; top: 0;
           font-weight: bold; font-size: 13px; font-family: 'Inter', sans-serif;
-      }
-      .q-marks {
-          float: right;
-          font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; 
-      }
-
-      .q-body {
-          /* Content Flow */
       }
 
       .q-text { 
           font-size: 13px; 
           line-height: 1.5; 
-          text-align: justify; /* Justified text */
+          text-align: justify; /* JUSTIFIED TEXT */
           text-justify: inter-word;
       }
+      
+      /* Ensure paragraphs inside editor content are inline or clean */
       .q-text p { margin: 0; display: inline; }
-
+      
       .options-grid { 
           display: grid; 
           grid-template-columns: 1fr 1fr; 
           gap: 4px; 
           margin-top: 5px; 
+          clear: both; /* Clear marks if options are below */
       }
       .option { font-size: 12px; }
 
@@ -342,11 +332,11 @@ function BuilderContent() {
           text-align: center;
           font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888;
           break-inside: avoid;
+          border-top: 1px solid #eee;
+          padding-top: 5px;
       }
     `;
 
-    // Construct Body: Wrapper contains Header -> Questions -> Footer
-    // This forces Header to be Item 1 in Column 1 in Landscape mode.
     printWindow.document.write(`
       <html>
         <head>
@@ -463,7 +453,6 @@ function BuilderContent() {
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
-                  {/* Filter Grid */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -480,7 +469,6 @@ function BuilderContent() {
                   </div>
               </div>
 
-              {/* Question List */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-100/50">
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
