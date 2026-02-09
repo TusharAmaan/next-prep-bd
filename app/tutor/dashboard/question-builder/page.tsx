@@ -9,7 +9,7 @@ import {
   Layout, Columns, Filter, Copy
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-import { useRouter } from "next/navigation"; // Removed useParams as this is the Create page
+import { useRouter } from "next/navigation"; 
 import Link from "next/link";
 
 // --- TYPES ---
@@ -27,7 +27,6 @@ interface MetaItem {
   id: string | number;
   title: string;
 }
-// Test
 
 type PrintFormat = 'portrait' | 'landscape';
 
@@ -40,9 +39,6 @@ function BuilderContent() {
   const [initialLoading, setInitialLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  // Access Control
-  const [isPro, setIsPro] = useState(false);
-
   // Paper State
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [paperTitle, setPaperTitle] = useState("Monthly Assessment");
@@ -84,30 +80,18 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Fetch Profile for Permissions & Defaults
         const { data: prof } = await supabase.from('profiles')
-            .select('subscription_plan, institute_name, subscription_status')
+            .select('institute_name')
             .eq('id', user.id)
             .single();
         
-        if (prof) {
-            console.log("User Profile:", prof); 
-
-            const plan = (prof.subscription_plan || '').toLowerCase().trim();
-            const status = (prof.subscription_status || '').toLowerCase().trim();
-
-            // FIXED: Robust Access Check
-            const hasAccess = (status === 'active') || plan.includes('pro') || plan.includes('trial');
-            setIsPro(hasAccess);
-            
-            // Prepopulate Institute Name if available
-            if(prof.institute_name) {
-                 setInstituteName(prof.institute_name);
-            }
+        // Auto-set Institute Name if user has one saved, otherwise default
+        if (prof?.institute_name) {
+             setInstituteName(prof.institute_name);
         }
       }
       
-      // Load Segments
+      // Load Segments for Filter
       const { data: segs } = await supabase.from('segments').select('id, title');
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
@@ -191,7 +175,7 @@ function BuilderContent() {
 
     const isLandscape = printFormat === 'landscape';
 
-    // -- CONTENT COMPONENTS --
+    // -- EXAM CONTENT --
     const examHeaderHtml = `
       <div class="exam-header">
           <h1 class="institute-title">${instituteName}</h1>
@@ -228,7 +212,7 @@ function BuilderContent() {
 
     const examFooterHtml = `<div class="footer">${footerText}</div>`;
 
-    // Wrap Single Instance
+    // Single Instance of the Exam
     const singleExamInstance = `
         <div class="exam-instance">
             ${examHeaderHtml}
@@ -237,7 +221,8 @@ function BuilderContent() {
         </div>
     `;
 
-    // Handle Duplication logic
+    // --- DUPLICATION LOGIC ---
+    // If Duplication Enabled (Landscape only), render twice separated by a forced column break
     const finalBodyHtml = (isDuplicate && isLandscape)
         ? `${singleExamInstance} <div class="column-break"></div> ${singleExamInstance}`
         : singleExamInstance;
@@ -257,23 +242,26 @@ function BuilderContent() {
           -webkit-print-color-adjust: exact;
       }
 
+      /* LAYOUT CONTROLLER */
       .content-wrapper {
           ${isLandscape ? 'column-count: 2; column-gap: 40px;' : ''}
+          /* CRITICAL: Fill left column first! Prevents splitting small exams. */
           column-fill: auto; 
           width: 100%;
           min-height: 95vh;
       }
 
+      /* Forced Break for Duplication */
       .column-break {
           break-after: column;
           height: 1px;
-          width: 100%;
           margin-bottom: 20px; 
           visibility: hidden;
       }
 
       .exam-instance { break-inside: auto; margin-bottom: 30px; }
 
+      /* HEADER */
       .exam-header { text-align: center; margin-bottom: 15px; break-inside: avoid; }
       .institute-title { margin: 0; font-size: 20px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; line-height: 1.2; }
       .exam-title { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
@@ -291,6 +279,7 @@ function BuilderContent() {
       }
       .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
 
+      /* QUESTIONS */
       .question-block {
           margin-bottom: 12px;
           display: block; 
@@ -448,6 +437,7 @@ function BuilderContent() {
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
+                  {/* FULL FILTER GRID */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -495,21 +485,20 @@ function BuilderContent() {
           <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 flex justify-center relative">
               <div className="bg-white shadow-xl w-full max-w-7xl min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* HEADER (Editable & Unlocked) */}
+                  {/* HEADER (Fully Unlocked & Editable) */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
                       <input 
-                        className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
+                        className="w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight text-slate-900 focus:text-indigo-900"
                         value={instituteName} 
-                        onChange={e => isPro && setInstituteName(e.target.value)} 
-                        disabled={!isPro} 
-                        placeholder="INSTITUTE NAME"
+                        onChange={e => setInstituteName(e.target.value)} 
+                        placeholder="YOUR INSTITUTE NAME"
                       />
                       
                       <input 
                         className="w-full text-center text-lg font-medium mb-4 outline-none bg-transparent text-slate-700 focus:text-indigo-700" 
                         value={paperTitle} 
                         onChange={e => setPaperTitle(e.target.value)} 
-                        placeholder="Subject / Exam Title"
+                        placeholder="Exam Name / Subject"
                       />
 
                       <div className="flex justify-between items-center font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
@@ -531,8 +520,6 @@ function BuilderContent() {
                               <span className="font-black text-indigo-700 text-lg">{totalMarks}</span>
                           </div>
                       </div>
-                      
-                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">LOCKED</span>}
                   </div>
 
                   {/* INSTRUCTIONS */}

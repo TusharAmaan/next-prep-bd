@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Plus, Trash2, Save, CheckCircle, 
   ChevronDown, ChevronRight, FileText, 
   HelpCircle, BookOpen, AlertCircle,
   Search, Filter, X, ChevronLeft, Edit3,
-  MoreHorizontal, LayoutGrid, List as ListIcon,
-  Tag, Layers, Hash
+  List as ListIcon, Tag, LayoutGrid
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 
@@ -35,7 +34,7 @@ interface Question {
   subject_id?: number;
 }
 
-// --- CUSTOM MODAL COMPONENT ---
+// --- CUSTOM MODAL COMPONENT (Professional In-App Popup) ---
 function CustomModal({ isOpen, type, message, onConfirm, onCancel }: { 
   isOpen: boolean; 
   type: 'success' | 'error' | 'confirm'; 
@@ -46,36 +45,32 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
-        <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-          type === 'success' ? 'bg-green-100 text-green-600' : 
+    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-white/20">
+        <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
+          type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
           type === 'error' ? 'bg-red-100 text-red-600' : 
-          'bg-amber-100 text-amber-600'
+          'bg-indigo-100 text-indigo-600'
         }`}>
-          {type === 'success' && <CheckCircle size={24} />}
-          {type === 'error' && <AlertCircle size={24} />}
-          {type === 'confirm' && <HelpCircle size={24} />}
+          {type === 'success' && <CheckCircle size={28} />}
+          {type === 'error' && <AlertCircle size={28} />}
+          {type === 'confirm' && <HelpCircle size={28} />}
         </div>
         
-        <h3 className={`text-lg font-bold mb-2 ${
-          type === 'success' ? 'text-green-700' : 
-          type === 'error' ? 'text-red-700' : 
-          'text-slate-800'
-        }`}>
-          {type === 'success' ? 'Success!' : type === 'error' ? 'Error' : 'Confirm Action'}
+        <h3 className="text-xl font-bold text-slate-800 mb-2">
+          {type === 'success' ? 'Success!' : type === 'error' ? 'Action Failed' : 'Are you sure?'}
         </h3>
         
-        <p className="text-slate-600 mb-6 text-sm">{message}</p>
+        <p className="text-slate-600 mb-8 text-sm leading-relaxed">{message}</p>
         
         <div className="flex gap-3 justify-center">
           {type === 'confirm' ? (
             <>
-              <button onClick={onCancel} className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-slate-50 text-sm">Cancel</button>
-              <button onClick={onConfirm} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 text-sm">Confirm</button>
+              <button onClick={onCancel} className="px-5 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 text-sm transition-colors">Cancel</button>
+              <button onClick={onConfirm} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 text-sm shadow-lg shadow-indigo-200 transition-all">Confirm</button>
             </>
           ) : (
-            <button onClick={onCancel} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 text-sm">Okay</button>
+            <button onClick={onCancel} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-black text-sm shadow-lg transition-all">Okay</button>
           )}
         </div>
       </div>
@@ -90,11 +85,11 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
 
     return (
         <div className="relative">
-            <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+            <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
                 <div className="pl-3 text-slate-400"><Tag size={16}/></div>
                 <input 
                     className="w-full p-2.5 text-sm outline-none font-medium text-slate-700 placeholder:text-slate-400"
-                    placeholder="e.g. Algebra, Newton's Laws..."
+                    placeholder="e.g. Algebra..."
                     value={value}
                     onChange={e => { onChange(e.target.value); setIsOpen(true); }}
                     onFocus={() => setIsOpen(true)}
@@ -104,11 +99,7 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
             {isOpen && filtered.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
                     {filtered.map(tag => (
-                        <button 
-                            key={tag} 
-                            onClick={() => onChange(tag)}
-                            className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-                        >
+                        <button key={tag} onClick={() => onChange(tag)} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                             {tag}
                         </button>
                     ))}
@@ -118,13 +109,111 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
     );
 };
 
+// --- MEMOIZED QUESTION FORM (Prevents Cursor Jumping) ---
+const QuestionFormInternal = memo(({ 
+    isSub, type, content, setContent, marks, setMarks, 
+    options, setOptions, explanation, setExplanation, 
+    topicTag, setTopicTag, uniqueTags, setType 
+}: any) => {
+    
+    return (
+        <div className={`space-y-6 ${isSub ? 'bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm' : ''}`}>
+            
+            {/* TYPE & TOPIC HEADER */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+               <div className="flex bg-slate-100 p-1 rounded-xl">
+                   {/* If it's a sub-question, we don't show 'Passage' as an option */}
+                   {!isSub && (
+                       <button onClick={() => setType('passage')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500 hover:text-slate-700'}`}>Passage</button>
+                   )}
+                   <button onClick={() => setType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
+                   <button onClick={() => setType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
+               </div>
+               
+               {!isSub && (
+                   <div className="w-full sm:w-64">
+                       <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
+                   </div>
+               )}
+            </div>
+
+            {/* EDITOR */}
+            <div className="space-y-2">
+               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
+                   {type === 'passage' && !isSub ? 'Passage / Stem Content' : 'Question Text'}
+               </label>
+               {/* KEY PROP IS CRITICAL HERE: It must be unique per mode but stable during typing */}
+               <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow overflow-hidden"> 
+                   <RichTextEditor 
+                        key={isSub ? "sub-editor" : "main-editor"} 
+                        initialValue={content} 
+                        onChange={setContent} 
+                   />
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {(type !== 'passage' || isSub) && (
+                   <div>
+                       <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
+                       <input 
+                         type="number" 
+                         value={marks} 
+                         onChange={e => setMarks(Number(e.target.value))} 
+                         className="w-full border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" 
+                       />
+                   </div>
+               )}
+            </div>
+
+            {/* MCQ OPTIONS */}
+            {type === 'mcq' && (
+               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                   <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
+                   <div className="grid grid-cols-1 gap-3">
+                       {options.map((opt: any, i: number) => (
+                          <div key={i} className="flex gap-3 items-center bg-white p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
+                             <button onClick={() => {
+                                 const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts);
+                               }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-300 hover:border-slate-300'}`}>
+                                <CheckCircle size={18} />
+                             </button>
+                             <input 
+                                value={opt.option_text} 
+                                onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} 
+                                className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" 
+                                placeholder={`Option ${i+1}`} 
+                             />
+                             <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                          </div>
+                       ))}
+                   </div>
+                   <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
+               </div>
+            )}
+
+            {/* EXPLANATION */}
+            {(type !== 'passage' || isSub) && (
+               <div className="space-y-2">
+                   <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
+                   <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
+                      <RichTextEditor initialValue={explanation} onChange={setExplanation} />
+                   </div>
+               </div>
+            )}
+        </div>
+    );
+});
+QuestionFormInternal.displayName = "QuestionFormInternal";
+
+
 export default function QuestionBankManager() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'list' | 'create'>('list');
   const [questions, setQuestions] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // For filter sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // --- MODAL STATE ---
   const [modalState, setModalState] = useState<{
@@ -139,26 +228,24 @@ export default function QuestionBankManager() {
   };
   const closeModal = () => setModalState({ ...modalState, isOpen: false });
 
-  // --- FILTER & PAGINATION STATE ---
+  // --- FILTERS ---
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSegment, setFilterSegment] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
-  const [filterTopic, setFilterTopic] = useState(""); // Powerful Topic Filter
-  const [filterType, setFilterType] = useState<string>("all"); // MCQ/Descriptive etc.
+  const [filterTopic, setFilterTopic] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
   
-  const [itemsPerPage, setItemsPerPage] = useState(20); // Default to 20 for density
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
-  // --- DROPDOWN DATA ---
+  // --- DATA ---
   const [segments, setSegments] = useState<any[]>([]);
   const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
   const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
   const [uniqueTags, setUniqueTags] = useState<string[]>([]);
-
-  // Creation Dropdowns
   const [createGroupsList, setCreateGroupsList] = useState<any[]>([]);
   const [createSubjectsList, setCreateSubjectsList] = useState<any[]>([]);
 
@@ -169,7 +256,9 @@ export default function QuestionBankManager() {
   const [topicTag, setTopicTag] = useState('');
   
   const [qType, setQType] = useState<QuestionType>('mcq'); 
-  const [subQType, setSubQType] = useState<QuestionType>('mcq');
+  
+  // FIX 1: Dedicated State for Sub-Questions
+  const [subQType, setSubQType] = useState<QuestionType>('mcq'); 
   
   const [passageText, setPassageText] = useState(''); 
   const [qText, setQText] = useState('');             
@@ -181,7 +270,6 @@ export default function QuestionBankManager() {
     { option_text: '', is_correct: false },
   ]);
 
-  // --- SUB-QUESTION STATE ---
   const [subQuestions, setSubQuestions] = useState<Question[]>([]);
   const [isAddingSub, setIsAddingSub] = useState(false);
 
@@ -205,7 +293,6 @@ export default function QuestionBankManager() {
     if (filterSubject) query = query.eq('subject_id', filterSubject);
     if (filterTopic) query = query.eq('topic_tag', filterTopic);
     if (filterType !== 'all') query = query.eq('question_type', filterType);
-    
     if (searchQuery) query = query.or(`question_text.ilike.%${searchQuery}%,topic_tag.ilike.%${searchQuery}%`);
     
     const from = page * itemsPerPage;
@@ -291,6 +378,7 @@ export default function QuestionBankManager() {
   const handleAddSubQuestion = () => {
     if (!qText) return showModal('error', "Please enter a question.");
     
+    // FIX 2: Use subQType for the new question, don't touch qType
     const newSub: Question = {
       question_text: qText,
       question_type: subQType, 
@@ -300,9 +388,11 @@ export default function QuestionBankManager() {
     };
     
     setSubQuestions([...subQuestions, newSub]);
+    // Reset Form for next sub question
     setQText('');
     setExplanation('');
     setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
+    setSubQType('mcq'); // Reset sub type
     setIsAddingSub(false); 
   };
 
@@ -341,6 +431,7 @@ export default function QuestionBankManager() {
 
         if (qType === 'passage' && parentId && subQuestions.length > 0) {
             if (editingId) {
+                // For simplicity, we delete old children and re-insert (better for ordering)
                 const { data: children } = await supabase.from('question_bank').select('id').eq('parent_id', editingId);
                 const childIds = children?.map(c => c.id) || [];
                 if(childIds.length) await supabase.from('question_bank').delete().in('id', childIds);
@@ -391,101 +482,6 @@ export default function QuestionBankManager() {
     setSubQType('mcq');
   };
 
-  // --- RENDER FORM HELPER (With Rich Text Editor & Auto Height) ---
-  const renderQuestionForm = (isSub: boolean = false) => (
-    <div className={`space-y-6 ${isSub ? 'bg-indigo-50/50 p-6 rounded-xl border border-indigo-100' : ''}`}>
-       
-       {/* 1. TYPE SELECTOR */}
-       <div className="flex justify-between items-center">
-          {(!isSub || view === 'create') && (
-             <div className="flex bg-slate-100 p-1 rounded-lg">
-                {!isSub && (
-                    <button onClick={() => setQType('passage')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500'}`}>Passage</button>
-                )}
-                <button onClick={() => setQType('mcq')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>MCQ</button>
-                <button onClick={() => setQType('descriptive')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${qType === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500'}`}>Descriptive</button>
-             </div>
-          )}
-          
-          {/* Topic Tag in Editor */}
-          {!isSub && (
-              <div className="w-64">
-                  <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
-              </div>
-          )}
-       </div>
-
-       {/* 2. QUESTION EDITOR */}
-       <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
-             {qType === 'passage' && !isSub ? 'Passage Content' : 'Question Content'}
-          </label>
-          <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow"> 
-              {qType === 'passage' && !isSub ? (
-                 <RichTextEditor key="passage-main" initialValue={passageText} onChange={setPassageText} />
-              ) : (
-                 <RichTextEditor key={isSub ? "sub-q-editor" : "main-q-editor"} initialValue={qText} onChange={setQText} />
-              )}
-          </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Marks */}
-          {(qType !== 'passage' || isSub) && (
-              <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
-                  <input 
-                    type="number" 
-                    value={marks} 
-                    onChange={e => setMarks(Number(e.target.value))} 
-                    className="w-full border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" 
-                  />
-              </div>
-          )}
-       </div>
-
-       {/* 3. MCQ OPTIONS */}
-       {qType === 'mcq' && (
-          <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
-             <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
-             <div className="grid grid-cols-1 gap-3">
-                 {options.map((opt, i) => (
-                    <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                       <button onClick={() => {
-                           const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts);
-                         }} className={`p-2 rounded-lg border transition ${opt.is_correct ? 'bg-green-100 border-green-400 text-green-700' : 'bg-slate-50 border-slate-200 text-slate-300'}`}>
-                          <CheckCircle size={18} />
-                       </button>
-                       <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium" placeholder={`Option ${i+1}`} />
-                       <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2"><Trash2 size={16}/></button>
-                    </div>
-                 ))}
-             </div>
-             <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
-          </div>
-       )}
-
-       {/* 4. EXPLANATION */}
-       {(qType !== 'passage' || isSub) && (
-          <div className="space-y-2">
-             <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
-             <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
-                <RichTextEditor initialValue={explanation} onChange={setExplanation} />
-             </div>
-          </div>
-       )}
-
-       {/* 5. SUB-QUESTION ACTIONS */}
-       {isSub && (
-          <div className="flex justify-end gap-2 pt-4 border-t border-indigo-200">
-             <button onClick={() => setIsAddingSub(false)} className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg transition-colors text-xs">Cancel</button>
-             <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all text-xs">Add to Passage</button>
-          </div>
-       )}
-    </div>
-  );
-
-  // --- RENDER COMPONENT ---
   return (
     <div className="flex flex-col h-full">
        <CustomModal isOpen={modalState.isOpen} type={modalState.type} message={modalState.message} onConfirm={modalState.onConfirm} onCancel={closeModal} />
@@ -518,23 +514,34 @@ export default function QuestionBankManager() {
              <div className="bg-slate-50 p-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-slate-100">
                 <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => handleCreateSegmentChange(e.target.value)} value={selSegment}><option value="">Select Segment...</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => handleCreateSegmentChange(e.target.value)} value={selSegment}><option value="">Select Segment...</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                 </div>
                 <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase">Group</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => handleCreateGroupChange(e.target.value)} disabled={!selSegment} value={selGroup}><option value="">Select Group...</option>{createGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => handleCreateGroupChange(e.target.value)} disabled={!selSegment} value={selGroup}><option value="">Select Group...</option>{createGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
                 </div>
                 <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white" onChange={e => setSelSubject(e.target.value)} disabled={!selGroup} value={selSubject}><option value="">Select Subject...</option>{createSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => setSelSubject(e.target.value)} disabled={!selGroup} value={selSubject}><option value="">Select Subject...</option>{createSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                 </div>
              </div>
 
              <div className="p-8 max-w-5xl mx-auto">
                 {/* Main Form */}
-                {!isAddingSub && renderQuestionForm(false)}
+                {!isAddingSub && (
+                    <QuestionFormInternal 
+                        isSub={false}
+                        type={qType} setType={setQType}
+                        content={qType === 'passage' ? passageText : qText}
+                        setContent={qType === 'passage' ? setPassageText : setQText}
+                        marks={marks} setMarks={setMarks}
+                        options={options} setOptions={setOptions}
+                        explanation={explanation} setExplanation={setExplanation}
+                        topicTag={topicTag} setTopicTag={setTopicTag} uniqueTags={uniqueTags}
+                    />
+                )}
 
-                {/* Passage Sub-Questions */}
+                {/* Passage Sub-Questions Section */}
                 {qType === 'passage' && (
                    <div className="mt-8 border-t border-slate-100 pt-8">
                       <div className="flex justify-between items-center mb-6">
@@ -542,7 +549,7 @@ export default function QuestionBankManager() {
                           {!isAddingSub && (
                              <button onClick={() => { 
                                  setIsAddingSub(true); 
-                                 setQType('mcq'); 
+                                 setSubQType('mcq'); // Reset Sub Type
                                  setQText(''); 
                                  setExplanation('');
                                  setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
@@ -558,7 +565,7 @@ export default function QuestionBankManager() {
                                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-xs font-bold text-slate-500">{idx + 1}</span>
                                   <div>
                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${sq.question_type === 'mcq' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{sq.question_type}</span>
-                                     <p className="font-bold text-slate-800 mt-1 line-clamp-1 text-sm" dangerouslySetInnerHTML={{__html: sq.question_text}}></p>
+                                     <div className="font-bold text-slate-800 mt-1 line-clamp-1 text-sm prose prose-sm" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
                                   </div>
                                </div>
                                <button onClick={() => { 
@@ -570,10 +577,27 @@ export default function QuestionBankManager() {
                          ))}
                       </div>
 
+                      {/* SUB QUESTION FORM */}
                       {isAddingSub && (
                          <div className="animate-in fade-in slide-in-from-bottom-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100">
-                            <h4 className="font-bold text-indigo-900 mb-4 px-2">New Sub-Question</h4>
-                            {renderQuestionForm(true)}
+                            <div className="flex justify-between items-center mb-4 px-2">
+                                <h4 className="font-bold text-indigo-900">New Sub-Question</h4>
+                                <button onClick={() => setIsAddingSub(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
+                            </div>
+                            
+                            <QuestionFormInternal 
+                                isSub={true}
+                                type={subQType} setType={setSubQType} // Use SUB Q State
+                                content={qText} setContent={setQText}
+                                marks={marks} setMarks={setMarks}
+                                options={options} setOptions={setOptions}
+                                explanation={explanation} setExplanation={setExplanation}
+                                topicTag={topicTag} setTopicTag={setTopicTag} uniqueTags={uniqueTags}
+                            />
+                            
+                            <div className="flex justify-end pt-4">
+                                <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all text-xs">Add to Passage</button>
+                            </div>
                          </div>
                       )}
                    </div>
@@ -582,7 +606,7 @@ export default function QuestionBankManager() {
              
              <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center sticky bottom-0 z-10">
                 <div className="text-xs text-slate-400 font-medium italic">
-                    {editingId ? `Editing Question ID: ${editingId}` : "Drafting New Question"}
+                   {editingId ? `Editing Question ID: ${editingId}` : "Drafting New Question"}
                 </div>
                 <button onClick={handleSaveToBank} disabled={loading || isAddingSub} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95 text-sm flex items-center gap-2">
                    {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
@@ -592,11 +616,10 @@ export default function QuestionBankManager() {
           </div>
        )}
 
-       {/* LIST VIEW (Data Grid) */}
+       {/* LIST VIEW */}
        {view === 'list' && (
           <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-200px)]">
-             
-             {/* FILTERS SIDEBAR */}
+             {/* Sidebar */}
              {isSidebarOpen && (
                  <div className="w-full md:w-64 flex-shrink-0 bg-white border border-slate-200 rounded-xl shadow-sm p-4 overflow-y-auto space-y-6 animate-in slide-in-from-left-4 h-full">
                      <div>
@@ -616,7 +639,6 @@ export default function QuestionBankManager() {
                             </div>
                         </div>
                      </div>
-
                      <div>
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Attributes</h3>
                         <div className="space-y-3">
@@ -638,35 +660,23 @@ export default function QuestionBankManager() {
                             </div>
                         </div>
                      </div>
-
-                     <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); setFilterType('all'); }} className="w-full py-2 text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-                        Reset Filters
-                     </button>
+                     <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); setFilterType('all'); }} className="w-full py-2 text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Reset Filters</button>
                  </div>
              )}
 
-             {/* MAIN TABLE AREA */}
+             {/* Table */}
              <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-full">
-                 {/* Toolbar */}
                  <div className="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                         <input className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 outline-none bg-white" placeholder="Search question text..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <select 
-                            className="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white outline-none font-medium text-slate-600"
-                            value={itemsPerPage}
-                            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}
-                        >
-                            <option value={20}>20 Rows</option>
-                            <option value={50}>50 Rows</option>
-                            <option value={100}>100 Rows</option>
-                        </select>
-                    </div>
+                    <select className="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white outline-none font-medium text-slate-600" value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}>
+                        <option value={20}>20 Rows</option>
+                        <option value={50}>50 Rows</option>
+                        <option value={100}>100 Rows</option>
+                    </select>
                  </div>
-
-                 {/* Table */}
                  <div className="flex-1 overflow-auto relative">
                      <table className="w-full text-left text-sm border-collapse">
                         <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
@@ -692,29 +702,17 @@ export default function QuestionBankManager() {
                                        <div className="font-medium text-slate-800 line-clamp-2 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
                                     </td>
                                     <td className="px-4 py-3">
-                                       {q.topic_tag ? (
-                                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                               {q.topic_tag}
-                                           </span>
-                                       ) : <span className="text-slate-300 text-xs">-</span>}
+                                       {q.topic_tag ? <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">{q.topic_tag}</span> : <span className="text-slate-300 text-xs">-</span>}
                                     </td>
                                     <td className="px-4 py-3">
-                                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                                           q.question_type === 'passage' ? 'bg-purple-50 text-purple-700 border-purple-100' : 
-                                           q.question_type === 'mcq' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                           'bg-amber-50 text-amber-700 border-amber-100'
-                                       }`}>
-                                           {q.question_type}
-                                       </span>
+                                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${q.question_type === 'passage' ? 'bg-purple-50 text-purple-700 border-purple-100' : q.question_type === 'mcq' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>{q.question_type}</span>
                                     </td>
-                                    <td className="px-4 py-3 text-xs text-slate-500 font-medium truncate max-w-[150px]" title={q.subjects?.title}>
-                                        {q.subjects?.title || '-'}
-                                    </td>
+                                    <td className="px-4 py-3 text-xs text-slate-500 font-medium truncate max-w-[150px]" title={q.subjects?.title}>{q.subjects?.title || '-'}</td>
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(q)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit"><Edit3 size={16}/></button>
-                                            <button onClick={() => handleDelete(q.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete"><Trash2 size={16}/></button>
-                                        </div>
+                                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                           <button onClick={() => handleEdit(q)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit"><Edit3 size={16}/></button>
+                                           <button onClick={() => handleDelete(q.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete"><Trash2 size={16}/></button>
+                                       </div>
                                     </td>
                                  </tr>
                               ))
@@ -722,8 +720,6 @@ export default function QuestionBankManager() {
                         </tbody>
                      </table>
                  </div>
-
-                 {/* Pagination Footer */}
                  <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
                     <span className="text-xs text-slate-500 font-medium">Page {page + 1}</span>
                     <div className="flex gap-2">
@@ -734,7 +730,6 @@ export default function QuestionBankManager() {
              </div>
           </div>
        )}
-
     </div>
   );
 }
