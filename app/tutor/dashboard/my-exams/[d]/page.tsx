@@ -5,10 +5,10 @@ import { createClient } from "@/utils/supabase/client";
 import { 
   Search, Plus, Trash2, Save, CheckCircle, 
   Loader2, ArrowLeft, Eye, X, MonitorPlay, EyeOff,
-  Printer, Pencil // Added icons
+  Printer, Pencil 
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation"; // Changed useSearchParams to useParams
 import Link from "next/link";
 
 // --- TYPES ---
@@ -26,12 +26,14 @@ interface MetaItem {
   title: string;
 }
 
-// Separate component for search params to avoid Suspense errors
 function BuilderContent() {
   const supabase = createClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams.get('edit_id');
+  const params = useParams(); 
+  
+  // LOGIC: If 'd' is 'new' or 'create', we are making a new one. Otherwise, it's an ID.
+  const routeId = params?.d as string;
+  const isEditMode = routeId && routeId !== 'new' && routeId !== 'create';
 
   // --- STATE ---
   const [loading, setLoading] = useState(false);
@@ -65,21 +67,24 @@ function BuilderContent() {
     const init = async () => {
       setInitialLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (user) {
         const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
         if (prof) {
             setIsPro(prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial');
-            if(prof.institute_name && !editId) setInstituteName(prof.institute_name);
+            // Only set default institute name if we are NOT editing (to avoid overwriting saved name)
+            if(prof.institute_name && !isEditMode) setInstituteName(prof.institute_name);
         }
       }
       
-      // Load Segments
+      // Load Segments for Filter
       const { data: segs } = await supabase.from('segments').select('id, title');
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
-      // EDIT MODE LOGIC
-      if (editId) {
-          const { data: exam } = await supabase.from('exam_papers').select('*').eq('id', editId).single();
+      // Load Existing Exam Data if in Edit Mode
+      if (isEditMode) {
+          const { data: exam, error } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
+          
           if (exam) {
               setPaperTitle(exam.title);
               setInstituteName(exam.institute_name || "NextPrep Model Test");
@@ -90,12 +95,22 @@ function BuilderContent() {
                   setShowInstructions(exam.settings.showInstructions);
                   setInstructions(exam.settings.instructions);
               }
+              // OPTION B: Also populate the "Available" list with these questions so they are visible on the left too?
+              // Standard behavior is usually to show the bank, but we can seed the list with the selected ones 
+              // so the user sees the "Added" status immediately.
+              setAvailableQuestions(exam.questions || []); 
+          } else if (error) {
+              console.error("Error loading exam:", error);
+              // alert("Could not load exam. It might have been deleted.");
           }
+      } else {
+          // If new, maybe load some default questions or leave empty
+          searchQuestions(); // Load initial batch of 50
       }
       setInitialLoading(false);
     };
     init();
-  }, [editId]);
+  }, [routeId, isEditMode]); // Depend on routeId
 
   // --- 2. FILTER LOGIC ---
   const loadGroups = async (segId: string) => {
@@ -160,49 +175,71 @@ function BuilderContent() {
     setTotalMarks(total);
   };
 
-  // --- PRINT LOGIC ---
-  const handlePrintSingleQuestion = (q: Question) => {
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
+  // --- 4. PRINTING (WHOLE PAPER) ---
+  const handlePrintPaper = () => {
+    const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Build Options HTML if they exist
-    const optionsHtml = (q.options && q.options.length > 0)
-      ? `<div style="margin-top:20px; display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          ${q.options.map((opt: any, i: number) => 
-            `<div style="font-size:14px; padding: 5px;"><strong>(${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
-          ).join('')}
-         </div>` 
-      : '';
+    const questionsHtml = selectedQuestions.map((q, idx) => {
+        const optionsHtml = (q.options && q.options.length > 0)
+          ? `<div style="margin-top:10px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 20px;">
+              ${q.options.map((opt: any, i: number) => 
+                `<div style="font-size:14px;"><strong>${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
+              ).join('')}
+             </div>` 
+          : '';
+        
+        return `
+            <div style="margin-bottom: 25px; page-break-inside: avoid;">
+                <div style="display: flex; gap: 10px;">
+                    <div style="font-weight: bold; width: 25px;">${idx + 1}.</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; line-height: 1.5;">${q.question_text}</div>
+                        ${optionsHtml}
+                    </div>
+                    <div style="font-weight: bold; font-size: 14px;">[${q.marks}]</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const instructionsHtml = showInstructions 
+        ? `<div style="font-size: 13px; font-style: italic; margin-bottom: 20px; padding: 10px; border: 1px dashed #ccc;">${instructions}</div>` 
+        : '';
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Print Question - NextPrepBD</title>
+          <title>${paperTitle} - Print</title>
           <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
-            .header { margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-            .logo { font-weight: bold; font-size: 1.2rem; color: #4f46e5; }
-            .meta { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
-            .q-container { background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
-            .q-text { font-size: 18px; font-weight: 500; margin-bottom: 10px; line-height: 1.6; }
-            .q-text p { margin: 0; }
+            body { font-family: 'Times New Roman', Times, serif; padding: 40px; max-width: 900px; margin: 0 auto; color: #000; }
+            h1 { text-align: center; margin-bottom: 5px; font-size: 28px; text-transform: uppercase; }
+            h2 { text-align: center; margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: normal; text-decoration: underline; }
+            .meta { display: flex; justify-content: space-between; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 5px 0; margin-bottom: 20px; font-family: sans-serif; font-size: 14px; }
+            p { margin: 0; }
             @media print {
-              body { padding: 0; }
-              .q-container { border: none; padding: 0; }
+                body { padding: 0; width: 100%; }
+                @page { margin: 20mm; }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo">NextPrepBD</div>
-            <div class="meta">ID: ${q.id.substring(0,8)}... • Marks: ${q.marks}</div>
+          <h1>${instituteName}</h1>
+          <h2>${paperTitle}</h2>
+          
+          <div class="meta">
+              <span>Time: ${duration}</span>
+              <span>Total Marks: ${totalMarks}</span>
           </div>
-          <div class="q-container">
-            <div class="q-text">${q.question_text}</div>
-            ${optionsHtml}
+
+          ${instructionsHtml}
+
+          <div class="questions">
+            ${questionsHtml}
           </div>
+
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
+            window.onload = () => { setTimeout(() => { window.print(); }, 500); }
           </script>
         </body>
       </html>
@@ -229,22 +266,25 @@ function BuilderContent() {
     };
 
     let error;
-    if (editId) {
+    if (isEditMode) {
         // Update existing exam
-        const { error: updateError } = await supabase.from('exam_papers').update(payload).eq('id', editId);
+        const { error: updateError } = await supabase.from('exam_papers').update(payload).eq('id', routeId);
         error = updateError;
+        if (!error) alert("Exam Updated Successfully!");
     } else {
         // Create new exam
-        const { error: insertError } = await supabase.from('exam_papers').insert(payload);
+        const { data: newExam, error: insertError } = await supabase.from('exam_papers').insert(payload).select().single();
         error = insertError;
+        if (!error && newExam) {
+             alert("Exam Saved! Redirecting to Edit Mode...");
+             // Redirect to the "Edit" URL of this new exam so the Print button appears
+             router.push(`/tutor/dashboard/my-exams/${newExam.id}`);
+        }
     }
 
     if (error) {
         alert("Save Failed: " + error.message);
-    } else {
-        alert("Exam Saved Successfully!");
-        router.push("/tutor/dashboard/my-exams"); 
-    }
+    } 
     setSaving(false);
   };
 
@@ -252,12 +292,13 @@ function BuilderContent() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 font-sans text-slate-900">
+      {/* HEADER */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm z-30">
           <div className="flex items-center gap-4">
-              <Link href="/tutor/dashboard" className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft className="w-5 h-5 text-slate-500"/></Link>
+              <Link href="/tutor/dashboard/my-exams" className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft className="w-5 h-5 text-slate-500"/></Link>
               <div>
                   <h1 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                      {editId ? "Editing Exam" : "Exam Composer"}
+                      {isEditMode ? "Editing Exam" : "Exam Composer"}
                   </h1>
                   <div className="flex items-center gap-3 text-xs font-medium text-slate-500">
                       <span>{selectedQuestions.length} Questions</span>
@@ -267,18 +308,26 @@ function BuilderContent() {
               </div>
           </div>
           <div className="flex gap-3">
+              {/* PRINT BUTTON - Only shows if Saved (Edit Mode) */}
+              {isEditMode && (
+                  <button onClick={handlePrintPaper} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm">
+                      <Printer className="w-4 h-4 text-indigo-600"/> Print Paper
+                  </button>
+              )}
+
               <button onClick={() => setShowPaperOverview(true)} disabled={selectedQuestions.length === 0} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50">
-                  <MonitorPlay className="w-4 h-4"/> View Overview
+                  <MonitorPlay className="w-4 h-4"/> Overview
               </button>
+              
               <button onClick={handleSave} disabled={saving || selectedQuestions.length === 0} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
-                  {editId ? "Update Exam" : "Save & Exit"}
+                  {isEditMode ? "Update" : "Save"}
               </button>
           </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-          {/* LEFT: DISCOVERY */}
+          {/* LEFT: DISCOVERY / BANK */}
           <div className="w-96 bg-white border-r border-slate-200 flex flex-col z-20 hidden md:flex">
               <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-3">
                   <div className="relative">
@@ -316,7 +365,7 @@ function BuilderContent() {
               </div>
           </div>
 
-          {/* RIGHT: CANVAS */}
+          {/* RIGHT: CANVAS (The Paper) */}
           <div className="flex-1 overflow-y-auto bg-slate-200 p-4 md:p-8 flex justify-center">
               <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[20mm] relative">
                   <div className="text-center border-b-2 border-black pb-4 mb-6 group">
@@ -347,6 +396,7 @@ function BuilderContent() {
           </div>
       </div>
 
+      {/* SINGLE QUESTION PREVIEW POPUP */}
       {previewQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
@@ -364,11 +414,9 @@ function BuilderContent() {
                     </button>
                 </div>
 
-                {/* Body (Scrollable) */}
+                {/* Body */}
                 <div className="p-6 overflow-y-auto">
                     <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{__html: previewQuestion.question_text}}></div>
-                    
-                    {/* Render Options if MCQ */}
                     {previewQuestion.options && previewQuestion.options.length > 0 && (
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
                             {previewQuestion.options.map((opt: any, i: number) => (
@@ -383,35 +431,23 @@ function BuilderContent() {
                     )}
                 </div>
 
-                {/* Footer (Actions) */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        {/* EDIT BUTTON */}
-                        <a href={`/tutor/question-bank`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 hover:text-indigo-600 transition-colors">
-                            <Pencil className="w-4 h-4"/> <span className="inline">Edit</span>
-                        </a>
-                        {/* PRINT BUTTON */}
-                        <button onClick={() => handlePrintSingleQuestion(previewQuestion)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 hover:text-indigo-600 transition-colors">
-                            <Printer className="w-4 h-4"/> <span className="inline">Print</span>
-                        </button>
-                    </div>
-
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={() => setPreviewQuestion(null)} className="flex-1 sm:flex-none px-5 py-2 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-lg transition-colors">
-                            Close
-                        </button>
-                        <button 
-                          onClick={() => { addToPaper(previewQuestion); setPreviewQuestion(null); }} 
-                          className="flex-1 sm:flex-none px-6 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus className="w-4 h-4"/> Add to Paper
-                        </button>
-                    </div>
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end gap-2">
+                    <button onClick={() => setPreviewQuestion(null)} className="px-5 py-2 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-lg transition-colors">
+                        Close
+                    </button>
+                    <button 
+                      onClick={() => { addToPaper(previewQuestion); setPreviewQuestion(null); }} 
+                      className="px-6 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Plus className="w-4 h-4"/> Add to Paper
+                    </button>
                 </div>
             </div>
         </div>
       )}
 
+      {/* READ ONLY OVERVIEW POPUP */}
       {showPaperOverview && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
               <div className="bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
