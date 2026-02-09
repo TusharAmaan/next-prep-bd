@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Plus, Trash2, Save, CheckCircle, 
   ChevronDown, ChevronRight, FileText, 
   HelpCircle, BookOpen, AlertCircle,
   Search, Filter, X, ChevronLeft, Edit3,
-  List as ListIcon, Tag, LayoutGrid
+  List as ListIcon, Tag, LayoutGrid, MoreHorizontal, Layers,
+  Loader2 // Fixed: Imported Loader2
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 
@@ -28,13 +29,13 @@ interface Question {
   explanation: string;
   options: Option[];
   parent_id?: string;
-  topic_tag?: string;
+  topic_tag?: string; // Stored as "Tag1, Tag2"
   segment_id?: number;
   group_id?: number;
   subject_id?: number;
 }
 
-// --- PROFESSIONAL IN-APP MODAL ---
+// --- PROFESSIONAL MODAL (In-App Popup) ---
 function CustomModal({ isOpen, type, message, onConfirm, onCancel }: { 
   isOpen: boolean; 
   type: 'success' | 'error' | 'confirm'; 
@@ -45,8 +46,8 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-white/20">
+    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-white/20 transform transition-all scale-100">
         <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
           type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
           type === 'error' ? 'bg-red-100 text-red-600' : 
@@ -58,7 +59,7 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
         </div>
         
         <h3 className="text-xl font-bold text-slate-800 mb-2">
-          {type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Confirm Action'}
+          {type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Confirm'}
         </h3>
         
         <p className="text-slate-600 mb-8 text-sm leading-relaxed">{message}</p>
@@ -78,28 +79,81 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   );
 }
 
-// --- TAG INPUT COMPONENT ---
-const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (val: string) => void, suggestions: string[] }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const filtered = suggestions.filter(s => s.toLowerCase().includes(value.toLowerCase()) && s !== value);
+// --- YOUTUBE STYLE TAG INPUT ---
+const MultiTagInput = ({ value, onChange, suggestions }: { value: string, onChange: (val: string) => void, suggestions: string[] }) => {
+    const [inputValue, setInputValue] = useState("");
+    const [isFocused, setIsFocused] = useState(false);
+    
+    // Parse comma-separated string to array
+    const tags = useMemo(() => value ? value.split(',').map(t => t.trim()).filter(Boolean) : [], [value]);
+    
+    // Filter suggestions based on input
+    const filteredSuggestions = suggestions.filter(
+        s => s.toLowerCase().includes(inputValue.toLowerCase()) && !tags.includes(s)
+    );
+
+    const addTag = (tag: string) => {
+        const newTags = [...tags, tag];
+        onChange(newTags.join(', '));
+        setInputValue("");
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        const newTags = tags.filter(tag => tag !== tagToRemove);
+        onChange(newTags.join(', '));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && inputValue) {
+            e.preventDefault();
+            addTag(inputValue);
+        } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+            removeTag(tags[tags.length - 1]);
+        }
+    };
 
     return (
-        <div className="relative">
-            <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                <div className="pl-3 text-slate-400"><Tag size={16}/></div>
+        <div className="relative group w-full">
+            <div className={`flex flex-wrap items-center gap-2 border rounded-xl p-2 bg-white transition-all ${isFocused ? 'ring-2 ring-indigo-100 border-indigo-300' : 'border-slate-200'}`}>
+                <div className="pl-2 text-slate-400"><Tag size={14}/></div>
+                
+                {tags.map(tag => (
+                    <span key={tag} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+                        {tag}
+                        <button onClick={() => removeTag(tag)} className="hover:text-indigo-900"><X size={12}/></button>
+                    </span>
+                ))}
+
                 <input 
-                    className="w-full p-2.5 text-sm outline-none font-medium text-slate-700 placeholder:text-slate-400"
-                    placeholder="e.g. Algebra, Newton's Laws..."
-                    value={value}
-                    onChange={e => { onChange(e.target.value); setIsOpen(true); }}
-                    onFocus={() => setIsOpen(true)}
-                    onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                    className="flex-1 min-w-[120px] text-sm outline-none bg-transparent text-slate-700 placeholder:text-slate-400 ml-1"
+                    placeholder={tags.length === 0 ? "Add tags (e.g. Algebra)..." : ""}
+                    value={inputValue}
+                    onChange={e => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                 />
             </div>
-            {isOpen && filtered.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                    {filtered.map(tag => (
-                        <button key={tag} onClick={() => onChange(tag)} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+
+            {/* Suggestions Dropdown */}
+            {isFocused && (filteredSuggestions.length > 0 || (inputValue && !tags.includes(inputValue))) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50 py-1">
+                    {/* Suggestion to create new if not exists */}
+                    {inputValue && !filteredSuggestions.includes(inputValue) && (
+                        <button 
+                            onMouseDown={(e) => { e.preventDefault(); addTag(inputValue); }}
+                            className="w-full text-left px-4 py-2 text-sm text-indigo-600 bg-indigo-50 font-bold hover:bg-indigo-100 flex items-center gap-2"
+                        >
+                            <Plus size={14}/> Create "{inputValue}"
+                        </button>
+                    )}
+                    {/* Existing suggestions */}
+                    {filteredSuggestions.map(tag => (
+                        <button 
+                            key={tag} 
+                            onMouseDown={(e) => { e.preventDefault(); addTag(tag); }}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
                             {tag}
                         </button>
                     ))}
@@ -109,6 +163,23 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
     );
 };
 
+// --- ISOLATED EDITOR (Prevents Cursor Jumping) ---
+// This wrapper only re-renders if 'initialContent' changes prop, 
+// ignoring parent state updates caused by typing.
+const EditorWrapper = memo(({ initialContent, onChange }: { initialContent: string, onChange: (val: string) => void }) => {
+    return (
+        <div className="prose-editor-wrapper">
+            <RichTextEditor 
+                initialValue={initialContent} 
+                onChange={onChange} 
+            />
+        </div>
+    );
+}, (prev, next) => prev.initialContent === next.initialContent); 
+
+EditorWrapper.displayName = "EditorWrapper";
+
+// --- MAIN MANAGER COMPONENT ---
 export default function QuestionBankManager() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -117,609 +188,449 @@ export default function QuestionBankManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // --- MODAL STATE ---
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    type: 'success' | 'error' | 'confirm';
-    message: string;
-    onConfirm?: () => void;
-  }>({ isOpen: false, type: 'success', message: '' });
+  // --- MODAL ---
+  const [modal, setModal] = useState<{ isOpen: boolean; type: any; message: string; onConfirm?: () => void }>({ isOpen: false, type: 'success', message: '' });
+  const showModal = (type: any, message: string, onConfirm?: () => void) => setModal({ isOpen: true, type, message, onConfirm });
+  const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  const showModal = (type: 'success' | 'error' | 'confirm', message: string, onConfirm?: () => void) => {
-    setModalState({ isOpen: true, type, message, onConfirm });
-  };
-  const closeModal = () => setModalState({ ...modalState, isOpen: false });
-
-  // --- FILTERS & PAGINATION ---
+  // --- FILTERS ---
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterSegment, setFilterSegment] = useState("");
-  const [filterGroup, setFilterGroup] = useState("");
-  const [filterSubject, setFilterSubject] = useState("");
-  const [filterTopic, setFilterTopic] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "all", topic: "" });
+  const [pagination, setPagination] = useState({ page: 0, itemsPerPage: 20, total: 0 });
 
-  // --- DROPDOWNS ---
-  const [segments, setSegments] = useState<any[]>([]);
-  const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
-  const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
-  const [uniqueTags, setUniqueTags] = useState<string[]>([]);
-  const [createGroupsList, setCreateGroupsList] = useState<any[]>([]);
-  const [createSubjectsList, setCreateSubjectsList] = useState<any[]>([]);
+  // --- DATA ---
+  const [dropdowns, setDropdowns] = useState<{ segments: any[], groups: any[], subjects: any[], tags: string[] }>({ segments: [], groups: [], subjects: [], tags: [] });
+  const [createDropdowns, setCreateDropdowns] = useState<{ groups: any[], subjects: any[] }>({ groups: [], subjects: [] });
 
   // --- FORM STATE ---
-  const [selSegment, setSelSegment] = useState<string>('');
-  const [selGroup, setSelGroup] = useState<string>('');
-  const [selSubject, setSelSubject] = useState<string>('');
-  const [topicTag, setTopicTag] = useState('');
+  // Main Question State
+  const [mainForm, setMainForm] = useState({
+      segment: '', group: '', subject: '', tags: '',
+      type: 'mcq' as QuestionType,
+      text: '',
+      explanation: '',
+      marks: 1
+  });
   
-  const [qType, setQType] = useState<QuestionType>('mcq'); 
-  const [subQType, setSubQType] = useState<QuestionType>('mcq'); // For sub-questions
+  // MCQ Options for Main Question
+  const [options, setOptions] = useState<Option[]>([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
   
-  // Use separate states to prevent cursor jumping
-  const [passageText, setPassageText] = useState(''); 
-  const [qText, setQText] = useState('');             
-  
-  const [explanation, setExplanation] = useState('');
-  const [marks, setMarks] = useState(1);
-  const [options, setOptions] = useState<Option[]>([
-    { option_text: '', is_correct: false },
-    { option_text: '', is_correct: false },
-  ]);
-
+  // Passage: Sub-Questions List
   const [subQuestions, setSubQuestions] = useState<Question[]>([]);
-  const [isAddingSub, setIsAddingSub] = useState(false);
+  
+  // Passage: Sub-Question Adding Form State
+  const [subForm, setSubForm] = useState<{ isOpen: boolean, type: QuestionType, text: string, marks: number, explanation: string, options: Option[] }>({
+      isOpen: false, type: 'mcq', text: '', marks: 1, explanation: '', 
+      options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]
+  });
 
-  // --- INITIAL LOAD ---
-  useEffect(() => { 
-      fetchSegments(); 
-      fetchUniqueTags(); 
+  // --- INITIAL DATA LOAD ---
+  useEffect(() => {
+      const loadInit = async () => {
+          const { data: segs } = await supabase.from('segments').select('id, title');
+          const { data: tagsData } = await supabase.from('question_bank').select('topic_tag').not('topic_tag', 'is', null);
+          const uniqueTags = Array.from(new Set((tagsData || []).flatMap(d => (d.topic_tag || '').split(',').map((t: string) => t.trim()).filter(Boolean))));
+          
+          setDropdowns(prev => ({ ...prev, segments: segs || [], tags: uniqueTags }));
+      };
+      loadInit();
   }, []);
-  
-  useEffect(() => { 
-      fetchQuestions(); 
-  }, [page, itemsPerPage, filterSegment, filterGroup, filterSubject, filterTopic, filterType, searchQuery]);
 
-  // --- FETCHERS ---
-  const fetchQuestions = async () => {
-    setLoading(true);
-    let query = supabase.from('question_bank').select('*, subjects(title)', { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false });
-    
-    if (filterSegment) query = query.eq('segment_id', filterSegment);
-    if (filterGroup) query = query.eq('group_id', filterGroup);
-    if (filterSubject) query = query.eq('subject_id', filterSubject);
-    if (filterTopic) query = query.eq('topic_tag', filterTopic);
-    if (filterType !== 'all') query = query.eq('question_type', filterType);
-    if (searchQuery) query = query.or(`question_text.ilike.%${searchQuery}%,topic_tag.ilike.%${searchQuery}%`);
-    
-    const from = page * itemsPerPage;
-    const to = from + itemsPerPage - 1;
-    
-    query = query.range(from, to);
-    const { data, count, error } = await query;
-    if (!error) { 
-        setQuestions(data || []); 
-        setTotalCount(count || 0);
-        setHasMore((count || 0) > to + 1); 
-    }
-    setLoading(false);
-  };
+  // --- FETCH QUESTIONS ---
+  const fetchQuestions = useCallback(async () => {
+      setLoading(true);
+      let query = supabase.from('question_bank').select('*, subjects(title)', { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false });
+      
+      if (filters.segment) query = query.eq('segment_id', filters.segment);
+      if (filters.group) query = query.eq('group_id', filters.group);
+      if (filters.subject) query = query.eq('subject_id', filters.subject);
+      if (filters.type !== 'all') query = query.eq('question_type', filters.type);
+      if (filters.topic) query = query.ilike('topic_tag', `%${filters.topic}%`);
+      if (searchQuery) query = query.ilike('question_text', `%${searchQuery}%`);
 
-  const fetchSegments = async () => { const { data } = await supabase.from('segments').select('id, title'); if (data) setSegments(data); };
-  
-  const fetchUniqueTags = async () => {
-      const { data } = await supabase.from('question_bank').select('topic_tag').not('topic_tag', 'is', null);
+      const from = pagination.page * pagination.itemsPerPage;
+      const to = from + pagination.itemsPerPage - 1;
+      query = query.range(from, to);
+
+      const { data, count } = await query;
       if (data) {
-          const tags = Array.from(new Set(data.map(item => item.topic_tag).filter(Boolean)));
-          setUniqueTags(tags as string[]);
+          setQuestions(data);
+          setPagination(prev => ({ ...prev, total: count || 0 }));
       }
-  };
+      setLoading(false);
+  }, [filters, searchQuery, pagination.page, pagination.itemsPerPage]);
 
-  const loadGroups = async (segId: string, setFn: Function) => { const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId); setFn(data || []); };
-  const loadSubjects = async (grpId: string, setFn: Function) => { const { data } = await supabase.from('subjects').select('id, title').eq('group_id', grpId); setFn(data || []); };
+  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
+
+  // --- DEPENDENT DROPDOWNS ---
+  const loadGroups = async (segId: string, isFilter: boolean) => {
+      const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId);
+      if(isFilter) setDropdowns(prev => ({ ...prev, groups: data || [] }));
+      else setCreateDropdowns(prev => ({ ...prev, groups: data || [] }));
+  };
+  const loadSubjects = async (grpId: string, isFilter: boolean) => {
+      const { data } = await supabase.from('subjects').select('id, title').eq('group_id', grpId);
+      if(isFilter) setDropdowns(prev => ({ ...prev, subjects: data || [] }));
+      else setCreateDropdowns(prev => ({ ...prev, subjects: data || [] }));
+  };
 
   // --- HANDLERS ---
-  const handleFilterSegmentChange = (val: string) => { setFilterSegment(val); setFilterGroup(''); setFilterSubject(''); setPage(0); if(val) loadGroups(val, setFilterGroupsList); };
-  const handleFilterGroupChange = (val: string) => { setFilterGroup(val); setFilterSubject(''); setPage(0); if(val) loadSubjects(val, setFilterSubjectsList); };
-  const handleCreateSegmentChange = (val: string) => { setSelSegment(val); setSelGroup(''); setSelSubject(''); if(val) loadGroups(val, setCreateGroupsList); };
-  const handleCreateGroupChange = (val: string) => { setSelGroup(val); setSelSubject(''); if(val) loadSubjects(val, setCreateSubjectsList); };
+  const handleReset = () => {
+      setEditingId(null);
+      setMainForm({ segment: '', group: '', subject: '', tags: '', type: 'mcq', text: '', explanation: '', marks: 1 });
+      setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
+      setSubQuestions([]);
+      setSubForm({ isOpen: false, type: 'mcq', text: '', marks: 1, explanation: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }] });
+  };
 
   const handleEdit = async (q: any) => {
-    setEditingId(q.id);
-    setLoading(true);
-    setSelSegment(q.segment_id ? String(q.segment_id) : '');
-    if(q.segment_id) await loadGroups(q.segment_id, setCreateGroupsList);
-    setSelGroup(q.group_id ? String(q.group_id) : '');
-    if(q.group_id) await loadSubjects(q.group_id, setCreateSubjectsList);
-    setSelSubject(q.subject_id ? String(q.subject_id) : '');
-    setTopicTag(q.topic_tag || '');
-    setQType(q.question_type);
+      setLoading(true);
+      setEditingId(q.id);
+      
+      if(q.segment_id) await loadGroups(String(q.segment_id), false);
+      if(q.group_id) await loadSubjects(String(q.group_id), false);
 
-    if (q.question_type === 'passage') {
-        setPassageText(q.question_text);
-        const { data: subs } = await supabase.from('question_bank').select(`*, options:question_options(*)`).eq('parent_id', q.id).order('created_at', { ascending: true });
-        const formattedSubs: Question[] = (subs || []).map((s: any) => ({
-            id: s.id, question_text: s.question_text, question_type: s.question_type, marks: s.marks, explanation: s.explanation || '', options: s.options || []
-        }));
-        setSubQuestions(formattedSubs);
-    } else {
-        setQText(q.question_text);
-        setMarks(q.marks);
-        setExplanation(q.explanation || '');
-        if (q.question_type === 'mcq') {
-            const { data: opts } = await supabase.from('question_options').select('*').eq('question_id', q.id).order('order_index');
-            setOptions(opts || []);
-        }
-    }
-    setLoading(false);
-    setView('create');
+      setMainForm({
+          segment: String(q.segment_id || ''),
+          group: String(q.group_id || ''),
+          subject: String(q.subject_id || ''),
+          tags: q.topic_tag || '',
+          type: q.question_type,
+          text: q.question_text,
+          explanation: q.explanation || '',
+          marks: q.marks
+      });
+
+      if(q.question_type === 'mcq') {
+          const { data } = await supabase.from('question_options').select('*').eq('question_id', q.id).order('order_index');
+          setOptions(data || []);
+      } else if (q.question_type === 'passage') {
+          const { data } = await supabase.from('question_bank').select(`*, options:question_options(*)`).eq('parent_id', q.id).order('created_at', { ascending: true });
+          setSubQuestions(data as any[] || []);
+      }
+      
+      setLoading(false);
+      setView('create');
   };
 
   const handleDelete = (id: string) => {
-    showModal('confirm', "Are you sure you want to delete this question? This cannot be undone.", async () => {
-        setLoading(true);
-        const { error } = await supabase.from('question_bank').delete().eq('id', id);
-        
-        if (error) {
-            showModal('error', "Failed to delete question: " + error.message);
-        } else {
-            setQuestions(questions.filter(q => q.id !== id));
-            showModal('success', "Question deleted successfully.");
-            fetchUniqueTags(); 
-        }
-        setLoading(false);
-        closeModal();
-    });
+      showModal('confirm', "Delete this question?", async () => {
+          setLoading(true);
+          await supabase.from('question_bank').delete().eq('id', id);
+          setQuestions(prev => prev.filter(q => q.id !== id));
+          setLoading(false);
+          closeModal();
+      });
   };
 
-  // --- ADD TO LIST (Client Side) ---
-  const handleAddSubQuestion = () => {
-    if (!qText) return showModal('error', "Please enter a question.");
-    
-    // Create new Sub Question Object
-    const newSub: Question = {
-      question_text: qText,
-      question_type: subQType, // Use the sub-question type selector
-      marks: marks,
-      explanation: explanation,
-      options: subQType === 'mcq' ? [...options] : []
-    };
-    
-    setSubQuestions([...subQuestions, newSub]);
-    
-    // Reset Form for next entry
-    setQText('');
-    setExplanation('');
-    setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
-    setSubQType('mcq'); 
-    setIsAddingSub(false); 
+  const handleSave = async () => {
+      if(!mainForm.text) return showModal('error', 'Content text is required.');
+      
+      setLoading(true);
+      try {
+          const payload = {
+              segment_id: mainForm.segment || null,
+              group_id: mainForm.group || null,
+              subject_id: mainForm.subject || null,
+              topic_tag: mainForm.tags,
+              question_type: mainForm.type,
+              question_text: mainForm.text,
+              marks: mainForm.type === 'passage' ? 0 : mainForm.marks, // Passages have 0 marks on parent
+              explanation: mainForm.explanation
+          };
+
+          let qId = editingId;
+
+          if (qId) {
+              await supabase.from('question_bank').update(payload).eq('id', qId);
+          } else {
+              const { data } = await supabase.from('question_bank').insert(payload).select().single();
+              if(data) qId = data.id;
+          }
+
+          // Handle Options
+          if (mainForm.type === 'mcq' && qId) {
+              if (editingId) await supabase.from('question_options').delete().eq('question_id', qId);
+              const opts = options.map((o, i) => ({ ...o, question_id: qId, order_index: i }));
+              await supabase.from('question_options').insert(opts);
+          }
+
+          // Handle Passage Sub-Questions
+          if (mainForm.type === 'passage' && qId) {
+              if (editingId) {
+                  const { data: old } = await supabase.from('question_bank').select('id').eq('parent_id', qId);
+                  const oldIds = old?.map(x => x.id) || [];
+                  if(oldIds.length) await supabase.from('question_bank').delete().in('id', oldIds);
+              }
+              for (const sub of subQuestions) {
+                  const { data: subQ } = await supabase.from('question_bank').insert({
+                      parent_id: qId,
+                      question_text: sub.question_text,
+                      question_type: sub.question_type,
+                      marks: sub.marks,
+                      explanation: sub.explanation,
+                      segment_id: payload.segment_id,
+                      group_id: payload.group_id,
+                      subject_id: payload.subject_id
+                  }).select().single();
+                  
+                  if(subQ && sub.question_type === 'mcq') {
+                      const subOpts = sub.options.map((o, i) => ({ ...o, question_id: subQ.id, order_index: i }));
+                      await supabase.from('question_options').insert(subOpts);
+                  }
+              }
+          }
+
+          showModal('success', 'Question saved successfully!', () => {
+              handleReset();
+              setView('list');
+              fetchQuestions();
+              closeModal();
+          });
+
+      } catch (e: any) {
+          showModal('error', e.message);
+      } finally {
+          setLoading(false);
+      }
   };
 
-  // --- SAVE TO DB ---
-  const handleSaveToBank = async () => {
-    const mainContent = qType === 'passage' ? passageText : qText;
-    if (!mainContent && !isAddingSub) return showModal('error', "Please enter content text.");
-    
-    setLoading(true);
-    try {
-        let parentId = editingId;
-        
-        const payload = {
-            segment_id: selSegment ? Number(selSegment) : null,
-            group_id: selGroup ? Number(selGroup) : null,
-            subject_id: selSubject ? Number(selSubject) : null,
-            topic_tag: topicTag,
-            question_type: qType,
-            question_text: mainContent,
-            marks: qType === 'passage' ? 0 : marks, 
-            explanation: qType === 'passage' ? '' : explanation
-        };
-
-        if (editingId) {
-            const { error } = await supabase.from('question_bank').update(payload).eq('id', editingId);
-            if (error) throw error;
-        } else {
-            const { data, error } = await supabase.from('question_bank').insert(payload).select().single();
-            if (error) throw error;
-            parentId = data.id;
-        }
-
-        // Handle MCQ Options for Main Question
-        if (qType === 'mcq' && parentId) {
-            if (editingId) await supabase.from('question_options').delete().eq('question_id', editingId);
-            const opts = options.map((o, i) => ({ question_id: parentId, option_text: o.option_text, is_correct: o.is_correct, order_index: i }));
-            await supabase.from('question_options').insert(opts);
-        }
-
-        // Handle Sub-Questions for Passage
-        if (qType === 'passage' && parentId && subQuestions.length > 0) {
-            if (editingId) {
-                const { data: children } = await supabase.from('question_bank').select('id').eq('parent_id', editingId);
-                const childIds = children?.map(c => c.id) || [];
-                if(childIds.length) await supabase.from('question_bank').delete().in('id', childIds);
-            }
-            for (const sub of subQuestions) {
-                const { data: subQ, error: subError } = await supabase.from('question_bank').insert({
-                        parent_id: parentId,
-                        question_text: sub.question_text,
-                        question_type: sub.question_type,
-                        marks: sub.marks,
-                        explanation: sub.explanation,
-                        segment_id: selSegment ? Number(selSegment) : null,
-                        group_id: selGroup ? Number(selGroup) : null,
-                        subject_id: selSubject ? Number(selSubject) : null,
-                    }).select().single();
-                if (subError) throw subError;
-                if (sub.question_type === 'mcq' && sub.options) {
-                    const subOpts = sub.options.map((o, i) => ({ question_id: subQ.id, option_text: o.option_text, is_correct: o.is_correct, order_index: i }));
-                    await supabase.from('question_options').insert(subOpts);
-                }
-            }
-        }
-        
-        showModal('success', editingId ? "Question updated!" : "Saved to Question Bank!", () => {
-            resetAll();
-            closeModal(); 
-            setView('list'); 
-            fetchQuestions(); 
-            fetchUniqueTags(); 
-        });
-
-    } catch (err: any) {
-        showModal('error', err.message);
-    } finally {
-        setLoading(false);
-    }
-  };
-
-  const resetAll = () => {
-    setEditingId(null);
-    setQText('');
-    setPassageText('');
-    setExplanation('');
-    setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
-    setSubQuestions([]);
-    setIsAddingSub(false);
-    setQType('mcq');
-    setSubQType('mcq');
-    setTopicTag('');
+  // --- SUB QUESTION LOGIC ---
+  const saveSubQuestion = () => {
+      if(!subForm.text) return;
+      const newQ: Question = {
+          question_text: subForm.text,
+          question_type: subForm.type,
+          marks: subForm.marks,
+          explanation: subForm.explanation,
+          options: [...subForm.options]
+      };
+      setSubQuestions([...subQuestions, newQ]);
+      setSubForm({ isOpen: false, type: 'mcq', text: '', marks: 1, explanation: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }] });
   };
 
   // --- RENDER HELPERS ---
-  const renderRichEditor = (initialContent: string, onChange: (val: string) => void, idPrefix: string) => {
-      // FIX: Key based on ID ensures editor re-inits only when switching questions, preventing cursor jumping
-      return (
-          <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow overflow-hidden">
-              <RichTextEditor 
-                  key={editingId ? `${idPrefix}-edit-${editingId}` : `${idPrefix}-new`} 
-                  initialValue={initialContent} 
-                  onChange={onChange} 
-              />
-          </div>
-      );
-  };
-
   return (
-    <div className="flex flex-col h-full">
-       <CustomModal isOpen={modalState.isOpen} type={modalState.type} message={modalState.message} onConfirm={modalState.onConfirm} onCancel={closeModal} />
+    <div className="flex flex-col h-full font-sans text-slate-900">
+       <CustomModal isOpen={modal.isOpen} type={modal.type} message={modal.message} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
        {/* HEADER */}
        <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-200">
           <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Question Bank</h2>
-              <p className="text-xs font-medium text-slate-500 mt-1">
-                  {totalCount} Questions • {page + 1} of {Math.ceil(totalCount / itemsPerPage) || 1} Pages
-              </p>
+              <h2 className="text-2xl font-black tracking-tight">Question Bank</h2>
+              <p className="text-slate-500 text-xs font-medium mt-1">Manage, categorize, and organize your question bank.</p>
           </div>
-          {view === 'list' ? (
-             <div className="flex gap-3">
-                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
-                     <Filter size={16}/> {isSidebarOpen ? 'Hide Filters' : 'Show Filters'}
-                 </button>
-                 <button onClick={() => { resetAll(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-transform active:scale-95 text-sm">
-                    <Plus size={18}/> New Question
-                 </button>
-             </div>
-          ) : (
-             <button onClick={() => { setView('list'); resetAll(); }} className="text-slate-500 font-bold hover:text-slate-800 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
-          )}
+          <div className="flex gap-3">
+              {view === 'list' && (
+                  <button onClick={() => { handleReset(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-all">
+                      <Plus size={18}/> New Question
+                  </button>
+              )}
+              {view === 'create' && (
+                  <button onClick={() => setView('list')} className="text-slate-500 font-bold hover:text-slate-800 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
+              )}
+          </div>
        </div>
 
        {/* CREATE VIEW */}
        {view === 'create' && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-4">
-             {/* 1. METADATA HEADER */}
-             <div className="bg-slate-50 p-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-slate-100">
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => handleCreateSegmentChange(e.target.value)} value={selSegment}><option value="">Select Segment...</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Group</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => handleCreateGroupChange(e.target.value)} disabled={!selSegment} value={selGroup}><option value="">Select Group...</option>{createGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label>
-                    <select className="w-full border p-2 rounded-lg text-sm bg-white outline-none focus:border-indigo-500" onChange={e => setSelSubject(e.target.value)} disabled={!selGroup} value={selSubject}><option value="">Select Subject...</option>{createSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                </div>
-             </div>
+           <div className="flex flex-col h-full overflow-hidden">
+               {/* 1. METADATA HEADER */}
+               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                   <div className="grid grid-cols-3 gap-4">
+                       <div className="space-y-1">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
+                           <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 outline-none" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
+                               <option value="">Select...</option>{dropdowns.segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                           </select>
+                       </div>
+                       <div className="space-y-1">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Group</label>
+                           <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 outline-none" value={mainForm.group} onChange={e => { setMainForm(p => ({...p, group: e.target.value})); loadSubjects(e.target.value, false); }} disabled={!mainForm.segment}>
+                               <option value="">Select...</option>{createDropdowns.groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                           </select>
+                       </div>
+                       <div className="space-y-1">
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label>
+                           <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 outline-none" value={mainForm.subject} onChange={e => setMainForm(p => ({...p, subject: e.target.value}))} disabled={!mainForm.group}>
+                               <option value="">Select...</option>{createDropdowns.subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                           </select>
+                       </div>
+                   </div>
+                   <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-slate-400 uppercase">Topic Tags</label>
+                       {/* YouTube Style Tag Input */}
+                       <MultiTagInput value={mainForm.tags} onChange={val => setMainForm(p => ({...p, tags: val}))} suggestions={dropdowns.tags} />
+                   </div>
+               </div>
 
-             <div className="p-8 max-w-5xl mx-auto space-y-8">
-                
-                {/* 2. MAIN QUESTION EDITOR */}
-                {!isAddingSub && (
-                    <div className="space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                           <div className="flex bg-slate-100 p-1 rounded-xl">
-                               <button onClick={() => setQType('passage')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500 hover:text-slate-700'}`}>Passage</button>
-                               <button onClick={() => setQType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
-                               <button onClick={() => setQType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
+               {/* 2. EDITOR LAYOUT (SPLIT OR FULL) */}
+               <div className={`flex flex-col md:flex-row gap-6 ${mainForm.type === 'passage' ? 'h-full overflow-hidden' : ''}`}>
+                   
+                   {/* LEFT: MAIN CONTENT / PASSAGE STEM */}
+                   <div className={`flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col ${mainForm.type === 'passage' ? 'md:w-1/2' : 'w-full'}`}>
+                       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                           <div className="flex gap-2">
+                               <button onClick={() => setMainForm(p => ({...p, type: 'mcq'}))} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mainForm.type === 'mcq' ? 'bg-indigo-600 text-white' : 'bg-white border text-slate-500'}`}>MCQ</button>
+                               <button onClick={() => setMainForm(p => ({...p, type: 'descriptive'}))} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mainForm.type === 'descriptive' ? 'bg-indigo-600 text-white' : 'bg-white border text-slate-500'}`}>Descriptive</button>
+                               <button onClick={() => setMainForm(p => ({...p, type: 'passage'}))} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mainForm.type === 'passage' ? 'bg-purple-600 text-white' : 'bg-white border text-slate-500'}`}>Passage</button>
                            </div>
-                           <div className="w-full sm:w-64">
-                               <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
-                           </div>
-                        </div>
-
-                        <div className="space-y-2">
-                           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
-                               {qType === 'passage' ? 'Passage / Stem Content' : 'Question Content'}
-                           </label>
-                           {/* Using helper to render editor with stable Key */}
-                           {renderRichEditor(qType === 'passage' ? passageText : qText, qType === 'passage' ? setPassageText : setQText, 'main')}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           {qType !== 'passage' && (
-                               <div>
-                                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
-                                   <input type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} className="w-full border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" />
+                           {mainForm.type !== 'passage' && (
+                               <div className="flex items-center gap-2">
+                                   <label className="text-xs font-bold uppercase text-slate-400">Marks</label>
+                                   <input type="number" value={mainForm.marks} onChange={e => setMainForm(p => ({...p, marks: Number(e.target.value)}))} className="w-16 border rounded-lg p-1 text-center font-bold text-sm outline-none focus:border-indigo-500"/>
                                </div>
                            )}
-                        </div>
+                       </div>
 
-                        {/* Main MCQ Options */}
-                        {qType === 'mcq' && (
-                           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
-                               <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
-                               <div className="grid grid-cols-1 gap-3">
-                                   {options.map((opt, i) => (
-                                      <div key={i} className="flex gap-3 items-center bg-white p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
-                                         <button onClick={() => { const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-300 hover:border-slate-300'}`}>
-                                            <CheckCircle size={18} />
-                                         </button>
-                                         <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" placeholder={`Option ${i+1}`} />
-                                         <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
-                                      </div>
-                                   ))}
-                               </div>
-                               <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
-                           </div>
-                        )}
+                       <div className="flex-1 p-6 overflow-y-auto">
+                           <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
+                               {mainForm.type === 'passage' ? 'Passage / Stem Content' : 'Question Content'}
+                           </label>
+                           
+                           {/* KEY PROP FIX: Prevents Cursor Jumping */}
+                           <EditorWrapper 
+                               initialContent={mainForm.text} 
+                               onChange={(val) => setMainForm(p => ({...p, text: val}))} 
+                           />
 
-                        {qType !== 'passage' && (
-                           <div className="space-y-2">
-                               <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
-                               <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
-                                  <RichTextEditor key="main-expl" initialValue={explanation} onChange={setExplanation} />
-                               </div>
-                           </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 3. PASSAGE SUB-QUESTIONS AREA */}
-                {qType === 'passage' && (
-                   <div className="mt-8 border-t border-slate-100 pt-8">
-                      <div className="flex justify-between items-center mb-6">
-                          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><BookOpen size={20} className="text-purple-600"/>Passage Questions</h3>
-                          {!isAddingSub && (
-                             <button onClick={() => { 
-                                 setIsAddingSub(true); 
-                                 setSubQType('mcq'); 
-                                 setQText(''); 
-                                 setExplanation('');
-                                 setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
-                             }} className="px-4 py-2 border-2 border-dashed border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 flex items-center gap-2 text-xs transition-colors"><Plus size={16}/> Add Question</button>
-                          )}
-                      </div>
-                      
-                      <div className="space-y-3 mb-6">
-                         {subQuestions.length === 0 && !isAddingSub && <div className="text-center p-8 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-sm italic">No questions added to this passage yet.</div>}
-                         {subQuestions.map((sq, idx) => (
-                            <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex justify-between items-start hover:shadow-md transition-shadow group">
-                               <div className="flex gap-3">
-                                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-xs font-bold text-slate-500">{idx + 1}</span>
-                                  <div>
-                                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${sq.question_type === 'mcq' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{sq.question_type}</span>
-                                     <div className="font-bold text-slate-800 mt-1 line-clamp-1 text-sm prose prose-sm" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
-                                  </div>
-                               </div>
-                               <button onClick={() => { showModal('confirm', "Delete this sub-question?", () => { const newSub = [...subQuestions]; newSub.splice(idx, 1); setSubQuestions(newSub); closeModal(); }); }} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16}/></button>
-                            </div>
-                         ))}
-                      </div>
-
-                      {/* 4. SUB QUESTION FORM (Slide In) */}
-                      {isAddingSub && (
-                         <div className="animate-in fade-in slide-in-from-bottom-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100 space-y-6">
-                            <div className="flex justify-between items-center mb-4 px-2">
-                                <h4 className="font-bold text-indigo-900">New Sub-Question</h4>
-                                <button onClick={() => setIsAddingSub(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
-                            </div>
-                            
-                            {/* Type Selector for Sub Q */}
-                            <div className="flex bg-white p-1 rounded-xl w-fit border border-indigo-100">
-                               <button onClick={() => setSubQType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${subQType === 'mcq' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
-                               <button onClick={() => setSubQType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${subQType === 'descriptive' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
-                            </div>
-
-                            <div className="space-y-2">
-                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Question Text</label>
-                               {/* Use helper with unique key for sub-editor to prevent cursor jump */}
-                               {renderRichEditor(qText, setQText, 'sub')}
-                            </div>
-
-                            <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
-                               <input type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} className="w-32 border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none bg-white" />
-                            </div>
-
-                            {subQType === 'mcq' && (
-                               <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                           {/* Main MCQ Options (Only if Main Type is MCQ) */}
+                           {mainForm.type === 'mcq' && (
+                               <div className="mt-6 space-y-3">
                                    <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
-                                   <div className="grid grid-cols-1 gap-3">
-                                       {options.map((opt, i) => (
-                                          <div key={i} className="flex gap-3 items-center bg-slate-50 p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
-                                             <button onClick={() => { const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-white border-slate-200 text-slate-300 hover:border-slate-300'}`}>
-                                                <CheckCircle size={18} />
-                                             </button>
-                                             <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" placeholder={`Option ${i+1}`} />
-                                             <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
-                                          </div>
-                                       ))}
-                                   </div>
-                                   <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
+                                   {options.map((opt, i) => (
+                                       <div key={i} className="flex gap-2 items-center">
+                                           <button onClick={() => { const n = [...options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setOptions(n); }} className={`p-2 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white border-green-600' : 'text-slate-300'}`}><CheckCircle size={16}/></button>
+                                           <input className="flex-1 border-b border-slate-200 p-2 text-sm outline-none focus:border-indigo-500" value={opt.option_text} onChange={e => { const n = [...options]; n[i].option_text = e.target.value; setOptions(n); }} placeholder={`Option ${i+1}`}/>
+                                           <button onClick={() => { const n = [...options]; n.splice(i,1); setOptions(n); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
+                                       </div>
+                                   ))}
+                                   <button onClick={() => setOptions([...options, {option_text:'', is_correct:false}])} className="text-xs font-bold text-indigo-600 hover:underline">+ Add Option</button>
                                </div>
-                            )}
-
-                            <div className="flex justify-end pt-4">
-                                <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all text-xs">Add to Passage</button>
-                            </div>
-                         </div>
-                      )}
+                           )}
+                       </div>
                    </div>
-                )}
-             </div>
-             
-             <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center sticky bottom-0 z-10">
-                <div className="text-xs text-slate-400 font-medium italic">
-                   {editingId ? `Editing Question ID: ${editingId}` : "Drafting New Question"}
-                </div>
-                <button onClick={handleSaveToBank} disabled={loading || isAddingSub} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95 text-sm flex items-center gap-2">
-                   {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
-                   {editingId ? "Update Question" : "Save to Bank"}
-                </button>
-             </div>
-          </div>
+
+                   {/* RIGHT: PASSAGE SUB-QUESTIONS (Only visible in Passage Mode) */}
+                   {mainForm.type === 'passage' && (
+                       <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner flex flex-col md:w-1/2 overflow-hidden">
+                           <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl">
+                               <h3 className="font-bold text-slate-700 flex items-center gap-2"><Layers size={16}/> Questions ({subQuestions.length})</h3>
+                               {!subForm.isOpen && (
+                                   <button onClick={() => setSubForm(p => ({...p, isOpen: true}))} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1">
+                                       <Plus size={14}/> Add Question
+                                   </button>
+                               )}
+                           </div>
+
+                           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                               {!subForm.isOpen && subQuestions.map((sq, i) => (
+                                   <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm group hover:border-indigo-200 transition-all">
+                                       <div className="flex justify-between items-start mb-2">
+                                           <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{sq.question_type} • {sq.marks} pts</span>
+                                           <button onClick={() => { const n = [...subQuestions]; n.splice(i, 1); setSubQuestions(n); }} className="text-slate-300 hover:text-red-500"><X size={14}/></button>
+                                       </div>
+                                       <div className="text-sm font-medium text-slate-800 line-clamp-2" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
+                                   </div>
+                               ))}
+
+                               {/* Sub Question Form */}
+                               {subForm.isOpen && (
+                                   <div className="bg-white p-6 rounded-xl border-2 border-indigo-100 shadow-lg animate-in slide-in-from-bottom-4">
+                                       <div className="flex justify-between mb-4">
+                                           <h4 className="font-bold text-indigo-900 text-sm">New Question</h4>
+                                           <button onClick={() => setSubForm(p => ({...p, isOpen: false}))}><X size={16} className="text-slate-400 hover:text-slate-600"/></button>
+                                       </div>
+                                       
+                                       <div className="flex gap-2 mb-4">
+                                           <button onClick={() => setSubForm(p => ({...p, type: 'mcq'}))} className={`flex-1 py-1.5 text-xs font-bold rounded border ${subForm.type === 'mcq' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 text-slate-500'}`}>MCQ</button>
+                                           <button onClick={() => setSubForm(p => ({...p, type: 'descriptive'}))} className={`flex-1 py-1.5 text-xs font-bold rounded border ${subForm.type === 'descriptive' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 text-slate-500'}`}>Descriptive</button>
+                                       </div>
+
+                                       <EditorWrapper initialContent="" onChange={val => setSubForm(p => ({...p, text: val}))} />
+
+                                       <div className="mt-4">
+                                           <label className="text-[10px] font-bold uppercase text-slate-400">Marks</label>
+                                           <input type="number" value={subForm.marks} onChange={e => setSubForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border rounded-lg p-2 text-sm font-bold mt-1"/>
+                                       </div>
+
+                                       {subForm.type === 'mcq' && (
+                                           <div className="space-y-2 mt-4">
+                                               {subForm.options.map((opt, i) => (
+                                                   <div key={i} className="flex gap-2 items-center">
+                                                       <button onClick={() => { const n = [...subForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300'}`}><CheckCircle size={14}/></button>
+                                                       <input className="flex-1 border-b text-sm p-1 outline-none" value={opt.option_text} onChange={e => { const n = [...subForm.options]; n[i].option_text = e.target.value; setSubForm(p => ({...p, options: n})); }} placeholder={`Option ${i+1}`}/>
+                                                   </div>
+                                               ))}
+                                               <button onClick={() => setSubForm(p => ({...p, options: [...p.options, {option_text:'', is_correct:false}]}))} className="text-xs text-indigo-600 font-bold hover:underline">+ Option</button>
+                                           </div>
+                                       )}
+
+                                       <button onClick={saveSubQuestion} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 mt-4">Add to Passage</button>
+                                   </div>
+                               )}
+                           </div>
+                       </div>
+                   )}
+               </div>
+
+               {/* Footer Actions */}
+               <div className="p-4 bg-white border-t border-slate-200 flex justify-end">
+                   <button onClick={handleSave} disabled={loading} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 flex items-center gap-2">
+                       {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Save size={18}/>} Save Question
+                   </button>
+               </div>
+           </div>
        )}
 
        {/* LIST VIEW */}
        {view === 'list' && (
-          <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-200px)]">
-             {/* Sidebar */}
-             {isSidebarOpen && (
+           <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-200px)]">
+               {/* SIDEBAR */}
+               {isSidebarOpen && (
                  <div className="w-full md:w-64 flex-shrink-0 bg-white border border-slate-200 rounded-xl shadow-sm p-4 overflow-y-auto space-y-6 animate-in slide-in-from-left-4 h-full">
                      <div>
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Hierarchy</h3>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Filters</h3>
                         <div className="space-y-3">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500">Segment</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterSegment} onChange={(e) => handleFilterSegmentChange(e.target.value)}><option value="">All Segments</option>{segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500">Group</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterGroup} onChange={(e) => handleFilterGroupChange(e.target.value)} disabled={!filterSegment}><option value="">All Groups</option>{filterGroupsList.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500">Subject</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterSubject} onChange={(e) => { setFilterSubject(e.target.value); setPage(0); }} disabled={!filterGroup}><option value="">All Subjects</option>{filterSubjectsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                            </div>
+                            <select className="w-full border p-2 rounded-lg text-xs" value={filters.segment} onChange={e => { setFilters(p=>({...p, segment:e.target.value})); loadGroups(e.target.value, true); }}><option value="">All Segments</option>{dropdowns.segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                            <select className="w-full border p-2 rounded-lg text-xs" value={filters.group} onChange={e => { setFilters(p=>({...p, group:e.target.value})); loadSubjects(e.target.value, true); }} disabled={!filters.segment}><option value="">All Groups</option>{dropdowns.groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                            <select className="w-full border p-2 rounded-lg text-xs" value={filters.subject} onChange={e => setFilters(p=>({...p, subject:e.target.value}))} disabled={!filters.group}><option value="">All Subjects</option>{dropdowns.subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                            <select className="w-full border p-2 rounded-lg text-xs" value={filters.type} onChange={e => setFilters(p=>({...p, type:e.target.value}))}><option value="all">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Descriptive</option></select>
                         </div>
                      </div>
-                     <div>
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Attributes</h3>
-                        <div className="space-y-3">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500">Topic</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterTopic} onChange={(e) => { setFilterTopic(e.target.value); setPage(0); }}>
-                                    <option value="">All Topics</option>
-                                    {uniqueTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500">Type</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-slate-50 focus:bg-white outline-none" value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(0); }}>
-                                    <option value="all">All Types</option>
-                                    <option value="mcq">MCQ</option>
-                                    <option value="passage">Passage</option>
-                                    <option value="descriptive">Descriptive</option>
-                                </select>
-                            </div>
-                        </div>
-                     </div>
-                     <button onClick={() => { setFilterSegment(''); setFilterGroup(''); setFilterSubject(''); setFilterTopic(''); setSearchQuery(''); setFilterType('all'); }} className="w-full py-2 text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Reset Filters</button>
                  </div>
-             )}
+               )}
 
-             {/* Table */}
-             <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-full">
-                 <div className="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
-                        <input className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 outline-none bg-white" placeholder="Search question text..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    </div>
-                    <select className="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white outline-none font-medium text-slate-600" value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(0); }}>
-                        <option value={20}>20 Rows</option>
-                        <option value={50}>50 Rows</option>
-                        <option value={100}>100 Rows</option>
-                    </select>
-                 </div>
-                 <div className="flex-1 overflow-auto relative">
-                     <table className="w-full text-left text-sm border-collapse">
-                        <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
-                           <tr>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase w-10">#</th>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase w-[50%]">Question</th>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Topic</th>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Type</th>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase">Subject</th>
-                              <th className="px-4 py-3 border-b border-slate-200 font-bold text-slate-500 text-xs uppercase text-right">Actions</th>
-                           </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                           {loading ? (
-                              <tr><td colSpan={6} className="p-20 text-center text-slate-400">Loading data...</td></tr>
-                           ) : questions.length === 0 ? (
-                              <tr><td colSpan={6} className="p-20 text-center text-slate-400 flex flex-col items-center"><LayoutGrid size={48} className="mb-4 opacity-20"/>No questions match your criteria.</td></tr>
-                           ) : (
-                              questions.map((q, i) => (
-                                 <tr key={q.id} className="hover:bg-indigo-50/30 transition-colors group">
-                                    <td className="px-4 py-3 text-xs text-slate-400 font-mono">{page * itemsPerPage + i + 1}</td>
-                                    <td className="px-4 py-3">
-                                       <div className="font-medium text-slate-800 line-clamp-2 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                       {q.topic_tag ? <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">{q.topic_tag}</span> : <span className="text-slate-300 text-xs">-</span>}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${q.question_type === 'passage' ? 'bg-purple-50 text-purple-700 border-purple-100' : q.question_type === 'mcq' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>{q.question_type}</span>
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-slate-500 font-medium truncate max-w-[150px]" title={q.subjects?.title}>{q.subjects?.title || '-'}</td>
-                                    <td className="px-4 py-3 text-right">
-                                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                           <button onClick={() => handleEdit(q)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit"><Edit3 size={16}/></button>
-                                           <button onClick={() => handleDelete(q.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete"><Trash2 size={16}/></button>
-                                       </div>
-                                    </td>
-                                 </tr>
-                              ))
-                           )}
-                        </tbody>
-                     </table>
-                 </div>
-                 <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
-                    <span className="text-xs text-slate-500 font-medium">Page {page + 1}</span>
-                    <div className="flex gap-2">
-                        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50">Previous</button>
-                        <button onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50">Next</button>
-                    </div>
-                 </div>
-             </div>
-          </div>
+               {/* TABLE */}
+               <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-full">
+                   <div className="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                       <Search className="w-4 h-4 text-slate-400"/>
+                       <input className="flex-1 bg-transparent text-sm outline-none" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                   </div>
+                   <div className="flex-1 overflow-auto">
+                       <table className="w-full text-left text-sm">
+                           <thead className="bg-slate-50 sticky top-0">
+                               <tr>
+                                   <th className="px-4 py-3 font-bold text-slate-500 text-xs uppercase w-12">#</th>
+                                   <th className="px-4 py-3 font-bold text-slate-500 text-xs uppercase">Question</th>
+                                   <th className="px-4 py-3 font-bold text-slate-500 text-xs uppercase">Type</th>
+                                   <th className="px-4 py-3 font-bold text-slate-500 text-xs uppercase text-right">Actions</th>
+                               </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                               {questions.map((q, i) => (
+                                   <tr key={q.id} className="hover:bg-slate-50 group">
+                                       <td className="px-4 py-3 text-slate-400 font-mono text-xs">{i + 1 + pagination.page * pagination.itemsPerPage}</td>
+                                       <td className="px-4 py-3"><div className="line-clamp-2" dangerouslySetInnerHTML={{__html: q.question_text}} /></td>
+                                       <td className="px-4 py-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold uppercase">{q.question_type}</span></td>
+                                       <td className="px-4 py-3 text-right"><button onClick={() => handleEdit(q)} className="p-1.5 hover:bg-slate-200 rounded text-slate-500"><Edit3 size={16}/></button><button onClick={() => handleDelete(q.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500 ml-1"><Trash2 size={16}/></button></td>
+                                   </tr>
+                               ))}
+                           </tbody>
+                       </table>
+                   </div>
+               </div>
+           </div>
        )}
     </div>
   );
