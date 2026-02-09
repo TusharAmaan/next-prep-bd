@@ -89,16 +89,14 @@ function BuilderContent() {
         const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
         
         if (prof) {
-            console.log("Profile Data:", prof); // Debugging
-
-            const plan = (prof.subscription_plan || '').toLowerCase().trim();
-            
-            // SIMPLIFIED CHECK: If plan is 'pro' or 'trial', grant access.
-            const hasAccess = (plan === 'pro' || plan === 'trial');
+            // ROBUST PERMISSION CHECK
+            // We convert to lower case and check if it INCLUDES 'pro' or 'trial' to be safe against spaces/casing
+            const plan = (prof.subscription_plan || '').toLowerCase();
+            const hasAccess = plan.includes('pro') || plan.includes('trial');
             
             setIsPro(hasAccess);
             
-            // Set Institute Name logic
+            // Set Institute Name logic (only override default if we aren't editing an existing paper)
             if(prof.institute_name && !isEditMode) {
                  setInstituteName(prof.institute_name);
             }
@@ -202,10 +200,26 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ADVANCED PRINTING ENGINE (REFINED LAYOUT) ---
+  // --- 4. ADVANCED PRINTING ENGINE (FIXED) ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+
+    const isLandscape = printFormat === 'landscape';
+
+    // --- FIX: DEFINING HEADER HTML HERE ---
+    const headerHtml = `
+      <div class="header-block">
+          <h1>${instituteName}</h1>
+          <h2>${paperTitle}</h2>
+          <div class="meta-bar">
+              <span>Time: ${duration} Mins</span>
+              <span>Total Marks: ${totalMarks}</span>
+          </div>
+          ${showInstructions ? `<div class="instructions">${instructions}</div>` : ''}
+          <div class="separator"></div>
+      </div>
+    `;
 
     // Generate Question HTML
     const questionsHtml = selectedQuestions.map((q, idx) => {
@@ -217,8 +231,6 @@ function BuilderContent() {
              </div>` 
           : '';
         
-        // Structure: Mark FIRST (floated right), then Number, then Text
-        // This ensures text wraps AROUND the mark instead of overlapping it.
         return `
             <div class="question-block">
                 <div class="q-marks">[${q.marks}]</div>
@@ -231,18 +243,12 @@ function BuilderContent() {
         `;
     }).join('');
 
-    const instructionsHtml = showInstructions 
-        ? `<div class="instructions">${instructions}</div>` 
-        : '';
-
-    const isLandscape = printFormat === 'landscape';
-    
     const cssStyles = `
       @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
       
       @page {
           size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
-          /* TIGHTER MARGINS: 10mm sides, 8mm bottom to save paper */
+          /* OPTIMIZED MARGINS: 8mm bottom to reduce waste */
           margin: 10mm 10mm 8mm 10mm;
       }
       
@@ -262,9 +268,8 @@ function BuilderContent() {
       /* --- HEADER STYLES --- */
       .header-block {
           text-align: center;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
           break-inside: avoid; 
-          /* In Landscape, this becomes the top of Col 1 */
       }
       h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
       h2 { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
@@ -285,21 +290,21 @@ function BuilderContent() {
 
       /* --- QUESTION BLOCK STYLES --- */
       .question-block {
-          margin-bottom: 10px;
-          display: block;
+          margin-bottom: 12px;
+          display: block; 
           position: relative;
           padding-left: 25px; /* Indent for Q Number */
-          /* break-inside: auto (default) allows splitting across columns to save space */
+          break-inside: auto; /* Allow breaking naturally */
       }
 
-      /* FLOAT THE MARK RIGHT so text wraps around it safely */
+      /* Marks Floated Right */
       .q-marks {
           float: right;
           font-family: 'Inter', sans-serif; 
           font-weight: 700; 
           font-size: 13px; 
-          margin-left: 8px; /* Buffer between text and mark */
-          background: #fff; /* Ensure it covers lines if needed */
+          margin-left: 8px;
+          background: #fff;
           padding-left: 5px;
       }
 
@@ -311,11 +316,9 @@ function BuilderContent() {
       .q-text { 
           font-size: 13px; 
           line-height: 1.5; 
-          text-align: justify; /* JUSTIFIED TEXT */
+          text-align: justify; /* Justify Text */
           text-justify: inter-word;
       }
-      
-      /* Ensure paragraphs inside editor content are inline or clean */
       .q-text p { margin: 0; display: inline; }
       
       .options-grid { 
@@ -323,7 +326,7 @@ function BuilderContent() {
           grid-template-columns: 1fr 1fr; 
           gap: 4px; 
           margin-top: 5px; 
-          clear: both; /* Clear marks if options are below */
+          clear: both;
       }
       .option { font-size: 12px; }
 
