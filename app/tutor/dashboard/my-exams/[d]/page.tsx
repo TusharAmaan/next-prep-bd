@@ -23,6 +23,7 @@ export default function ExamViewPage() {
     const fetchExam = async () => {
         try {
             const examId = params.id;
+            console.log("Fetching ID:", examId);
             
             // 1. Auth Check
             const { data: { user } } = await supabase.auth.getUser();
@@ -38,14 +39,20 @@ export default function ExamViewPage() {
                 .eq('id', examId)
                 .single();
 
-            if (dbError) throw dbError;
-            if (!data) throw new Error("Exam not found.");
+            if (dbError) {
+                console.error("DB Error:", dbError);
+                throw dbError;
+            }
+            if (!data) throw new Error("Exam not found in database.");
 
+            // 4. Set Success
             setExam(data);
+
         } catch (err: any) {
             console.error("Load Error:", err);
             setError(err.message || "Failed to load exam.");
         } finally {
+            // 5. CRITICAL: Always turn off loading
             setLoading(false);
         }
     };
@@ -58,13 +65,15 @@ export default function ExamViewPage() {
     documentTitle: exam?.title || "Exam Paper",
   });
 
+  // --- LOADING ---
   if (loading) return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600"/>
-          <p className="text-slate-500 font-bold animate-pulse">Loading Exam...</p>
+          <p className="text-slate-500 font-bold animate-pulse">Retrieving Exam...</p>
       </div>
   );
 
+  // --- ERROR ---
   if (error || !exam) return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-6 p-4">
           <div className="bg-red-100 p-4 rounded-full"><ShieldAlert className="w-10 h-10 text-red-600"/></div>
@@ -78,6 +87,7 @@ export default function ExamViewPage() {
       </div>
   );
 
+  // --- SUCCESS ---
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
        <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50 print:hidden">
