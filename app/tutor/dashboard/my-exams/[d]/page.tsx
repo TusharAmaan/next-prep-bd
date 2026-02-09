@@ -4,9 +4,9 @@ import { useState, useEffect, Suspense, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Search, Plus, Trash2, Save, CheckCircle, 
-  Loader2, ArrowLeft, Eye, X, MonitorPlay, 
-  Printer, ChevronDown, ChevronUp, Clock, FileText, Hash, 
-  Settings, Layout, Columns
+  Loader2, ArrowLeft, Eye, X, 
+  Printer, Clock, FileText, Hash, 
+  Layout, Columns
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useRouter, useParams } from "next/navigation";
@@ -51,11 +51,11 @@ function BuilderContent() {
   const [paperTitle, setPaperTitle] = useState("Monthly Assessment");
   const [instituteName, setInstituteName] = useState("NextPrep Model Test");
   const [duration, setDuration] = useState("45");
-  const [footerText, setFooterText] = useState("Good Luck"); // <--- NEW FOOTER STATE
+  const [footerText, setFooterText] = useState("Good Luck");
   const [showInstructions, setShowInstructions] = useState(true);
   const [instructions, setInstructions] = useState("<ul><li>Answer all questions.</li><li>No electronic devices allowed.</li></ul>");
 
-  // Sidebar / Discovery State
+  // Sidebar State
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "", topic: "" });
@@ -86,13 +86,22 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
+        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name, subscription_status').eq('id', user.id).single();
+        
         if (prof) {
-            // Allow access if plan is pro OR trial
-            const hasAccess = prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial';
+            // DEBUG: Check console if it still locks
+            console.log("User Profile Loaded:", prof);
+
+            // ROBUST CHECK: Trim spaces and lowercase to ensure matches match 'trial', 'Trial ', etc.
+            const plan = prof.subscription_plan ? prof.subscription_plan.toLowerCase().trim() : '';
+            const status = prof.subscription_status ? prof.subscription_status.toLowerCase().trim() : '';
+
+            // Allow if Plan is 'pro' OR 'trial' (and status is active for extra safety, though plan check is usually enough)
+            const hasAccess = (plan === 'pro' || plan === 'trial') && status === 'active';
+            
             setIsPro(hasAccess);
             
-            // Set Institute Name (Only if creating new, or if existing is default)
+            // Set Institute Name logic
             if(prof.institute_name && !isEditMode) {
                  setInstituteName(prof.institute_name);
             }
@@ -108,8 +117,6 @@ function BuilderContent() {
               setPaperTitle(exam.title);
               setInstituteName(exam.institute_name || "NextPrep Model Test");
               setDuration(exam.duration ? exam.duration.replace(/\D/g, '') : "45");
-              
-              // Load custom footer if saved, otherwise default
               if (exam.settings?.footerText) setFooterText(exam.settings.footerText);
 
               const loadedQuestions = (exam.questions || []).map((q: any) => ({
@@ -198,7 +205,7 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ADVANCED PRINTING ENGINE ---
+  // --- 4. ADVANCED PRINTING ENGINE (FIXED LAYOUT) ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -213,14 +220,16 @@ function BuilderContent() {
              </div>` 
           : '';
         
+        // FIXED STRUCTURE: Uses floats instead of Flexbox to allow column breaking
         return `
             <div class="question-block">
-                <div class="q-content">
-                    <span class="q-num">${idx + 1}.</span>
-                    <div class="q-text">${q.question_text}</div>
+                <span class="q-marks">[${q.marks}]</span>
+                <span class="q-num">${idx + 1}.</span>
+                <div class="q-text">
+                    ${q.question_text}
                     ${optionsHtml}
                 </div>
-                <div class="q-marks">[${q.marks}]</div>
+                <div style="clear:both;"></div>
             </div>
         `;
     }).join('');
@@ -229,7 +238,6 @@ function BuilderContent() {
         ? `<div class="instructions">${instructions}</div>` 
         : '';
 
-    // Dynamic Styles based on Format
     const isLandscape = printFormat === 'landscape';
     
     const cssStyles = `
@@ -254,7 +262,6 @@ function BuilderContent() {
       h2 { margin: 5px 0 15px 0; font-size: 16px; font-weight: normal; color: #444; }
       .meta-bar { display: flex; justify-content: space-between; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; }
 
-      /* Instructions */
       .instructions { 
           font-size: 13px; font-style: italic; margin-bottom: 20px; 
           padding: 8px 12px; border: 1px dashed #ccc; background: #fafafa;
@@ -262,45 +269,55 @@ function BuilderContent() {
       }
       .instructions ul { margin: 0; padding-left: 20px; }
 
-      /* Columns Logic */
+      /* --- COLUMN LOGIC (MS WORD STYLE) --- */
       .questions-container {
-          ${isLandscape ? 'column-count: 2; column-gap: 30px;' : ''}
+          ${isLandscape ? 'column-count: 2; column-gap: 40px;' : ''}
+          width: 100%;
       }
 
-      /* Question Block */
+      /* --- QUESTION BLOCK (FLOW FIX) --- */
       .question-block {
           margin-bottom: 15px;
-          break-inside: avoid;
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          page-break-inside: avoid;
+          display: block; /* Important: Block allows breaking inside */
+          /* REMOVED 'break-inside: avoid' to allow splitting between columns */
+      }
+
+      .q-num { 
+          float: left; 
+          font-weight: bold; 
+          margin-right: 8px; 
+          font-size: 14px;
+      }
+
+      .q-marks { 
+          float: right; 
+          font-family: 'Inter', sans-serif; 
+          font-weight: 700; 
+          font-size: 13px; 
+          margin-left: 10px;
+      }
+
+      .q-text { 
+          display: inline; /* Allows text to wrap naturally */
+          font-size: 14px; 
+          line-height: 1.5; 
+          text-align: justify;
       }
       
-      .q-content { flex: 1; padding-right: 10px; }
-      .q-num { font-weight: bold; margin-right: 8px; float: left; }
-      .q-text { font-size: 14px; line-height: 1.5; display: inline; }
       .q-text p { display: inline; margin: 0; }
       
       .options-grid { 
           display: grid; 
           grid-template-columns: 1fr 1fr; 
           gap: 6px; 
-          margin-top: 6px; 
-          margin-left: 20px; 
+          margin-top: 8px; 
+          margin-left: 24px; /* Indent options */
+          clear: both; /* Ensure options clear the floats if needed */
       }
       .option { font-size: 13px; }
-      
-      .q-marks { 
-          font-family: 'Inter', sans-serif; 
-          font-weight: 700; 
-          font-size: 13px; 
-          white-space: nowrap; 
-      }
 
-      /* Footer */
       .footer {
-          margin-top: 30px;
+          margin-top: 40px;
           text-align: center;
           font-size: 12px;
           font-weight: bold;
@@ -309,14 +326,13 @@ function BuilderContent() {
           color: #888;
           border-top: 1px solid #eee;
           padding-top: 10px;
-          break-inside: avoid;
       }
     `;
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>${paperTitle} - ${printFormat}</title>
+          <title>${paperTitle}</title>
           <style>${cssStyles}</style>
         </head>
         <body>
@@ -353,7 +369,6 @@ function BuilderContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Sanitize Empty Marks to 0
     const sanitizedQuestions = selectedQuestions.map(q => ({
         ...q,
         marks: (q.marks === "" || q.marks === undefined) ? 0 : Number(q.marks)
@@ -366,7 +381,7 @@ function BuilderContent() {
         duration: `${duration} Mins`,
         total_marks: totalMarks,
         questions: sanitizedQuestions,
-        settings: { instructions, showInstructions, footerText }, // <--- SAVING FOOTER
+        settings: { instructions, showInstructions, footerText },
         is_finalized: true 
     };
 
@@ -432,16 +447,14 @@ function BuilderContent() {
       {/* --- MAIN WORKSPACE --- */}
       <div className="flex flex-1 overflow-hidden">
           
-          {/* SIDEBAR: FILTERS & QUESTIONS */}
+          {/* SIDEBAR */}
           <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
-              {/* Robust Filters always visible */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
-                  {/* Filter Grid */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -458,7 +471,6 @@ function BuilderContent() {
                   </div>
               </div>
 
-              {/* Question List */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-100/50">
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
@@ -484,14 +496,12 @@ function BuilderContent() {
               </div>
           </div>
 
-          {/* CENTER: PAPER CANVAS */}
+          {/* CANVAS */}
           <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 md:p-6 flex justify-center relative">
-              
               <div className="bg-white shadow-xl w-full max-w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* --- DOC HEADER (Editable) --- */}
+                  {/* HEADER */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
-                      {/* Institute Name Input */}
                       <input 
                         className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
                         value={instituteName} 
@@ -530,7 +540,7 @@ function BuilderContent() {
                       {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">LOCKED</span>}
                   </div>
 
-                  {/* --- INSTRUCTIONS SECTION --- */}
+                  {/* INSTRUCTIONS */}
                   <div className="mb-8 group relative flex-none">
                       <div className="flex justify-between items-center mb-1 print:hidden opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0">
                           <button onClick={() => setShowInstructions(!showInstructions)} className="text-xs text-indigo-600 font-bold hover:underline flex gap-1 items-center bg-white px-2 py-0.5 rounded shadow-sm border">
@@ -544,7 +554,7 @@ function BuilderContent() {
                       )}
                   </div>
 
-                  {/* --- QUESTIONS LIST --- */}
+                  {/* QUESTIONS */}
                   <div className="space-y-6 flex-1">
                       {selectedQuestions.length === 0 && (
                           <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
@@ -594,7 +604,7 @@ function BuilderContent() {
                       ))}
                   </div>
 
-                  {/* --- NEW FOOTER --- */}
+                  {/* FOOTER */}
                   <div className="mt-16 pt-4 border-t border-slate-300 text-center flex-none">
                       <input 
                           className="w-full text-center text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 outline-none bg-transparent hover:text-slate-600 focus:text-indigo-600"
@@ -607,7 +617,7 @@ function BuilderContent() {
           </div>
       </div>
 
-      {/* --- PRINT SETTINGS MODAL --- */}
+      {/* PRINT MODAL */}
       {showPrintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
              <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in zoom-in-95">
@@ -643,7 +653,7 @@ function BuilderContent() {
         </div>
       )}
 
-      {/* --- PREVIEW MODAL --- */}
+      {/* PREVIEW MODAL */}
       {previewQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
