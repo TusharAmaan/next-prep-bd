@@ -1,219 +1,452 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useReactToPrint } from "react-to-print";
-import { Printer, ArrowLeft, ShieldAlert, Loader2, FileText, Pencil, AlertCircle } from "lucide-react";
+import { 
+  Search, Plus, Trash2, Save, CheckCircle, 
+  Loader2, ArrowLeft, Eye, X, MonitorPlay, EyeOff,
+  Printer, Pencil // Added icons
+} from "lucide-react";
+import { Editor } from "@tinymce/tinymce-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 
-export default function ExamViewPage() {
-  const params = useParams();
-  const router = useRouter();
+// --- TYPES ---
+interface Question {
+  id: string;
+  question_text: string;
+  question_type: string;
+  marks: number;
+  topic_tag?: string;
+  options?: any[];
+}
+
+interface MetaItem {
+  id: string | number;
+  title: string;
+}
+
+// Separate component for search params to avoid Suspense errors
+function BuilderContent() {
   const supabase = createClient();
-  const printRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit_id');
+
+  // --- STATE ---
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   
-  const [exam, setExam] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+  const [paperTitle, setPaperTitle] = useState("Monthly Assessment");
+  const [instituteName, setInstituteName] = useState("NextPrep Model Test");
+  const [duration, setDuration] = useState("45 Mins");
+  const [totalMarks, setTotalMarks] = useState(0);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [instructions, setInstructions] = useState("<ul><li>Answer all questions.</li><li>No electronic devices allowed.</li></ul>");
 
+  const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "", topic: "" });
+  
+  const [metaData, setMetaData] = useState<{
+    segments: MetaItem[];
+    groups: MetaItem[];
+    subjects: MetaItem[];
+  }>({ segments: [], groups: [], subjects: [] });
+
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const [showPaperOverview, setShowPaperOverview] = useState(false);
+
+  // --- 1. INITIAL LOAD & EDIT MODE CHECK ---
   useEffect(() => {
-    const fetchExam = async () => {
-        try {
-            // 1. Get ID safely
-            const examId = params?.id;
-            if (!examId) return; // Wait for ID to appear
-
-            console.log("1. Starting fetch for Exam ID:", examId);
-
-            // 2. Check Auth
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
-            if (authError || !user) {
-                console.error("Auth Error:", authError);
-                router.push('/login');
-                return;
-            }
-            console.log("2. User Authenticated:", user.id);
-
-            // 3. Fetch Exam Data
-            const { data, error: dbError } = await supabase
-                .from('exam_papers')
-                .select('*')
-                .eq('id', examId)
-                .single();
-
-            if (dbError) {
-                console.error("3. Supabase DB Error:", dbError);
-                throw new Error(dbError.message);
-            }
-
-            if (!data) {
-                console.error("3. Data is null (Exam likely belongs to another user)");
-                throw new Error("Exam not found or access denied.");
-            }
-
-            console.log("3. Success! Exam Data:", data);
-            setExam(data);
-
-        } catch (err: any) {
-            console.error("Critical Fetch Error:", err);
-            setError(err.message || "An unexpected error occurred.");
-        } finally {
-            setLoading(false);
+    const init = async () => {
+      setInitialLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
+        if (prof) {
+            setIsPro(prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial');
+            if(prof.institute_name && !editId) setInstituteName(prof.institute_name);
         }
+      }
+      
+      // Load Segments
+      const { data: segs } = await supabase.from('segments').select('id, title');
+      if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
+
+      // EDIT MODE LOGIC
+      if (editId) {
+          const { data: exam } = await supabase.from('exam_papers').select('*').eq('id', editId).single();
+          if (exam) {
+              setPaperTitle(exam.title);
+              setInstituteName(exam.institute_name || "NextPrep Model Test");
+              setDuration(exam.duration);
+              setTotalMarks(exam.total_marks);
+              setSelectedQuestions(exam.questions || []);
+              if (exam.settings) {
+                  setShowInstructions(exam.settings.showInstructions);
+                  setInstructions(exam.settings.instructions);
+              }
+          }
+      }
+      setInitialLoading(false);
+    };
+    init();
+  }, [editId]);
+
+  // --- 2. FILTER LOGIC ---
+  const loadGroups = async (segId: string) => {
+    const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId);
+    if (data) {
+        setMetaData(prev => ({ ...prev, groups: data as MetaItem[] }));
+        setFilters(prev => ({ ...prev, segment: segId, group: "", subject: "" }));
+    }
+  };
+
+  const loadSubjects = async (grpId: string) => {
+    const { data } = await supabase.from('subjects').select('id, title').eq('group_id', grpId);
+    if (data) {
+        setMetaData(prev => ({ ...prev, subjects: data as MetaItem[] }));
+        setFilters(prev => ({ ...prev, group: grpId, subject: "" }));
+    }
+  };
+
+  const searchQuestions = async () => {
+    setLoading(true);
+    let query = supabase
+      .from('question_bank')
+      .select('id, question_text, question_type, marks, topic_tag, options:question_options(option_text)')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (filters.segment) query = query.eq('segment_id', filters.segment);
+    if (filters.group) query = query.eq('group_id', filters.group);
+    if (filters.subject) query = query.eq('subject_id', filters.subject);
+    if (filters.type) query = query.eq('question_type', filters.type);
+    if (filters.topic) query = query.ilike('topic_tag', `%${filters.topic}%`);
+    if (search) query = query.ilike('question_text', `%${search}%`);
+
+    const { data } = await query;
+    if (data) setAvailableQuestions(data);
+    setLoading(false);
+  };
+
+  // --- 3. ACTIONS ---
+  const addToPaper = (q: Question) => {
+    if (selectedQuestions.some(item => item.id === q.id)) return;
+    const newQ = { ...q }; 
+    const updated = [...selectedQuestions, newQ];
+    setSelectedQuestions(updated);
+    recalcTotal(updated);
+  };
+
+  const removeFromPaper = (id: string) => {
+    const updated = selectedQuestions.filter(q => q.id !== id);
+    setSelectedQuestions(updated);
+    recalcTotal(updated);
+  };
+
+  const updateMark = (id: string, newMark: number) => {
+    const updated = selectedQuestions.map(q => q.id === id ? { ...q, marks: newMark } : q);
+    setSelectedQuestions(updated);
+    recalcTotal(updated);
+  };
+
+  const recalcTotal = (questions: Question[]) => {
+    const total = questions.reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
+    setTotalMarks(total);
+  };
+
+  // --- PRINT LOGIC ---
+  const handlePrintSingleQuestion = (q: Question) => {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) return;
+
+    // Build Options HTML if they exist
+    const optionsHtml = (q.options && q.options.length > 0)
+      ? `<div style="margin-top:20px; display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          ${q.options.map((opt: any, i: number) => 
+            `<div style="font-size:14px; padding: 5px;"><strong>(${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
+          ).join('')}
+         </div>` 
+      : '';
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Question - NextPrepBD</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
+            .header { margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+            .logo { font-weight: bold; font-size: 1.2rem; color: #4f46e5; }
+            .meta { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+            .q-container { background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
+            .q-text { font-size: 18px; font-weight: 500; margin-bottom: 10px; line-height: 1.6; }
+            .q-text p { margin: 0; }
+            @media print {
+              body { padding: 0; }
+              .q-container { border: none; padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">NextPrepBD</div>
+            <div class="meta">ID: ${q.id.substring(0,8)}... • Marks: ${q.marks}</div>
+          </div>
+          <div class="q-container">
+            <div class="q-text">${q.question_text}</div>
+            ${optionsHtml}
+          </div>
+          <script>
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleSave = async () => {
+    if (selectedQuestions.length === 0) return alert("Please add questions first!");
+    setSaving(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const payload = {
+        user_id: user.id,
+        title: paperTitle,
+        institute_name: instituteName,
+        duration: duration,
+        total_marks: totalMarks,
+        questions: selectedQuestions,
+        settings: { instructions, showInstructions },
+        is_finalized: true 
     };
 
-    fetchExam();
-  }, [params, router]);
+    let error;
+    if (editId) {
+        // Update existing exam
+        const { error: updateError } = await supabase.from('exam_papers').update(payload).eq('id', editId);
+        error = updateError;
+    } else {
+        // Create new exam
+        const { error: insertError } = await supabase.from('exam_papers').insert(payload);
+        error = insertError;
+    }
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: exam?.title || "Exam Paper",
-  });
+    if (error) {
+        alert("Save Failed: " + error.message);
+    } else {
+        alert("Exam Saved Successfully!");
+        router.push("/tutor/dashboard/my-exams"); 
+    }
+    setSaving(false);
+  };
 
-  // --- LOADING STATE ---
-  if (loading) return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-600"/>
-          <p className="text-slate-500 font-bold animate-pulse">Retrieving Exam Data...</p>
-          <p className="text-xs text-slate-400">If this takes too long, check browser console (F12)</p>
-      </div>
-  );
+  if(initialLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600"/></div>;
 
-  // --- ERROR STATE ---
-  if (error) return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-6 p-4">
-          <div className="bg-red-100 p-4 rounded-full"><ShieldAlert className="w-12 h-12 text-red-600"/></div>
-          <div className="text-center">
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Unable to Load Exam</h1>
-              <div className="bg-white p-4 rounded-lg border border-red-200 shadow-sm max-w-md mx-auto text-left">
-                  <p className="text-xs font-bold text-slate-400 uppercase mb-1">Error Details:</p>
-                  <code className="text-sm text-red-600 block bg-red-50 p-2 rounded">{error}</code>
+  return (
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 font-sans text-slate-900">
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm z-30">
+          <div className="flex items-center gap-4">
+              <Link href="/tutor/dashboard" className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft className="w-5 h-5 text-slate-500"/></Link>
+              <div>
+                  <h1 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                      {editId ? "Editing Exam" : "Exam Composer"}
+                  </h1>
+                  <div className="flex items-center gap-3 text-xs font-medium text-slate-500">
+                      <span>{selectedQuestions.length} Questions</span>
+                      <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                      <span>{totalMarks} Total Marks</span>
+                  </div>
               </div>
-              <div className="mt-8 flex justify-center gap-4">
-                  <Link href="/tutor/dashboard/my-exams" className="px-6 py-2.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                      Back to Library
-                  </Link>
-                  <button onClick={() => window.location.reload()} className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors">
-                      Retry
-                  </button>
+          </div>
+          <div className="flex gap-3">
+              <button onClick={() => setShowPaperOverview(true)} disabled={selectedQuestions.length === 0} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50">
+                  <MonitorPlay className="w-4 h-4"/> View Overview
+              </button>
+              <button onClick={handleSave} disabled={saving || selectedQuestions.length === 0} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
+                  {editId ? "Update Exam" : "Save & Exit"}
+              </button>
+          </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+          {/* LEFT: DISCOVERY */}
+          <div className="w-96 bg-white border-r border-slate-200 flex flex-col z-20 hidden md:flex">
+              <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-3">
+                  <div className="relative">
+                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
+                      <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 transition-all" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                  </div>
+                  <select className="w-full text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, type: e.target.value})}><option value="">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Creative</option></select>
+                      <input className="text-xs border p-2 rounded bg-white" placeholder="Topic Tag..." onChange={e => setFilters({...filters, topic: e.target.value})} />
+                  </div>
+                  <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-900 transition-all">Search Questions</button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-slate-100">
+                  {availableQuestions.map(q => {
+                      const isAdded = selectedQuestions.some(sq => sq.id === q.id);
+                      return (
+                          <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group ${isAdded ? 'opacity-60 border-indigo-200' : 'border-slate-200'}`}>
+                              <div className="flex justify-between items-start mb-2">
+                                  <div className="flex gap-1"><span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded uppercase text-slate-600">{q.question_type}</span>{q.topic_tag && <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 max-w-[80px] truncate">{q.topic_tag}</span>}</div>
+                                  <span className="text-xs font-bold text-slate-900">{q.marks} Pts</span>
+                              </div>
+                              <div className="text-xs text-slate-700 line-clamp-2 mb-2" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
+                              <div className="flex gap-2">
+                                  <button onClick={(e) => { e.stopPropagation(); setPreviewQuestion(q); }} className="flex-1 py-1.5 rounded bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 flex items-center justify-center gap-1"><Eye className="w-3 h-3"/> View</button>
+                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>{isAdded ? <CheckCircle className="w-3 h-3"/> : <Plus className="w-3 h-3"/>} {isAdded ? "Added" : "Add"}</button>
+                              </div>
+                          </div>
+                      );
+                  })}
+              </div>
+          </div>
+
+          {/* RIGHT: CANVAS */}
+          <div className="flex-1 overflow-y-auto bg-slate-200 p-4 md:p-8 flex justify-center">
+              <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[20mm] relative">
+                  <div className="text-center border-b-2 border-black pb-4 mb-6 group">
+                      <input className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent ${!isPro ? 'cursor-not-allowed text-slate-500' : 'text-slate-900'}`} value={instituteName} onChange={e => isPro && setInstituteName(e.target.value)} disabled={!isPro} placeholder="Your Institute Name"/>
+                      <input className="w-full text-center text-lg font-bold mb-4 outline-none bg-transparent" value={paperTitle} onChange={e => setPaperTitle(e.target.value)} placeholder="Exam Name / Subject"/>
+                      <div className="flex justify-between font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800">
+                          <div className="flex gap-2 items-center"><span>Time:</span><input className="w-20 font-black outline-none border-b border-transparent focus:border-black bg-transparent text-black" value={duration} onChange={e => setDuration(e.target.value)} /></div>
+                          <div className="flex gap-2 items-center"><span>Total Marks:</span><span className="font-black text-black">{totalMarks}</span></div>
+                      </div>
+                  </div>
+                  <div className="mb-8">
+                      <div className="flex justify-between items-center mb-1 print:hidden">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Instructions</span>
+                          <button onClick={() => setShowInstructions(!showInstructions)} className="text-slate-400 hover:text-indigo-600">{showInstructions ? <Eye className="w-3 h-3"/> : <EyeOff className="w-3 h-3"/>}</button>
+                      </div>
+                      {showInstructions && (<div className="text-sm text-slate-800 leading-relaxed p-2 rounded border border-transparent hover:border-slate-100 transition-colors"><Editor apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" value={instructions} onEditorChange={c => setInstructions(c)} init={{ height: 80, menubar: false, toolbar: false, statusbar: false }} /></div>)}
+                  </div>
+                  <div className="space-y-6">
+                      {selectedQuestions.map((q, idx) => (
+                          <div key={q.id} className="relative group pl-2 hover:bg-slate-50 transition-colors rounded -ml-2 p-1 break-inside-avoid">
+                              <div className="flex gap-3 items-start"><span className="font-bold text-lg w-6 flex-shrink-0 text-slate-900">{idx + 1}.</span><div className="flex-1"><div className="font-medium text-slate-900 text-sm leading-relaxed [&_p]:inline" dangerouslySetInnerHTML={{__html: q.question_text}}></div>{q.question_type === 'mcq' && q.options && (<div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-2">{q.options.map((opt:any, i:number) => (<div key={i} className="flex gap-2 text-sm items-start text-slate-800"><span className="font-bold text-slate-500">({String.fromCharCode(97 + i)})</span><span className="leading-snug">{opt.option_text}</span></div>))}</div>)}</div><div className="w-12 text-right">{isPro ? (<input type="number" className="w-8 text-right font-bold text-sm bg-slate-50 border border-slate-200 rounded px-1 focus:border-indigo-500 outline-none" value={q.marks} onChange={(e) => updateMark(q.id, Number(e.target.value))}/>) : <span className="font-bold text-sm text-slate-600">[{q.marks}]</span>}</div></div>
+                              <button onClick={() => removeFromPaper(q.id)} className="absolute -left-8 top-0 p-1.5 bg-white border border-red-100 text-red-500 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4"/></button>
+                          </div>
+                      ))}
+                  </div>
+                  <div className="mt-16 pt-6 border-t-2 border-slate-900 text-center"><p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Good Luck</p></div>
               </div>
           </div>
       </div>
-  );
 
-  if (!exam) return null; // Should not happen if error handling works
+      {previewQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+            <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                    <div>
+                      <h3 className="font-bold text-slate-800">Question Preview</h3>
+                      <div className="flex gap-2 text-xs mt-1">
+                          <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">{previewQuestion.question_type}</span>
+                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">{previewQuestion.marks} Marks</span>
+                      </div>
+                    </div>
+                    <button onClick={() => setPreviewQuestion(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                        <X className="w-5 h-5 text-slate-400"/>
+                    </button>
+                </div>
 
-  // --- SUCCESS STATE (Paper Render) ---
-  return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
-       
-       {/* 1. TOP BAR */}
-       <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50 print:hidden">
-           <div className="flex items-center gap-4">
-               <Link href="/tutor/dashboard/my-exams" className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-indigo-600 transition-colors">
-                   <ArrowLeft className="w-5 h-5"/>
-               </Link>
-               <div>
-                   <h1 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                       <FileText className="w-4 h-4 text-indigo-500"/> 
-                       {exam.title}
-                   </h1>
-                   <div className="flex gap-3 text-xs text-slate-500 font-medium">
-                        <span>{new Date(exam.created_at).toLocaleDateString()}</span>
-                        <span>•</span>
-                        <span>{exam.total_marks} Marks</span>
-                   </div>
-               </div>
-           </div>
-           
-           <div className="flex gap-2">
-               {/* EDIT BUTTON: Links back to builder with ID */}
-               <Link 
-                   href={`/tutor/dashboard/question-builder?edit_id=${exam.id}`}
-                   className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-               >
-                   <Pencil className="w-4 h-4"/> Edit
-               </Link>
-               
-               <button 
-                   onClick={() => handlePrint()} 
-                   className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95"
-               >
-                   <Printer className="w-4 h-4"/> Print / PDF
-               </button>
-           </div>
-       </div>
+                {/* Body (Scrollable) */}
+                <div className="p-6 overflow-y-auto">
+                    <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{__html: previewQuestion.question_text}}></div>
+                    
+                    {/* Render Options if MCQ */}
+                    {previewQuestion.options && previewQuestion.options.length > 0 && (
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {previewQuestion.options.map((opt: any, i: number) => (
+                                <div key={i} className="flex gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 items-center">
+                                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white border border-slate-300 rounded-full text-xs font-bold text-slate-500">
+                                        {String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span className="text-sm text-slate-700">{opt.option_text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-       {/* 2. PAPER PREVIEW (The "Blog Post" View) */}
-       <div className="flex-1 overflow-y-auto p-8 flex justify-center print:p-0 print:overflow-visible bg-slate-100/50">
-           <div ref={printRef} className="bg-white shadow-xl min-h-[297mm] w-[210mm] p-[20mm] relative print:shadow-none print:w-full print:h-auto print:p-0 print:m-0">
-               
-               {/* Exam Header */}
-               <div className="text-center border-b-2 border-black pb-6 mb-8">
-                   <h1 className="text-3xl font-black mb-2 text-slate-900 uppercase tracking-tight">{exam.institute_name}</h1>
-                   <h2 className="text-xl font-bold mb-4 text-slate-700">{exam.title}</h2>
-                   <div className="flex justify-between font-bold text-sm uppercase border-t-2 border-slate-100 pt-4 text-slate-600">
-                        <span>Time: {exam.duration}</span>
-                        <span>Marks: {exam.total_marks}</span>
-                   </div>
-               </div>
+                {/* Footer (Actions) */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        {/* EDIT BUTTON */}
+                        <a href={`/tutor/question-bank`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 hover:text-indigo-600 transition-colors">
+                            <Pencil className="w-4 h-4"/> <span className="inline">Edit</span>
+                        </a>
+                        {/* PRINT BUTTON */}
+                        <button onClick={() => handlePrintSingleQuestion(previewQuestion)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 hover:text-indigo-600 transition-colors">
+                            <Printer className="w-4 h-4"/> <span className="inline">Print</span>
+                        </button>
+                    </div>
 
-               {/* Instructions */}
-               {exam.settings?.instructions && exam.settings.showInstructions && (
-                   <div 
-                        className="mb-8 text-sm text-slate-800 leading-relaxed bg-slate-50/30 p-4 rounded-lg border border-slate-100 print:bg-transparent print:p-0 print:border-none" 
-                        dangerouslySetInnerHTML={{__html: exam.settings.instructions}}
-                   ></div>
-               )}
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button onClick={() => setPreviewQuestion(null)} className="flex-1 sm:flex-none px-5 py-2 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-lg transition-colors">
+                            Close
+                        </button>
+                        <button 
+                          onClick={() => { addToPaper(previewQuestion); setPreviewQuestion(null); }} 
+                          className="flex-1 sm:flex-none px-6 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Plus className="w-4 h-4"/> Add to Paper
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
 
-               {/* Question List Render */}
-               <div className="space-y-8">
-                   {exam.questions && exam.questions.length > 0 ? (
-                       exam.questions.map((q: any, idx: number) => (
-                           <div key={idx} className="flex gap-4 items-start break-inside-avoid">
-                               {/* Q Number */}
-                               <span className="font-bold text-lg w-6 flex-shrink-0 text-slate-900">{idx + 1}.</span>
-                               
-                               <div className="flex-1">
-                                   {/* Q Text */}
-                                   <div className="font-medium text-slate-900 mb-3 leading-relaxed text-base [&_p]:inline" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
-                                   
-                                   {/* MCQ Options */}
-                                   {q.question_type === 'mcq' && q.options && (
-                                       <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-2 ml-1">
-                                           {q.options.map((opt: any, i: number) => (
-                                               <div key={i} className="flex gap-2 text-sm items-start text-slate-800">
-                                                   <span className="font-semibold text-slate-500">({String.fromCharCode(97 + i)})</span>
-                                                   <span className="leading-snug">{opt.option_text}</span>
-                                               </div>
-                                           ))}
-                                       </div>
-                                   )}
-                               </div>
-                               
-                               {/* Marks */}
-                               <div className="font-bold text-sm min-w-[2.5rem] text-right text-slate-500">
-                                   [{q.marks}]
-                               </div>
-                           </div>
-                       ))
-                   ) : (
-                       <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
-                           <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2"/>
-                           <p className="text-slate-400 font-medium">This exam has no questions.</p>
-                       </div>
-                   )}
-               </div>
-
-               {/* Footer */}
-               <div className="mt-16 pt-8 border-t border-slate-200 text-center break-before-auto">
-                   <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Good Luck</p>
-                   {exam.settings?.showWatermark && (
-                       <p className="text-[9px] text-slate-300 mt-2 font-mono">Generated by NextPrep</p>
-                   )}
-               </div>
-           </div>
-       </div>
+      {showPaperOverview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+              <div className="bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                  <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                      <div><h3 className="font-black text-slate-800 text-lg">Exam Overview</h3><p className="text-xs text-slate-500">Read-only preview.</p></div>
+                      <button onClick={() => setShowPaperOverview(false)} className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"><X className="w-5 h-5"/></button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-8 bg-slate-100 flex justify-center">
+                      <div className="bg-white shadow-lg w-[210mm] min-h-[297mm] p-[20mm] pointer-events-none scale-90 origin-top">
+                          <div className="text-center border-b-2 border-black pb-4 mb-6">
+                              <h1 className="text-4xl font-black mb-2 text-slate-900">{instituteName}</h1>
+                              <h2 className="text-xl font-bold mb-4 text-slate-800">{paperTitle}</h2>
+                          </div>
+                          <div className="space-y-6">
+                              {selectedQuestions.map((q, idx) => (
+                                  <div key={idx} className="flex gap-3 items-start">
+                                      <span className="font-bold text-lg w-6 flex-shrink-0 text-slate-900">{idx + 1}.</span>
+                                      <div className="flex-1"><div className="font-medium text-slate-900 text-sm mb-2" dangerouslySetInnerHTML={{__html: q.question_text}}></div></div>
+                                      <div className="font-bold text-sm min-w-[2rem] text-right text-slate-600">[{q.marks}]</div>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
+  );
+}
+
+export default function QuestionBuilder() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600"/></div>}>
+      <BuilderContent />
+    </Suspense>
   );
 }
