@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, Suspense, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Search, Plus, Trash2, Save, CheckCircle, 
-  Loader2, ArrowLeft, Eye, X, MonitorPlay, EyeOff,
-  Printer, Pencil, ChevronDown, ChevronUp, Clock, FileText, Hash
+  Loader2, ArrowLeft, Eye, X, 
+  Printer, Clock, FileText, Hash, 
+  Layout, Columns, Filter, Copy
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation"; // Removed useParams as this is the Create page
 import Link from "next/link";
 
 // --- TYPES ---
@@ -16,8 +17,8 @@ interface Question {
   id: string;
   question_text: string;
   question_type: string;
-  default_marks: number; // The marks from the DB
-  marks: number;         // The marks currently assigned on the paper
+  default_marks: number;
+  marks: number | string;
   topic_tag?: string;
   options?: any[];
 }
@@ -27,25 +28,26 @@ interface MetaItem {
   title: string;
 }
 
+type PrintFormat = 'portrait' | 'landscape';
+
 function BuilderContent() {
   const supabase = createClient();
   const router = useRouter();
-  const params = useParams(); 
   
-  const routeId = params?.d as string;
-  const isEditMode = routeId && routeId !== 'new' && routeId !== 'create';
-
   // --- STATE ---
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isPro, setIsPro] = useState(false);
   
+  // Access Control
+  const [isPro, setIsPro] = useState(false);
+
   // Paper State
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [paperTitle, setPaperTitle] = useState("Monthly Assessment");
   const [instituteName, setInstituteName] = useState("NextPrep Model Test");
-  const [duration, setDuration] = useState("45"); // Store as string for input, convert for calc if needed
+  const [duration, setDuration] = useState("45");
+  const [footerText, setFooterText] = useState("Good Luck");
   const [showInstructions, setShowInstructions] = useState(true);
   const [instructions, setInstructions] = useState("<ul><li>Answer all questions.</li><li>No electronic devices allowed.</li></ul>");
 
@@ -53,7 +55,6 @@ function BuilderContent() {
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "", topic: "" });
-  const [showFilters, setShowFilters] = useState(false); // Collapsible filters
   
   const [metaData, setMetaData] = useState<{
     segments: MetaItem[];
@@ -61,12 +62,18 @@ function BuilderContent() {
     subjects: MetaItem[];
   }>({ segments: [], groups: [], subjects: [] });
 
+  // UI State
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
-  const [showPaperOverview, setShowPaperOverview] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printFormat, setPrintFormat] = useState<PrintFormat>('portrait');
+  const [isDuplicate, setIsDuplicate] = useState(false);
 
-  // Derived State
+  // --- DERIVED STATE ---
   const totalMarks = useMemo(() => {
-    return selectedQuestions.reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
+    return selectedQuestions.reduce((sum, q) => {
+        const m = typeof q.marks === 'string' ? parseFloat(q.marks) : q.marks;
+        return sum + (isNaN(m) ? 0 : m);
+    }, 0);
   }, [selectedQuestions]);
 
   // --- 1. INITIAL LOAD ---
@@ -76,40 +83,41 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
+        // Fetch Profile for Permissions & Defaults
+        const { data: prof } = await supabase.from('profiles')
+            .select('subscription_plan, institute_name, subscription_status')
+            .eq('id', user.id)
+            .single();
+        
         if (prof) {
-            setIsPro(prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial');
-            if(prof.institute_name && !isEditMode) setInstituteName(prof.institute_name);
+            console.log("User Profile:", prof); 
+
+            const plan = (prof.subscription_plan || '').toLowerCase().trim();
+            const status = (prof.subscription_status || '').toLowerCase().trim();
+
+            // FIXED: Robust Access Check
+            const hasAccess = (status === 'active') || plan.includes('pro') || plan.includes('trial');
+            setIsPro(hasAccess);
+            
+            // Prepopulate Institute Name if available
+            if(prof.institute_name) {
+                 setInstituteName(prof.institute_name);
+            }
         }
       }
       
+      // Load Segments
       const { data: segs } = await supabase.from('segments').select('id, title');
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
-      if (isEditMode) {
-          const { data: exam, error } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
-          if (exam) {
-              setPaperTitle(exam.title);
-              setInstituteName(exam.institute_name || "NextPrep Model Test");
-              setDuration(exam.duration ? exam.duration.replace(/\D/g, '') : "45"); // Extract number
-              setSelectedQuestions(exam.questions || []);
-              if (exam.settings) {
-                  setShowInstructions(exam.settings.showInstructions);
-                  setInstructions(exam.settings.instructions);
-              }
-              // Seed available with what we have to prevent empty list visual
-              setAvailableQuestions(exam.questions || []);
-          }
-      } else {
-        // Load initial questions for new exam
-        searchQuestions();
-      }
+      // Load initial questions
+      searchQuestions();
       setInitialLoading(false);
     };
     init();
-  }, [routeId, isEditMode]);
+  }, []);
 
-  // --- 2. DATA FETCHING ---
+  // --- 2. DATA & FILTERING ---
   const loadGroups = async (segId: string) => {
     const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId);
     if (data) {
@@ -143,11 +151,10 @@ function BuilderContent() {
 
     const { data } = await query;
     if (data) {
-        // Map DB marks to 'default_marks' and initialize 'marks'
         const mapped = data.map((q: any) => ({
             ...q,
             default_marks: q.marks,
-            marks: q.marks // Initialize editable mark with default
+            marks: q.marks 
         }));
         setAvailableQuestions(mapped);
     }
@@ -157,7 +164,6 @@ function BuilderContent() {
   // --- 3. ACTIONS ---
   const addToPaper = (q: Question) => {
     if (selectedQuestions.some(item => item.id === q.id)) return;
-    // When adding, ensure we clone it so we can edit marks independently
     const newQ = { ...q, marks: q.default_marks || q.marks }; 
     setSelectedQuestions([...selectedQuestions, newQ]);
   };
@@ -167,111 +173,222 @@ function BuilderContent() {
   };
 
   const updateQuestionMark = (id: string, newMark: string) => {
+    if (newMark === "") {
+        setSelectedQuestions(prev => prev.map(q => q.id === id ? { ...q, marks: "" } : q));
+        return;
+    }
     const num = parseFloat(newMark);
-    if (isNaN(num)) return;
-    
-    setSelectedQuestions(prev => prev.map(q => 
-        q.id === id ? { ...q, marks: num } : q
-    ));
+    if (!isNaN(num)) {
+        setSelectedQuestions(prev => prev.map(q => q.id === id ? { ...q, marks: num } : q));
+    }
   };
 
-  // --- 4. PRINT / SAVE ---
-  const handlePrintPaper = () => {
+  // --- 4. ADVANCED PRINTING ENGINE ---
+  const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const questionsHtml = selectedQuestions.map((q, idx) => {
+    const isLandscape = printFormat === 'landscape';
+
+    // -- CONTENT COMPONENTS --
+    const examHeaderHtml = `
+      <div class="exam-header">
+          <h1 class="institute-title">${instituteName}</h1>
+          <h2 class="exam-title">${paperTitle}</h2>
+          <div class="meta-bar">
+              <span>Time: ${duration} Mins</span>
+              <span>Total Marks: ${totalMarks}</span>
+          </div>
+          ${showInstructions ? `<div class="instructions">${instructions}</div>` : ''}
+          <div class="separator"></div>
+      </div>
+    `;
+
+    const examQuestionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
-          ? `<div style="margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 20px;">
+          ? `<div class="options-grid">
               ${q.options.map((opt: any, i: number) => 
-                `<div style="font-size:14px;"><strong>${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
+                `<div class="option"><strong>${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
               ).join('')}
              </div>` 
           : '';
         
         return `
-            <div style="margin-bottom: 20px; page-break-inside: avoid;">
-                <div style="display: flex; gap: 10px; align-items: baseline;">
-                    <div style="font-weight: bold; width: 25px; flex-shrink: 0;">${idx + 1}.</div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 15px; line-height: 1.5;">${q.question_text}</div>
-                        ${optionsHtml}
-                    </div>
-                    <div style="font-weight: bold; font-size: 14px; width: 30px; text-align: right;">[${q.marks}]</div>
+            <div class="question-block">
+                <div class="q-marks">[${q.marks}]</div>
+                <div class="q-num">${idx + 1}.</div>
+                <div class="q-text">
+                    ${q.question_text}
+                    ${optionsHtml}
                 </div>
             </div>
         `;
     }).join('');
 
-    const instructionsHtml = showInstructions 
-        ? `<div style="font-size: 13px; font-style: italic; margin-bottom: 25px; padding: 10px; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">${instructions}</div>` 
-        : '';
+    const examFooterHtml = `<div class="footer">${footerText}</div>`;
+
+    // Wrap Single Instance
+    const singleExamInstance = `
+        <div class="exam-instance">
+            ${examHeaderHtml}
+            ${examQuestionsHtml}
+            ${examFooterHtml}
+        </div>
+    `;
+
+    // Handle Duplication logic
+    const finalBodyHtml = (isDuplicate && isLandscape)
+        ? `${singleExamInstance} <div class="column-break"></div> ${singleExamInstance}`
+        : singleExamInstance;
+
+    const cssStyles = `
+      @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
+      
+      @page {
+          size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
+          margin: 10mm;
+      }
+      
+      body { 
+          font-family: 'Merriweather', serif; 
+          color: #1a1a1a; 
+          margin: 0; padding: 0;
+          -webkit-print-color-adjust: exact;
+      }
+
+      .content-wrapper {
+          ${isLandscape ? 'column-count: 2; column-gap: 40px;' : ''}
+          column-fill: auto; 
+          width: 100%;
+          min-height: 95vh;
+      }
+
+      .column-break {
+          break-after: column;
+          height: 1px;
+          width: 100%;
+          margin-bottom: 20px; 
+          visibility: hidden;
+      }
+
+      .exam-instance { break-inside: auto; margin-bottom: 30px; }
+
+      .exam-header { text-align: center; margin-bottom: 15px; break-inside: avoid; }
+      .institute-title { margin: 0; font-size: 20px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; line-height: 1.2; }
+      .exam-title { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
+      
+      .meta-bar { 
+          display: flex; justify-content: space-between; 
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; 
+          text-transform: uppercase; border-top: 2px solid #000; border-bottom: 2px solid #000;
+          padding: 4px 0; margin-bottom: 10px;
+      }
+
+      .instructions { 
+          font-size: 12px; font-style: italic; margin-bottom: 15px; 
+          text-align: left; background: #f9f9f9; padding: 5px; border-left: 2px solid #ccc;
+      }
+      .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
+
+      .question-block {
+          margin-bottom: 12px;
+          display: block; 
+          position: relative;
+          padding-left: 25px;
+          break-inside: auto; 
+      }
+
+      .q-marks {
+          float: right;
+          font-family: 'Inter', sans-serif; 
+          font-weight: 700; 
+          font-size: 13px; 
+          margin-left: 8px;
+          padding-left: 5px;
+      }
+
+      .q-num {
+          position: absolute; left: 0; top: 0;
+          font-weight: bold; font-size: 13px; font-family: 'Inter', sans-serif;
+      }
+
+      .q-text { 
+          font-size: 13px; 
+          line-height: 1.5; 
+          text-align: justify;
+          text-justify: inter-word;
+      }
+      .q-text p { margin: 0; display: inline; }
+      
+      .options-grid { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 4px; 
+          margin-top: 5px; 
+          clear: both;
+      }
+      .option { font-size: 12px; }
+
+      .footer {
+          margin-top: 20px;
+          text-align: center;
+          font-size: 10px; font-weight: bold; text-transform: uppercase; color: #888;
+          border-top: 1px solid #eee;
+          padding-top: 5px;
+          break-inside: avoid;
+      }
+    `;
 
     printWindow.document.write(`
       <html>
         <head>
           <title>${paperTitle}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
-            body { font-family: 'Merriweather', serif; padding: 40px; max-width: 210mm; margin: 0 auto; color: #1a1a1a; }
-            h1 { text-align: center; margin: 0 0 10px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-            h2 { text-align: center; margin: 0 0 25px 0; font-size: 16px; font-weight: normal; color: #4a4a4a; }
-            .header-meta { display: flex; justify-content: space-between; font-weight: bold; font-family: sans-serif; font-size: 13px; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; }
-            @media print {
-                body { padding: 0; width: 100%; margin: 20mm 15mm; }
-            }
-          </style>
+          <style>${cssStyles}</style>
         </head>
         <body>
-          <h1>${instituteName}</h1>
-          <h2>${paperTitle}</h2>
-          
-          <div class="header-meta">
-              <span>Time: ${duration} Mins</span>
-              <span>Total Marks: ${totalMarks}</span>
+          <div class="content-wrapper">
+              ${finalBodyHtml}
           </div>
-
-          ${instructionsHtml}
-          <div class="questions">${questionsHtml}</div>
-
-          <script>window.onload = () => { setTimeout(() => { window.print(); }, 500); }</script>
+          <script>
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
+          </script>
         </body>
       </html>
     `);
     printWindow.document.close();
+    setShowPrintModal(false);
   };
 
+  // --- 5. SAVE ---
   const handleSave = async () => {
     if (selectedQuestions.length === 0) return alert("Please add questions first!");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const sanitizedQuestions = selectedQuestions.map(q => ({
+        ...q,
+        marks: (q.marks === "" || q.marks === undefined) ? 0 : Number(q.marks)
+    }));
+
     const payload = {
         user_id: user.id,
         title: paperTitle,
         institute_name: instituteName,
-        duration: `${duration} Mins`, // Save formatted string
+        duration: `${duration} Mins`,
         total_marks: totalMarks,
-        questions: selectedQuestions,
-        settings: { instructions, showInstructions },
+        questions: sanitizedQuestions,
+        settings: { instructions, showInstructions, footerText },
         is_finalized: true 
     };
 
-    let error, newId;
-    if (isEditMode) {
-        const { error: updateError } = await supabase.from('exam_papers').update(payload).eq('id', routeId);
-        error = updateError;
-    } else {
-        const { data: newExam, error: insertError } = await supabase.from('exam_papers').insert(payload).select().single();
-        error = insertError;
-        if(newExam) newId = newExam.id;
-    }
+    // Insert New Exam
+    const { data: newExam, error } = await supabase.from('exam_papers').insert(payload).select().single();
 
     if (error) alert("Save Failed: " + error.message);
     else {
-        alert("Saved Successfully!");
-        if(newId) router.push(`/tutor/dashboard/my-exams/${newId}`);
+        // Redirect to Edit Page (which we fixed earlier)
+        if(newExam) router.push(`/tutor/dashboard/my-exams/${newExam.id}`);
     }
     setSaving(false);
   };
@@ -291,7 +408,7 @@ function BuilderContent() {
               <div>
                   <h1 className="text-base font-bold text-slate-800 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-indigo-600"/>
-                      {isEditMode ? "Edit Mode" : "New Exam"}
+                      New Exam
                   </h1>
                   <p className="text-xs text-slate-500">
                       {selectedQuestions.length} Questions • {totalMarks} Marks
@@ -300,14 +417,20 @@ function BuilderContent() {
           </div>
           
           <div className="flex gap-2">
-              {isEditMode && (
-                  <button onClick={handlePrintPaper} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 px-3 py-2 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all shadow-sm">
-                      <Printer className="w-4 h-4 text-indigo-600"/> Print
-                  </button>
-              )}
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50">
+              <button 
+                onClick={() => setShowPrintModal(true)} 
+                className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all shadow-sm"
+              >
+                  <Printer className="w-4 h-4 text-indigo-600"/> Print
+              </button>
+              
+              <button 
+                onClick={handleSave} 
+                disabled={saving} 
+                className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+              >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
-                  <span>{isEditMode ? "Update" : "Save"}</span>
+                  <span>Save Exam</span>
               </button>
           </div>
       </div>
@@ -315,46 +438,46 @@ function BuilderContent() {
       {/* --- MAIN WORKSPACE --- */}
       <div className="flex flex-1 overflow-hidden">
           
-          {/* LEFT SIDEBAR: QUESTION BANK */}
-          <div className="w-80 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
-              {/* Sidebar Header */}
+          {/* SIDEBAR */}
+          <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
+              {/* FIXED FILTERS (Always Visible) */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
-                      <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search bank..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
+                      <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
-                  <button onClick={() => setShowFilters(!showFilters)} className="w-full flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider hover:text-indigo-600 mb-2">
-                      <span>Filters</span>
-                      {showFilters ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
-                  </button>
-
-                  {showFilters && (
-                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-200 mb-2">
-                         <div className="grid grid-cols-2 gap-2">
-                              <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                              <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                         </div>
-                         <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                         <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-1.5 rounded text-xs font-bold hover:bg-slate-900">Apply Filters</button>
-                      </div>
-                  )}
+                  <div className="space-y-2">
+                     <div className="grid grid-cols-2 gap-2">
+                          <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                          <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                     </div>
+                     <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                     
+                     <div className="grid grid-cols-2 gap-2">
+                        <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => setFilters({...filters, type: e.target.value})}><option value="">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Creative</option></select>
+                        <input className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" placeholder="Topic Tag..." onChange={e => setFilters({...filters, topic: e.target.value})} />
+                     </div>
+                     
+                     <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded text-xs font-bold hover:bg-slate-900 transition-all shadow-sm flex justify-center items-center gap-2">
+                        <Filter className="w-3 h-3"/> Apply Filters
+                     </button>
+                  </div>
               </div>
 
-              {/* Question List */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-100/50">
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
                       return (
-                          <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group relative ${isAdded ? 'opacity-50 border-indigo-200' : 'border-slate-200 hover:border-indigo-300'}`}>
+                          <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group relative ${isAdded ? 'opacity-60 border-indigo-100 bg-indigo-50/20' : 'border-slate-200 hover:border-indigo-300'}`}>
                               <div className="flex justify-between items-start mb-1">
                                   <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase">{q.question_type}</span>
-                                  <span className="text-[10px] font-bold text-slate-400">{q.marks} pts</span>
+                                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{q.default_marks || 0} pts</span>
                               </div>
                               <div className="text-xs text-slate-800 line-clamp-2 mb-2 font-medium leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
                               <div className="flex gap-2 mt-2">
                                   <button onClick={(e) => { e.stopPropagation(); setPreviewQuestion(q); }} className="p-1.5 bg-slate-50 text-slate-500 rounded hover:bg-slate-100 hover:text-indigo-600"><Eye className="w-3.5 h-3.5"/></button>
-                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-green-50 text-green-600 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'}`}>
+                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-green-100 text-green-700 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'}`}>
                                       {isAdded ? <CheckCircle className="w-3 h-3"/> : <Plus className="w-3 h-3"/>} {isAdded ? "Added" : "Add"}
                                   </button>
                               </div>
@@ -362,20 +485,17 @@ function BuilderContent() {
                       );
                   })}
                   {availableQuestions.length === 0 && (
-                      <div className="text-center py-8 text-slate-400 text-xs">No questions found.<br/>Try adjusting filters.</div>
+                      <div className="text-center py-8 text-slate-400 text-xs">No questions found.</div>
                   )}
               </div>
           </div>
 
-          {/* CENTER: PAPER CANVAS */}
-          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-6 md:p-8 flex justify-center relative">
-              
-              {/* THE PAGE (A4 Visual) */}
-              <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top">
+          {/* CENTER: PAPER CANVAS - WIDER VIEW */}
+          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 flex justify-center relative">
+              <div className="bg-white shadow-xl w-full max-w-7xl min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* --- DOC HEADER (Editable) --- */}
+                  {/* HEADER (Editable & Unlocked) */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
-                      {/* Institute Name Input */}
                       <input 
                         className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
                         value={instituteName} 
@@ -384,7 +504,6 @@ function BuilderContent() {
                         placeholder="INSTITUTE NAME"
                       />
                       
-                      {/* Paper Title Input */}
                       <input 
                         className="w-full text-center text-lg font-medium mb-4 outline-none bg-transparent text-slate-700 focus:text-indigo-700" 
                         value={paperTitle} 
@@ -392,7 +511,6 @@ function BuilderContent() {
                         placeholder="Subject / Exam Title"
                       />
 
-                      {/* Meta Data Bar */}
                       <div className="flex justify-between items-center font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
                           <div className="flex gap-2 items-center bg-slate-100 px-3 py-1 rounded">
                               <Clock className="w-4 h-4 text-slate-500"/>
@@ -413,11 +531,11 @@ function BuilderContent() {
                           </div>
                       </div>
                       
-                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">PRO FEATURE</span>}
+                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">LOCKED</span>}
                   </div>
 
-                  {/* --- INSTRUCTIONS SECTION --- */}
-                  <div className="mb-8 group relative">
+                  {/* INSTRUCTIONS */}
+                  <div className="mb-8 group relative flex-none">
                       <div className="flex justify-between items-center mb-1 print:hidden opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0">
                           <button onClick={() => setShowInstructions(!showInstructions)} className="text-xs text-indigo-600 font-bold hover:underline flex gap-1 items-center bg-white px-2 py-0.5 rounded shadow-sm border">
                             {showInstructions ? "Hide Instructions" : "Show Instructions"}
@@ -430,26 +548,14 @@ function BuilderContent() {
                       )}
                   </div>
 
-                  {/* --- QUESTIONS LIST (The Real Content) --- */}
-                  <div className="space-y-6">
-                      {selectedQuestions.length === 0 && (
-                          <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
-                              <p className="text-slate-400 font-medium">Your paper is empty.</p>
-                              <p className="text-slate-300 text-sm mt-1">Add questions from the left sidebar.</p>
-                          </div>
-                      )}
-
+                  {/* QUESTIONS */}
+                  <div className="space-y-6 flex-1">
                       {selectedQuestions.map((q, idx) => (
                           <div key={q.id} className="relative group pl-3 hover:bg-slate-50 transition-colors rounded -ml-3 p-2 break-inside-avoid border border-transparent hover:border-slate-200">
                               <div className="flex gap-4 items-start">
-                                  {/* Q Index */}
                                   <span className="font-bold text-lg w-6 flex-shrink-0 text-slate-900 pt-0.5">{idx + 1}.</span>
-                                  
-                                  {/* Q Content */}
                                   <div className="flex-1">
                                       <div className="font-medium text-slate-900 text-base leading-relaxed font-serif [&_p]:inline" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
-                                      
-                                      {/* MCQ Options */}
                                       {q.question_type === 'mcq' && q.options && (
                                           <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-3 ml-2">
                                               {q.options.map((opt:any, i:number) => (
@@ -461,24 +567,21 @@ function BuilderContent() {
                                           </div>
                                       )}
                                   </div>
-
-                                  {/* Editable Marks */}
                                   <div className="w-16 text-right flex flex-col items-end">
                                       <div className="flex items-center gap-1 relative">
                                         <span className="text-slate-400 text-xs font-bold absolute -left-3">[</span>
                                         <input 
-                                            type="number" 
+                                            type="text" 
                                             className="w-10 text-center font-bold text-base bg-transparent border-b border-transparent focus:border-indigo-500 focus:bg-white outline-none text-slate-900 p-0" 
                                             value={q.marks} 
                                             onChange={(e) => updateQuestionMark(q.id, e.target.value)}
                                             onFocus={(e) => e.target.select()}
+                                            placeholder="0"
                                         />
                                         <span className="text-slate-400 text-xs font-bold absolute -right-3">]</span>
                                       </div>
                                   </div>
                               </div>
-
-                              {/* Hover Actions */}
                               <div className="absolute -right-10 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
                                   <button onClick={() => removeFromPaper(q.id)} className="p-2 bg-white border border-red-100 text-red-500 rounded shadow-sm hover:bg-red-50" title="Remove Question">
                                       <Trash2 className="w-4 h-4"/>
@@ -488,40 +591,68 @@ function BuilderContent() {
                       ))}
                   </div>
 
-                  {/* --- FOOTER --- */}
-                  <div className="mt-16 pt-6 border-t border-slate-300 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">End of Exam</p>
+                  {/* FOOTER (Editable) */}
+                  <div className="mt-16 pt-4 border-t border-slate-300 text-center flex-none">
+                      <input 
+                          className="w-full text-center text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 outline-none bg-transparent hover:text-slate-600 focus:text-indigo-600"
+                          value={footerText}
+                          onChange={(e) => setFooterText(e.target.value)}
+                          placeholder="WRITE FOOTER HERE..."
+                      />
                   </div>
               </div>
           </div>
       </div>
 
-      {/* --- PREVIEW MODAL --- */}
-      {previewQuestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-4 border-b border-slate-100">
-                    <h3 className="font-bold text-slate-800">Question Preview</h3>
-                    <button onClick={() => setPreviewQuestion(null)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5 text-slate-400"/></button>
-                </div>
-                <div className="p-6 overflow-y-auto">
-                    <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{__html: previewQuestion.question_text}}></div>
-                    {previewQuestion.options && (
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                            {previewQuestion.options.map((opt:any, i:number) => (
-                                <div key={i} className="flex gap-2 p-2 bg-slate-50 rounded border border-slate-100">
-                                    <span className="font-bold text-slate-400">{String.fromCharCode(65+i)}</span>
-                                    <span className="text-sm">{opt.option_text}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-2">
-                    <button onClick={() => setPreviewQuestion(null)} className="px-4 py-2 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-lg">Close</button>
-                    <button onClick={() => { addToPaper(previewQuestion); setPreviewQuestion(null); }} className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700">Add to Paper</button>
-                </div>
-            </div>
+      {/* PRINT MODAL */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in zoom-in-95">
+                 <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-lg font-bold text-slate-800">Print Settings</h3>
+                     <button onClick={() => setShowPrintModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600"/></button>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4 mb-8">
+                     <button 
+                        onClick={() => setPrintFormat('portrait')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${printFormat === 'portrait' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+                     >
+                         <Layout className="w-8 h-8"/>
+                         <span className="font-bold text-sm">Portrait</span>
+                         <span className="text-[10px] text-slate-500">Standard A4</span>
+                     </button>
+                     
+                     <button 
+                        onClick={() => setPrintFormat('landscape')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${printFormat === 'landscape' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+                     >
+                         <Columns className="w-8 h-8"/>
+                         <span className="font-bold text-sm">Landscape</span>
+                         <span className="text-[10px] text-slate-500">2-Column Saver</span>
+                     </button>
+                 </div>
+
+                 {/* DUPLICATION TOGGLE */}
+                 {printFormat === 'landscape' && (
+                     <div className="mb-6 bg-indigo-50 border border-indigo-100 p-3 rounded-lg flex items-center gap-3">
+                         <button 
+                            onClick={() => setIsDuplicate(!isDuplicate)}
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isDuplicate ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}
+                         >
+                             {isDuplicate && <CheckCircle className="w-3.5 h-3.5"/>}
+                         </button>
+                         <div>
+                             <p className="text-sm font-bold text-indigo-900 flex items-center gap-1"><Copy className="w-3 h-3"/> Paper Saver Mode</p>
+                             <p className="text-[10px] text-indigo-700/80">Duplicates the exam to fill both columns (2 copies on 1 sheet).</p>
+                         </div>
+                     </div>
+                 )}
+                 
+                 <button onClick={handlePrint} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                     <Printer className="w-5 h-5"/> Print Now
+                 </button>
+             </div>
         </div>
       )}
     </div>
@@ -530,8 +661,6 @@ function BuilderContent() {
 
 export default function QuestionBuilder() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600"/></div>}>
-      <BuilderContent />
-    </Suspense>
+    <BuilderContent />
   );
 }

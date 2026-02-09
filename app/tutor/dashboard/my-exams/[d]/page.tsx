@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Search, Plus, Trash2, Save, CheckCircle, 
   Loader2, ArrowLeft, Eye, X, 
   Printer, Clock, FileText, Hash, 
-  Layout, Columns, Filter
+  Layout, Columns, Filter, Copy
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useRouter, useParams } from "next/navigation";
@@ -70,6 +70,9 @@ function BuilderContent() {
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printFormat, setPrintFormat] = useState<PrintFormat>('portrait');
+  
+  // NEW: Duplicate Content State
+  const [isDuplicate, setIsDuplicate] = useState(false);
 
   // --- DERIVED STATE ---
   const totalMarks = useMemo(() => {
@@ -206,17 +209,19 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ADVANCED PRINTING ENGINE ---
+  // --- 4. ADVANCED PRINTING ENGINE (DUAL MODE) ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
     const isLandscape = printFormat === 'landscape';
 
-    const headerHtml = `
-      <div class="header-block">
-          <h1>${instituteName}</h1>
-          <h2>${paperTitle}</h2>
+    // -- EXAM CONTENT COMPONENT --
+    // We create this as a repeatable block string
+    const examHeaderHtml = `
+      <div class="exam-header">
+          <h1 class="institute-title">${instituteName}</h1>
+          <h2 class="exam-title">${paperTitle}</h2>
           <div class="meta-bar">
               <span>Time: ${duration} Mins</span>
               <span>Total Marks: ${totalMarks}</span>
@@ -226,7 +231,7 @@ function BuilderContent() {
       </div>
     `;
 
-    const questionsHtml = selectedQuestions.map((q, idx) => {
+    const examQuestionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
           ? `<div class="options-grid">
               ${q.options.map((opt: any, i: number) => 
@@ -247,12 +252,30 @@ function BuilderContent() {
         `;
     }).join('');
 
+    const examFooterHtml = `<div class="footer">${footerText}</div>`;
+
+    // COMBINED CONTENT BLOCK
+    const fullExamContent = `
+        <div class="exam-instance">
+            ${examHeaderHtml}
+            ${examQuestionsHtml}
+            ${examFooterHtml}
+        </div>
+    `;
+
+    // Logic: If Duplicate is ON, we render the Full Exam Content TWICE.
+    // We insert a 'column break' between them so the second copy starts at the top of the 2nd column.
+    const finalBodyHtml = isDuplicate && isLandscape
+        ? `${fullExamContent} <div class="column-break"></div> ${fullExamContent}`
+        : fullExamContent;
+
     const cssStyles = `
       @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
       
       @page {
           size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
-          margin: 10mm 10mm 8mm 10mm;
+          /* Tight margins for saving paper */
+          margin: 10mm;
       }
       
       body { 
@@ -262,18 +285,32 @@ function BuilderContent() {
           -webkit-print-color-adjust: exact;
       }
 
+      /* LAYOUT WRAPPER */
       .content-wrapper {
-          ${isLandscape ? 'column-count: 2; column-gap: 30px;' : ''}
+          ${isLandscape ? 'column-count: 2; column-gap: 40px;' : ''}
+          /* This ensures the left column fills completely before moving to right */
+          column-fill: auto; 
           width: 100%;
+          height: 100%;
       }
 
-      .header-block {
-          text-align: center;
-          margin-bottom: 15px;
-          break-inside: avoid;
+      /* Forces the second copy to start at the next column */
+      .column-break {
+          break-after: column;
+          height: 0;
+          width: 100%;
+          margin-bottom: 20px; /* Spacer */
       }
-      h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
-      h2 { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
+
+      .exam-instance {
+          /* Container for one full exam copy */
+          break-inside: avoid; /* Try to keep one exam instance together if possible, but allow breaking if long */
+      }
+
+      /* HEADER */
+      .exam-header { text-align: center; margin-bottom: 15px; }
+      .institute-title { margin: 0; font-size: 20px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
+      .exam-title { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
       
       .meta-bar { 
           display: flex; justify-content: space-between; 
@@ -284,11 +321,11 @@ function BuilderContent() {
 
       .instructions { 
           font-size: 12px; font-style: italic; margin-bottom: 15px; 
-          text-align: left; background: #f9f9f9; padding: 5px;
-          line-height: 1.3;
+          text-align: left; background: #f9f9f9; padding: 5px; border-left: 2px solid #ccc;
       }
       .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
 
+      /* QUESTIONS */
       .question-block {
           margin-bottom: 12px;
           display: block; 
@@ -329,12 +366,12 @@ function BuilderContent() {
       .option { font-size: 12px; }
 
       .footer {
-          margin-top: 20px;
+          margin-top: 30px;
           text-align: center;
-          font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888;
-          break-inside: avoid;
+          font-size: 10px; font-weight: bold; text-transform: uppercase; color: #888;
           border-top: 1px solid #eee;
           padding-top: 5px;
+          margin-bottom: 30px;
       }
     `;
 
@@ -346,9 +383,7 @@ function BuilderContent() {
         </head>
         <body>
           <div class="content-wrapper">
-              ${headerHtml}
-              ${questionsHtml}
-              <div class="footer">${footerText}</div>
+              ${finalBodyHtml}
           </div>
           <script>
             window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
@@ -454,7 +489,7 @@ function BuilderContent() {
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
-                  {/* RESTORED: FULL FILTER GRID */}
+                  {/* FULL FILTER GRID */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -501,24 +536,24 @@ function BuilderContent() {
           {/* CENTER: PAPER CANVAS - FULL WIDTH */}
           <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 flex justify-center relative">
               
-              {/* FIXED WIDTH: Removed max-w constraint, using large width for better editing view */}
+              {/* EDITABLE PAPER */}
               <div className="bg-white shadow-xl w-full min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* HEADER (Editable) */}
-                  <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
+                  {/* CLEAN HEADER EDITING (No Locked UI) */}
+                  <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group p-2 hover:bg-slate-50 transition-colors rounded-lg">
                       <input 
-                        className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
+                        className="w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight text-slate-900 focus:text-indigo-900"
                         value={instituteName} 
                         onChange={e => isPro && setInstituteName(e.target.value)} 
                         disabled={!isPro} 
-                        placeholder="INSTITUTE NAME"
+                        placeholder="YOUR INSTITUTE NAME"
                       />
                       
                       <input 
                         className="w-full text-center text-lg font-medium mb-4 outline-none bg-transparent text-slate-700 focus:text-indigo-700" 
                         value={paperTitle} 
                         onChange={e => setPaperTitle(e.target.value)} 
-                        placeholder="Subject / Exam Title"
+                        placeholder="Exam Name / Subject"
                       />
 
                       <div className="flex justify-between items-center font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
@@ -540,8 +575,6 @@ function BuilderContent() {
                               <span className="font-black text-indigo-700 text-lg">{totalMarks}</span>
                           </div>
                       </div>
-                      
-                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">LOCKED</span>}
                   </div>
 
                   {/* INSTRUCTIONS */}
@@ -642,6 +675,22 @@ function BuilderContent() {
                          <span className="text-[10px] text-slate-500">2-Column Saver</span>
                      </button>
                  </div>
+
+                 {/* DUPLICATION TOGGLE */}
+                 {printFormat === 'landscape' && (
+                     <div className="mb-6 bg-indigo-50 border border-indigo-100 p-3 rounded-lg flex items-center gap-3">
+                         <button 
+                            onClick={() => setIsDuplicate(!isDuplicate)}
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isDuplicate ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}
+                         >
+                             {isDuplicate && <CheckCircle className="w-3.5 h-3.5"/>}
+                         </button>
+                         <div>
+                             <p className="text-sm font-bold text-indigo-900 flex items-center gap-1"><Copy className="w-3 h-3"/> Paper Saver Mode</p>
+                             <p className="text-[10px] text-indigo-700/80">Duplicates the exam to fill both columns (2 copies on 1 sheet).</p>
+                         </div>
+                     </div>
+                 )}
                  
                  <button onClick={handlePrint} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
                      <Printer className="w-5 h-5"/> Print Now
