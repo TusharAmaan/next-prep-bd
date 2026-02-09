@@ -5,43 +5,74 @@ import {
   Trash2, KeyRound, Activity, Phone, 
   Building, Mail, GraduationCap, BookOpen, 
   Shield, User, CheckCircle2, MapPin, 
-  Heart, ExternalLink, Loader2, 
-  Ban, AlertTriangle, FileText, Star, Briefcase, Calendar,
-  CreditCard, Check, X, Clock, Smartphone
+  Heart, Loader2, Ban, FileText, Star, Briefcase, 
+  CreditCard, Check, X, Calendar, Edit, Save
 } from "lucide-react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient"; 
 
-// Update props to include the sync functions from UserManagement
+// --- TYPES ---
+interface PaymentRequest {
+  id: string;
+  amount: number;
+  payment_method: string;
+  transaction_id: string;
+  sender_number: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  plan_name: string;
+}
+
 export default function UserDetailView({ 
   user, onClose, onSendReset, onDeleteUser, 
   onRoleUpdate, onApproveUser, onSuspendUser 
 }: any) {
   
-  // --- 1. STATE & HOOKS ---
+  // --- STATE ---
   const [activeTab, setActiveTab] = useState<'profile' | 'likes' | 'billing'>('profile');
   const [likesData, setLikesData] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]); // New: Transactions
+  const [transactions, setTransactions] = useState<PaymentRequest[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   
-  // Local Management State
+  // Local Profile State (for optimistic updates)
   const [status, setStatus] = useState(user?.status || 'pending');
   const [role, setRole] = useState(user?.role || 'student');
   const [notes, setNotes] = useState(user?.admin_notes || "");
   const [isFeatured, setIsFeatured] = useState(user?.is_featured || false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- 1.5 SYNC STATE ON PROP CHANGE ---
+  // Manual Subscription State
+  const [subPlan, setSubPlan] = useState(user?.subscription_plan || 'free');
+  const [subStatus, setSubStatus] = useState(user?.subscription_status || 'expired');
+  const [subExpiry, setSubExpiry] = useState(
+    user?.subscription_expiry ? new Date(user.subscription_expiry).toISOString().split('T')[0] : ''
+  );
+
+  // --- SYNC STATE ---
   useEffect(() => {
     if (user) {
       setStatus(user.status || 'pending');
       setRole(user.role || 'student');
       setNotes(user.admin_notes || "");
       setIsFeatured(user.is_featured || false);
+      setSubPlan(user.subscription_plan || 'free');
+      setSubStatus(user.subscription_status || 'expired');
+      setSubExpiry(user.subscription_expiry ? new Date(user.subscription_expiry).toISOString().split('T')[0] : '');
     }
   }, [user]);
 
-  // --- 2. FETCH DATA (Activity & Billing) ---
+  // --- FETCH DATA ---
+  const loadBillingData = async () => {
+      setLoadingData(true);
+      // Fetch from the correct 'payment_requests' table
+      const { data } = await supabase
+          .from('payment_requests')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+      if (data) setTransactions(data);
+      setLoadingData(false);
+  };
+
   useEffect(() => {
     if (user?.id) {
         const loadData = async () => {
@@ -57,25 +88,21 @@ export default function UserDetailView({
                 if (data) setLikesData(data);
             }
 
-            // 2. Billing (For Tutors/Institutes)
-            if (activeTab === 'billing' || (role === 'tutor' || role === 'institute')) {
-                const { data } = await supabase
-                    .from('transactions')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-                if (data) setTransactions(data);
+            // 2. Billing
+            if (activeTab === 'billing') {
+                await loadBillingData();
             }
             setLoadingData(false);
         };
         loadData();
     }
-  }, [activeTab, user?.id, role]);
+  }, [activeTab, user?.id]);
 
   if (!user) return null;
 
-  // --- 3. CORE ACTIONS ---
-  
+  // --- ACTIONS ---
+
+  // 1. Core Profile Updates
   const handleUpdateProfile = async (field: string, value: any) => {
     setIsSaving(true);
     // Optimistic Update
@@ -91,15 +118,10 @@ export default function UserDetailView({
             else await supabase.from('profiles').update({ status: 'pending' }).eq('id', user.id);
         } 
         else if (field === 'is_featured') {
-            const { error } = await supabase.from('profiles').update({ is_featured: value }).eq('id', user.id);
-            if (error) throw error;
+            await supabase.from('profiles').update({ is_featured: value }).eq('id', user.id);
         }
     } catch (error: any) {
-        alert(`❌ Update Failed: ${error.message}`);
-        // Revert
-        if(field === 'status') setStatus(user.status);
-        if(field === 'role') setRole(user.role);
-        if(field === 'is_featured') setIsFeatured(user.is_featured);
+        alert(`Error: ${error.message}`);
     } finally {
         setIsSaving(false);
     }
@@ -108,45 +130,86 @@ export default function UserDetailView({
   const saveNotes = async () => {
       if (notes === user.admin_notes) return;
       setIsSaving(true);
-      const { error } = await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
-      if (error) alert("Failed to save notes.");
+      await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
       setIsSaving(false);
   };
 
-  // --- NEW: Approve/Reject Transaction ---
-  const handleTransaction = async (id: number, action: 'approved' | 'rejected') => {
+  // 2. Payment Approval Logic (The Fix)
+  const handlePaymentAction = async (trx: PaymentRequest, action: 'approved' | 'rejected') => {
       if(!confirm(`Are you sure you want to ${action} this payment?`)) return;
       
-      const { error } = await supabase.from('transactions').update({ status: action }).eq('id', id);
+      setIsSaving(true);
+
+      // A. Update Payment Request Status
+      const { error } = await supabase
+          .from('payment_requests')
+          .update({ status: action })
+          .eq('id', trx.id);
       
-      if (!error) {
-          alert(`Transaction ${action}`);
-          // Refresh list
-          const { data } = await supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-          if(data) setTransactions(data);
-      } else {
-          alert("Error: " + error.message);
+      if (error) {
+          alert("Error updating payment: " + error.message);
+          setIsSaving(false);
+          return;
       }
+
+      // B. If Approved, Automatically Upgrade User Profile
+      if (action === 'approved') {
+          const isYearly = trx.plan_name.toLowerCase().includes('year');
+          const monthsToAdd = isYearly ? 12 : 1;
+          
+          // Calculate Expiry
+          const expiryDate = new Date();
+          expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
+
+          const { error: profileError } = await supabase.from('profiles').update({
+              subscription_plan: 'pro',
+              subscription_status: 'active',
+              subscription_expiry: expiryDate.toISOString(),
+              max_questions: 10000 // Grant unlimited access
+          }).eq('id', user.id);
+
+          if (profileError) alert("Payment approved, but profile update failed: " + profileError.message);
+          else {
+              alert("Payment Approved! User upgraded to PRO.");
+              // Update local state to reflect changes immediately
+              setSubPlan('pro');
+              setSubStatus('active');
+              setSubExpiry(expiryDate.toISOString().split('T')[0]);
+          }
+      }
+
+      await loadBillingData(); // Refresh table
+      setIsSaving(false);
   };
 
-  // --- FORMATTERS ---
-  const formatGoal = (slug: string) => {
-      if (!slug) return "Not Set";
-      return slug.replace('/resources/', '').replace(/-/g, ' '); 
+  // 3. Manual Subscription Override (Give Friend Access)
+  const handleManualSubscriptionUpdate = async () => {
+      if(!confirm("Are you sure you want to manually update this subscription?")) return;
+      
+      setIsSaving(true);
+      const { error } = await supabase.from('profiles').update({
+          subscription_plan: subPlan,
+          subscription_status: subStatus,
+          subscription_expiry: subExpiry ? new Date(subExpiry).toISOString() : null,
+          max_questions: subPlan === 'pro' || subPlan === 'trial' ? 10000 : 50
+      }).eq('id', user.id);
+
+      if(error) alert("Failed to update: " + error.message);
+      else alert("Subscription updated successfully!");
+      
+      setIsSaving(false);
   };
 
+  // --- HELPERS ---
   const getRoleIcon = (r: string) => {
     switch (r) {
       case 'student': return <GraduationCap className="w-4 h-4"/>;
       case 'tutor': return <BookOpen className="w-4 h-4"/>;
       case 'institute': return <Building className="w-4 h-4"/>;
       case 'admin': return <Shield className="w-4 h-4"/>;
-      case 'editor': return <Briefcase className="w-4 h-4"/>;
       default: return <User className="w-4 h-4"/>;
     }
   };
-
-  const pendingTrx = transactions.find(t => t.status === 'pending');
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -163,11 +226,9 @@ export default function UserDetailView({
                 <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                     <Heart className="w-3 h-3" /> Activity
                 </button>
-                {(role === 'tutor' || role === 'institute') && (
-                    <button onClick={() => setActiveTab('billing')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'billing' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                        <CreditCard className="w-3 h-3" /> Billing {pendingTrx && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
-                    </button>
-                )}
+                <button onClick={() => setActiveTab('billing')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'billing' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <CreditCard className="w-3 h-3" /> Billing
+                </button>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold transition-colors">✕</button>
@@ -193,13 +254,12 @@ export default function UserDetailView({
                   
                   {/* === ADMIN ACTION BAR === */}
                   <div className="flex flex-wrap items-center gap-3 mt-5">
-                      
-                      {/* 1. ROLE DROPDOWN */}
+                      {/* ROLE */}
                       <div className="relative group">
                           <select 
                             value={role} 
                             onChange={(e) => handleUpdateProfile('role', e.target.value)} 
-                            className="appearance-none pl-9 pr-8 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer uppercase tracking-wider hover:bg-white transition-all shadow-sm"
+                            className="appearance-none pl-9 pr-8 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 outline-none cursor-pointer uppercase tracking-wider hover:bg-white transition-all shadow-sm"
                           >
                               <option value="student">Student</option>
                               <option value="tutor">Tutor</option>
@@ -210,7 +270,7 @@ export default function UserDetailView({
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{getRoleIcon(role)}</div>
                       </div>
 
-                      {/* 2. STATUS DROPDOWN */}
+                      {/* STATUS */}
                       <div className="relative">
                           <select 
                             value={status} 
@@ -231,20 +291,18 @@ export default function UserDetailView({
                           </div>
                       </div>
 
-                      {/* 3. FEATURED TOGGLE */}
-                      {(role === 'tutor' || role === 'institute') && (
-                          <button 
-                            onClick={() => handleUpdateProfile('is_featured', !isFeatured)} 
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all shadow-sm ${
-                                isFeatured 
-                                ? 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-200' 
-                                : 'bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
-                            }`}
-                          >
-                              <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} /> 
-                              {isFeatured ? "Featured" : "Promote"}
-                          </button>
-                      )}
+                      {/* FEATURED */}
+                      <button 
+                        onClick={() => handleUpdateProfile('is_featured', !isFeatured)} 
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all shadow-sm ${
+                            isFeatured 
+                            ? 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-200' 
+                            : 'bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                        }`}
+                      >
+                          <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} /> 
+                          {isFeatured ? "Featured" : "Promote"}
+                      </button>
                   </div>
               </div>
            </div>
@@ -253,37 +311,8 @@ export default function UserDetailView({
               {/* === TAB 1: PROFILE === */}
               {activeTab === 'profile' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in">
-                      
-                      {/* LEFT: INFO & NOTES */}
+                      {/* LEFT */}
                       <div className="md:col-span-7 space-y-6">
-                          
-                          {/* PENDING PAYMENT ALERT (If any) */}
-                          {pendingTrx && (
-                              <div className="bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-lg shadow-indigo-100 animate-pulse">
-                                  <div className="flex items-start justify-between">
-                                      <div className="flex gap-3">
-                                          <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600"><CreditCard className="w-5 h-5"/></div>
-                                          <div>
-                                              <h4 className="font-bold text-slate-800 text-sm">Payment Verification Needed</h4>
-                                              <p className="text-xs text-slate-500 mt-1">
-                                                  Sent <b>৳{pendingTrx.amount}</b> via <span className="capitalize font-bold">{pendingTrx.payment_method}</span>
-                                              </p>
-                                              <div className="mt-2 flex items-center gap-2 text-xs font-mono bg-slate-50 w-fit px-2 py-1 rounded border">
-                                                  <Smartphone className="w-3 h-3"/> {pendingTrx.sender_number}
-                                                  <span className="text-slate-300">|</span>
-                                                  TRX: {pendingTrx.transaction_id}
-                                              </div>
-                                          </div>
-                                      </div>
-                                      <div className="flex gap-2">
-                                          <button onClick={() => handleTransaction(pendingTrx.id, 'approved')} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-md transition-transform active:scale-95" title="Approve"><Check className="w-4 h-4"/></button>
-                                          <button onClick={() => handleTransaction(pendingTrx.id, 'rejected')} className="p-2 bg-red-100 text-red-500 rounded-lg hover:bg-red-200 transition-colors" title="Reject"><X className="w-4 h-4"/></button>
-                                      </div>
-                                  </div>
-                              </div>
-                          )}
-
-                          {/* Admin Notes */}
                           <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 shadow-sm">
                               <h5 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
                                   <FileText className="w-4 h-4"/> Admin Private Notes
@@ -298,46 +327,18 @@ export default function UserDetailView({
                               />
                           </div>
 
-                          {/* Info Card */}
                           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
                               <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                   <User className="w-4 h-4"/> Profile Details
                               </h5>
-                              
-                              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
+                              <div className="grid grid-cols-2 gap-4 pb-4">
                                   <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Phone</p><p className="font-bold text-slate-800">{user.phone || "—"}</p></div>
                                   <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Institution</p><p className="font-bold text-slate-800">{user.institution || "—"}</p></div>
                               </div>
-
-                              {/* TUTOR/INSTITUTE SUBSCRIPTION DETAILS */}
-                              {(role === 'tutor' || role === 'institute') && (
-                                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                      <div className="flex justify-between items-center mb-3">
-                                          <p className="text-xs font-bold text-slate-500 uppercase">Subscription Status</p>
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                                              user.subscription_plan === 'pro' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                                              user.subscription_plan === 'trial' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                              'bg-slate-200 text-slate-600'
-                                          }`}>
-                                              {user.subscription_plan}
-                                          </span>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4 text-sm">
-                                          <div>
-                                              <p className="text-slate-400 text-xs">Expires</p>
-                                              <p className="font-bold text-slate-800">{user.subscription_expiry ? new Date(user.subscription_expiry).toLocaleDateString() : 'N/A'}</p>
-                                          </div>
-                                          <div>
-                                              <p className="text-slate-400 text-xs">Usage (Month)</p>
-                                              <p className="font-bold text-slate-800">{user.monthly_question_count || 0} / {user.max_questions || 50}</p>
-                                          </div>
-                                      </div>
-                                  </div>
-                              )}
                           </div>
                       </div>
 
-                      {/* RIGHT: SECURITY & ACTIONS */}
+                      {/* RIGHT */}
                       <div className="md:col-span-5 space-y-6">
                           <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
                               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Security & Access</h5>
@@ -356,31 +357,90 @@ export default function UserDetailView({
                   </div>
               )}
 
-              {/* === TAB 3: BILLING HISTORY (Admin View) === */}
+              {/* === TAB 3: BILLING & SUBSCRIPTION === */}
               {activeTab === 'billing' && (
-                  <div className="animate-in fade-in">
+                  <div className="animate-in fade-in space-y-8">
+                      
+                      {/* 1. MANUAL SUBSCRIPTION CONTROL */}
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
+                          <div className="flex justify-between items-center mb-4">
+                              <h5 className="text-sm font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                  <Activity className="w-4 h-4 text-slate-400"/> Manual Subscription Control
+                              </h5>
+                              <span className="text-[10px] bg-white border px-2 py-1 rounded text-slate-400 font-medium">Use for manual upgrades</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Plan</label>
+                                  <select 
+                                      value={subPlan} 
+                                      onChange={(e) => setSubPlan(e.target.value)} 
+                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                  >
+                                      <option value="free">Free</option>
+                                      <option value="trial">Trial</option>
+                                      <option value="pro">Pro</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Status</label>
+                                  <select 
+                                      value={subStatus} 
+                                      onChange={(e) => setSubStatus(e.target.value)} 
+                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                  >
+                                      <option value="active">Active</option>
+                                      <option value="expired">Expired</option>
+                                      <option value="canceled">Canceled</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Expiry Date</label>
+                                  <input 
+                                      type="date" 
+                                      value={subExpiry} 
+                                      onChange={(e) => setSubExpiry(e.target.value)} 
+                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                  />
+                              </div>
+                              <button 
+                                  onClick={handleManualSubscriptionUpdate}
+                                  className="bg-indigo-600 text-white font-bold text-sm py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-indigo-200"
+                              >
+                                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                                  Update
+                              </button>
+                          </div>
+                      </div>
+
+                      {/* 2. TRANSACTION TABLE */}
                       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                           <table className="w-full text-sm text-left">
                               <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-xs">
                                   <tr>
                                       <th className="px-6 py-4">Date</th>
-                                      <th className="px-6 py-4">Plan</th>
+                                      <th className="px-6 py-4">Transaction Details</th>
                                       <th className="px-6 py-4">Amount</th>
-                                      <th className="px-6 py-4">Method</th>
                                       <th className="px-6 py-4 text-right">Status</th>
                                       <th className="px-6 py-4 text-right">Action</th>
                                   </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
                                   {transactions.length === 0 ? (
-                                      <tr><td colSpan={6} className="p-8 text-center text-slate-400 italic">No transactions found.</td></tr>
+                                      <tr><td colSpan={5} className="p-8 text-center text-slate-400 italic">No transactions found.</td></tr>
                                   ) : (
                                       transactions.map(t => (
                                           <tr key={t.id} className="hover:bg-slate-50">
                                               <td className="px-6 py-4 text-slate-600">{new Date(t.created_at).toLocaleDateString()}</td>
-                                              <td className="px-6 py-4 font-bold text-slate-800 capitalize">{t.plan_type.replace('pro_', '')}</td>
+                                              <td className="px-6 py-4">
+                                                  <p className="font-bold text-slate-800 capitalize">{t.plan_name}</p>
+                                                  <div className="flex gap-2 text-xs text-slate-500 mt-1">
+                                                      <span className="font-mono bg-slate-100 px-1 rounded">{t.transaction_id}</span>
+                                                      <span className="font-mono">{t.sender_number}</span>
+                                                  </div>
+                                              </td>
                                               <td className="px-6 py-4 text-slate-600 font-mono">৳{t.amount}</td>
-                                              <td className="px-6 py-4 capitalize font-bold text-slate-700">{t.payment_method}</td>
                                               <td className="px-6 py-4 text-right">
                                                   <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
                                                       t.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
@@ -393,8 +453,8 @@ export default function UserDetailView({
                                               <td className="px-6 py-4 text-right">
                                                   {t.status === 'pending' && (
                                                       <div className="flex justify-end gap-2">
-                                                          <button onClick={() => handleTransaction(t.id, 'approved')} className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200" title="Approve"><Check className="w-4 h-4"/></button>
-                                                          <button onClick={() => handleTransaction(t.id, 'rejected')} className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Reject"><X className="w-4 h-4"/></button>
+                                                          <button onClick={() => handlePaymentAction(t, 'approved')} className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200" title="Approve"><Check className="w-4 h-4"/></button>
+                                                          <button onClick={() => handlePaymentAction(t, 'rejected')} className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Reject"><X className="w-4 h-4"/></button>
                                                       </div>
                                                   )}
                                               </td>

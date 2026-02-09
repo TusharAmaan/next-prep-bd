@@ -6,7 +6,7 @@ import {
   Search, Plus, Trash2, Save, CheckCircle, 
   Loader2, ArrowLeft, Eye, X, 
   Printer, Clock, FileText, Hash, 
-  Layout, Columns
+  Layout, Columns, Filter
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useRouter, useParams } from "next/navigation";
@@ -92,29 +92,26 @@ function BuilderContent() {
             .single();
         
         if (prof) {
-            // --- ROBUST ACCESS CHECK (FIXED) ---
+            console.log("User Profile:", prof); 
+
             const plan = (prof.subscription_plan || '').toLowerCase().trim();
             const status = (prof.subscription_status || '').toLowerCase().trim();
 
-            // Grant access if:
-            // 1. Plan contains 'pro' OR 'trial'
-            // 2. OR Status is 'active' (Approved payment)
-            const hasAccess = plan.includes('pro') || plan.includes('trial') || status === 'active';
+            // FIXED: Grant access if Active OR if plan is Pro/Trial
+            const hasAccess = (status === 'active') || plan.includes('pro') || plan.includes('trial');
             
             setIsPro(hasAccess);
             
-            // Set Institute Name (Only override default if user has one AND we aren't editing)
+            // If editing a new exam, prepopulate institute name
             if(prof.institute_name && !isEditMode) {
                  setInstituteName(prof.institute_name);
             }
         }
       }
       
-      // Load Metadata
       const { data: segs } = await supabase.from('segments').select('id, title');
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
-      // Load Exam Data (Edit Mode)
       if (isEditMode) {
           const { data: exam } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
           if (exam) {
@@ -450,12 +447,14 @@ function BuilderContent() {
           
           {/* SIDEBAR */}
           <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
+              {/* Filters */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
+                  {/* RESTORED: FULL FILTER GRID */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -468,7 +467,9 @@ function BuilderContent() {
                         <input className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" placeholder="Topic Tag..." onChange={e => setFilters({...filters, topic: e.target.value})} />
                      </div>
                      
-                     <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded text-xs font-bold hover:bg-slate-900 transition-all shadow-sm">Search Questions</button>
+                     <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded text-xs font-bold hover:bg-slate-900 transition-all shadow-sm flex justify-center items-center gap-2">
+                        <Filter className="w-3 h-3"/> Apply Filters
+                     </button>
                   </div>
               </div>
 
@@ -497,12 +498,13 @@ function BuilderContent() {
               </div>
           </div>
 
-          {/* CENTER: PAPER CANVAS - WIDER VIEW */}
-          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-2 md:p-4 flex justify-center relative">
-              {/* WIDTH INCREASED: max-w-7xl for a comfortable editing experience */}
-              <div className="bg-white shadow-xl w-full max-w-7xl min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
+          {/* CENTER: PAPER CANVAS - FULL WIDTH */}
+          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 flex justify-center relative">
+              
+              {/* FIXED WIDTH: Removed max-w constraint, using large width for better editing view */}
+              <div className="bg-white shadow-xl w-full min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* HEADER */}
+                  {/* HEADER (Editable) */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
                       <input 
                         className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
