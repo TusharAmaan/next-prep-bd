@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Search, Plus, Trash2, Save, CheckCircle, 
-  Loader2, ArrowLeft, Eye, X, MonitorPlay, EyeOff,
-  Printer, Pencil, ChevronDown, ChevronUp, Clock, FileText, Hash
+  Loader2, ArrowLeft, Eye, X, MonitorPlay, 
+  Printer, ChevronDown, ChevronUp, Clock, FileText, Hash, 
+  Settings, Layout, Columns
 } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useRouter, useParams } from "next/navigation";
@@ -17,7 +18,7 @@ interface Question {
   question_text: string;
   question_type: string;
   default_marks: number;
-  marks: number | string; // FIXED: Allow string so input can be empty while typing
+  marks: number | string;
   topic_tag?: string;
   options?: any[];
 }
@@ -26,6 +27,8 @@ interface MetaItem {
   id: string | number;
   title: string;
 }
+
+type PrintFormat = 'portrait' | 'landscape';
 
 function BuilderContent() {
   const supabase = createClient();
@@ -39,21 +42,23 @@ function BuilderContent() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isPro, setIsPro] = useState(false);
   
+  // Access Control
+  const [isPro, setIsPro] = useState(false);
+
   // Paper State
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [paperTitle, setPaperTitle] = useState("Monthly Assessment");
   const [instituteName, setInstituteName] = useState("NextPrep Model Test");
   const [duration, setDuration] = useState("45");
+  const [footerText, setFooterText] = useState("Good Luck"); // <--- NEW FOOTER STATE
   const [showInstructions, setShowInstructions] = useState(true);
   const [instructions, setInstructions] = useState("<ul><li>Answer all questions.</li><li>No electronic devices allowed.</li></ul>");
 
-  // Sidebar State
+  // Sidebar / Discovery State
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "", topic: "" });
-  const [showFilters, setShowFilters] = useState(false);
   
   const [metaData, setMetaData] = useState<{
     segments: MetaItem[];
@@ -61,10 +66,12 @@ function BuilderContent() {
     subjects: MetaItem[];
   }>({ segments: [], groups: [], subjects: [] });
 
+  // UI State
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
-  const [showPaperOverview, setShowPaperOverview] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printFormat, setPrintFormat] = useState<PrintFormat>('portrait');
 
-  // Derived State (Robust Total Calculation)
+  // --- DERIVED STATE ---
   const totalMarks = useMemo(() => {
     return selectedQuestions.reduce((sum, q) => {
         const m = typeof q.marks === 'string' ? parseFloat(q.marks) : q.marks;
@@ -81,8 +88,14 @@ function BuilderContent() {
       if (user) {
         const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name').eq('id', user.id).single();
         if (prof) {
-            setIsPro(prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial');
-            if(prof.institute_name && !isEditMode) setInstituteName(prof.institute_name);
+            // Allow access if plan is pro OR trial
+            const hasAccess = prof.subscription_plan === 'pro' || prof.subscription_plan === 'trial';
+            setIsPro(hasAccess);
+            
+            // Set Institute Name (Only if creating new, or if existing is default)
+            if(prof.institute_name && !isEditMode) {
+                 setInstituteName(prof.institute_name);
+            }
         }
       }
       
@@ -96,7 +109,9 @@ function BuilderContent() {
               setInstituteName(exam.institute_name || "NextPrep Model Test");
               setDuration(exam.duration ? exam.duration.replace(/\D/g, '') : "45");
               
-              // FIXED: Ensure loaded questions allow editing by sanitizing 'marks'
+              // Load custom footer if saved, otherwise default
+              if (exam.settings?.footerText) setFooterText(exam.settings.footerText);
+
               const loadedQuestions = (exam.questions || []).map((q: any) => ({
                   ...q,
                   marks: q.marks !== undefined ? q.marks : (q.default_marks || 0)
@@ -107,8 +122,7 @@ function BuilderContent() {
                   setShowInstructions(exam.settings.showInstructions);
                   setInstructions(exam.settings.instructions);
               }
-              // Populate sidebar with something so it isn't empty
-              setAvailableQuestions(loadedQuestions);
+              setAvailableQuestions(loadedQuestions); 
           }
       } else {
         searchQuestions();
@@ -118,7 +132,7 @@ function BuilderContent() {
     init();
   }, [routeId, isEditMode]);
 
-  // --- 2. DATA FETCHING ---
+  // --- 2. DATA & FILTERING ---
   const loadGroups = async (segId: string) => {
     const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId);
     if (data) {
@@ -155,7 +169,7 @@ function BuilderContent() {
         const mapped = data.map((q: any) => ({
             ...q,
             default_marks: q.marks,
-            marks: q.marks // Initialize editable mark
+            marks: q.marks 
         }));
         setAvailableQuestions(mapped);
     }
@@ -173,94 +187,173 @@ function BuilderContent() {
     setSelectedQuestions(selectedQuestions.filter(q => q.id !== id));
   };
 
-  // FIXED: MARK UPDATE LOGIC
   const updateQuestionMark = (id: string, newMark: string) => {
-    // 1. Allow empty string (clearing the input)
     if (newMark === "") {
         setSelectedQuestions(prev => prev.map(q => q.id === id ? { ...q, marks: "" } : q));
         return;
     }
-
-    // 2. Allow valid numbers
     const num = parseFloat(newMark);
     if (!isNaN(num)) {
         setSelectedQuestions(prev => prev.map(q => q.id === id ? { ...q, marks: num } : q));
     }
   };
 
-  // --- 4. PRINT / SAVE ---
-  const handlePrintPaper = () => {
+  // --- 4. ADVANCED PRINTING ENGINE ---
+  const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    // Generate Question HTML
     const questionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
-          ? `<div style="margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 20px;">
+          ? `<div class="options-grid">
               ${q.options.map((opt: any, i: number) => 
-                `<div style="font-size:14px;"><strong>${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
+                `<div class="option"><strong>${String.fromCharCode(97 + i)})</strong> ${opt.option_text}</div>`
               ).join('')}
              </div>` 
           : '';
         
         return `
-            <div style="margin-bottom: 20px; page-break-inside: avoid;">
-                <div style="display: flex; gap: 10px; align-items: baseline;">
-                    <div style="font-weight: bold; width: 25px; flex-shrink: 0;">${idx + 1}.</div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 15px; line-height: 1.5;">${q.question_text}</div>
-                        ${optionsHtml}
-                    </div>
-                    <div style="font-weight: bold; font-size: 14px; width: 30px; text-align: right;">[${q.marks}]</div>
+            <div class="question-block">
+                <div class="q-content">
+                    <span class="q-num">${idx + 1}.</span>
+                    <div class="q-text">${q.question_text}</div>
+                    ${optionsHtml}
                 </div>
+                <div class="q-marks">[${q.marks}]</div>
             </div>
         `;
     }).join('');
 
     const instructionsHtml = showInstructions 
-        ? `<div style="font-size: 13px; font-style: italic; margin-bottom: 25px; padding: 10px; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">${instructions}</div>` 
+        ? `<div class="instructions">${instructions}</div>` 
         : '';
+
+    // Dynamic Styles based on Format
+    const isLandscape = printFormat === 'landscape';
+    
+    const cssStyles = `
+      @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
+      
+      @page {
+          size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
+          margin: 15mm;
+      }
+      
+      body { 
+          font-family: 'Merriweather', serif; 
+          color: #1a1a1a; 
+          margin: 0;
+          padding: 0;
+          -webkit-print-color-adjust: exact;
+      }
+
+      /* Header */
+      .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+      h1 { margin: 0; font-size: 24px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: 0.5px; }
+      h2 { margin: 5px 0 15px 0; font-size: 16px; font-weight: normal; color: #444; }
+      .meta-bar { display: flex; justify-content: space-between; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+
+      /* Instructions */
+      .instructions { 
+          font-size: 13px; font-style: italic; margin-bottom: 20px; 
+          padding: 8px 12px; border: 1px dashed #ccc; background: #fafafa;
+          line-height: 1.4;
+      }
+      .instructions ul { margin: 0; padding-left: 20px; }
+
+      /* Columns Logic */
+      .questions-container {
+          ${isLandscape ? 'column-count: 2; column-gap: 30px;' : ''}
+      }
+
+      /* Question Block */
+      .question-block {
+          margin-bottom: 15px;
+          break-inside: avoid;
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          page-break-inside: avoid;
+      }
+      
+      .q-content { flex: 1; padding-right: 10px; }
+      .q-num { font-weight: bold; margin-right: 8px; float: left; }
+      .q-text { font-size: 14px; line-height: 1.5; display: inline; }
+      .q-text p { display: inline; margin: 0; }
+      
+      .options-grid { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 6px; 
+          margin-top: 6px; 
+          margin-left: 20px; 
+      }
+      .option { font-size: 13px; }
+      
+      .q-marks { 
+          font-family: 'Inter', sans-serif; 
+          font-weight: 700; 
+          font-size: 13px; 
+          white-space: nowrap; 
+      }
+
+      /* Footer */
+      .footer {
+          margin-top: 30px;
+          text-align: center;
+          font-size: 12px;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          color: #888;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+          break-inside: avoid;
+      }
+    `;
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>${paperTitle}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
-            body { font-family: 'Merriweather', serif; padding: 40px; max-width: 210mm; margin: 0 auto; color: #1a1a1a; }
-            h1 { text-align: center; margin: 0 0 10px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-            h2 { text-align: center; margin: 0 0 25px 0; font-size: 16px; font-weight: normal; color: #4a4a4a; }
-            .header-meta { display: flex; justify-content: space-between; font-weight: bold; font-family: sans-serif; font-size: 13px; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; }
-            @media print {
-                body { padding: 0; width: 100%; margin: 20mm 15mm; }
-            }
-          </style>
+          <title>${paperTitle} - ${printFormat}</title>
+          <style>${cssStyles}</style>
         </head>
         <body>
-          <h1>${instituteName}</h1>
-          <h2>${paperTitle}</h2>
-          
-          <div class="header-meta">
-              <span>Time: ${duration} Mins</span>
-              <span>Total Marks: ${totalMarks}</span>
+          <div class="header">
+              <h1>${instituteName}</h1>
+              <h2>${paperTitle}</h2>
+              <div class="meta-bar">
+                  <span>Time: ${duration} Mins</span>
+                  <span>Total Marks: ${totalMarks}</span>
+              </div>
           </div>
-
+          
           ${instructionsHtml}
-          <div class="questions">${questionsHtml}</div>
-
-          <script>window.onload = () => { setTimeout(() => { window.print(); }, 500); }</script>
+          
+          <div class="questions-container">
+            ${questionsHtml}
+            <div class="footer">${footerText}</div>
+          </div>
+          
+          <script>
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 800); }
+          </script>
         </body>
       </html>
     `);
     printWindow.document.close();
+    setShowPrintModal(false);
   };
 
+  // --- 5. SAVE ---
   const handleSave = async () => {
     if (selectedQuestions.length === 0) return alert("Please add questions first!");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // SANITIZE: Convert any empty strings back to 0 before saving
+    // Sanitize Empty Marks to 0
     const sanitizedQuestions = selectedQuestions.map(q => ({
         ...q,
         marks: (q.marks === "" || q.marks === undefined) ? 0 : Number(q.marks)
@@ -273,7 +366,7 @@ function BuilderContent() {
         duration: `${duration} Mins`,
         total_marks: totalMarks,
         questions: sanitizedQuestions,
-        settings: { instructions, showInstructions },
+        settings: { instructions, showInstructions, footerText }, // <--- SAVING FOOTER
         is_finalized: true 
     };
 
@@ -289,7 +382,6 @@ function BuilderContent() {
 
     if (error) alert("Save Failed: " + error.message);
     else {
-        alert("Saved Successfully!");
         if(newId) router.push(`/tutor/dashboard/my-exams/${newId}`);
     }
     setSaving(false);
@@ -319,12 +411,18 @@ function BuilderContent() {
           </div>
           
           <div className="flex gap-2">
-              {isEditMode && (
-                  <button onClick={handlePrintPaper} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 px-3 py-2 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all shadow-sm">
-                      <Printer className="w-4 h-4 text-indigo-600"/> Print
-                  </button>
-              )}
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50">
+              <button 
+                onClick={() => setShowPrintModal(true)} 
+                className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all shadow-sm"
+              >
+                  <Printer className="w-4 h-4 text-indigo-600"/> Print
+              </button>
+              
+              <button 
+                onClick={handleSave} 
+                disabled={saving} 
+                className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+              >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
                   <span>{isEditMode ? "Update" : "Save"}</span>
               </button>
@@ -334,30 +432,30 @@ function BuilderContent() {
       {/* --- MAIN WORKSPACE --- */}
       <div className="flex flex-1 overflow-hidden">
           
-          {/* LEFT SIDEBAR: QUESTION BANK */}
-          <div className="w-80 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
-              {/* Sidebar Header */}
+          {/* SIDEBAR: FILTERS & QUESTIONS */}
+          <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
+              {/* Robust Filters always visible */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
-                      <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search bank..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
+                      <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
-                  <button onClick={() => setShowFilters(!showFilters)} className="w-full flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider hover:text-indigo-600 mb-2">
-                      <span>Filters</span>
-                      {showFilters ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
-                  </button>
-
-                  {showFilters && (
-                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-200 mb-2">
-                         <div className="grid grid-cols-2 gap-2">
-                              <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                              <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
-                         </div>
-                         <select className="text-xs border border-slate-200 p-1.5 rounded bg-white w-full" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                         <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-1.5 rounded text-xs font-bold hover:bg-slate-900">Apply Filters</button>
-                      </div>
-                  )}
+                  {/* Filter Grid */}
+                  <div className="space-y-2">
+                     <div className="grid grid-cols-2 gap-2">
+                          <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                          <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                     </div>
+                     <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                     
+                     <div className="grid grid-cols-2 gap-2">
+                        <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => setFilters({...filters, type: e.target.value})}><option value="">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Creative</option></select>
+                        <input className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" placeholder="Topic Tag..." onChange={e => setFilters({...filters, topic: e.target.value})} />
+                     </div>
+                     
+                     <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded text-xs font-bold hover:bg-slate-900 transition-all shadow-sm">Search Questions</button>
+                  </div>
               </div>
 
               {/* Question List */}
@@ -365,15 +463,15 @@ function BuilderContent() {
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
                       return (
-                          <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group relative ${isAdded ? 'opacity-50 border-indigo-200' : 'border-slate-200 hover:border-indigo-300'}`}>
+                          <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group relative ${isAdded ? 'opacity-60 border-indigo-100 bg-indigo-50/20' : 'border-slate-200 hover:border-indigo-300'}`}>
                               <div className="flex justify-between items-start mb-1">
                                   <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase">{q.question_type}</span>
-                                  <span className="text-[10px] font-bold text-slate-400">{q.default_marks || 0} pts</span>
+                                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{q.default_marks || 0} pts</span>
                               </div>
                               <div className="text-xs text-slate-800 line-clamp-2 mb-2 font-medium leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
                               <div className="flex gap-2 mt-2">
                                   <button onClick={(e) => { e.stopPropagation(); setPreviewQuestion(q); }} className="p-1.5 bg-slate-50 text-slate-500 rounded hover:bg-slate-100 hover:text-indigo-600"><Eye className="w-3.5 h-3.5"/></button>
-                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-green-50 text-green-600 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'}`}>
+                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-green-100 text-green-700 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'}`}>
                                       {isAdded ? <CheckCircle className="w-3 h-3"/> : <Plus className="w-3 h-3"/>} {isAdded ? "Added" : "Add"}
                                   </button>
                               </div>
@@ -381,16 +479,15 @@ function BuilderContent() {
                       );
                   })}
                   {availableQuestions.length === 0 && (
-                      <div className="text-center py-8 text-slate-400 text-xs">No questions found.<br/>Try adjusting filters.</div>
+                      <div className="text-center py-8 text-slate-400 text-xs">No questions found.</div>
                   )}
               </div>
           </div>
 
           {/* CENTER: PAPER CANVAS */}
-          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-6 md:p-8 flex justify-center relative">
+          <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 md:p-6 flex justify-center relative">
               
-              {/* THE PAGE (A4 Visual) */}
-              <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top">
+              <div className="bg-white shadow-xl w-full max-w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
                   {/* --- DOC HEADER (Editable) --- */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
@@ -403,7 +500,6 @@ function BuilderContent() {
                         placeholder="INSTITUTE NAME"
                       />
                       
-                      {/* Paper Title Input */}
                       <input 
                         className="w-full text-center text-lg font-medium mb-4 outline-none bg-transparent text-slate-700 focus:text-indigo-700" 
                         value={paperTitle} 
@@ -411,7 +507,6 @@ function BuilderContent() {
                         placeholder="Subject / Exam Title"
                       />
 
-                      {/* Meta Data Bar */}
                       <div className="flex justify-between items-center font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
                           <div className="flex gap-2 items-center bg-slate-100 px-3 py-1 rounded">
                               <Clock className="w-4 h-4 text-slate-500"/>
@@ -432,11 +527,11 @@ function BuilderContent() {
                           </div>
                       </div>
                       
-                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">PRO FEATURE</span>}
+                      {!isPro && <span className="absolute top-2 right-2 text-[10px] font-bold text-amber-500 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded-full">LOCKED</span>}
                   </div>
 
                   {/* --- INSTRUCTIONS SECTION --- */}
-                  <div className="mb-8 group relative">
+                  <div className="mb-8 group relative flex-none">
                       <div className="flex justify-between items-center mb-1 print:hidden opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 right-0">
                           <button onClick={() => setShowInstructions(!showInstructions)} className="text-xs text-indigo-600 font-bold hover:underline flex gap-1 items-center bg-white px-2 py-0.5 rounded shadow-sm border">
                             {showInstructions ? "Hide Instructions" : "Show Instructions"}
@@ -449,8 +544,8 @@ function BuilderContent() {
                       )}
                   </div>
 
-                  {/* --- QUESTIONS LIST (The Real Content) --- */}
-                  <div className="space-y-6">
+                  {/* --- QUESTIONS LIST --- */}
+                  <div className="space-y-6 flex-1">
                       {selectedQuestions.length === 0 && (
                           <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
                               <p className="text-slate-400 font-medium">Your paper is empty.</p>
@@ -461,14 +556,9 @@ function BuilderContent() {
                       {selectedQuestions.map((q, idx) => (
                           <div key={q.id} className="relative group pl-3 hover:bg-slate-50 transition-colors rounded -ml-3 p-2 break-inside-avoid border border-transparent hover:border-slate-200">
                               <div className="flex gap-4 items-start">
-                                  {/* Q Index */}
                                   <span className="font-bold text-lg w-6 flex-shrink-0 text-slate-900 pt-0.5">{idx + 1}.</span>
-                                  
-                                  {/* Q Content */}
                                   <div className="flex-1">
                                       <div className="font-medium text-slate-900 text-base leading-relaxed font-serif [&_p]:inline" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
-                                      
-                                      {/* MCQ Options */}
                                       {q.question_type === 'mcq' && q.options && (
                                           <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-3 ml-2">
                                               {q.options.map((opt:any, i:number) => (
@@ -480,8 +570,6 @@ function BuilderContent() {
                                           </div>
                                       )}
                                   </div>
-
-                                  {/* Editable Marks */}
                                   <div className="w-16 text-right flex flex-col items-end">
                                       <div className="flex items-center gap-1 relative">
                                         <span className="text-slate-400 text-xs font-bold absolute -left-3">[</span>
@@ -497,8 +585,6 @@ function BuilderContent() {
                                       </div>
                                   </div>
                               </div>
-
-                              {/* Hover Actions */}
                               <div className="absolute -right-10 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
                                   <button onClick={() => removeFromPaper(q.id)} className="p-2 bg-white border border-red-100 text-red-500 rounded shadow-sm hover:bg-red-50" title="Remove Question">
                                       <Trash2 className="w-4 h-4"/>
@@ -508,13 +594,54 @@ function BuilderContent() {
                       ))}
                   </div>
 
-                  {/* --- FOOTER --- */}
-                  <div className="mt-16 pt-6 border-t border-slate-300 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">End of Exam</p>
+                  {/* --- NEW FOOTER --- */}
+                  <div className="mt-16 pt-4 border-t border-slate-300 text-center flex-none">
+                      <input 
+                          className="w-full text-center text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 outline-none bg-transparent hover:text-slate-600 focus:text-indigo-600"
+                          value={footerText}
+                          onChange={(e) => setFooterText(e.target.value)}
+                          placeholder="WRITE FOOTER HERE..."
+                      />
                   </div>
               </div>
           </div>
       </div>
+
+      {/* --- PRINT SETTINGS MODAL --- */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in zoom-in-95">
+                 <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-lg font-bold text-slate-800">Print Settings</h3>
+                     <button onClick={() => setShowPrintModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600"/></button>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4 mb-8">
+                     <button 
+                        onClick={() => setPrintFormat('portrait')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${printFormat === 'portrait' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+                     >
+                         <Layout className="w-8 h-8"/>
+                         <span className="font-bold text-sm">Portrait</span>
+                         <span className="text-[10px] text-slate-500">Standard A4</span>
+                     </button>
+                     
+                     <button 
+                        onClick={() => setPrintFormat('landscape')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${printFormat === 'landscape' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+                     >
+                         <Columns className="w-8 h-8"/>
+                         <span className="font-bold text-sm">Landscape</span>
+                         <span className="text-[10px] text-slate-500">2-Column Saver</span>
+                     </button>
+                 </div>
+                 
+                 <button onClick={handlePrint} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                     <Printer className="w-5 h-5"/> Print Now
+                 </button>
+             </div>
+        </div>
+      )}
 
       {/* --- PREVIEW MODAL --- */}
       {previewQuestion && (
