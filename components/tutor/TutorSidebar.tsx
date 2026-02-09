@@ -37,7 +37,7 @@ export default function TutorSidebar({ toggleMobile }: { toggleMobile?: () => vo
     {
       title: "Account & Billing",
       items: [
-        { label: "Subscription", href: "/tutor/dashboard/subscription", icon: CreditCard },
+        { label: "Subscription", href: "/tutor/subscription", icon: CreditCard },
         { label: "Settings", href: "/tutor/dashboard/settings", icon: Settings },
         { label: "Profile", href: "/profile", icon: User },
       ]

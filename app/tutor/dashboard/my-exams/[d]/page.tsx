@@ -17,45 +17,35 @@ export default function ExamViewPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // 1. SAFETY: If params aren't ready, wait (don't error out, don't stop loading yet).
-    if (!params || !params.id) return;
+    // Wait for ID to exist
+    if (!params?.id) return;
 
     const fetchExam = async () => {
-        setLoading(true);
-        setError(""); // Clear previous errors
-
         try {
             const examId = params.id;
-            console.log("Fetching ID:", examId);
             
-            // 2. Auth Check
+            // 1. Auth Check
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/login');
                 return;
             }
 
-            // 3. Fetch Data
+            // 2. Fetch Data
             const { data, error: dbError } = await supabase
                 .from('exam_papers')
                 .select('*')
                 .eq('id', examId)
                 .single();
 
-            if (dbError) {
-                console.error("DB Error:", dbError);
-                throw dbError;
-            }
-            if (!data) throw new Error("Exam not found in database.");
+            if (dbError) throw dbError;
+            if (!data) throw new Error("Exam not found.");
 
-            // 4. Set Success
             setExam(data);
-
         } catch (err: any) {
             console.error("Load Error:", err);
             setError(err.message || "Failed to load exam.");
         } finally {
-            // 5. CRITICAL: Always turn off loading
             setLoading(false);
         }
     };
@@ -68,15 +58,13 @@ export default function ExamViewPage() {
     documentTitle: exam?.title || "Exam Paper",
   });
 
-  // --- LOADING ---
   if (loading) return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600"/>
-          <p className="text-slate-500 font-bold animate-pulse">Retrieving Exam...</p>
+          <p className="text-slate-500 font-bold animate-pulse">Loading Exam...</p>
       </div>
   );
 
-  // --- ERROR ---
   if (error || !exam) return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-6 p-4">
           <div className="bg-red-100 p-4 rounded-full"><ShieldAlert className="w-10 h-10 text-red-600"/></div>
@@ -90,7 +78,6 @@ export default function ExamViewPage() {
       </div>
   );
 
-  // --- SUCCESS ---
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
        <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50 print:hidden">
@@ -103,10 +90,10 @@ export default function ExamViewPage() {
            </div>
            
            <div className="flex gap-2">
-                {/* NEW EDIT BUTTON */}
-               <button onClick={() => alert("Edit Feature Coming Soon (Requires Update Logic)")} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">
-                   <Pencil className="w-4 h-4"/> Edit
-               </button>
+               {/* EDIT BUTTON LINKING TO BUILDER */}
+               <Link href={`/tutor/dashboard/question-builder?edit_id=${exam.id}`} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm">
+                   <Pencil className="w-4 h-4"/> Edit Question
+               </Link>
                
                <button onClick={() => handlePrint()} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95">
                    <Printer className="w-4 h-4"/> Print / PDF

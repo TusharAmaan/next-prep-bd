@@ -188,7 +188,7 @@ export default function TutorDashboard() {
                       </div>
                   </div>
 
-                  <Link href="/tutor/dashboard/subscription" className={`block w-full py-2.5 rounded-xl text-center text-xs font-bold border transition-all ${isPro ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-slate-900 text-white hover:bg-black'}`}>
+                  <Link href="/tutor/subscription" className={`block w-full py-2.5 rounded-xl text-center text-xs font-bold border transition-all ${isPro ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-slate-900 text-white hover:bg-black'}`}>
                       {isPro ? "Manage Billing" : "Upgrade to Pro"}
                   </Link>
               </div>
