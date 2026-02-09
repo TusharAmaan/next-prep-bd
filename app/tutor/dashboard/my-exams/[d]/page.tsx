@@ -89,15 +89,12 @@ function BuilderContent() {
         const { data: prof } = await supabase.from('profiles').select('subscription_plan, institute_name, subscription_status').eq('id', user.id).single();
         
         if (prof) {
-            // DEBUG: Check console if it still locks
-            console.log("User Profile Loaded:", prof);
+            // ROBUST PERMISSION CHECK
+            const plan = (prof.subscription_plan || '').toLowerCase().trim();
+            const status = (prof.subscription_status || '').toLowerCase().trim();
 
-            // ROBUST CHECK: Trim spaces and lowercase to ensure matches match 'trial', 'Trial ', etc.
-            const plan = prof.subscription_plan ? prof.subscription_plan.toLowerCase().trim() : '';
-            const status = prof.subscription_status ? prof.subscription_status.toLowerCase().trim() : '';
-
-            // Allow if Plan is 'pro' OR 'trial' (and status is active for extra safety, though plan check is usually enough)
-            const hasAccess = (plan === 'pro' || plan === 'trial') && status === 'active';
+            // Allow if Plan is 'pro' OR 'trial'
+            const hasAccess = (plan === 'pro' || plan === 'trial');
             
             setIsPro(hasAccess);
             
@@ -112,7 +109,7 @@ function BuilderContent() {
       if (segs) setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
 
       if (isEditMode) {
-          const { data: exam, error } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
+          const { data: exam } = await supabase.from('exam_papers').select('*').eq('id', routeId).single();
           if (exam) {
               setPaperTitle(exam.title);
               setInstituteName(exam.institute_name || "NextPrep Model Test");
@@ -205,12 +202,28 @@ function BuilderContent() {
     }
   };
 
-  // --- 4. ADVANCED PRINTING ENGINE (FIXED LAYOUT) ---
+  // --- 4. ROBUST PRINTING ENGINE (WORD-LIKE LAYOUT) ---
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Generate Question HTML
+    const isLandscape = printFormat === 'landscape';
+
+    // -- HEADER COMPONENT --
+    const headerHtml = `
+      <div class="header-block">
+          <h1>${instituteName}</h1>
+          <h2>${paperTitle}</h2>
+          <div class="meta-bar">
+              <span>Time: ${duration} Mins</span>
+              <span>Total Marks: ${totalMarks}</span>
+          </div>
+          ${showInstructions ? `<div class="instructions">${instructions}</div>` : ''}
+          <div class="separator"></div>
+      </div>
+    `;
+
+    // -- QUESTIONS LOOP --
     const questionsHtml = selectedQuestions.map((q, idx) => {
         const optionsHtml = (q.options && q.options.length > 0)
           ? `<div class="options-grid">
@@ -220,115 +233,120 @@ function BuilderContent() {
              </div>` 
           : '';
         
-        // FIXED STRUCTURE: Uses floats instead of Flexbox to allow column breaking
         return `
             <div class="question-block">
-                <span class="q-marks">[${q.marks}]</span>
-                <span class="q-num">${idx + 1}.</span>
-                <div class="q-text">
-                    ${q.question_text}
+                <div class="q-meta">
+                    <span class="q-num">${idx + 1}.</span>
+                    <span class="q-marks">[${q.marks}]</span>
+                </div>
+                <div class="q-body">
+                    <div class="q-text">${q.question_text}</div>
                     ${optionsHtml}
                 </div>
-                <div style="clear:both;"></div>
             </div>
         `;
     }).join('');
 
-    const instructionsHtml = showInstructions 
-        ? `<div class="instructions">${instructions}</div>` 
-        : '';
-
-    const isLandscape = printFormat === 'landscape';
-    
     const cssStyles = `
       @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;600;800&display=swap');
       
       @page {
           size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
-          margin: 15mm;
+          margin: 10mm; /* Narrow margins for better fit */
       }
       
       body { 
           font-family: 'Merriweather', serif; 
           color: #1a1a1a; 
-          margin: 0;
-          padding: 0;
+          margin: 0; padding: 0;
           -webkit-print-color-adjust: exact;
       }
 
-      /* Header */
-      .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-      h1 { margin: 0; font-size: 24px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: 0.5px; }
-      h2 { margin: 5px 0 15px 0; font-size: 16px; font-weight: normal; color: #444; }
-      .meta-bar { display: flex; justify-content: space-between; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-
-      .instructions { 
-          font-size: 13px; font-style: italic; margin-bottom: 20px; 
-          padding: 8px 12px; border: 1px dashed #ccc; background: #fafafa;
-          line-height: 1.4;
-      }
-      .instructions ul { margin: 0; padding-left: 20px; }
-
-      /* --- COLUMN LOGIC (MS WORD STYLE) --- */
-      .questions-container {
-          ${isLandscape ? 'column-count: 2; column-gap: 40px;' : ''}
+      /* --- LAYOUT LOGIC --- */
+      /* This wrapper handles the columns. */
+      .content-wrapper {
+          ${isLandscape ? 'column-count: 2; column-gap: 25px;' : ''}
           width: 100%;
       }
 
-      /* --- QUESTION BLOCK (FLOW FIX) --- */
-      .question-block {
+      /* --- HEADER STYLES --- */
+      .header-block {
+          text-align: center;
           margin-bottom: 15px;
-          display: block; /* Important: Block allows breaking inside */
-          /* REMOVED 'break-inside: avoid' to allow splitting between columns */
+          break-inside: avoid; /* Keep header intact */
+          /* In Landscape, this stays in Column 1 naturally */
+      }
+      h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; }
+      h2 { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
+      
+      .meta-bar { 
+          display: flex; justify-content: space-between; 
+          font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; 
+          text-transform: uppercase; border-top: 2px solid #000; border-bottom: 2px solid #000;
+          padding: 4px 0; margin-bottom: 10px;
       }
 
-      .q-num { 
-          float: left; 
-          font-weight: bold; 
-          margin-right: 8px; 
-          font-size: 14px;
+      .instructions { 
+          font-size: 12px; font-style: italic; margin-bottom: 10px; 
+          text-align: left; background: #f9f9f9; padding: 5px;
+          line-height: 1.3;
+      }
+      .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
+
+      /* --- QUESTION STYLES --- */
+      .question-block {
+          margin-bottom: 12px;
+          display: block;
+          /* allow breaking to prevent gaps, similar to Word */
+          break-inside: auto; 
+          position: relative;
+          padding-left: 25px; /* Space for number */
       }
 
-      .q-marks { 
-          float: right; 
-          font-family: 'Inter', sans-serif; 
-          font-weight: 700; 
-          font-size: 13px; 
-          margin-left: 10px;
+      .q-meta {
+          position: absolute;
+          left: 0; top: 0; width: 100%;
+          height: 0; /* Ghost height to not affect flow */
+      }
+      .q-num {
+          position: absolute; left: 0; top: 0;
+          font-weight: bold; font-size: 13px; font-family: 'Inter', sans-serif;
+      }
+      .q-marks {
+          float: right;
+          font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; 
+      }
+
+      .q-body {
+          /* Content Flow */
       }
 
       .q-text { 
-          display: inline; /* Allows text to wrap naturally */
-          font-size: 14px; 
+          font-size: 13px; 
           line-height: 1.5; 
-          text-align: justify;
+          text-align: justify; /* Justified text */
+          text-justify: inter-word;
       }
-      
-      .q-text p { display: inline; margin: 0; }
-      
+      .q-text p { margin: 0; display: inline; }
+
       .options-grid { 
           display: grid; 
           grid-template-columns: 1fr 1fr; 
-          gap: 6px; 
-          margin-top: 8px; 
-          margin-left: 24px; /* Indent options */
-          clear: both; /* Ensure options clear the floats if needed */
+          gap: 4px; 
+          margin-top: 5px; 
       }
-      .option { font-size: 13px; }
+      .option { font-size: 12px; }
 
       .footer {
-          margin-top: 40px;
+          margin-top: 20px;
           text-align: center;
-          font-size: 12px;
-          font-weight: bold;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          color: #888;
-          border-top: 1px solid #eee;
-          padding-top: 10px;
+          font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888;
+          break-inside: avoid;
       }
     `;
 
+    // Construct Body: Wrapper contains Header -> Questions -> Footer
+    // This forces Header to be Item 1 in Column 1 in Landscape mode.
     printWindow.document.write(`
       <html>
         <head>
@@ -336,24 +354,13 @@ function BuilderContent() {
           <style>${cssStyles}</style>
         </head>
         <body>
-          <div class="header">
-              <h1>${instituteName}</h1>
-              <h2>${paperTitle}</h2>
-              <div class="meta-bar">
-                  <span>Time: ${duration} Mins</span>
-                  <span>Total Marks: ${totalMarks}</span>
-              </div>
+          <div class="content-wrapper">
+              ${headerHtml}
+              ${questionsHtml}
+              <div class="footer">${footerText}</div>
           </div>
-          
-          ${instructionsHtml}
-          
-          <div class="questions-container">
-            ${questionsHtml}
-            <div class="footer">${footerText}</div>
-          </div>
-          
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 800); }
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
           </script>
         </body>
       </html>
@@ -447,14 +454,16 @@ function BuilderContent() {
       {/* --- MAIN WORKSPACE --- */}
       <div className="flex flex-1 overflow-hidden">
           
-          {/* SIDEBAR */}
+          {/* SIDEBAR: FILTERS & QUESTIONS */}
           <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col z-20 flex-none shadow-[2px_0_10px_-5px_rgba(0,0,0,0.1)]">
+              {/* Robust Filters always visible */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                   <div className="relative mb-3">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all bg-white shadow-sm" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
                   
+                  {/* Filter Grid */}
                   <div className="space-y-2">
                      <div className="grid grid-cols-2 gap-2">
                           <select className="text-xs border border-slate-200 p-2 rounded bg-white w-full outline-none focus:border-indigo-500" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
@@ -471,6 +480,7 @@ function BuilderContent() {
                   </div>
               </div>
 
+              {/* Question List */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-100/50">
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
@@ -496,11 +506,11 @@ function BuilderContent() {
               </div>
           </div>
 
-          {/* CANVAS */}
+          {/* CENTER: PAPER CANVAS */}
           <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 md:p-6 flex justify-center relative">
               <div className="bg-white shadow-xl w-full max-w-[210mm] min-h-[297mm] h-fit p-[15mm] md:p-[20mm] relative transition-all duration-300 origin-top flex flex-col">
                   
-                  {/* HEADER */}
+                  {/* HEADER (Editable) */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
                       <input 
                         className={`w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight ${!isPro ? 'cursor-not-allowed text-slate-400' : 'text-slate-900 focus:text-indigo-900'}`} 
@@ -556,13 +566,6 @@ function BuilderContent() {
 
                   {/* QUESTIONS */}
                   <div className="space-y-6 flex-1">
-                      {selectedQuestions.length === 0 && (
-                          <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
-                              <p className="text-slate-400 font-medium">Your paper is empty.</p>
-                              <p className="text-slate-300 text-sm mt-1">Add questions from the left sidebar.</p>
-                          </div>
-                      )}
-
                       {selectedQuestions.map((q, idx) => (
                           <div key={q.id} className="relative group pl-3 hover:bg-slate-50 transition-colors rounded -ml-3 p-2 break-inside-avoid border border-transparent hover:border-slate-200">
                               <div className="flex gap-4 items-start">
@@ -650,35 +653,6 @@ function BuilderContent() {
                      <Printer className="w-5 h-5"/> Print Now
                  </button>
              </div>
-        </div>
-      )}
-
-      {/* PREVIEW MODAL */}
-      {previewQuestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-4 border-b border-slate-100">
-                    <h3 className="font-bold text-slate-800">Question Preview</h3>
-                    <button onClick={() => setPreviewQuestion(null)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5 text-slate-400"/></button>
-                </div>
-                <div className="p-6 overflow-y-auto">
-                    <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{__html: previewQuestion.question_text}}></div>
-                    {previewQuestion.options && (
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                            {previewQuestion.options.map((opt:any, i:number) => (
-                                <div key={i} className="flex gap-2 p-2 bg-slate-50 rounded border border-slate-100">
-                                    <span className="font-bold text-slate-400">{String.fromCharCode(65+i)}</span>
-                                    <span className="text-sm">{opt.option_text}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-2">
-                    <button onClick={() => setPreviewQuestion(null)} className="px-4 py-2 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-lg">Close</button>
-                    <button onClick={() => { addToPaper(previewQuestion); setPreviewQuestion(null); }} className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700">Add to Paper</button>
-                </div>
-            </div>
         </div>
       )}
     </div>
