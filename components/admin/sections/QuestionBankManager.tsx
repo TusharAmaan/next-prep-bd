@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Plus, Trash2, Save, CheckCircle, 
@@ -34,7 +34,7 @@ interface Question {
   subject_id?: number;
 }
 
-// --- CUSTOM MODAL COMPONENT (Professional In-App Popup) ---
+// --- PROFESSIONAL IN-APP MODAL ---
 function CustomModal({ isOpen, type, message, onConfirm, onCancel }: { 
   isOpen: boolean; 
   type: 'success' | 'error' | 'confirm'; 
@@ -45,7 +45,7 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100 border border-white/20">
         <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
           type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
@@ -58,7 +58,7 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: {
         </div>
         
         <h3 className="text-xl font-bold text-slate-800 mb-2">
-          {type === 'success' ? 'Success!' : type === 'error' ? 'Action Failed' : 'Are you sure?'}
+          {type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Confirm Action'}
         </h3>
         
         <p className="text-slate-600 mb-8 text-sm leading-relaxed">{message}</p>
@@ -89,7 +89,7 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
                 <div className="pl-3 text-slate-400"><Tag size={16}/></div>
                 <input 
                     className="w-full p-2.5 text-sm outline-none font-medium text-slate-700 placeholder:text-slate-400"
-                    placeholder="e.g. Algebra..."
+                    placeholder="e.g. Algebra, Newton's Laws..."
                     value={value}
                     onChange={e => { onChange(e.target.value); setIsOpen(true); }}
                     onFocus={() => setIsOpen(true)}
@@ -108,104 +108,6 @@ const TagInput = ({ value, onChange, suggestions }: { value: string, onChange: (
         </div>
     );
 };
-
-// --- MEMOIZED QUESTION FORM (Prevents Cursor Jumping) ---
-const QuestionFormInternal = memo(({ 
-    isSub, type, content, setContent, marks, setMarks, 
-    options, setOptions, explanation, setExplanation, 
-    topicTag, setTopicTag, uniqueTags, setType 
-}: any) => {
-    
-    return (
-        <div className={`space-y-6 ${isSub ? 'bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm' : ''}`}>
-            
-            {/* TYPE & TOPIC HEADER */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-               <div className="flex bg-slate-100 p-1 rounded-xl">
-                   {/* If it's a sub-question, we don't show 'Passage' as an option */}
-                   {!isSub && (
-                       <button onClick={() => setType('passage')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500 hover:text-slate-700'}`}>Passage</button>
-                   )}
-                   <button onClick={() => setType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
-                   <button onClick={() => setType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${type === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
-               </div>
-               
-               {!isSub && (
-                   <div className="w-full sm:w-64">
-                       <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
-                   </div>
-               )}
-            </div>
-
-            {/* EDITOR */}
-            <div className="space-y-2">
-               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
-                   {type === 'passage' && !isSub ? 'Passage / Stem Content' : 'Question Text'}
-               </label>
-               {/* KEY PROP IS CRITICAL HERE: It must be unique per mode but stable during typing */}
-               <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow overflow-hidden"> 
-                   <RichTextEditor 
-                        key={isSub ? "sub-editor" : "main-editor"} 
-                        initialValue={content} 
-                        onChange={setContent} 
-                   />
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {(type !== 'passage' || isSub) && (
-                   <div>
-                       <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
-                       <input 
-                         type="number" 
-                         value={marks} 
-                         onChange={e => setMarks(Number(e.target.value))} 
-                         className="w-full border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" 
-                       />
-                   </div>
-               )}
-            </div>
-
-            {/* MCQ OPTIONS */}
-            {type === 'mcq' && (
-               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
-                   <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
-                   <div className="grid grid-cols-1 gap-3">
-                       {options.map((opt: any, i: number) => (
-                          <div key={i} className="flex gap-3 items-center bg-white p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
-                             <button onClick={() => {
-                                 const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts);
-                               }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-300 hover:border-slate-300'}`}>
-                                <CheckCircle size={18} />
-                             </button>
-                             <input 
-                                value={opt.option_text} 
-                                onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} 
-                                className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" 
-                                placeholder={`Option ${i+1}`} 
-                             />
-                             <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
-                          </div>
-                       ))}
-                   </div>
-                   <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
-               </div>
-            )}
-
-            {/* EXPLANATION */}
-            {(type !== 'passage' || isSub) && (
-               <div className="space-y-2">
-                   <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
-                   <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
-                      <RichTextEditor initialValue={explanation} onChange={setExplanation} />
-                   </div>
-               </div>
-            )}
-        </div>
-    );
-});
-QuestionFormInternal.displayName = "QuestionFormInternal";
-
 
 export default function QuestionBankManager() {
   const supabase = createClient();
@@ -228,7 +130,7 @@ export default function QuestionBankManager() {
   };
   const closeModal = () => setModalState({ ...modalState, isOpen: false });
 
-  // --- FILTERS ---
+  // --- FILTERS & PAGINATION ---
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSegment, setFilterSegment] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
@@ -241,7 +143,7 @@ export default function QuestionBankManager() {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
-  // --- DATA ---
+  // --- DROPDOWNS ---
   const [segments, setSegments] = useState<any[]>([]);
   const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
   const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
@@ -256,10 +158,9 @@ export default function QuestionBankManager() {
   const [topicTag, setTopicTag] = useState('');
   
   const [qType, setQType] = useState<QuestionType>('mcq'); 
+  const [subQType, setSubQType] = useState<QuestionType>('mcq'); // For sub-questions
   
-  // FIX 1: Dedicated State for Sub-Questions
-  const [subQType, setSubQType] = useState<QuestionType>('mcq'); 
-  
+  // Use separate states to prevent cursor jumping
   const [passageText, setPassageText] = useState(''); 
   const [qText, setQText] = useState('');             
   
@@ -375,27 +276,30 @@ export default function QuestionBankManager() {
     });
   };
 
+  // --- ADD TO LIST (Client Side) ---
   const handleAddSubQuestion = () => {
     if (!qText) return showModal('error', "Please enter a question.");
     
-    // FIX 2: Use subQType for the new question, don't touch qType
+    // Create new Sub Question Object
     const newSub: Question = {
       question_text: qText,
-      question_type: subQType, 
+      question_type: subQType, // Use the sub-question type selector
       marks: marks,
       explanation: explanation,
       options: subQType === 'mcq' ? [...options] : []
     };
     
     setSubQuestions([...subQuestions, newSub]);
-    // Reset Form for next sub question
+    
+    // Reset Form for next entry
     setQText('');
     setExplanation('');
     setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]);
-    setSubQType('mcq'); // Reset sub type
+    setSubQType('mcq'); 
     setIsAddingSub(false); 
   };
 
+  // --- SAVE TO DB ---
   const handleSaveToBank = async () => {
     const mainContent = qType === 'passage' ? passageText : qText;
     if (!mainContent && !isAddingSub) return showModal('error', "Please enter content text.");
@@ -403,6 +307,7 @@ export default function QuestionBankManager() {
     setLoading(true);
     try {
         let parentId = editingId;
+        
         const payload = {
             segment_id: selSegment ? Number(selSegment) : null,
             group_id: selGroup ? Number(selGroup) : null,
@@ -423,15 +328,16 @@ export default function QuestionBankManager() {
             parentId = data.id;
         }
 
+        // Handle MCQ Options for Main Question
         if (qType === 'mcq' && parentId) {
             if (editingId) await supabase.from('question_options').delete().eq('question_id', editingId);
             const opts = options.map((o, i) => ({ question_id: parentId, option_text: o.option_text, is_correct: o.is_correct, order_index: i }));
             await supabase.from('question_options').insert(opts);
         }
 
+        // Handle Sub-Questions for Passage
         if (qType === 'passage' && parentId && subQuestions.length > 0) {
             if (editingId) {
-                // For simplicity, we delete old children and re-insert (better for ordering)
                 const { data: children } = await supabase.from('question_bank').select('id').eq('parent_id', editingId);
                 const childIds = children?.map(c => c.id) || [];
                 if(childIds.length) await supabase.from('question_bank').delete().in('id', childIds);
@@ -480,13 +386,28 @@ export default function QuestionBankManager() {
     setIsAddingSub(false);
     setQType('mcq');
     setSubQType('mcq');
+    setTopicTag('');
+  };
+
+  // --- RENDER HELPERS ---
+  const renderRichEditor = (initialContent: string, onChange: (val: string) => void, idPrefix: string) => {
+      // FIX: Key based on ID ensures editor re-inits only when switching questions, preventing cursor jumping
+      return (
+          <div className="min-h-[150px] border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow overflow-hidden">
+              <RichTextEditor 
+                  key={editingId ? `${idPrefix}-edit-${editingId}` : `${idPrefix}-new`} 
+                  initialValue={initialContent} 
+                  onChange={onChange} 
+              />
+          </div>
+      );
   };
 
   return (
     <div className="flex flex-col h-full">
        <CustomModal isOpen={modalState.isOpen} type={modalState.type} message={modalState.message} onConfirm={modalState.onConfirm} onCancel={closeModal} />
 
-       {/* HEADER BAR */}
+       {/* HEADER */}
        <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-200">
           <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Question Bank</h2>
@@ -511,6 +432,7 @@ export default function QuestionBankManager() {
        {/* CREATE VIEW */}
        {view === 'create' && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-4">
+             {/* 1. METADATA HEADER */}
              <div className="bg-slate-50 p-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-slate-100">
                 <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
@@ -526,22 +448,70 @@ export default function QuestionBankManager() {
                 </div>
              </div>
 
-             <div className="p-8 max-w-5xl mx-auto">
-                {/* Main Form */}
+             <div className="p-8 max-w-5xl mx-auto space-y-8">
+                
+                {/* 2. MAIN QUESTION EDITOR */}
                 {!isAddingSub && (
-                    <QuestionFormInternal 
-                        isSub={false}
-                        type={qType} setType={setQType}
-                        content={qType === 'passage' ? passageText : qText}
-                        setContent={qType === 'passage' ? setPassageText : setQText}
-                        marks={marks} setMarks={setMarks}
-                        options={options} setOptions={setOptions}
-                        explanation={explanation} setExplanation={setExplanation}
-                        topicTag={topicTag} setTopicTag={setTopicTag} uniqueTags={uniqueTags}
-                    />
+                    <div className="space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                           <div className="flex bg-slate-100 p-1 rounded-xl">
+                               <button onClick={() => setQType('passage')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'passage' ? 'bg-white shadow text-purple-700' : 'text-slate-500 hover:text-slate-700'}`}>Passage</button>
+                               <button onClick={() => setQType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
+                               <button onClick={() => setQType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${qType === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
+                           </div>
+                           <div className="w-full sm:w-64">
+                               <TagInput value={topicTag} onChange={setTopicTag} suggestions={uniqueTags} />
+                           </div>
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
+                               {qType === 'passage' ? 'Passage / Stem Content' : 'Question Content'}
+                           </label>
+                           {/* Using helper to render editor with stable Key */}
+                           {renderRichEditor(qType === 'passage' ? passageText : qText, qType === 'passage' ? setPassageText : setQText, 'main')}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           {qType !== 'passage' && (
+                               <div>
+                                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
+                                   <input type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} className="w-full border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none" />
+                               </div>
+                           )}
+                        </div>
+
+                        {/* Main MCQ Options */}
+                        {qType === 'mcq' && (
+                           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                               <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
+                               <div className="grid grid-cols-1 gap-3">
+                                   {options.map((opt, i) => (
+                                      <div key={i} className="flex gap-3 items-center bg-white p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
+                                         <button onClick={() => { const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-300 hover:border-slate-300'}`}>
+                                            <CheckCircle size={18} />
+                                         </button>
+                                         <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" placeholder={`Option ${i+1}`} />
+                                         <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                                      </div>
+                                   ))}
+                               </div>
+                               <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
+                           </div>
+                        )}
+
+                        {qType !== 'passage' && (
+                           <div className="space-y-2">
+                               <label className="block text-xs font-bold text-slate-500 uppercase">Explanation (Optional)</label>
+                               <div className="min-h-[100px] border border-slate-200 rounded-xl bg-white overflow-hidden">
+                                  <RichTextEditor key="main-expl" initialValue={explanation} onChange={setExplanation} />
+                               </div>
+                           </div>
+                        )}
+                    </div>
                 )}
 
-                {/* Passage Sub-Questions Section */}
+                {/* 3. PASSAGE SUB-QUESTIONS AREA */}
                 {qType === 'passage' && (
                    <div className="mt-8 border-t border-slate-100 pt-8">
                       <div className="flex justify-between items-center mb-6">
@@ -549,7 +519,7 @@ export default function QuestionBankManager() {
                           {!isAddingSub && (
                              <button onClick={() => { 
                                  setIsAddingSub(true); 
-                                 setSubQType('mcq'); // Reset Sub Type
+                                 setSubQType('mcq'); 
                                  setQText(''); 
                                  setExplanation('');
                                  setOptions([{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]); 
@@ -568,33 +538,54 @@ export default function QuestionBankManager() {
                                      <div className="font-bold text-slate-800 mt-1 line-clamp-1 text-sm prose prose-sm" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
                                   </div>
                                </div>
-                               <button onClick={() => { 
-                                  showModal('confirm', "Delete this sub-question?", () => {
-                                     const newSub = [...subQuestions]; newSub.splice(idx, 1); setSubQuestions(newSub); closeModal();
-                                  });
-                               }} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16}/></button>
+                               <button onClick={() => { showModal('confirm', "Delete this sub-question?", () => { const newSub = [...subQuestions]; newSub.splice(idx, 1); setSubQuestions(newSub); closeModal(); }); }} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16}/></button>
                             </div>
                          ))}
                       </div>
 
-                      {/* SUB QUESTION FORM */}
+                      {/* 4. SUB QUESTION FORM (Slide In) */}
                       {isAddingSub && (
-                         <div className="animate-in fade-in slide-in-from-bottom-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100">
+                         <div className="animate-in fade-in slide-in-from-bottom-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100 space-y-6">
                             <div className="flex justify-between items-center mb-4 px-2">
                                 <h4 className="font-bold text-indigo-900">New Sub-Question</h4>
                                 <button onClick={() => setIsAddingSub(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
                             </div>
                             
-                            <QuestionFormInternal 
-                                isSub={true}
-                                type={subQType} setType={setSubQType} // Use SUB Q State
-                                content={qText} setContent={setQText}
-                                marks={marks} setMarks={setMarks}
-                                options={options} setOptions={setOptions}
-                                explanation={explanation} setExplanation={setExplanation}
-                                topicTag={topicTag} setTopicTag={setTopicTag} uniqueTags={uniqueTags}
-                            />
-                            
+                            {/* Type Selector for Sub Q */}
+                            <div className="flex bg-white p-1 rounded-xl w-fit border border-indigo-100">
+                               <button onClick={() => setSubQType('mcq')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${subQType === 'mcq' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
+                               <button onClick={() => setSubQType('descriptive')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${subQType === 'descriptive' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
+                            </div>
+
+                            <div className="space-y-2">
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Question Text</label>
+                               {/* Use helper with unique key for sub-editor to prevent cursor jump */}
+                               {renderRichEditor(qText, setQText, 'sub')}
+                            </div>
+
+                            <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Marks</label>
+                               <input type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} className="w-32 border border-slate-200 p-3 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-indigo-100 outline-none bg-white" />
+                            </div>
+
+                            {subQType === 'mcq' && (
+                               <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                                   <label className="text-xs font-bold uppercase text-slate-400">Answer Options</label>
+                                   <div className="grid grid-cols-1 gap-3">
+                                       {options.map((opt, i) => (
+                                          <div key={i} className="flex gap-3 items-center bg-slate-50 p-2 rounded-xl border border-slate-200 shadow-sm group focus-within:border-indigo-300 transition-colors">
+                                             <button onClick={() => { const newOpts = [...options]; newOpts.forEach(o => o.is_correct = false); newOpts[i].is_correct = true; setOptions(newOpts); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-white border-slate-200 text-slate-300 hover:border-slate-300'}`}>
+                                                <CheckCircle size={18} />
+                                             </button>
+                                             <input value={opt.option_text} onChange={(e) => { const newOpts = [...options]; newOpts[i].option_text = e.target.value; setOptions(newOpts); }} className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-300" placeholder={`Option ${i+1}`} />
+                                             <button onClick={() => { const newOpts = [...options]; newOpts.splice(i, 1); setOptions(newOpts); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                                          </div>
+                                       ))}
+                                   </div>
+                                   <button onClick={() => setOptions([...options, { option_text: '', is_correct: false }])} className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"><Plus size={14}/> Add Option</button>
+                               </div>
+                            )}
+
                             <div className="flex justify-end pt-4">
                                 <button onClick={handleAddSubQuestion} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-all text-xs">Add to Passage</button>
                             </div>
