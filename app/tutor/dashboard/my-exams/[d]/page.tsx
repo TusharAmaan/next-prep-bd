@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useReactToPrint } from "react-to-print";
-import { Printer, ArrowLeft, ShieldAlert, Loader2, FileText } from "lucide-react";
+import { Printer, ArrowLeft, ShieldAlert, Loader2, FileText, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -17,7 +17,7 @@ export default function ExamViewPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // 1. SAFETY: If params aren't ready, wait (don't error out).
+    // 1. SAFETY: If params aren't ready, wait (don't error out, don't stop loading yet).
     if (!params || !params.id) return;
 
     const fetchExam = async () => {
@@ -26,6 +26,7 @@ export default function ExamViewPage() {
 
         try {
             const examId = params.id;
+            console.log("Fetching ID:", examId);
             
             // 2. Auth Check
             const { data: { user } } = await supabase.auth.getUser();
@@ -41,7 +42,10 @@ export default function ExamViewPage() {
                 .eq('id', examId)
                 .single();
 
-            if (dbError) throw dbError;
+            if (dbError) {
+                console.error("DB Error:", dbError);
+                throw dbError;
+            }
             if (!data) throw new Error("Exam not found in database.");
 
             // 4. Set Success
@@ -57,7 +61,7 @@ export default function ExamViewPage() {
     };
 
     fetchExam();
-  }, [params, router]); // Dependency on 'params' ensures it re-runs when ID arrives
+  }, [params, router]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -97,7 +101,17 @@ export default function ExamViewPage() {
                    <p className="text-xs text-slate-400 font-medium">Generated on {new Date(exam.created_at).toLocaleDateString()}</p>
                </div>
            </div>
-           <button onClick={() => handlePrint()} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95"><Printer className="w-4 h-4"/> Print / Download PDF</button>
+           
+           <div className="flex gap-2">
+                {/* NEW EDIT BUTTON */}
+               <button onClick={() => alert("Edit Feature Coming Soon (Requires Update Logic)")} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">
+                   <Pencil className="w-4 h-4"/> Edit
+               </button>
+               
+               <button onClick={() => handlePrint()} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                   <Printer className="w-4 h-4"/> Print / PDF
+               </button>
+           </div>
        </div>
 
        <div className="flex-1 overflow-y-auto p-8 flex justify-center print:p-0 print:overflow-visible bg-slate-100/50">

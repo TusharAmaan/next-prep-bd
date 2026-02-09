@@ -45,7 +45,7 @@ export default function QuestionBuilder() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ segment: "", group: "", subject: "", type: "", topic: "" });
   
-  // FIX: Explicitly typed state
+  // FIX: Explicitly typed state to prevent 'never[]' error
   const [metaData, setMetaData] = useState<{
     segments: MetaItem[];
     groups: MetaItem[];
@@ -68,9 +68,9 @@ export default function QuestionBuilder() {
       }
       
       const { data: segs } = await supabase.from('segments').select('id, title');
-      // FIX: Cast to any to bypass the 'never[]' inference error safely
       if (segs) {
-          setMetaData(prev => ({ ...prev, segments: segs as any }));
+          // Explicit casting to match the interface
+          setMetaData(prev => ({ ...prev, segments: segs as MetaItem[] }));
       }
     };
     init();
@@ -79,18 +79,16 @@ export default function QuestionBuilder() {
   // --- 2. FILTER LOGIC ---
   const loadGroups = async (segId: string) => {
     const { data } = await supabase.from('groups').select('id, title').eq('segment_id', segId);
-    // FIX: Cast to any
     if (data) {
-        setMetaData(prev => ({ ...prev, groups: data as any }));
+        setMetaData(prev => ({ ...prev, groups: data as MetaItem[] }));
         setFilters(prev => ({ ...prev, segment: segId, group: "", subject: "" }));
     }
   };
 
   const loadSubjects = async (grpId: string) => {
     const { data } = await supabase.from('subjects').select('id, title').eq('group_id', grpId);
-    // FIX: Cast to any
     if (data) {
-        setMetaData(prev => ({ ...prev, subjects: data as any }));
+        setMetaData(prev => ({ ...prev, subjects: data as MetaItem[] }));
         setFilters(prev => ({ ...prev, group: grpId, subject: "" }));
     }
   };
@@ -172,7 +170,9 @@ export default function QuestionBuilder() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 font-sans text-slate-900">
-      <div className="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm z-30">
+      
+      {/* HEADER */}
+      <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex justify-between items-center shadow-sm z-30">
           <div className="flex items-center gap-4">
               <Link href="/tutor/dashboard" className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft className="w-5 h-5 text-slate-500"/></Link>
               <div>
@@ -184,12 +184,23 @@ export default function QuestionBuilder() {
                   </div>
               </div>
           </div>
+          
           <div className="flex gap-3">
-              <button onClick={() => setShowPaperOverview(true)} disabled={selectedQuestions.length === 0} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50">
+              <button 
+                  onClick={() => setShowPaperOverview(true)} 
+                  disabled={selectedQuestions.length === 0}
+                  className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
+              >
                   <MonitorPlay className="w-4 h-4"/> View Overview
               </button>
-              <button onClick={handleSave} disabled={saving || selectedQuestions.length === 0} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50">
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} Save & Exit
+
+              <button 
+                  onClick={handleSave} 
+                  disabled={saving || selectedQuestions.length === 0} 
+                  className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 disabled:opacity-50"
+              >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                  Save & Exit
               </button>
           </div>
       </div>
@@ -202,30 +213,48 @@ export default function QuestionBuilder() {
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
                       <input className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 transition-all" placeholder="Search keywords..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchQuestions()}/>
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-2">
-                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
-                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map(g=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadGroups(e.target.value)}><option value="">Segment</option>{metaData.segments.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => loadSubjects(e.target.value)}><option value="">Group</option>{metaData.groups.map((g:any)=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
                   </div>
-                  <select className="w-full text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                  <select className="w-full text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, subject: e.target.value})}><option value="">Subject</option>{metaData.subjects.map((s:any)=><option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                  
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
-                      <select className="text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, type: e.target.value})}><option value="">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Creative</option></select>
+                      <select className="text-xs border p-2 rounded bg-white" onChange={e => setFilters({...filters, type: e.target.value})}>
+                          <option value="">All Types</option>
+                          <option value="mcq">MCQ</option>
+                          <option value="passage">Passage</option>
+                          <option value="descriptive">Creative</option>
+                      </select>
                       <input className="text-xs border p-2 rounded bg-white" placeholder="Topic Tag..." onChange={e => setFilters({...filters, topic: e.target.value})} />
                   </div>
+
                   <button onClick={searchQuestions} className="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-900 transition-all">Search Questions</button>
               </div>
+
+              {/* QUESTIONS LIST */}
               <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-slate-100">
                   {availableQuestions.map(q => {
                       const isAdded = selectedQuestions.some(sq => sq.id === q.id);
                       return (
                           <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group ${isAdded ? 'opacity-60 border-indigo-200' : 'border-slate-200'}`}>
                               <div className="flex justify-between items-start mb-2">
-                                  <div className="flex gap-1"><span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded uppercase text-slate-600">{q.question_type}</span>{q.topic_tag && <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 max-w-[80px] truncate">{q.topic_tag}</span>}</div>
+                                  <div className="flex gap-1">
+                                      <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded uppercase text-slate-600">{q.question_type}</span>
+                                      {q.topic_tag && <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 max-w-[80px] truncate">{q.topic_tag}</span>}
+                                  </div>
                                   <span className="text-xs font-bold text-slate-900">{q.marks} Pts</span>
                               </div>
                               <div className="text-xs text-slate-700 line-clamp-2 mb-2" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
+                              
                               <div className="flex gap-2">
-                                  <button onClick={(e) => { e.stopPropagation(); setPreviewQuestion(q); }} className="flex-1 py-1.5 rounded bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 flex items-center justify-center gap-1"><Eye className="w-3 h-3"/> View</button>
-                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>{isAdded ? <CheckCircle className="w-3 h-3"/> : <Plus className="w-3 h-3"/>} {isAdded ? "Added" : "Add"}</button>
+                                  <button onClick={(e) => { e.stopPropagation(); setPreviewQuestion(q); }} className="flex-1 py-1.5 rounded bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 flex items-center justify-center gap-1">
+                                      <Eye className="w-3 h-3"/> View
+                                  </button>
+                                  <button onClick={() => !isAdded && addToPaper(q)} className={`flex-1 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 transition-colors ${isAdded ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                                      {isAdded ? <CheckCircle className="w-3 h-3"/> : <Plus className="w-3 h-3"/>} {isAdded ? "Added" : "Add"}
+                                  </button>
                               </div>
                           </div>
                       );
