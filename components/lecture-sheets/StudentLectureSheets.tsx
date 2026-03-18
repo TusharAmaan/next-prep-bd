@@ -15,8 +15,10 @@ import {
   MessageSquare,
   HelpCircle,
   Printer,
-  Save
+  Save,
+  Trash2
 } from "lucide-react";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 interface StudentLectureSheetsProps {
   user: any;
@@ -42,6 +44,7 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
     comment: '',
     user_deadline: ''
   });
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
   const [existingSuggestions, setExistingSuggestions] = useState<any[]>([]);
 
@@ -63,7 +66,6 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
   const fetchSubjects = async (grpId: string) => {
     const { data } = await supabase.from('subjects').select('*').eq('group_id', grpId).order('title');
     setSubjects(data || []);
-    setFormData(prev => ({ ...prev, subject_id: '' }));
   };
 
   // Fetch Available & Requests
@@ -134,22 +136,77 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
     if (!formData.subject_id || !formData.topic) return;
 
     try {
-      const { error } = await supabase.from('lecture_sheet_requests').insert([{
-        user_id: user.id,
-        segment_id: parseInt(formData.segment_id),
-        group_id: formData.group_id ? parseInt(formData.group_id) : null,
-        subject_id: parseInt(formData.subject_id),
-        topic: formData.topic,
-        comment: formData.comment,
-        user_deadline: formData.user_deadline || null
-      }]);
+      if (editingRequestId) {
+        const { error } = await supabase
+          .from('lecture_sheet_requests')
+          .update({
+            segment_id: parseInt(formData.segment_id),
+            group_id: formData.group_id ? parseInt(formData.group_id) : null,
+            subject_id: parseInt(formData.subject_id),
+            topic: formData.topic,
+            comment: formData.comment,
+            user_deadline: formData.user_deadline || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingRequestId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('lecture_sheet_requests').insert([{
+          user_id: user.id,
+          segment_id: parseInt(formData.segment_id),
+          group_id: formData.group_id ? parseInt(formData.group_id) : null,
+          subject_id: parseInt(formData.subject_id),
+          topic: formData.topic,
+          comment: formData.comment,
+          user_deadline: formData.user_deadline || null
+        }]);
+        if (error) throw error;
+      }
 
-      if (error) throw error;
       setShowRequestModal(false);
+      setEditingRequestId(null);
       setFormData({ segment_id: '', group_id: '', subject_id: '', topic: '', comment: '', user_deadline: '' });
       fetchData();
     } catch (err) {
       console.error("Error submitting request:", err);
+    }
+  };
+
+  const handleEditRequest = async (req: any) => {
+    setEditingRequestId(req.id);
+    setFormData({
+      segment_id: req.segment_id?.toString() || '',
+      group_id: req.group_id?.toString() || '',
+      subject_id: req.subject_id?.toString() || '',
+      topic: req.topic,
+      comment: req.comment || '',
+      user_deadline: req.user_deadline || ''
+    });
+    
+    // Predispatch hierarchy fetches
+    if (req.segment_id) {
+      const { data: gData } = await supabase.from('groups').select('*').eq('segment_id', req.segment_id).order('title');
+      setGroups(gData || []);
+    }
+    if (req.group_id) {
+      const { data: sData } = await supabase.from('subjects').select('*').eq('group_id', req.group_id).order('title');
+      setSubjects(sData || []);
+    }
+    
+    setShowRequestModal(true);
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this request?")) return;
+    try {
+      const { error } = await supabase
+        .from('lecture_sheet_requests')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      fetchData();
+    } catch (err) {
+      console.error("Error deleting request:", err);
     }
   };
 
@@ -210,6 +267,13 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
                           <span className="bg-white/90 backdrop-blur-md text-[9px] md:text-[10px] font-black uppercase px-2 py-0.5 md:py-1 rounded-md md:lg text-indigo-600 border border-white shadow-sm">
                             {sheet.subjects?.title}
                           </span>
+                       </div>
+                       <div className="absolute top-2 md:top-3 right-2 md:right-3">
+                          <BookmarkButton 
+                            itemType="lecture_sheet" 
+                            itemId={sheet.id} 
+                            metadata={{ title: sheet.title, thumbnail_url: sheet.thumbnail_url }} 
+                          />
                        </div>
                     </div>
                     
@@ -282,6 +346,25 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
                             <CheckCircle2 className="w-4 h-4" /> VIEW SHEET
                          </button>
                        )}
+                       {req.status === 'pending' && (
+                         <div className="flex gap-2">
+                            <button 
+                              onClick={() => handleEditRequest(req)}
+                              className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-[10px] md:text-xs transition-all"
+                            >
+                               EDIT
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteRequest(req.id)}
+                              className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-[10px] md:text-xs transition-all"
+                            >
+                               DELETE
+                            </button>
+                         </div>
+                       )}
+                       {req.status === 'rejected' && (
+                         <p className="text-[10px] font-bold text-red-500 text-center py-2 italic">Your request was rejected</p>
+                       )}
                     </div>
                   </div>
                 ))
@@ -315,25 +398,27 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
                        <select 
                          required
                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 transition-all"
-                         value={formData.segment_id}
-                         onChange={(e) => { setFormData(prev => ({ ...prev, segment_id: e.target.value })); fetchGroups(e.target.value); }}
-                       >
-                         <option value="">Select Segment</option>
-                         {segments.map(seg => <option key={seg.id} value={seg.id}>{seg.title}</option>)}
-                       </select>
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-xs font-black text-slate-500 uppercase ml-1">Group (Optional)</label>
-                       <select 
-                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 transition-all disabled:opacity-50"
-                         disabled={!formData.segment_id}
-                         value={formData.group_id}
-                         onChange={(e) => { setFormData(prev => ({ ...prev, group_id: e.target.value })); fetchSubjects(e.target.value); }}
-                       >
-                         <option value="">Select Group</option>
-                         {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
-                       </select>
-                    </div>
+                        >
+                          <option value="">Select Segment</option>
+                          {segments.map(seg => <option key={seg.id} value={seg.id}>{seg.title}</option>)}
+                        </select>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase ml-1">Group (Optional)</label>
+                        <select 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 transition-all disabled:opacity-50"
+                          disabled={!formData.segment_id}
+                          value={formData.group_id}
+                          onChange={(e) => { 
+                            setFormData(prev => ({ ...prev, group_id: e.target.value, subject_id: '' })); 
+                            if (e.target.value) fetchSubjects(e.target.value); 
+                            else setSubjects([]);
+                          }}
+                        >
+                          <option value="">Select Group</option>
+                          {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                        </select>
+                     </div>
                  </div>
 
                  <div className="space-y-2">

@@ -18,7 +18,8 @@ import {
   Filter,
   X,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Edit
 } from "lucide-react";
 
 interface LectureSheetManagerProps {
@@ -47,6 +48,11 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
     file_url: '',
     thumbnail_url: ''
   });
+  const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+  const [selectedSheetForAccess, setSelectedSheetForAccess] = useState<any>(null);
+  const [targetUserEmail, setTargetUserEmail] = useState('');
+  const [grantedUsers, setGrantedUsers] = useState<any[]>([]);
+  const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   // Fetch Logic
   const fetchData = useCallback(async () => {
@@ -108,6 +114,64 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
     }
   };
 
+  const handleOpenAccessModal = async (sheet: any) => {
+    setSelectedSheetForAccess(sheet);
+    setIsAccessModalOpen(true);
+    fetchGrantedUsers(sheet.id);
+  };
+
+  const fetchGrantedUsers = async (sheetId: string) => {
+    const { data, error } = await supabase
+      .from('lecture_sheet_access')
+      .select('*, profiles(full_name, email)')
+      .eq('lecture_sheet_id', sheetId);
+    if (!error) setGrantedUsers(data || []);
+  };
+
+  const handleGrantAccess = async () => {
+    if (!targetUserEmail) return;
+    setIsSearchingUser(true);
+    try {
+      const { data: profile, error: pError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('email', targetUserEmail)
+        .single();
+      
+      if (pError || !profile) {
+        alert("User not found with this email.");
+        return;
+      }
+
+      const { error: aError } = await supabase
+        .from('lecture_sheet_access')
+        .insert([{
+          lecture_sheet_id: selectedSheetForAccess.id,
+          user_id: profile.id
+        }]);
+      
+      if (aError) {
+        if (aError.code === '23505') alert("User already has access.");
+        else throw aError;
+      } else {
+        setTargetUserEmail('');
+        fetchGrantedUsers(selectedSheetForAccess.id);
+      }
+    } catch (err) {
+      console.error("Error granting access:", err);
+    } finally {
+      setIsSearchingUser(false);
+    }
+  };
+
+  const handleRevokeAccess = async (accessId: string) => {
+    const { error } = await supabase
+      .from('lecture_sheet_access')
+      .delete()
+      .eq('id', accessId);
+    if (!error) fetchGrantedUsers(selectedSheetForAccess.id);
+  };
+
   const handleOpenAddModal = () => {
     setEditingSheet(null);
     setSelectedRequest(null);
@@ -143,19 +207,25 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const handleSaveSheet = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const sheetData = {
+      const sheetData: any = {
         ...formData,
         is_published: true,
-        created_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
-        .from('lecture_sheets')
-        .insert([sheetData])
-        .select()
-        .single();
-
-      if (error) throw error;
+      if (editingSheet) {
+        const { error } = await supabase
+          .from('lecture_sheets')
+          .update(sheetData)
+          .eq('id', editingSheet.id);
+        if (error) throw error;
+      } else {
+        sheetData.created_at = new Date().toISOString();
+        const { error } = await supabase
+          .from('lecture_sheets')
+          .insert([sheetData]);
+        if (error) throw error;
+      }
 
       // If published from a request, update the request status
       if (selectedRequest) {
@@ -167,7 +237,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
 
       setIsModalOpen(false);
       fetchData();
-      alert("Lecture sheet published successfully!");
+      alert(editingSheet ? "Sheet updated successfully!" : "Lecture sheet published successfully!");
     } catch (err) {
       console.error("Error saving sheet:", err);
       alert("Failed to save sheet.");
@@ -314,9 +384,13 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                             Accept & Taking Time
                           </button>
                           <button 
-                            className="w-full border border-slate-200 hover:bg-slate-50 text-slate-600 py-2 rounded-xl text-xs font-bold transition-all"
+                            onClick={() => {
+                              const comment = prompt("Reason for rejection?");
+                              if (comment) updateRequestStatus(req.id, 'rejected', comment);
+                            }}
+                            className="w-full border border-red-200 hover:bg-red-50 text-red-600 py-2 rounded-xl text-xs font-bold transition-all"
                           >
-                            Set Custom Deadline
+                            Reject & Cancel
                           </button>
                         </>
                       )}
@@ -382,21 +456,46 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                           </span>
                        </div>
                        <div className="flex items-center justify-between border-t border-slate-50 pt-4 mt-auto">
-                          <div className="flex gap-2">
-                             <button onClick={() => window.open(sheet.file_url, '_blank')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all">
-                                <ExternalLink className="w-4 h-4" />
-                             </button>
-                             <button className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all">
-                                <Users className="w-4 h-4" />
-                             </button>
-                          </div>
-                          <button 
-                            onClick={() => handleDeleteSheet(sheet.id)}
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                          >
-                             <Trash2 className="w-4 h-4" />
-                          </button>
-                       </div>
+                           <div className="flex gap-2">
+                              <button onClick={() => window.open(sheet.file_url, '_blank')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all" title="View File">
+                                 <ExternalLink className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleOpenAccessModal(sheet)}
+                                className="p-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-600 transition-all"
+                                title="Manage Access"
+                              >
+                                 <Users className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => { 
+                                  setEditingSheet(sheet); 
+                                  setFormData({ 
+                                    title: sheet.title, 
+                                    description: sheet.description || '', 
+                                    segment_id: sheet.segment_id?.toString() || '', 
+                                    group_id: sheet.group_id?.toString() || '', 
+                                    subject_id: sheet.subject_id?.toString() || '',
+                                    access_type: sheet.access_type,
+                                    file_url: sheet.file_url,
+                                    thumbnail_url: sheet.thumbnail_url || ''
+                                  }); 
+                                  setIsModalOpen(true); 
+                                }} 
+                                className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all"
+                                title="Edit Sheet"
+                              >
+                                 <Edit className="w-4 h-4" />
+                              </button>
+                           </div>
+                           <button 
+                             onClick={() => handleDeleteSheet(sheet.id)}
+                             className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                             title="Delete Sheet"
+                           >
+                              <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
                     </div>
                   </div>
                 ))
@@ -419,7 +518,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
             <form onSubmit={handleSaveSheet} className="p-8 space-y-6">
               <div className="space-y-1">
                 <h3 className="text-2xl font-black text-slate-900">
-                  {selectedRequest ? 'Publish from Request' : 'Create New Lecture Sheet'}
+                  {editingSheet ? 'Edit Lecture Sheet' : selectedRequest ? 'Publish from Request' : 'Create New Lecture Sheet'}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">Fill in the details for the students</p>
               </div>
@@ -437,20 +536,34 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Segment</label>
                    <select 
                      required
                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
                      value={formData.segment_id}
-                     onChange={(e) => setFormData({...formData, segment_id: e.target.value})}
+                     onChange={(e) => setFormData({...formData, segment_id: e.target.value, group_id: '', subject_id: ''})}
                    >
                      <option value="">Select Segment</option>
                      {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                    </select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
+                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Group (Optional)</label>
+                   <select 
+                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     value={formData.group_id}
+                     onChange={(e) => setFormData({...formData, group_id: e.target.value, subject_id: ''})}
+                   >
+                     <option value="">Select Group</option>
+                     {groups.filter(g => !formData.segment_id || g.segment_id?.toString() === formData.segment_id).map(g => (
+                       <option key={g.id} value={g.id}>{g.title}</option>
+                     ))}
+                   </select>
+                </div>
+
+                <div className="col-span-full md:col-span-1 space-y-2 text-left">
                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Subject</label>
                    <select 
                      required
@@ -459,7 +572,11 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                      onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
                    >
                      <option value="">Select Subject</option>
-                     {subjects.filter(s => !formData.segment_id || s.segment_id?.toString() === formData.segment_id).map(s => (
+                     {subjects.filter(s => {
+                       if (formData.group_id) return s.group_id?.toString() === formData.group_id;
+                       if (formData.segment_id) return s.segment_id?.toString() === formData.segment_id;
+                       return true;
+                     }).map(s => (
                        <option key={s.id} value={s.id}>{s.title}</option>
                      ))}
                    </select>
@@ -518,10 +635,78 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                   className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
                 >
                   <Upload className="w-5 h-5" />
-                  {selectedRequest ? 'PUBLISH NOW' : 'CREATE SHEET'}
+                  {editingSheet ? 'UPDATE' : selectedRequest ? 'PUBLISH NOW' : 'CREATE SHEET'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Access Management Modal */}
+      {isAccessModalOpen && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95">
+             <div className="flex justify-between items-start mb-6">
+                <div>
+                   <h2 className="text-xl font-black text-slate-900">Manage Manual Access</h2>
+                   <p className="text-xs text-slate-500 font-medium mt-1">{selectedSheetForAccess?.title}</p>
+                </div>
+                <button onClick={() => setIsAccessModalOpen(false)} className="text-slate-300 hover:text-red-500 transition-colors"><X className="w-6 h-6" /></button>
+             </div>
+
+             <div className="space-y-6">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Grant Access (User Email)</label>
+                   <div className="flex gap-2">
+                      <input 
+                        type="email" 
+                        placeholder="student@example.com"
+                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800"
+                        value={targetUserEmail}
+                        onChange={(e) => setTargetUserEmail(e.target.value)}
+                      />
+                      <button 
+                        onClick={handleGrantAccess}
+                        disabled={isSearchingUser}
+                        className="px-6 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 active:scale-95 transition-all text-xs uppercase"
+                      >
+                         {isSearchingUser ? '...' : 'Grant'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="space-y-3">
+                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest pl-1">Users with Access</h3>
+                   <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                      {grantedUsers.length === 0 ? (
+                        <p className="text-center py-8 text-xs text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">No manual access granted yet.</p>
+                      ) : (
+                        grantedUsers.map(access => (
+                          <div key={access.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl group">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{access.profiles?.full_name}</p>
+                                <p className="text-[10px] text-slate-500">{access.profiles?.email}</p>
+                             </div>
+                             <button 
+                               onClick={() => handleRevokeAccess(access.id)}
+                               className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                             >
+                                <Trash2 className="w-4 h-4" />
+                             </button>
+                          </div>
+                        ))
+                      )}
+                   </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsAccessModalOpen(false)}
+                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                >
+                   Close
+                </button>
+             </div>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
 import { debounce } from "lodash";
+import BookmarkButton from "./shared/BookmarkButton";
 
 type BlogListProps = {
   initialBlogs: any[];
@@ -291,6 +292,13 @@ export default function BlogList({ initialBlogs, initialCount, segments }: BlogL
                         <span className="bg-white/95 backdrop-blur shadow-sm text-slate-800 text-[10px] font-extrabold px-3 py-1 rounded-full border border-slate-100 tracking-wide uppercase">
                           {blog.badgeTitle}
                         </span>
+                      </div>
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <BookmarkButton 
+                          itemType="post" 
+                          itemId={blog.id} 
+                          metadata={{ title: blog.title, thumbnail_url: blog.content_url }} 
+                        />
                       </div>
                     </div>
 
