@@ -63,67 +63,85 @@ export default function PrintableBlogBody({
         `}
       >
         
-        {/* === MOBILE-FIRST RESPONSIVE FONT SCALING === */}
+        {/* === FLUID RESPONSIVE TYPOGRAPHY === */}
         <style>{`
-          @media (max-width: 767px) {
-            .responsive-typography {
-              font-size: 13px;
-              line-height: 1.65;
-            }
-            .responsive-h1 { font-size: 22px; line-height: 1.3; }
-            .responsive-h2 { font-size: 18px; line-height: 1.35; margin-top: 1.25rem; margin-bottom: 0.75rem; }
-            .responsive-h3 { font-size: 16px; line-height: 1.35; margin-top: 1rem; margin-bottom: 0.65rem; }
-            .responsive-p { margin-bottom: 1rem; }
-            .responsive-li { margin: 0.5rem 0; }
-            .responsive-code { font-size: 12px; overflow-x: auto; word-wrap: break-word; white-space: pre-wrap; }
-            .responsive-table { font-size: 12px; overflow-x: auto; }
-            .responsive-meta { font-size: 11px; }
+          :root {
+            --base-font-size: 16px;
+          }
+          @media (max-width: 640px) {
+            :root { --base-font-size: 14.5px; }
+          }
+          @media (min-width: 1536px) {
+            :root { --base-font-size: 18px; }
+          }
+
+          .responsive-typography {
+            font-size: var(--base-font-size);
+            line-height: 1.7;
+            color: #334155; /* slate-700 */
+          }
+
+          .responsive-h1 { 
+            font-size: clamp(1.75rem, 5vw, 2.5rem); 
+            line-height: 1.2; 
+            letter-spacing: -0.02em;
+          }
+          .responsive-h2 { 
+            font-size: clamp(1.4rem, 4vw, 1.875rem); 
+            line-height: 1.3; 
+            margin-top: 2.5rem; 
+            margin-bottom: 1.25rem;
+          }
+          .responsive-h3 { 
+            font-size: clamp(1.1rem, 3vw, 1.5rem); 
+            line-height: 1.4; 
+            margin-top: 2rem; 
+            margin-bottom: 1rem;
+          }
+          .responsive-p { margin-bottom: 1.25rem; }
+          .responsive-li { margin: 0.75rem 0; }
+          
+          /* Specialized scales for small screens to prevent "too large" feel */
+          @media (max-width: 480px) {
+            .responsive-typography { font-size: 14px; line-height: 1.6; }
+            .responsive-h1 { font-size: 1.5rem; }
+            .responsive-h2 { font-size: 1.25rem; }
+            .responsive-h3 { font-size: 1.1rem; }
+          }
+
+          .responsive-code { 
+            font-size: 0.9em; 
+            background: #f8fafc;
+            padding: 0.2em 0.4em;
+            border-radius: 0.4em;
+            border: 1px solid #e2e8f0;
           }
           
-          @media (min-width: 768px) and (max-width: 1023px) {
-            .responsive-typography {
-              font-size: 14px;
-              line-height: 1.7;
-            }
-            .responsive-h1 { font-size: 26px; line-height: 1.35; }
-            .responsive-h2 { font-size: 20px; line-height: 1.4; margin-top: 1.5rem; margin-bottom: 0.85rem; }
-            .responsive-h3 { font-size: 18px; line-height: 1.4; margin-top: 1.25rem; margin-bottom: 0.75rem; }
-            .responsive-p { margin-bottom: 1.1rem; }
-            .responsive-li { margin: 0.55rem 0; }
-            .responsive-code { font-size: 13px; }
-            .responsive-table { font-size: 13px; }
-            .responsive-meta { font-size: 12px; }
-          }
-          
-          @media (min-width: 1024px) {
-            .responsive-typography {
-              font-size: 16px;
-              line-height: 1.75;
-            }
-            .responsive-h1 { font-size: 32px; line-height: 1.4; }
-            .responsive-h2 { font-size: 24px; line-height: 1.45; margin-top: 2rem; margin-bottom: 1rem; }
-            .responsive-h3 { font-size: 20px; line-height: 1.45; margin-top: 1.5rem; margin-bottom: 0.85rem; }
-            .responsive-p { margin-bottom: 1.25rem; }
-            .responsive-li { margin: 0.6rem 0; }
-            .responsive-code { font-size: 14px; }
-            .responsive-table { font-size: 14px; }
-            .responsive-meta { font-size: 13px; }
+          .responsive-table { 
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            font-size: 0.9em;
           }
           
           @media print {
             .responsive-typography {
-              font-size: 12.5pt;
-              line-height: 1.5;
-              color: black;
+              font-size: 12pt !important;
+              line-height: 1.5 !important;
+              color: black !important;
             }
-            .responsive-h1 { font-size: 22pt; color: black; }
-            .responsive-h2 { font-size: 16pt; color: black; page-break-inside: avoid; }
-            .responsive-h3 { font-size: 14pt; color: black; page-break-inside: avoid; }
-            .responsive-p { margin-bottom: 0.5cm; orphans: 3; widows: 3; }
-            .responsive-li { margin: 0.25cm 0; }
-            .responsive-code { font-size: 10pt; background: #f5f5f5; page-break-inside: avoid; }
-            .responsive-table { font-size: 10pt; page-break-inside: avoid; }
-            .responsive-meta { font-size: 9pt; color: #666; }
+            .responsive-h1 { font-size: 24pt !important; color: black !important; margin-bottom: 0.5cm !important; }
+            .responsive-h2 { font-size: 18pt !important; color: black !important; margin-top: 1cm !important; }
+            .responsive-h3 { font-size: 14pt !important; color: black !important; }
+            .responsive-p { margin-bottom: 0.4cm !important; orphans: 3; widows: 3; }
+            .responsive-code { font-size: 10pt !important; background: #eee !important; border: 1px solid #ddd !important; }
+            
+            /* High Quality Print specific */
+            @page {
+              margin: 2cm;
+              size: A4;
+            }
           }
         `}</style>
         

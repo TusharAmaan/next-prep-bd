@@ -55,13 +55,13 @@ const TutorLectureSheets: React.FC<TutorLectureSheetsProps> = ({ user }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header & Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+          <h2 className="text-lg md:text-xl font-black text-slate-900 flex items-center gap-2">
             <FileText className="w-5 h-5 text-indigo-600" />
             Lecture Sheet Repository
           </h2>
-          <p className="text-xs text-slate-500 font-medium">Access and print materials for your sessions</p>
+          <p className="text-[11px] md:text-xs text-slate-500 font-medium">Access and print materials for your sessions</p>
         </div>
         
         <div className="relative w-full md:w-80">
@@ -69,7 +69,7 @@ const TutorLectureSheets: React.FC<TutorLectureSheetsProps> = ({ user }) => {
           <input 
             type="text" 
             placeholder="Search sheets or subjects..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -90,14 +90,16 @@ const TutorLectureSheets: React.FC<TutorLectureSheetsProps> = ({ user }) => {
           ) : (
             filteredSheets.map((sheet) => (
               <div key={sheet.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
-                <div className="h-40 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                <div className="h-32 md:h-40 bg-slate-50 relative overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.open(sheet.file_url, '_blank')}>
                    {sheet.thumbnail_url ? (
                      <img src={sheet.thumbnail_url} alt={sheet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                    ) : (
-                     <FileText className="w-10 h-10 text-slate-200" />
+                     <div className="p-6 md:p-8 bg-indigo-50 rounded-2xl">
+                        <FileText className="w-8 h-8 md:w-10 md:h-10 text-indigo-300" />
+                     </div>
                    )}
                    <div className="absolute top-2 left-2">
-                      <span className="bg-white/90 backdrop-blur-md text-[10px] font-black uppercase px-2 py-1 rounded-lg text-indigo-600 shadow-sm border border-slate-100">
+                      <span className="bg-white/90 backdrop-blur-md text-[9px] md:text-[10px] font-black uppercase px-2 py-0.5 md:py-1 rounded-md md:lg text-indigo-600 shadow-sm border border-slate-100">
                         {sheet.subjects?.title}
                       </span>
                    </div>
@@ -131,15 +133,15 @@ const TutorLectureSheets: React.FC<TutorLectureSheetsProps> = ({ user }) => {
       )}
 
       {/* Quick Stats / Info Footer */}
-      <div className="bg-indigo-900 rounded-2xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
+      <div className="bg-indigo-900 rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <Sparkles className="w-32 h-32" />
+            <Sparkles className="w-24 h-24 md:w-32 md:h-32" />
          </div>
-         <div className="relative z-10 text-center md:text-left">
-            <h3 className="text-lg font-bold">Request Content Creation</h3>
-            <p className="text-indigo-200 text-xs mt-1">Need a custom lecture sheet for your batch? Contact Admin or suggest via the student portal.</p>
+         <div className="relative z-10 text-center md:text-left flex-1">
+            <h3 className="text-base md:text-lg font-bold">Request Content Creation</h3>
+            <p className="text-indigo-200 text-[10px] md:text-xs mt-1">Need a custom lecture sheet for your batch? Contact Admin or suggest via the student portal.</p>
          </div>
-         <button className="relative z-10 bg-white text-indigo-900 px-6 py-2.5 rounded-xl font-black text-xs hover:bg-slate-100 transition-all shadow-lg active:scale-95">
+         <button className="relative z-10 w-full md:w-auto bg-white text-indigo-900 px-6 py-3 rounded-xl font-black text-xs hover:bg-slate-100 transition-all shadow-lg active:scale-95 uppercase tracking-wider">
             CONTACT ADMIN
          </button>
       </div>

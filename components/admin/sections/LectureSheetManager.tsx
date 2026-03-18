@@ -15,7 +15,10 @@ import {
   Trash2,
   Calendar,
   Layers,
-  Filter
+  Filter,
+  X,
+  Upload,
+  Link as LinkIcon
 } from "lucide-react";
 
 interface LectureSheetManagerProps {
@@ -31,6 +34,19 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [editingSheet, setEditingSheet] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    segment_id: '',
+    group_id: '',
+    subject_id: '',
+    access_type: 'public',
+    file_url: '',
+    thumbnail_url: ''
+  });
 
   // Fetch Logic
   const fetchData = useCallback(async () => {
@@ -92,6 +108,72 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
     }
   };
 
+  const handleOpenAddModal = () => {
+    setEditingSheet(null);
+    setSelectedRequest(null);
+    setFormData({
+      title: '',
+      description: '',
+      segment_id: '',
+      group_id: '',
+      subject_id: '',
+      access_type: 'public',
+      file_url: '',
+      thumbnail_url: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenPublishModal = (req: any) => {
+    setSelectedRequest(req);
+    setEditingSheet(null);
+    setFormData({
+      title: req.topic,
+      description: req.comment || '',
+      segment_id: req.segment_id?.toString() || '',
+      group_id: req.group_id?.toString() || '',
+      subject_id: req.subject_id?.toString() || '',
+      access_type: 'public',
+      file_url: '',
+      thumbnail_url: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveSheet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const sheetData = {
+        ...formData,
+        is_published: true,
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('lecture_sheets')
+        .insert([sheetData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // If published from a request, update the request status
+      if (selectedRequest) {
+        await supabase
+          .from('lecture_sheet_requests')
+          .update({ status: 'published', updated_at: new Date().toISOString() })
+          .eq('id', selectedRequest.id);
+      }
+
+      setIsModalOpen(false);
+      fetchData();
+      alert("Lecture sheet published successfully!");
+    } catch (err) {
+      console.error("Error saving sheet:", err);
+      alert("Failed to save sheet.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Tabs */}
@@ -104,23 +186,23 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           <p className="text-sm text-slate-500 font-medium">Manage student requests and repository</p>
         </div>
         
-        <div className="flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
           <button 
             onClick={() => setActiveView('requests')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Requests {requests.filter(r => r.status === 'pending').length > 0 && (
-              <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+              <span className="bg-red-500 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">
                 {requests.filter(r => r.status === 'pending').length}
               </span>
             )}
           </button>
           <button 
             onClick={() => setActiveView('sheets')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
             All Sheets
           </button>
         </div>
@@ -151,7 +233,10 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
             <option value="published">Published</option>
           </select>
           {activeView === 'sheets' && (
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md shadow-indigo-100">
+            <button 
+              onClick={handleOpenAddModal}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md shadow-indigo-100"
+            >
               <Plus className="w-4 h-4" />
               New Sheet
             </button>
@@ -243,7 +328,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                               <p className="text-sm font-black text-indigo-700">{req.admin_deadline ? new Date(req.admin_deadline).toLocaleDateString() : 'Not Set'}</p>
                            </div>
                            <button 
-                             onClick={() => setActiveView('sheets')}
+                             onClick={() => handleOpenPublishModal(req)}
                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold transition-all shadow-md"
                            >
                               Publish Sheet
@@ -318,6 +403,126 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
               )}
             </div>
           )}
+        </div>
+      )}
+      {/* MODAL SYSTEM */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <form onSubmit={handleSaveSheet} className="p-8 space-y-6">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900">
+                  {selectedRequest ? 'Publish from Request' : 'Create New Lecture Sheet'}
+                </h3>
+                <p className="text-sm text-slate-500 font-medium">Fill in the details for the students</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="col-span-full space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Sheet Title</label>
+                  <input 
+                    required
+                    type="text" 
+                    placeholder="Enter descriptive title"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Segment</label>
+                   <select 
+                     required
+                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     value={formData.segment_id}
+                     onChange={(e) => setFormData({...formData, segment_id: e.target.value})}
+                   >
+                     <option value="">Select Segment</option>
+                     {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                   </select>
+                </div>
+
+                <div className="space-y-2">
+                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Subject</label>
+                   <select 
+                     required
+                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     value={formData.subject_id}
+                     onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
+                   >
+                     <option value="">Select Subject</option>
+                     {subjects.filter(s => !formData.segment_id || s.segment_id?.toString() === formData.segment_id).map(s => (
+                       <option key={s.id} value={s.id}>{s.title}</option>
+                     ))}
+                   </select>
+                </div>
+
+                <div className="col-span-full space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">File URL / Link</label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <input 
+                      required
+                      type="url" 
+                      placeholder="Google Drive link or PDF URL"
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800"
+                      value={formData.file_url}
+                      onChange={(e) => setFormData({...formData, file_url: e.target.value})}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 pl-1">Ensure the link is accessible and shared with "Anyone with the link"</p>
+                </div>
+
+                <div className="space-y-2">
+                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Access Type</label>
+                   <select 
+                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 uppercase text-xs"
+                     value={formData.access_type}
+                     onChange={(e) => setFormData({...formData, access_type: e.target.value})}
+                   >
+                     <option value="public">Public (Everyone)</option>
+                     <option value="restricted">Restricted (Batch/Manual)</option>
+                   </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Thumbnail (Optional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Image URL"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800"
+                    value={formData.thumbnail_url}
+                    onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-6 flex flex-col sm:flex-row gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-8 py-4 bg-slate-50 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all"
+                >
+                  CANCEL
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
+                >
+                  <Upload className="w-5 h-5" />
+                  {selectedRequest ? 'PUBLISH NOW' : 'CREATE SHEET'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
