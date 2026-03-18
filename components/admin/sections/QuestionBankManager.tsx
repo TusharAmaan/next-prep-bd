@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Save, CheckCircle, 
   ChevronLeft, Edit3, Search, Filter, X, 
   BookOpen, HelpCircle, AlertCircle, 
-  Tag, Layers, ArrowRight, Loader2, MoreHorizontal
+  Tag, Layers, Loader2
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 
@@ -34,7 +34,8 @@ interface Question {
   subjects?: { title: string };
 }
 
-// --- 1. STABLE EDITOR (Prevents Cursor Jumping) ---
+// --- 1. STABLE EDITOR (GUARANTEED NO CURSOR JUMP) ---
+// This uses memo to NEVER re-render the editor on keystrokes. It only remounts if the uniqueKey changes.
 const StableEditor = memo(({ initialContent, onChange, uniqueKey }: { initialContent: string, onChange: (val: string) => void, uniqueKey: string }) => {
     return (
         <div className="prose-editor-wrapper min-h-[140px] bg-white border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
@@ -75,8 +76,8 @@ const MultiTagInput = ({ value, onChange, suggestions }: { value: string, onChan
                     </span>
                 ))}
                 <input 
-                    className="flex-1 min-w-[100px] text-sm outline-none bg-transparent text-slate-700 placeholder:text-slate-400"
-                    placeholder={tags.length === 0 ? "Add tags..." : ""}
+                    className="flex-1 min-w-[120px] text-sm outline-none bg-transparent text-slate-700 placeholder:text-slate-400"
+                    placeholder={tags.length === 0 ? "Add tags (e.g. Algebra)..." : ""}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
                     onKeyDown={e => { if(e.key === 'Enter' && inputValue) { e.preventDefault(); addTag(inputValue); } else if(e.key === 'Backspace' && !inputValue && tags.length > 0) removeTag(tags[tags.length-1]); }}
@@ -145,13 +146,11 @@ export default function QuestionBankManager() {
 
   // Data
   const [dropdowns, setDropdowns] = useState<{ segments: any[], groups: any[], subjects: any[], tags: string[] }>({ segments: [], groups: [], subjects: [], tags: [] });
-  // Dropdowns for Creation
   const [createDropdowns, setCreateDropdowns] = useState<{ groups: any[], subjects: any[] }>({ groups: [], subjects: [] });
-  // Dropdowns for Filters
   const [filterGroupsList, setFilterGroupsList] = useState<any[]>([]);
   const [filterSubjectsList, setFilterSubjectsList] = useState<any[]>([]);
 
-  // --- FORM STATES ---
+  // Main Form
   const [mainForm, setMainForm] = useState({
       segment: '', group: '', subject: '', tags: '',
       type: 'mcq' as QuestionType,
@@ -165,11 +164,9 @@ export default function QuestionBankManager() {
   
   // PASSAGE STATE
   const [subQuestions, setSubQuestions] = useState<Question[]>([]);
-  
-  // Sub Question Form State
   const [subQForm, setSubQForm] = useState<{
       isOpen: boolean;
-      editIndex: number | null; // Null means creating new
+      editIndex: number | null; 
       type: QuestionType;
       text: string;
       marks: number;
@@ -275,7 +272,6 @@ export default function QuestionBankManager() {
   // --- SUB QUESTION ACTIONS ---
   const openSubForm = (question?: Question, index?: number) => {
       if (question) {
-          // Edit Mode
           setSubQForm({
               isOpen: true, editIndex: index !== undefined ? index : null,
               type: question.question_type, text: question.question_text,
@@ -283,7 +279,6 @@ export default function QuestionBankManager() {
               options: question.options && question.options.length ? question.options : [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }]
           });
       } else {
-          // Create Mode
           setSubQForm({
               isOpen: true, editIndex: null,
               type: 'mcq', text: '', marks: 1, explanation: '',
@@ -341,11 +336,10 @@ export default function QuestionBankManager() {
 
           // --- SAVE PASSAGE SUB-QUESTIONS ---
           if (mainForm.type === 'passage' && qId) {
-              // Strategy: Delete old children, insert new (Simplest way to sync order/updates)
+              // Delete old children and insert new to keep sync straightforward
               if (editingId) {
                  const { data: old } = await supabase.from('question_bank').select('id').eq('parent_id', qId);
                  if(old?.length) {
-                    // Delete options of children first
                     await supabase.from('question_options').delete().in('question_id', old.map(o=>o.id));
                     await supabase.from('question_bank').delete().in('id', old.map(o=>o.id));
                  }
@@ -358,7 +352,7 @@ export default function QuestionBankManager() {
                       question_type: sub.question_type,
                       marks: sub.marks,
                       explanation: sub.explanation,
-                      segment_id: payload.segment_id, // Inherit Meta
+                      segment_id: payload.segment_id, 
                       group_id: payload.group_id,
                       subject_id: payload.subject_id
                   }).select().single();
@@ -384,11 +378,11 @@ export default function QuestionBankManager() {
   };
 
   return (
-    <div className="flex flex-col h-full font-sans text-slate-900 bg-slate-50/50">
+    <div className="flex flex-col h-[calc(100vh-64px)] font-sans text-slate-900 bg-slate-50/50">
        <CustomModal isOpen={modal.isOpen} type={modal.type} message={modal.message} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
        {/* HEADER */}
-       <div className="flex justify-between items-center mb-6 px-6 pt-6 bg-white border-b border-slate-200 pb-4">
+       <div className="flex justify-between items-center mb-6 px-6 pt-6 bg-white border-b border-slate-200 pb-4 shrink-0">
           <div>
               <h2 className="text-2xl font-black tracking-tight text-slate-900">Question Manager</h2>
               <p className="text-slate-500 text-xs font-medium mt-1">Create, edit, and organize question bank content.</p>
@@ -407,10 +401,10 @@ export default function QuestionBankManager() {
 
        {/* === CREATE / EDIT VIEW === */}
        {view === 'create' && (
-           <div className="flex flex-col h-full overflow-hidden px-6 pb-6">
+           <div className="flex flex-col flex-1 overflow-hidden px-6 pb-6">
                
                {/* 1. METADATA HEADER */}
-               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
                    <div className="space-y-1">
                        <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
                        <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 outline-none focus:border-indigo-500" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
@@ -435,14 +429,13 @@ export default function QuestionBankManager() {
                    </div>
                </div>
 
-               {/* 2. EDITOR LAYOUT */}
-               <div className={`flex flex-col md:flex-row gap-6 ${mainForm.type === 'passage' ? 'h-full overflow-hidden' : ''}`}>
+               {/* 2. THE UNIFIED LAYOUT (FLEX ROW FOR PASSAGE) */}
+               <div className={`flex flex-col lg:flex-row gap-6 flex-1 min-h-0 ${mainForm.type === 'passage' ? '' : 'overflow-y-auto'}`}>
                    
                    {/* LEFT COLUMN: MAIN CONTENT */}
-                   <div className={`flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col ${mainForm.type === 'passage' ? 'md:w-1/2' : 'w-full'}`}>
-                       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
+                   <div className={`flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm ${mainForm.type === 'passage' ? 'w-full lg:w-1/2 h-full' : 'w-full'}`}>
+                       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl shrink-0">
                            <div className="flex bg-slate-200 p-1 rounded-lg">
-                               {/* Only show 'Passage' button if not already in passage mode (to switch back) OR if editing */}
                                <button onClick={() => setMainForm(p => ({...p, type: 'mcq'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'mcq' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>MCQ</button>
                                <button onClick={() => setMainForm(p => ({...p, type: 'descriptive'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'descriptive' ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Descriptive</button>
                                <button onClick={() => setMainForm(p => ({...p, type: 'passage'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'passage' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:text-slate-700'}`}>Passage</button>
@@ -455,7 +448,7 @@ export default function QuestionBankManager() {
                            )}
                        </div>
 
-                       <div className="flex-1 p-6 overflow-y-auto space-y-6">
+                       <div className={`p-6 space-y-6 ${mainForm.type === 'passage' ? 'overflow-y-auto flex-1' : ''}`}>
                            <div className="space-y-2">
                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">
                                    {mainForm.type === 'passage' ? 'Passage / Stem Content' : 'Question Content'}
@@ -492,8 +485,8 @@ export default function QuestionBankManager() {
 
                    {/* RIGHT: SUB-QUESTIONS (ONLY FOR PASSAGE) */}
                    {mainForm.type === 'passage' && (
-                       <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner flex flex-col md:w-1/2 overflow-hidden">
-                           <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
+                       <div className="w-full lg:w-1/2 flex flex-col bg-slate-50 rounded-2xl border border-slate-200 shadow-inner h-full">
+                           <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white rounded-t-2xl shrink-0">
                                <h3 className="font-bold text-slate-700 flex items-center gap-2"><Layers size={16}/> Questions ({subQuestions.length})</h3>
                                {!subQForm.isOpen && (
                                    <button onClick={() => openSubForm()} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1">
@@ -505,7 +498,7 @@ export default function QuestionBankManager() {
                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                {/* List of Sub Questions */}
                                {!subQForm.isOpen && subQuestions.length === 0 && (
-                                   <div className="text-center p-10 text-slate-400 italic text-sm border-2 border-dashed border-slate-200 rounded-xl">No sub-questions added yet.</div>
+                                   <div className="text-center p-10 text-slate-400 italic text-sm border-2 border-dashed border-slate-200 rounded-xl bg-white">No sub-questions added yet.</div>
                                )}
                                
                                {!subQForm.isOpen && subQuestions.map((sq, i) => (
@@ -523,7 +516,7 @@ export default function QuestionBankManager() {
 
                                {/* SUB FORM OVERLAY */}
                                {subQForm.isOpen && (
-                                   <div className="bg-white p-5 rounded-xl border-2 border-indigo-100 shadow-lg animate-in slide-in-from-bottom-2">
+                                   <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-md animate-in slide-in-from-bottom-2">
                                        <div className="flex justify-between mb-4">
                                            <div className="flex gap-2">
                                                <button onClick={() => setSubQForm(p => ({...p, type: 'mcq'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'mcq' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200'}`}>MCQ</button>
@@ -532,37 +525,35 @@ export default function QuestionBankManager() {
                                            <button onClick={() => setSubQForm(p => ({...p, isOpen: false}))}><X size={16} className="text-slate-400 hover:text-slate-600"/></button>
                                        </div>
 
-                                       <div className="space-y-2">
-                                           <label className="text-[10px] font-bold uppercase text-slate-400">Question Text</label>
-                                           <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-edit-${subQForm.editIndex}` : 'sub-new'} initialContent={subQForm.text} onChange={val => setSubQForm(p => ({...p, text: val}))} />
+                                       <div className="space-y-1 mb-4">
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Question Text</label>
+                                            <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-edit-${subQForm.editIndex}` : 'sub-new'} initialContent={subQForm.text} onChange={val => setSubQForm(p => ({...p, text: val}))} />
                                        </div>
                                        
-                                       <div className="mt-4 flex gap-4">
-                                            <div className="flex-1">
-                                                <label className="text-[10px] font-bold uppercase text-slate-400">Marks</label>
-                                                <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border rounded-lg p-2 text-sm font-bold mt-1"/>
-                                            </div>
+                                       <div className="mb-4">
+                                            <label className="text-[10px] font-bold uppercase text-slate-400">Marks</label>
+                                            <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border rounded-lg p-2 text-sm font-bold mt-1 outline-none focus:border-indigo-500"/>
                                        </div>
 
                                        {subQForm.type === 'mcq' && (
-                                           <div className="mt-4 space-y-2">
+                                           <div className="mb-4 space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                                <label className="text-[10px] font-bold uppercase text-slate-400">Options</label>
                                                {subQForm.options.map((opt, i) => (
                                                    <div key={i} className="flex gap-2 items-center">
-                                                       <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300'}`}><CheckCircle size={14}/></button>
-                                                       <input className="flex-1 border-b text-sm p-1 outline-none" value={opt.option_text} onChange={e => { const n = [...subQForm.options]; n[i].option_text = e.target.value; setSubQForm(p => ({...p, options: n})); }} placeholder={`Option ${i+1}`}/>
+                                                       <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300 bg-white'}`}><CheckCircle size={14}/></button>
+                                                       <input className="flex-1 border-b border-slate-200 text-sm p-1.5 outline-none bg-transparent focus:border-indigo-500" value={opt.option_text} onChange={e => { const n = [...subQForm.options]; n[i].option_text = e.target.value; setSubQForm(p => ({...p, options: n})); }} placeholder={`Option ${i+1}`}/>
                                                    </div>
                                                ))}
                                                <button onClick={() => setSubQForm(p => ({...p, options: [...p.options, {option_text:'', is_correct:false}]}))} className="text-xs text-indigo-600 font-bold hover:underline">+ Option</button>
                                            </div>
                                        )}
 
-                                       <div className="mt-4 space-y-1">
+                                       <div className="space-y-1">
                                             <label className="text-[10px] font-bold uppercase text-slate-400">Explanation</label>
                                             <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-expl-${subQForm.editIndex}` : 'sub-expl-new'} initialContent={subQForm.explanation} onChange={val => setSubQForm(p => ({...p, explanation: val}))} />
                                        </div>
 
-                                       <button onClick={saveSubQuestion} className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-700 mt-4 shadow-md">
+                                       <button onClick={saveSubQuestion} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 mt-6 shadow-md">
                                            {subQForm.editIndex !== null ? 'Update Question' : 'Add to Passage'}
                                        </button>
                                    </div>
@@ -572,7 +563,7 @@ export default function QuestionBankManager() {
                    )}
                </div>
 
-               <div className="px-6 py-4 bg-white border-t border-slate-200 flex justify-end sticky bottom-0 z-10">
+               <div className="py-4 mt-4 bg-transparent flex justify-end shrink-0">
                    <button onClick={handleSave} disabled={loading} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 flex items-center gap-2">
                        {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Save size={18}/>} Save Question
                    </button>
@@ -582,7 +573,7 @@ export default function QuestionBankManager() {
 
        {/* === LIST VIEW === */}
        {view === 'list' && (
-           <div className="flex flex-col md:flex-row gap-6 px-6 pb-6 overflow-hidden h-[calc(100vh-140px)]">
+           <div className="flex flex-col md:flex-row gap-6 px-6 pb-6 overflow-hidden flex-1">
                
                {/* SIDEBAR FILTERS */}
                {isSidebarOpen && (
@@ -618,7 +609,7 @@ export default function QuestionBankManager() {
                
                {/* MAIN TABLE */}
                <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col h-full">
-                   <div className="p-3 border-b flex items-center gap-2 bg-slate-50/50">
+                   <div className="p-3 border-b flex items-center gap-2 bg-slate-50/50 shrink-0">
                        <Search className="w-4 h-4 text-slate-400 ml-2"/>
                        <input className="flex-1 bg-transparent text-sm outline-none" placeholder="Search questions or tags..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/>
                    </div>
@@ -634,7 +625,11 @@ export default function QuestionBankManager() {
                                </tr>
                            </thead>
                            <tbody className="divide-y divide-slate-100">
-                               {questions.map((q, i) => (
+                               {questions.length === 0 ? (
+                                   <tr>
+                                       <td colSpan={5} className="p-10 text-center text-slate-400">No questions found matching your criteria.</td>
+                                   </tr>
+                               ) : questions.map((q, i) => (
                                    <tr key={q.id} className="hover:bg-slate-50 group">
                                        <td className="p-3 text-xs text-slate-400 font-mono">{i + 1 + pagination.page * pagination.itemsPerPage}</td>
                                        <td className="p-3">
@@ -644,7 +639,7 @@ export default function QuestionBankManager() {
                                        <td className="p-3">
                                            <div className="flex flex-wrap gap-1">
                                                {q.topic_tag?.split(',').slice(0, 2).map((t:string, idx:number) => (
-                                                   <span key={idx} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{t}</span>
+                                                   <span key={idx} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{t.trim()}</span>
                                                ))}
                                                {(q.topic_tag?.split(',').length || 0) > 2 && <span className="text-[10px] text-slate-400">...</span>}
                                            </div>
@@ -661,7 +656,7 @@ export default function QuestionBankManager() {
                            </tbody>
                        </table>
                    </div>
-                   <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
+                   <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs shrink-0">
                         <span className="text-slate-500">Page {pagination.page + 1}</span>
                         <div className="flex gap-2">
                             <button onClick={() => setPagination(p => ({...p, page: Math.max(0, p.page - 1)}))} disabled={pagination.page === 0} className="px-3 py-1 bg-white border rounded disabled:opacity-50">Prev</button>
