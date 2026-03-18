@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { headers } from 'next/headers';
 import FacebookComments from "@/components/FacebookComments";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 import { Metadata } from 'next';
 
 export const dynamic = "force-dynamic";
@@ -73,8 +74,17 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-4xl mx-auto">
             <Link href="/news" className="inline-block text-blue-300 font-bold text-sm mb-4 hover:text-white transition">← Back to News</Link>
-            <div className="flex gap-2 mb-4">
-                <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">{post.category || "General"}</span>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-2">
+                    <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">{post.category || "General"}</span>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+                   <BookmarkButton 
+                      itemType="news" 
+                      itemId={post.id} 
+                      metadata={{ title: post.title, thumbnail_url: post.image_url }} 
+                   />
+                </div>
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-4">{post.title}</h1>
             <p className="text-gray-400 font-bold text-sm">Published on {new Date(post.created_at).toLocaleDateString()}</p>

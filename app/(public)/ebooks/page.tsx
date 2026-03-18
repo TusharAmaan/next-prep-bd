@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import EbookFilters from "@/components/EbookFilters"; 
 import { BookOpen, Calendar, User, Search } from "lucide-react"; 
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,15 @@ export default async function EbooksPage({ searchParams }: Props) {
                   <span className="absolute top-3 right-3 bg-white/95 backdrop-blur text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm text-slate-800 border border-slate-100">
                     {book.category}
                   </span>
+
+                  {/* Bookmark Overlay */}
+                  <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <BookmarkButton 
+                        itemType="ebook" 
+                        itemId={book.id} 
+                        metadata={{ title: book.title, thumbnail_url: book.cover_url }} 
+                     />
+                  </div>
                 </div>
 
                 {/* Text Content */}

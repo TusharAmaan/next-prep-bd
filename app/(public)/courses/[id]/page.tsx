@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import FacebookComments from "@/components/FacebookComments";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 import { headers } from 'next/headers';
 import { Metadata } from 'next';
 
@@ -129,7 +130,10 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                         {course.thumbnail_url ? (
                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Preview</div>
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold flex-col">
+                                <span className="text-4xl mb-2">📚</span>
+                                <span>No Preview</span>
+                            </div>
                         )}
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg cursor-default">
@@ -150,14 +154,23 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                             )}
                         </div>
 
-                        <a 
-                            href={enrollLink} 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 mb-4"
-                        >
-                            Enroll Now
-                        </a>
+                        <div className="flex gap-3 mb-4">
+                            <a 
+                                href={enrollLink} 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105"
+                            >
+                                Enroll Now
+                            </a>
+                            <div className="bg-slate-100 rounded-xl p-1 border border-slate-200 flex items-center">
+                               <BookmarkButton 
+                                  itemType="course" 
+                                  itemId={course.id} 
+                                  metadata={{ title: course.title, thumbnail_url: course.thumbnail_url }} 
+                               />
+                            </div>
+                        </div>
                         
                         <p className="text-xs text-gray-500 text-center mb-6">30-Day Money-Back Guarantee</p>
 

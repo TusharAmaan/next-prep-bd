@@ -10,6 +10,7 @@ import {
   Sparkles, Layers, PenTool, FileText, PlayCircle,
   CalendarDays, BookOpen
 } from "lucide-react";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -330,6 +331,13 @@ export default async function SegmentPage({
                                             </div>
                                         )}
                                         <div className="absolute top-3 left-3"><span className="bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm border border-slate-100">{blog.category || 'Article'}</span></div>
+                                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                           <BookmarkButton 
+                                             itemType="post" 
+                                             itemId={blog.id} 
+                                             metadata={{ title: blog.title, thumbnail_url: blog.content_url }} 
+                                           />
+                                        </div>
                                     </div>
                                     <div className="p-5 flex-1 flex flex-col">
                                         <h3 className="font-bold text-lg text-slate-900 mb-2 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2">{blog.title}</h3>
@@ -364,9 +372,16 @@ export default async function SegmentPage({
                                             <span className="uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">{Array.isArray(item.subjects) ? item.subjects[0]?.title : 'General'}</span>
                                         </div>
                                     </div>
-                                    <Link href={`/material/${item.slug || item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
-                                        {item.type === 'pdf' ? 'Download' : 'Watch'}
-                                    </Link>
+                                    <div className="flex items-center gap-2 pr-2">
+                                       <BookmarkButton 
+                                           itemType={item.type === 'pdf' ? 'ebook' : (item.type === 'question' ? 'question' : (item.type === 'video' ? 'course' : 'post'))} 
+                                           itemId={item.id} 
+                                           metadata={{ title: item.title }} 
+                                       />
+                                       <Link href={`/material/${item.slug || item.id}`} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-900 hover:text-white transition whitespace-nowrap hidden sm:block">
+                                           {item.type === 'pdf' ? 'Download' : 'Watch'}
+                                       </Link>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -413,7 +428,14 @@ export default async function SegmentPage({
                                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(q.created_at).toLocaleDateString()}</span>
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600" />
+                                        <div className="flex items-center gap-3">
+                                           <BookmarkButton 
+                                               itemType="question" 
+                                               itemId={q.id} 
+                                               metadata={{ title: q.title }} 
+                                           />
+                                           <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600" />
+                                        </div>
                                     </Link>
                                 ))}
                                 <Link href={`/resources/${segment_slug}?type=question`} className="text-center py-4 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-b-xl transition-colors uppercase tracking-wide">

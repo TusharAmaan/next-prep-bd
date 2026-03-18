@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,7 +27,8 @@ import {
   MessageSquare,
   Search as SearchIcon,
   Library,
-  Users
+  Users,
+  HelpCircle
 } from "lucide-react";
 import StudentLectureSheets from "@/components/lecture-sheets/StudentLectureSheets";
 import BookmarkButton from "@/components/shared/BookmarkButton";
@@ -103,13 +104,36 @@ export default function ModernStudentDashboard() {
   const [exams, setExams] = useState<ExamPaper[]>([]);
   const [badges, setBadges] = useState<UserBadge[]>([]);
 
-  // Stats derived
   const [stats, setStats] = useState({
     coursesCount: 0,
     examsCount: 0,
     bookmarksCount: 0,
     averageScore: 0,
   });
+
+  // Library/Bookmarks States
+  const [searchTerm, setSearchTerm] = useState("");
+  const [libraryFilter, setLibraryFilter] = useState("all");
+
+  const filteredBookmarks = useMemo(() => {
+    return bookmarks.filter(bkm => {
+      const matchSearch = bkm.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchFilter = libraryFilter === "all" || bkm.type === libraryFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [bookmarks, searchTerm, libraryFilter]);
+
+  const getLibraryLink = (type: string, id: number) => {
+    switch(type) {
+      case 'course': return `/courses/${id}`;
+      case 'ebook': return `/ebooks/${id}`;
+      case 'news': return `/news/${id}`;
+      case 'question': return `/question/${id}`;
+      case 'post': return `/blog/${id}`;
+      case 'segment_post': return `/resources/redirect/${id}`; // Future-proofing
+      default: return `/blog/${id}`;
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -553,43 +577,93 @@ export default function ModernStudentDashboard() {
           {/* LIBRARY TAB */}
           {activeTab === "bookmarks" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center px-2">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-2 gap-4">
                 <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Your Library</h2>
-                <div className="relative">
-                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                   <input 
-                     type="text" 
-                     placeholder="Search library..." 
-                     className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
-                   />
+                
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    {/* Search Input */}
+                    <div className="relative flex-1 sm:w-64">
+                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                       <input 
+                         type="text" 
+                         placeholder="Search library..." 
+                         value={searchTerm}
+                         onChange={(e) => setSearchTerm(e.target.value)}
+                         className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium shadow-sm"
+                       />
+                    </div>
                 </div>
               </div>
 
+              {/* Filters */}
+              <div className="flex flex-wrap gap-2 px-2 overflow-x-auto pb-2 scrollbar-hide">
+                 {[
+                   { id: 'all', label: 'All Items' },
+                   { id: 'post', label: 'Blogs' },
+                   { id: 'course', label: 'Courses' },
+                   { id: 'ebook', label: 'Ebooks' },
+                   { id: 'question', label: 'Questions' },
+                   { id: 'news', label: 'News' },
+                   { id: 'segment_post', label: 'Updates' }
+                 ].map(filter => (
+                   <button
+                     key={filter.id}
+                     onClick={() => setLibraryFilter(filter.id)}
+                     className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border whitespace-nowrap ${
+                       libraryFilter === filter.id 
+                       ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
+                       : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                     }`}
+                   >
+                     {filter.label}
+                   </button>
+                 ))}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bookmarks.map((bkm) => (
-                  <div key={bkm.id} className="bg-white rounded-3xl p-6 border border-slate-100 hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm">
+                {filteredBookmarks.map((bkm) => (
+                  <div key={bkm.id} className="bg-white rounded-3xl p-6 border border-slate-100 hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm flex flex-col h-full focus-within:ring-2 focus-within:ring-indigo-200">
                     <div className="flex justify-between items-start mb-6">
                       <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                        {bkm.type === "video" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "course" ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />)}
+                        {bkm.type === "question" ? <HelpCircle className="w-8 h-8" /> : (bkm.type === "course" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "ebook" ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />))}
                       </div>
-                      <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} />
+                      <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} metadata={{ title: bkm.title }} />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{bkm.type}</span>
+                          <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest">{bkm.type.replace('_', ' ')}</span>
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight leading-tight">{bkm.title}</h3>
+                        <Link 
+                            href={getLibraryLink(bkm.type, bkm.resource_id)}
+                            className="block"
+                        >
+                          <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight leading-tight line-clamp-2">
+                             {bkm.title}
+                          </h3>
+                        </Link>
                       </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
-                        <button className="text-xs font-black text-slate-900 hover:text-indigo-600 uppercase tracking-widest">
-                           Resume
-                        </button>
+                        <Link 
+                           href={getLibraryLink(bkm.type, bkm.resource_id)}
+                           className="text-xs font-black text-slate-900 hover:text-indigo-600 uppercase tracking-widest transition-colors flex items-center gap-1 group/btn"
+                        >
+                           View <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                        </Link>
                       </div>
                     </div>
                   </div>
                 ))}
+                
+                {filteredBookmarks.length === 0 && bookmarks.length > 0 && (
+                  <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                    <SearchIcon className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No results found</h3>
+                    <p className="text-slate-500 mt-2 font-medium max-w-xs mx-auto text-center">Try adjusting your search or filters.</p>
+                  </div>
+                )}
+
                 {bookmarks.length === 0 && (
                   <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                     <Library className="w-16 h-16 text-slate-100 mx-auto mb-4" />

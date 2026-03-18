@@ -7,6 +7,7 @@ import {
   Lock, Download, Check
 } from "lucide-react";
 import LikeButton from "./LikeButton";
+import BookmarkButton from "./shared/BookmarkButton";
 import BlogContent from "@/components/BlogContent"; 
 
 interface PrintableBlogBodyProps {
@@ -43,7 +44,16 @@ export default function PrintableBlogBody({
                 {post.subjects?.groups?.segments?.title || "Post"}
             </span>
          </div>
-        <div className="no-print"><LikeButton resourceId={post.id} /></div>
+         <div className="no-print flex items-center gap-2">
+            <LikeButton resourceId={post.id} />
+            <div className="bg-white border border-slate-200 rounded-full p-0.5 shadow-sm">
+               <BookmarkButton 
+                  itemType="post" 
+                  itemId={post.id} 
+                  metadata={{ title: post.title, thumbnail_url: post.image_url || post.content_url }} 
+               />
+            </div>
+         </div>
       </div>
 
       {/* === MAIN CONTENT CARD === */}
@@ -66,55 +76,66 @@ export default function PrintableBlogBody({
         {/* === FLUID RESPONSIVE TYPOGRAPHY === */}
         <style>{`
           :root {
-            --base-font-size: 16px;
-            --h1-size: 2.5rem;
-            --h2-size: 1.875rem;
-          }
-          @media (max-width: 768px) {
-            :root { 
-              --base-font-size: 15px; 
-              --h1-size: 1.875rem;
-              --h2-size: 1.5rem;
-            }
-          }
-          @media (max-width: 480px) {
-            :root { 
-              --base-font-size: 14px; 
-              --h1-size: 1.6rem;
-              --h2-size: 1.35rem;
-            }
+            /* Fluid base font: 15px on mobile, scales to 18px on large screens */
+            --fluid-base: clamp(15px, 1.1vw + 12px, 18px);
+            --fluid-h1: clamp(1.75rem, 4vw + 1rem, 3rem);
+            --fluid-h2: clamp(1.4rem, 3vw + 0.8rem, 2.25rem);
+            --fluid-h3: clamp(1.2rem, 2vw + 0.7rem, 1.75rem);
           }
 
           .responsive-typography {
-            font-size: var(--base-font-size);
-            line-height: 1.8;
-            color: #334155;
-            transition: font-size 0.3s ease;
+            font-size: var(--fluid-base);
+            line-height: 1.75;
+            color: #1e293b;
+            transition: font-size 0.2s ease;
           }
 
           .responsive-h1 { 
-            font-size: var(--h1-size); 
-            line-height: 1.2; 
-            letter-spacing: -0.025em;
+            font-size: var(--fluid-h1); 
+            line-height: 1.15; 
+            letter-spacing: -0.03em;
+            font-weight: 900;
           }
           .responsive-h2 { 
-            font-size: var(--h2-size); 
-            line-height: 1.3; 
+            font-size: var(--fluid-h2); 
+            line-height: 1.25; 
             margin-top: 2.5rem; 
             margin-bottom: 1.25rem;
+            font-weight: 800;
+          }
+          .responsive-h3 {
+            font-size: var(--fluid-h3);
+            line-height: 1.3;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
           }
           
+          /* Target BlogContent children specifically */
+          .blog-content-area p { margin-bottom: 1.5rem; }
+          .blog-content-area h2 { font-size: var(--fluid-h2); font-weight: 800; margin-top: 2.5rem; margin-bottom: 1.25rem; line-height: 1.25; }
+          .blog-content-area h3 { font-size: var(--fluid-h3); font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; line-height: 1.3; }
+          
           @media print {
+            .print-container {
+              padding: 0 !important;
+              margin: 0 !important;
+              border: none !important;
+              box-shadow: none !important;
+            }
             .responsive-typography {
               font-size: 12pt !important;
               line-height: 1.5 !important;
               color: black !important;
             }
-            .responsive-h1 { font-size: 24pt !important; color: black !important; }
-            .responsive-h2 { font-size: 18pt !important; color: black !important; }
+            .responsive-h1 { font-size: 22pt !important; color: black !important; border-bottom: none !important; }
+            .responsive-h2 { font-size: 18pt !important; color: black !important; margin-top: 15pt !important; margin-bottom: 10pt !important; }
+            .responsive-h3 { font-size: 14pt !important; color: black !important; margin-top: 12pt !important; margin-bottom: 8pt !important; }
+            
+            .blog-content-area p { margin-bottom: 10pt !important; }
             
             @page {
-              margin: 2cm;
+              margin: 1.5cm;
               size: A4;
             }
           }
@@ -191,7 +212,7 @@ export default function PrintableBlogBody({
         </div>
 
         {/* === CONTENT BODY (Mobile-Optimized Responsive Typography) === */}
-        <div className="responsive-typography print:text-sm print:leading-normal print:text-black">
+        <div className="responsive-typography blog-content-area print:text-sm print:leading-normal print:text-black">
             <div className="[&_p]:responsive-p [&_h2]:responsive-h2 [&_h3]:responsive-h3 [&_h4]:responsive-h3 [&_h5]:responsive-h3 [&_li]:responsive-li [&_code]:responsive-code [&_table]:responsive-table [&_pre]:overflow-x-auto [&_blockquote]:pl-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:text-slate-600 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg">
                 <BlogContent content={post.content_body || ""} />
             </div>

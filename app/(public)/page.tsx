@@ -139,6 +139,51 @@ export default async function HomePage() {
       </section>
 
       {/* =========================================
+          3.5 COMPREHENSIVE LESSON PLAN TEASER
+         ========================================= */}
+      <section className="py-24 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex-1 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/30 px-4 py-1.5 rounded-full text-xs font-black text-indigo-300 mb-6 uppercase tracking-widest">
+                   New Release ✨
+                </div>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-6 leading-none italic">
+                   Comprehensive <br/> <span className="text-indigo-500">Lesson Plans</span>
+                </h2>
+                <p className="text-slate-400 text-lg mb-10 max-w-xl font-medium leading-relaxed">
+                   Experience the most structured curriculum ever built. Every unit, every lesson, and every small topic perfectly organized for your success.
+                </p>
+                <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                   <Link href="/curriculum" className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-white hover:text-indigo-600 transition-all shadow-2xl shadow-indigo-600/20 active:scale-95">Explore Syllabus</Link>
+                </div>
+            </div>
+            <div className="flex-1 grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem] transform translate-y-8">
+                      <div className="w-12 h-12 bg-indigo-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-indigo-500/40 font-black">1</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white">Unit-wise Organization</h4>
+                   </div>
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem]">
+                      <div className="w-12 h-12 bg-pink-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-pink-500/40 font-black">2</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white">Lesson-detail Breakdown</h4>
+                   </div>
+                </div>
+                <div className="space-y-4 pt-12">
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem]">
+                      <div className="w-12 h-12 bg-emerald-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-black">3</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white">Interactive Exercises</h4>
+                   </div>
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem] transform lg:-translate-y-8">
+                      <div className="w-12 h-12 bg-amber-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-amber-500/40 font-black">4</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white">Exam Integration</h4>
+                   </div>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* =========================================
           4. PREMIUM COURSES
          ========================================= */}
       {courses.length > 0 && (

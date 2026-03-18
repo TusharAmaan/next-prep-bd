@@ -5,7 +5,7 @@ import { Bookmark } from 'lucide-react';
 import { supabase } from "@/lib/supabaseClient";
 
 interface BookmarkButtonProps {
-  itemType: 'course' | 'post' | 'lecture_sheet' | 'question' | 'ebook';
+  itemType: 'course' | 'post' | 'lecture_sheet' | 'question' | 'ebook' | 'news' | 'segment_post';
   itemId: string | number;
   metadata?: {
     title: string;

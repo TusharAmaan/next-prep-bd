@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from 'next'; // Import Metadata type
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -72,14 +73,23 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
                 </div>
                 
                 {book.pdf_url ? (
-                    <a 
-                        href={book.pdf_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="block w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-center rounded-xl transition shadow-lg shadow-blue-200"
-                    >
-                        View / Download Book
-                    </a>
+                    <div className="flex gap-3">
+                        <a 
+                            href={book.pdf_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-center rounded-xl transition shadow-lg shadow-blue-200"
+                        >
+                            View / Download Book
+                        </a>
+                        <div className="bg-slate-100 rounded-xl p-1 border border-slate-200 flex items-center">
+                            <BookmarkButton 
+                                itemType="ebook" 
+                                itemId={book.id} 
+                                metadata={{ title: book.title, thumbnail_url: book.cover_url }} 
+                            />
+                        </div>
+                    </div>
                 ) : (
                     <div className="bg-yellow-50 text-yellow-800 p-4 rounded-xl text-sm font-bold text-center border border-yellow-100">
                         Read Online / See Link Below

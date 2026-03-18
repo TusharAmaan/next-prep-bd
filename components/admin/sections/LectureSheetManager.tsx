@@ -38,6 +38,12 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [editingSheet, setEditingSheet] = useState<any>(null);
+  
+  // Local Hierarchy State (To be robust)
+  const [localSegments, setLocalSegments] = useState<any[]>(segments || []);
+  const [localGroups, setLocalGroups] = useState<any[]>([]);
+  const [localSubjects, setLocalSubjects] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,16 +54,40 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
     file_url: '',
     thumbnail_url: ''
   });
+
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
   const [selectedSheetForAccess, setSelectedSheetForAccess] = useState<any>(null);
   const [targetUserEmail, setTargetUserEmail] = useState('');
   const [grantedUsers, setGrantedUsers] = useState<any[]>([]);
   const [isSearchingUser, setIsSearchingUser] = useState(false);
 
+  // Fetch Hierarchy Helpers
+  const fetchLocalGroups = async (segId: string) => {
+    if (!segId) { setLocalGroups([]); return; }
+    const { data } = await supabase.from('groups').select('*').eq('segment_id', segId).order('title');
+    setLocalGroups(data || []);
+  };
+
+  const fetchLocalSubjects = async (grpId: string, segId?: string) => {
+    if (!grpId && !segId) { setLocalSubjects([]); return; }
+    let query = supabase.from('subjects').select('*');
+    if (grpId) query = query.eq('group_id', grpId);
+    else if (segId) query = query.eq('segment_id', segId);
+    
+    const { data } = await query.order('title');
+    setLocalSubjects(data || []);
+  };
+
   // Fetch Logic
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Refresh segments if prop is empty
+      if (localSegments.length === 0) {
+        const { data: sData } = await supabase.from('segments').select('*').order('title');
+        setLocalSegments(sData || []);
+      }
+
       if (activeView === 'requests') {
         const { data, error } = await supabase
           .from('lecture_sheet_requests')
@@ -175,6 +205,8 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const handleOpenAddModal = () => {
     setEditingSheet(null);
     setSelectedRequest(null);
+    setLocalGroups([]);
+    setLocalSubjects([]);
     setFormData({
       title: '',
       description: '',
@@ -191,6 +223,12 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const handleOpenPublishModal = (req: any) => {
     setSelectedRequest(req);
     setEditingSheet(null);
+    
+    // Pre-fetch hierarchy for the modal
+    if (req.segment_id) fetchLocalGroups(req.segment_id.toString());
+    if (req.group_id) fetchLocalSubjects(req.group_id.toString());
+    else if (req.segment_id) fetchLocalSubjects('', req.segment_id.toString());
+
     setFormData({
       title: req.topic,
       description: req.comment || '',
@@ -379,7 +417,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                         <>
                           <button 
                             onClick={() => updateRequestStatus(req.id, 'taking_time', 'I am working on this. Will be ready soon.', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())}
-                            className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 rounded-xl text-xs font-bold transition-all"
+                            className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-3 rounded-xl text-xs font-bold transition-all"
                           >
                             Accept & Taking Time
                           </button>
@@ -388,7 +426,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                               const comment = prompt("Reason for rejection?");
                               if (comment) updateRequestStatus(req.id, 'rejected', comment);
                             }}
-                            className="w-full border border-red-200 hover:bg-red-50 text-red-600 py-2 rounded-xl text-xs font-bold transition-all"
+                            className="w-full border border-red-200 hover:bg-red-50 text-red-600 py-3 rounded-xl text-xs font-bold transition-all"
                           >
                             Reject & Cancel
                           </button>
@@ -402,10 +440,25 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                               <p className="text-sm font-black text-indigo-700">{req.admin_deadline ? new Date(req.admin_deadline).toLocaleDateString() : 'Not Set'}</p>
                            </div>
                            <button 
-                             onClick={() => handleOpenPublishModal(req)}
-                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold transition-all shadow-md"
+                             onClick={() => {
+                               // Load hierarchy for the modal
+                               if (req.segment_id) fetchLocalGroups(req.segment_id.toString());
+                               if (req.group_id) fetchLocalSubjects(req.group_id.toString());
+                               else if (req.segment_id) fetchLocalSubjects('', req.segment_id.toString());
+                               handleOpenPublishModal(req);
+                             }}
+                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-md"
                            >
                               Publish Sheet
+                           </button>
+                           <button 
+                             onClick={() => {
+                               const comment = prompt("Reason for cancellation?");
+                               if (comment) updateRequestStatus(req.id, 'rejected', comment);
+                             }}
+                             className="w-full border border-red-100 hover:bg-red-50 text-red-400 py-2 rounded-xl text-[10px] font-bold transition-all"
+                           >
+                              Cancel Request
                            </button>
                         </div>
                       )}
@@ -469,6 +522,11 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                               </button>
                               <button 
                                 onClick={() => { 
+                                  // Pre-fetch hierarchy for editing
+                                  if (sheet.segment_id) fetchLocalGroups(sheet.segment_id.toString());
+                                  if (sheet.group_id) fetchLocalSubjects(sheet.group_id.toString());
+                                  else if (sheet.segment_id) fetchLocalSubjects('', sheet.segment_id.toString());
+
                                   setEditingSheet(sheet); 
                                   setFormData({ 
                                     title: sheet.title, 
@@ -516,7 +574,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
             </button>
 
             <form onSubmit={handleSaveSheet} className="p-8 space-y-6">
-              <div className="space-y-1">
+              <div className="space-y-1 text-center md:text-left">
                 <h3 className="text-2xl font-black text-slate-900">
                   {editingSheet ? 'Edit Lecture Sheet' : selectedRequest ? 'Publish from Request' : 'Create New Lecture Sheet'}
                 </h3>
@@ -530,7 +588,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                     required
                     type="text" 
                     placeholder="Enter descriptive title"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                   />
@@ -540,24 +598,34 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Segment</label>
                    <select 
                      required
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
                      value={formData.segment_id}
-                     onChange={(e) => setFormData({...formData, segment_id: e.target.value, group_id: '', subject_id: ''})}
+                     onChange={(e) => {
+                       const segId = e.target.value;
+                       setFormData({...formData, segment_id: segId, group_id: '', subject_id: ''});
+                       fetchLocalGroups(segId);
+                       fetchLocalSubjects('', segId);
+                     }}
                    >
                      <option value="">Select Segment</option>
-                     {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                     {localSegments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                    </select>
                 </div>
 
                 <div className="space-y-2 text-left">
                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Group (Optional)</label>
                    <select 
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
                      value={formData.group_id}
-                     onChange={(e) => setFormData({...formData, group_id: e.target.value, subject_id: ''})}
+                     onChange={(e) => {
+                       const grpId = e.target.value;
+                       setFormData({...formData, group_id: grpId, subject_id: ''});
+                       if (grpId) fetchLocalSubjects(grpId);
+                       else fetchLocalSubjects('', formData.segment_id);
+                     }}
                    >
                      <option value="">Select Group</option>
-                     {groups.filter(g => !formData.segment_id || g.segment_id?.toString() === formData.segment_id).map(g => (
+                     {localGroups.map(g => (
                        <option key={g.id} value={g.id}>{g.title}</option>
                      ))}
                    </select>
@@ -567,16 +635,12 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Subject</label>
                    <select 
                      required
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
                      value={formData.subject_id}
                      onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
                    >
                      <option value="">Select Subject</option>
-                     {subjects.filter(s => {
-                       if (formData.group_id) return s.group_id?.toString() === formData.group_id;
-                       if (formData.segment_id) return s.segment_id?.toString() === formData.segment_id;
-                       return true;
-                     }).map(s => (
+                     {localSubjects.map(s => (
                        <option key={s.id} value={s.id}>{s.title}</option>
                      ))}
                    </select>

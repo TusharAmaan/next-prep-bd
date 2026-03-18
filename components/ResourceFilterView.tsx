@@ -5,6 +5,7 @@ import {
   Search, Filter, FileText, PlayCircle, HelpCircle, 
   ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X 
 } from "lucide-react";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export default function ResourceFilterView({ 
   items, 
@@ -207,9 +208,16 @@ export default function ResourceFilterView({
                   </div>
                   
                   {/* Title */}
-                  <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors leading-snug pr-4">
-                    {item.title}
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <BookmarkButton 
+                        itemType={initialType === 'pdf' ? 'ebook' : (initialType === 'question' ? 'question' : (initialType === 'video' ? 'course' : 'post'))} 
+                        itemId={item.id} 
+                        metadata={{ title: item.title }} 
+                    />
+                    <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors leading-snug pr-4">
+                        {item.title}
+                    </h3>
+                  </div>
                 </div>
 
                 {/* Action Button */}

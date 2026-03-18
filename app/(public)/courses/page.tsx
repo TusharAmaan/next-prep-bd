@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles } from "lucide-react";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,15 @@ export default async function CoursesPage() {
                           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
                               <Clock className="w-3 h-3 text-blue-600" />
                               {course.duration || "Self-Paced"}
+                          </div>
+
+                          {/* Top Left Bookmark */}
+                          <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <BookmarkButton 
+                                itemType="course" 
+                                itemId={course.id} 
+                                metadata={{ title: course.title, thumbnail_url: course.thumbnail_url }} 
+                             />
                           </div>
                       </Link>
 

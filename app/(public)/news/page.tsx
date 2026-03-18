@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import { Search, Calendar, Clock, ChevronRight, Tag, ArrowRight, BookOpen } from "lucide-react";
+import BookmarkButton from "@/components/shared/BookmarkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,13 @@ export default async function NewsPage({ searchParams }: Props) {
                         <span className="w-2 h-2 bg-white rounded-full animate-pulse"/> Featured
                       </span>
                    </div>
+                   <div className="absolute top-6 right-6">
+                      <BookmarkButton 
+                        itemType="news" 
+                        itemId={featuredNews.id} 
+                        metadata={{ title: featuredNews.title, thumbnail_url: featuredNews.image_url }} 
+                      />
+                   </div>
                 </div>
 
                 {/* CONTENT SIDE */}
@@ -214,6 +222,13 @@ export default async function NewsPage({ searchParams }: Props) {
                      <span className="bg-white/95 backdrop-blur text-slate-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
                        {item.category}
                      </span>
+                  </div>
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <BookmarkButton 
+                        itemType="news" 
+                        itemId={item.id} 
+                        metadata={{ title: item.title, thumbnail_url: item.image_url }} 
+                      />
                   </div>
                 </div>
 

@@ -346,7 +346,7 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
                             <CheckCircle2 className="w-4 h-4" /> VIEW SHEET
                          </button>
                        )}
-                       {req.status === 'pending' && (
+                       {(req.status === 'pending' || req.status === 'taking_time') && (
                          <div className="flex gap-2">
                             <button 
                               onClick={() => handleEditRequest(req)}
@@ -398,6 +398,16 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
                        <select 
                          required
                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 transition-all"
+                         value={formData.segment_id}
+                         onChange={(e) => {
+                           const segId = e.target.value;
+                           setFormData(prev => ({ ...prev, segment_id: segId, group_id: '', subject_id: '' }));
+                           if (segId) fetchGroups(segId);
+                           else {
+                             setGroups([]);
+                             setSubjects([]);
+                           }
+                         }}
                         >
                           <option value="">Select Segment</option>
                           {segments.map(seg => <option key={seg.id} value={seg.id}>{seg.title}</option>)}
