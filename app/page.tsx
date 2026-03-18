@@ -26,8 +26,10 @@ import {
   UserCheck,
   Star,
   ShieldCheck,
-  PlayCircle
+  PlayCircle,
+  Sparkles
 } from "lucide-react";
+import LectureSheetEcosystem from "@/components/lecture-sheets/LectureSheetEcosystem";
 
 export const revalidate = 0; 
 
@@ -209,7 +211,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. MAIN CONTENT AREA */}
+      {/* 5. NEXTPREP ECOSYSTEM - MARKETING */}
+      <LectureSheetEcosystem />
+
+      {/* 6. MAIN CONTENT AREA */}
       <section className="pt-16 pb-20 max-w-7xl mx-auto px-4 md:px-6">
         <div className="mb-10">
             <AdBanner dataAdSlot="8219606997" dataAdFormat="fluid" dataAdLayoutKey="-f9+a+14-5p+64" />

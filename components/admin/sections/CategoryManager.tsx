@@ -149,7 +149,7 @@ export default function CategoryManager({
   });
 
   // Updated Tabs list to match your likely DB schema for types
-  const tabs = ['all', 'resource', 'news', 'ebook', 'course'];
+  const tabs = ['all', 'blog', 'pdf', 'video', 'question', 'news', 'ebook', 'course'];
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -175,7 +175,7 @@ export default function CategoryManager({
                         onClick={() => setActiveFilter(t)}
                         className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
                     >
-                        {t === 'resource' ? 'Study Materials' : t}
+                        {t === 'resource' ? 'Materials' : (t === 'blog' ? 'Blogs' : (t === 'pdf' ? 'PDFs' : (t === 'video' ? 'Videos' : (t === 'question' ? 'Questions' : t))))}
                     </button>
                 ))}
             </div>
@@ -214,7 +214,7 @@ export default function CategoryManager({
                             (cat.type || 'general') === 'course' ? 'bg-emerald-50 text-emerald-600' :
                             'bg-slate-100 text-slate-500'
                         }`}>
-                            {cat.type === 'resource' ? 'Study' : cat.type || 'General'}
+                            {cat.type === 'resource' ? 'Material' : (cat.type === 'blog' ? 'Blog' : (cat.type === 'pdf' ? 'PDF' : (cat.type === 'video' ? 'Video' : (cat.type === 'question' ? 'Question' : cat.type || 'General'))))}
                         </span>
                         <button 
                             onClick={(e) => handleDelete(e, cat.id)} 
@@ -253,10 +253,14 @@ export default function CategoryManager({
                             value={newCatType} 
                             onChange={e => setNewCatType(e.target.value)}
                         >
-                            <option value="resource">Study Materials (Blog/PDF/Video)</option>
-                            <option value="ebook">eBook</option>
-                            <option value="course">Course</option>
-                            <option value="news">News</option>
+                            <option value="resource">All Material types (Fallback)</option>
+                            <option value="blog">✍️ Blog / Article</option>
+                            <option value="pdf">📄 PDF Document</option>
+                            <option value="video">🎬 Video Lesson</option>
+                            <option value="question">❓ Question Bank</option>
+                            <option value="ebook">📖 eBook</option>
+                            <option value="course">🎓 Course</option>
+                            <option value="news">📰 News</option>
                         </select>
                         <p className="text-[10px] text-slate-400 mt-1">This ensures the category appears in the correct editor dropdown.</p>
                     </div>

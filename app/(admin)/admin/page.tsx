@@ -23,6 +23,7 @@ import ContentManager from "@/components/admin/sections/ContentManager";
 import FeedbackManager from "@/components/admin/sections/FeedbackManager";
 import PendingManager from "@/components/admin/sections/PendingManager";
 import QuestionBankManager from "@/components/admin/sections/QuestionBankManager"; 
+import LectureSheetManager from "@/components/admin/sections/LectureSheetManager";
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -211,6 +212,7 @@ export default function AdminDashboard() {
                     <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
                     {[
                       { id: 'materials', label: 'Study Materials', icon: FileStack },
+                      { id: 'lecture_sheets', label: 'Lecture Sheets', icon: FileText },
                       { id: 'ebooks', label: 'eBooks', icon: BookOpen },
                       { id: 'segment_updates', label: 'Segment Updates', icon: RefreshCw },
                       { id: 'courses', label: 'Courses', icon: GraduationCap },
@@ -282,6 +284,7 @@ export default function AdminDashboard() {
                     {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} />}
                     {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />}
                     {activeTab === 'feedbacks' && <FeedbackManager />}
+                    {activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} />}
 
                     {['materials', 'news', 'ebooks', 'segment_updates', 'courses'].includes(activeTab) && (
                         <ContentManager 

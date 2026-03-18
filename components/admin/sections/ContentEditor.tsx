@@ -36,8 +36,10 @@ export default function ContentEditor({
       if (activeTab === 'ebooks') return categories.filter((c:any) => c.type === 'ebook');
       if (activeTab === 'courses') return categories.filter((c:any) => c.type === 'course');
       if (activeTab === 'materials') {
+          // Systematic Filtering: Show categories for the specific type (blog, pdf, etc.)
+          // PLUS 'resource', 'general' or untyped categories as fallback.
           return categories.filter((c:any) => 
-              c.type === 'resource' || c.type === 'general' || c.type === 'blog' || c.type === 'question' || !c.type
+              c.type === type || c.type === 'resource' || c.type === 'general' || !c.type
           );
       }
       return categories.filter((c:any) => c.type === 'general' || !c.type);

@@ -23,8 +23,10 @@ import {
   Trophy,
   History,
   Target,
-  GraduationCap
+  GraduationCap,
+  MessageSquare
 } from "lucide-react";
+import StudentLectureSheets from "@/components/lecture-sheets/StudentLectureSheets";
 
 // --- Types ---
 interface Profile {
@@ -304,6 +306,7 @@ export default function ModernStudentDashboard() {
           {[
             { id: "overview", label: "Overview", icon: BarChart3 },
             { id: "courses", label: "My Learning", icon: BookOpen },
+            { id: "lecture_sheets", label: "Lecture Sheets", icon: FileText },
             { id: "exams", label: "Mock Tests", icon: FileText },
             { id: "bookmarks", label: "Library", icon: Bookmark },
             { id: "achievements", label: "Achievements", icon: Award },
@@ -602,6 +605,10 @@ export default function ModernStudentDashboard() {
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === "lecture_sheets" && profile && (
+            <StudentLectureSheets user={profile} />
           )}
 
         </div>

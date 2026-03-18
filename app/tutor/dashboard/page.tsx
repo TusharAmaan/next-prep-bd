@@ -9,6 +9,7 @@ import {
   Layers, Settings, Search, Printer, ArrowUpRight
 } from "lucide-react";
 import BadgeDisplay from "@/components/tutor/BadgeDisplay";
+import TutorLectureSheets from "@/components/lecture-sheets/TutorLectureSheets";
 
 interface Profile {
   id: string;
@@ -33,6 +34,7 @@ export default function TutorDashboard() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [recentExams, setRecentExams] = useState<SavedExam[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -153,6 +155,15 @@ export default function TutorDashboard() {
                           </div>
                           <ChevronRight className="w-4 h-4 text-slate-300"/>
                       </Link>
+
+                      <button onClick={() => setActiveTab('lecture_sheets')} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors group ${activeTab === 'lecture_sheets' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600 hover:text-indigo-600'}`}>
+                          <div className={`p-2 rounded-lg transition-colors ${activeTab === 'lecture_sheets' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white'}`}><FileText className="w-4 h-4"/></div>
+                          <div className="flex-1 text-left">
+                              <span className="font-bold text-sm block">Lecture Sheets</span>
+                              <span className={`text-[10px] block ${activeTab === 'lecture_sheets' ? 'text-indigo-100' : 'text-slate-400'}`}>Content Library</span>
+                          </div>
+                          <ChevronRight className={`w-4 h-4 ${activeTab === 'lecture_sheets' ? 'text-white' : 'text-slate-300'}`}/>
+                      </button>
                   </div>
               </div>
 
@@ -197,118 +208,124 @@ export default function TutorDashboard() {
           {/* === RIGHT CONTENT (Stats & Lists) - 8 COLS === */}
           <div className="lg:col-span-8 space-y-8">
               
-              {/* 1. Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Saved Exams Stat (New) */}
-                  <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                          <div className="bg-indigo-50 p-1.5 rounded-md text-indigo-600"><FileText className="w-3.5 h-3.5"/></div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Saved Exams</span>
+              {activeTab === 'overview' && (
+                <>
+                  {/* 1. Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Saved Exams Stat (New) */}
+                      <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                              <div className="bg-indigo-50 p-1.5 rounded-md text-indigo-600"><FileText className="w-3.5 h-3.5"/></div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Saved Exams</span>
+                          </div>
+                          <p className="text-2xl font-black text-indigo-900">{stats.savedExams}</p>
                       </div>
-                      <p className="text-2xl font-black text-indigo-900">{stats.savedExams}</p>
+
+                      <div className="bg-white border border-emerald-100 p-4 rounded-2xl shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                              <div className="bg-emerald-50 p-1.5 rounded-md text-emerald-600"><CheckCircle className="w-3.5 h-3.5"/></div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Approved</span>
+                          </div>
+                          <p className="text-2xl font-black text-emerald-900">{stats.approved}</p>
+                      </div>
+
+                      <div className="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                              <div className="bg-amber-50 p-1.5 rounded-md text-amber-600"><Clock className="w-3.5 h-3.5"/></div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Pending</span>
+                          </div>
+                          <p className="text-2xl font-black text-amber-900">{stats.pending}</p>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                              <div className="bg-slate-100 p-1.5 rounded-md text-slate-600"><BarChart3 className="w-3.5 h-3.5"/></div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Rejected</span>
+                          </div>
+                          <p className="text-2xl font-black text-slate-700">{stats.rejected}</p>
+                      </div>
                   </div>
 
-                  <div className="bg-white border border-emerald-100 p-4 rounded-2xl shadow-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                          <div className="bg-emerald-50 p-1.5 rounded-md text-emerald-600"><CheckCircle className="w-3.5 h-3.5"/></div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Approved</span>
+                  {/* 2. Recent Saved Exams (The "My Exams" Preview) */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                      <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                              <Layers className="w-4 h-4 text-indigo-500"/> Recent Exam Papers
+                          </h3>
+                          <Link href="/tutor/dashboard/my-exams" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
                       </div>
-                      <p className="text-2xl font-black text-emerald-900">{stats.approved}</p>
-                  </div>
-
-                  <div className="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                          <div className="bg-amber-50 p-1.5 rounded-md text-amber-600"><Clock className="w-3.5 h-3.5"/></div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Pending</span>
-                      </div>
-                      <p className="text-2xl font-black text-amber-900">{stats.pending}</p>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                          <div className="bg-slate-100 p-1.5 rounded-md text-slate-600"><BarChart3 className="w-3.5 h-3.5"/></div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Rejected</span>
-                      </div>
-                      <p className="text-2xl font-black text-slate-700">{stats.rejected}</p>
-                  </div>
-              </div>
-
-              {/* 2. Recent Saved Exams (The "My Exams" Preview) */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                          <Layers className="w-4 h-4 text-indigo-500"/> Recent Exam Papers
-                      </h3>
-                      <Link href="/tutor/dashboard/my-exams" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
-                  </div>
-                  
-                  {recentExams.length === 0 ? (
-                      <div className="p-8 text-center">
-                          <p className="text-sm text-slate-400 mb-3">No exams created yet.</p>
-                          <Link href="/tutor/dashboard/question-builder" className="text-xs font-bold bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded border border-indigo-100 hover:bg-indigo-100">
-                              Create First Exam
-                          </Link>
-                      </div>
-                  ) : (
-                      <div className="divide-y divide-slate-100">
-                          {recentExams.map((exam) => (
-                              <div key={exam.id} className="p-4 hover:bg-slate-50 flex items-center justify-between group transition-colors">
-                                  <div className="flex items-center gap-4">
-                                      <div className="bg-white border border-slate-200 p-2 rounded-lg text-slate-400 group-hover:text-indigo-500 group-hover:border-indigo-200 transition-colors">
-                                          <FileText className="w-5 h-5"/>
-                                      </div>
-                                      <div>
-                                          <h4 className="font-bold text-sm text-slate-800">{exam.title}</h4>
-                                          <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                                              <span>{formatDate(exam.created_at)}</span>
-                                              <span className="text-slate-300">•</span>
-                                              <span>{exam.questions?.length || 0} Questions</span>
-                                              <span className="text-slate-300">•</span>
-                                              <span>{exam.total_marks} Marks</span>
+                      
+                      {recentExams.length === 0 ? (
+                          <div className="p-8 text-center">
+                              <p className="text-sm text-slate-400 mb-3">No exams created yet.</p>
+                              <Link href="/tutor/dashboard/question-builder" className="text-xs font-bold bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded border border-indigo-100 hover:bg-indigo-100">
+                                  Create First Exam
+                              </Link>
+                          </div>
+                      ) : (
+                          <div className="divide-y divide-slate-100">
+                              {recentExams.map((exam) => (
+                                  <div key={exam.id} className="p-4 hover:bg-slate-50 flex items-center justify-between group transition-colors">
+                                      <div className="flex items-center gap-4">
+                                          <div className="bg-white border border-slate-200 p-2 rounded-lg text-slate-400 group-hover:text-indigo-500 group-hover:border-indigo-200 transition-colors">
+                                              <FileText className="w-5 h-5"/>
+                                          </div>
+                                          <div>
+                                              <h4 className="font-bold text-sm text-slate-800">{exam.title}</h4>
+                                              <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                                  <span>{formatDate(exam.created_at)}</span>
+                                                  <span className="text-slate-300">•</span>
+                                                  <span>{exam.questions?.length || 0} Questions</span>
+                                                  <span className="text-slate-300">•</span>
+                                                  <span>{exam.total_marks} Marks</span>
+                                              </div>
                                           </div>
                                       </div>
+                                      <Link href={`/tutor/dashboard/my-exams/${exam.id}`} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Print/View">
+                                          <Printer className="w-4 h-4"/>
+                                      </Link>
                                   </div>
-                                  <Link href={`/tutor/dashboard/my-exams/${exam.id}`} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Print/View">
-                                      <Printer className="w-4 h-4"/>
-                                  </Link>
-                              </div>
-                          ))}
-                      </div>
-                  )}
-              </div>
-
-              {/* 3. General Activity Log */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-                      <h3 className="font-bold text-slate-800 text-sm">Content Updates</h3>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                      {recentActivity.length === 0 ? (
-                          <div className="p-8 text-center text-slate-400 text-sm">No recent activity.</div>
-                      ) : (
-                          recentActivity.map((item, i) => (
-                              <div key={i} className="p-4 flex items-center justify-between text-sm hover:bg-slate-50 transition-colors">
-                                  <div className="flex items-center gap-3">
-                                      <span className={`w-2 h-2 rounded-full ${
-                                          item.status === 'approved' ? 'bg-emerald-500' : 
-                                          item.status === 'rejected' ? 'bg-red-500' : 'bg-amber-500'
-                                      }`}></span>
-                                      <span className="font-medium text-slate-700 truncate max-w-[200px]">{item.title}</span>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                      <span className="text-xs text-slate-400 hidden sm:block uppercase font-bold">{item.type || 'Course'}</span>
-                                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
-                                          item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                                          item.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                      }`}>
-                                          {item.status}
-                                      </span>
-                                  </div>
-                              </div>
-                          ))
+                              ))}
+                          </div>
                       )}
                   </div>
-              </div>
+
+                  {/* 3. General Activity Log */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                      <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                          <h3 className="font-bold text-slate-800 text-sm">Content Updates</h3>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                          {recentActivity.length === 0 ? (
+                              <div className="p-8 text-center text-slate-400 text-sm">No recent activity.</div>
+                          ) : (
+                              recentActivity.map((item, i) => (
+                                  <div key={i} className="p-4 flex items-center justify-between text-sm hover:bg-slate-50 transition-colors">
+                                      <div className="flex items-center gap-3">
+                                          <span className={`w-2 h-2 rounded-full ${
+                                              item.status === 'approved' ? 'bg-emerald-500' : 
+                                              item.status === 'rejected' ? 'bg-red-500' : 'bg-amber-500'
+                                          }`}></span>
+                                          <span className="font-medium text-slate-700 truncate max-w-[200px]">{item.title}</span>
+                                      </div>
+                                      <div className="flex items-center gap-4">
+                                          <span className="text-xs text-slate-400 hidden sm:block uppercase font-bold">{item.type || 'Course'}</span>
+                                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                                              item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                              item.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                                          }`}>
+                                              {item.status}
+                                          </span>
+                                      </div>
+                                  </div>
+                              )
+                          ))}
+                      </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'lecture_sheets' && <TutorLectureSheets user={profile} />}
 
           </div>
       </div>

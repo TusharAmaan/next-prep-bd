@@ -90,10 +90,17 @@ export default function ContentManager({
             if (activeTab === 'ebooks') return c.type === 'ebook';
             if (activeTab === 'news') return c.type === 'news';
             if (activeTab === 'courses') return c.type === 'course';
-            if (activeTab === 'materials') return c.type === 'resource' || c.type === 'general' || !c.type;
+            if (activeTab === 'materials') {
+                // If a specific type filter is active, show only that type's categories (plus fallbacks)
+                if (typeFilter !== 'all') {
+                    return c.type === typeFilter || c.type === 'resource' || c.type === 'general' || !c.type;
+                }
+                // Default: Show all relevant material types
+                return ['resource', 'general', 'blog', 'pdf', 'video', 'question'].includes(c.type) || !c.type;
+            }
             return true;
         });
-    }, [categories, activeTab]);
+    }, [categories, activeTab, typeFilter]);
 
     const markDirty = () => setIsDirty(true);
 
