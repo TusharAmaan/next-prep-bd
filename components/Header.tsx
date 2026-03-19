@@ -223,6 +223,7 @@ export default function Header() {
           {/* DESKTOP NAVIGATION (Visible lg+) */}
           <nav className="hidden lg:flex items-center gap-1">
             <NavLink href="/">Home</NavLink>
+            <NavLink href="/curriculum">Lesson Plans</NavLink>
             
             {/* Resources Dropdown */}
             <div className="relative" ref={resourcesRef}>
@@ -428,6 +429,10 @@ export default function Header() {
                 
                 <Link href="/" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${pathname === "/" ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>
                     <Home className="w-5 h-5"/> Home
+                </Link>
+
+                <Link href="/curriculum" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${pathname?.startsWith("/curriculum") ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>
+                    <BookOpen className="w-5 h-5"/> Lesson Plans
                 </Link>
                 
                 {user && (

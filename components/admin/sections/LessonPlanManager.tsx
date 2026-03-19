@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from "@/lib/supabaseClient";
 import { 
   BookOpen, 
@@ -25,8 +25,38 @@ interface LessonPlanManagerProps {
 
 export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) {
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [units, setUnits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Derived options for dropdowns
+  const segments = useMemo(() => {
+    const map = new Map();
+    subjects.forEach(s => {
+      if (s.groups?.segments) map.set(s.groups.segments.id, s.groups.segments);
+    });
+    return Array.from(map.values());
+  }, [subjects]);
+
+  const groups = useMemo(() => {
+    const map = new Map();
+    subjects.forEach(s => {
+       if (s.groups && (!selectedSegmentId || s.groups.segments?.id?.toString() === selectedSegmentId)) {
+          map.set(s.groups.id, s.groups);
+       }
+    });
+    return Array.from(map.values());
+  }, [subjects, selectedSegmentId]);
+
+  const filteredSubjects = useMemo(() => {
+    return subjects.filter(s => {
+      const matchSeg = !selectedSegmentId || s.groups?.segments?.id?.toString() === selectedSegmentId;
+      const matchGr = !selectedGroupId || s.groups?.id?.toString() === selectedGroupId;
+      return matchSeg && matchGr;
+    });
+  }, [subjects, selectedSegmentId, selectedGroupId]);
+
   
   // Modal states
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
@@ -222,17 +252,47 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
           <p className="text-sm text-slate-500 mt-1">Manage curriculum hierarchy and content</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
           <select 
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            value={selectedSegmentId}
+            onChange={(e) => {
+              setSelectedSegmentId(e.target.value);
+              setSelectedGroupId('');
+              setSelectedSubject(null);
+            }}
+          >
+            <option value="">Select Segment</option>
+            {segments.map((seg: any) => (
+              <option key={seg.id} value={seg.id}>{seg.title}</option>
+            ))}
+          </select>
+
+          <select 
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            value={selectedGroupId}
+            onChange={(e) => {
+              setSelectedGroupId(e.target.value);
+              setSelectedSubject(null);
+            }}
+          >
+            <option value="">Select Group</option>
+            {groups.map((gr: any) => (
+              <option key={gr.id} value={gr.id}>{gr.title}</option>
+            ))}
+          </select>
+
+          <select 
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            value={selectedSubject?.id || ''}
             onChange={(e) => {
               const sub = subjects.find(s => s.id.toString() === e.target.value);
               setSelectedSubject(sub);
             }}
           >
             <option value="">Select Subject</option>
-            {subjects.map(s => (
-              <option key={s.id} value={s.id}>{s.title} ({s.groups?.segments?.title || 'No Segment'})</option>
+            {filteredSubjects.map(s => (
+              <option key={s.id} value={s.id}>{s.title}</option>
             ))}
           </select>
 
