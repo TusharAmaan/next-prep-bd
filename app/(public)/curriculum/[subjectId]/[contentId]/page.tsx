@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   Lock, 
   User, 
   ArrowLeft,
@@ -46,6 +47,10 @@ export default function ContentDetailPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isTocOpenMobile, setIsTocOpenMobile] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState<{id: string, show: boolean} | null>(null);
+
+  // Collapsible ToC State
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
 
   // Intersection Observer Ref
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -129,6 +134,42 @@ export default function ContentDetailPage() {
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [handleObserver, loaderRef.current]);
+
+  // Auto-expand the unit & lesson that contains the currently viewed content
+  useEffect(() => {
+    if (loadedContents.length === 0 || hierarchy.length === 0) return;
+    const currentId = loadedContents[loadedContents.length - 1]?.id;
+    const unitIds = new Set<string>();
+    const lessonIds = new Set<string>();
+    hierarchy.forEach(u => {
+      u.lesson_plan_lessons?.forEach((l: any) => {
+        l.lesson_plan_contents?.forEach((c: any) => {
+          if (loadedContents.some(lc => lc.id === c.id)) {
+            unitIds.add(String(u.id));
+            lessonIds.add(String(l.id));
+          }
+        });
+      });
+    });
+    setExpandedUnits(prev => new Set([...prev, ...unitIds]));
+    setExpandedLessons(prev => new Set([...prev, ...lessonIds]));
+  }, [loadedContents, hierarchy]);
+
+  const toggleUnit = (unitId: string) => {
+    setExpandedUnits(prev => {
+      const next = new Set(prev);
+      if (next.has(unitId)) next.delete(unitId); else next.add(unitId);
+      return next;
+    });
+  };
+
+  const toggleLesson = (lessonId: string) => {
+    setExpandedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId); else next.add(lessonId);
+      return next;
+    });
+  };
 
   const loadNextContent = async () => {
      if (loadedContents.length === 0 || flatContentIndex.length === 0) return;
@@ -379,45 +420,76 @@ export default function ContentDetailPage() {
                    </div>
                 </div>
 
-                <div className="overflow-y-auto flex-1 pr-2 space-y-6 custom-scrollbar scroll-smooth">
-                   {hierarchy.map(unit => (
-                      <div key={unit.id} className="space-y-3">
-                         <div className="flex items-center gap-2">
-                             <div className="w-1 h-4 bg-indigo-600 rounded-full" />
-                             <h4 className={`text-[10px] font-black uppercase tracking-widest ${textMain}`}>{unit.title}</h4>
-                         </div>
-                         <div className={`space-y-1 pl-3 border-l ${borderCol}`}>
-                            {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => (
-                               <div key={l.id} className="space-y-1">
-                                  <p className={`text-[10px] font-bold py-1 uppercase ${textMuted}`}>{l.title}</p>
-                                  {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
-                                     // Determine if active: we can just check if it's the latest loaded one, or just if it's in loaded contents 
-                                     const isViewed = loadedContents.some(loaded => loaded.id === c.id);
-                                     
-                                     return (
-                                       <button 
-                                         key={c.id} 
-                                         onClick={() => {
-                                            const element = document.getElementById(`content-${c.id}`);
-                                            if (element) {
-                                               element.scrollIntoView({ behavior: 'smooth' });
-                                            } else {
-                                               // If not loaded yet, push to router to hard reload on that exact content
-                                               router.push(`/curriculum/${subjectId}/${c.id}`);
-                                            }
-                                         }}
-                                         className={`group w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500 dark:hover:text-indigo-400`}`}
-                                       >
-                                          <div className={`w-1.5 h-1.5 rounded-full ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                                          <span className="truncate">{c.title}</span>
-                                       </button>
-                                     );
-                                  })}
-                               </div>
-                            ))}
-                         </div>
-                      </div>
-                   ))}
+                <div className="overflow-y-auto flex-1 pr-2 space-y-2 custom-scrollbar scroll-smooth">
+                   {hierarchy.map(unit => {
+                      const unitKey = String(unit.id);
+                      const isUnitOpen = expandedUnits.has(unitKey);
+                      const unitHasViewed = unit.lesson_plan_lessons?.some((l: any) => l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id)));
+                      const lessonCount = unit.lesson_plan_lessons?.length || 0;
+                      
+                      return (
+                        <div key={unit.id}>
+                         <button
+                           onClick={() => toggleUnit(unitKey)}
+                           className={`w-full flex items-center gap-2 px-2 py-2.5 rounded-xl transition-all text-left group ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                         >
+                             <div className={`w-1 h-4 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                             <h4 className={`text-[10px] font-black uppercase tracking-widest flex-1 truncate ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <span className={`text-[9px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
+                             <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
+                         </button>
+                         
+                         {isUnitOpen && (
+                           <div className={`space-y-1 pl-4 ml-2 mt-1 border-l ${borderCol} animate-in fade-in slide-in-from-top-1 duration-200`}>
+                            {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => {
+                               const lessonKey = String(l.id);
+                               const isLessonOpen = expandedLessons.has(lessonKey);
+                               const contentCount = l.lesson_plan_contents?.length || 0;
+                               const lessonHasViewed = l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id));
+
+                               return (
+                                 <div key={l.id}>
+                                  <button
+                                    onClick={() => toggleLesson(lessonKey)}
+                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
+                                  >
+                                     <ChevronDown className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
+                                     <span className="text-[10px] font-bold uppercase truncate flex-1">{l.title}</span>
+                                     <span className={`text-[9px] font-medium ${textMuted}`}>{contentCount}</span>
+                                  </button>
+
+                                  {isLessonOpen && (
+                                    <div className="pl-4 space-y-0.5 mt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                     {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
+                                      const isViewed = loadedContents.some(loaded => loaded.id === c.id);
+                                      return (
+                                        <button 
+                                          key={c.id} 
+                                          onClick={() => {
+                                             const element = document.getElementById(`content-${c.id}`);
+                                             if (element) {
+                                                element.scrollIntoView({ behavior: 'smooth' });
+                                             } else {
+                                                router.push(`/curriculum/${subjectId}/${c.id}`);
+                                             }
+                                          }}
+                                          className={`group w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
+                                        >
+                                           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                                           <span className="truncate">{c.title}</span>
+                                        </button>
+                                      );
+                                     })}
+                                    </div>
+                                  )}
+                                 </div>
+                               );
+                            })}
+                           </div>
+                         )}
+                        </div>
+                      );
+                   })}
                 </div>
 
                 <Link href={`/curriculum/${subjectId}`} className="mt-8 flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
@@ -451,43 +523,77 @@ export default function ContentDetailPage() {
                   <button onClick={() => setIsTocOpenMobile(false)} className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}><X className="w-5 h-5" /></button>
                </div>
 
-               <div className="overflow-y-auto flex-1 pr-2 space-y-6">
-                   {hierarchy.map(unit => (
-                      <div key={unit.id} className="space-y-3">
-                         <div className="flex items-center gap-2">
-                             <div className="w-1 h-4 bg-indigo-600 rounded-full" />
-                             <h4 className={`text-[10px] font-black uppercase tracking-widest ${textMain}`}>{unit.title}</h4>
-                         </div>
-                         <div className={`space-y-1 pl-3 border-l ${borderCol}`}>
-                            {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => (
-                               <div key={l.id} className="space-y-1">
-                                  <p className={`text-[10px] font-bold py-1 uppercase ${textMuted}`}>{l.title}</p>
-                                  {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
-                                     const isViewed = loadedContents.some(loaded => loaded.id === c.id);
-                                     return (
-                                       <button 
-                                         key={c.id} 
-                                         onClick={() => {
-                                            setIsTocOpenMobile(false);
-                                            const element = document.getElementById(`content-${c.id}`);
-                                            if (element) {
-                                               element.scrollIntoView({ behavior: 'smooth' });
-                                            } else {
-                                               router.push(`/curriculum/${subjectId}/${c.id}`);
-                                            }
-                                         }}
-                                         className={`group w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white' : `${textMuted}`}`}
-                                       >
-                                          <div className={`w-1.5 h-1.5 rounded-full ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                                          <span className="truncate">{c.title}</span>
-                                       </button>
-                                     );
-                                  })}
-                               </div>
-                            ))}
-                         </div>
-                      </div>
-                   ))}
+               <div className="overflow-y-auto flex-1 pr-2 space-y-2">
+                   {hierarchy.map(unit => {
+                      const unitKey = String(unit.id);
+                      const isUnitOpen = expandedUnits.has(unitKey);
+                      const unitHasViewed = unit.lesson_plan_lessons?.some((l: any) => l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id)));
+                      const lessonCount = unit.lesson_plan_lessons?.length || 0;
+                      
+                      return (
+                        <div key={unit.id}>
+                         <button
+                           onClick={() => toggleUnit(unitKey)}
+                           className={`w-full flex items-center gap-2 px-2 py-2.5 rounded-xl transition-all text-left ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : ''}`}
+                         >
+                             <div className={`w-1 h-4 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                             <h4 className={`text-[10px] font-black uppercase tracking-widest flex-1 truncate ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <span className={`text-[9px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
+                             <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
+                         </button>
+                         
+                         {isUnitOpen && (
+                           <div className={`space-y-1 pl-4 ml-2 mt-1 border-l ${borderCol}`}>
+                            {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => {
+                               const lessonKey = String(l.id);
+                               const isLessonOpen = expandedLessons.has(lessonKey);
+                               const contentCount = l.lesson_plan_contents?.length || 0;
+                               const lessonHasViewed = l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id));
+
+                               return (
+                                 <div key={l.id}>
+                                  <button
+                                    onClick={() => toggleLesson(lessonKey)}
+                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
+                                  >
+                                     <ChevronDown className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
+                                     <span className="text-[10px] font-bold uppercase truncate flex-1">{l.title}</span>
+                                     <span className={`text-[9px] font-medium ${textMuted}`}>{contentCount}</span>
+                                  </button>
+
+                                  {isLessonOpen && (
+                                    <div className="pl-4 space-y-0.5 mt-0.5">
+                                     {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
+                                      const isViewed = loadedContents.some(loaded => loaded.id === c.id);
+                                      return (
+                                        <button 
+                                          key={c.id} 
+                                          onClick={() => {
+                                             setIsTocOpenMobile(false);
+                                             const element = document.getElementById(`content-${c.id}`);
+                                             if (element) {
+                                                element.scrollIntoView({ behavior: 'smooth' });
+                                             } else {
+                                                router.push(`/curriculum/${subjectId}/${c.id}`);
+                                             }
+                                          }}
+                                          className={`group w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
+                                        >
+                                           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                                           <span className="truncate">{c.title}</span>
+                                        </button>
+                                      );
+                                     })}
+                                    </div>
+                                  )}
+                                 </div>
+                               );
+                            })}
+                           </div>
+                         )}
+                        </div>
+                      );
+                   })}
                </div>
             </div>
          </div>
