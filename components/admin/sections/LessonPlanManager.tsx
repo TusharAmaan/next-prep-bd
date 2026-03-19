@@ -23,39 +23,61 @@ interface LessonPlanManagerProps {
   subjects: any[];
 }
 
-export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) {
+export default function LessonPlanManager({ subjects: initialSubjects }: LessonPlanManagerProps) {
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  
+  // Independent Hierarchy State
+  const [segments, setSegments] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [isHierarchyLoading, setIsHierarchyLoading] = useState(false);
+
   const [units, setUnits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Derived options for dropdowns
-  const segments = useMemo(() => {
-    const map = new Map();
-    subjects.forEach(s => {
-      if (s.groups?.segments) map.set(s.groups.segments.id, s.groups.segments);
-    });
-    return Array.from(map.values());
-  }, [subjects]);
+  // Initial Fetch Segments
+  useEffect(() => {
+    const fetchSegments = async () => {
+      setIsHierarchyLoading(true);
+      const { data } = await supabase.from('segments').select('*').order('id');
+      setSegments(data || []);
+      setIsHierarchyLoading(false);
+    };
+    fetchSegments();
+  }, []);
 
-  const groups = useMemo(() => {
-    const map = new Map();
-    subjects.forEach(s => {
-       if (s.groups && (!selectedSegmentId || s.groups.segments?.id?.toString() === selectedSegmentId)) {
-          map.set(s.groups.id, s.groups);
-       }
-    });
-    return Array.from(map.values());
-  }, [subjects, selectedSegmentId]);
+  // Fetch Groups when Segment changes
+  useEffect(() => {
+    if (!selectedSegmentId) {
+      setGroups([]);
+      setSubjects([]);
+      return;
+    }
+    const fetchGroups = async () => {
+      setIsHierarchyLoading(true);
+      const { data } = await supabase.from('groups').select('*').eq('segment_id', selectedSegmentId).order('id');
+      setGroups(data || []);
+      setIsHierarchyLoading(false);
+    };
+    fetchGroups();
+  }, [selectedSegmentId]);
 
-  const filteredSubjects = useMemo(() => {
-    return subjects.filter(s => {
-      const matchSeg = !selectedSegmentId || s.groups?.segments?.id?.toString() === selectedSegmentId;
-      const matchGr = !selectedGroupId || s.groups?.id?.toString() === selectedGroupId;
-      return matchSeg && matchGr;
-    });
-  }, [subjects, selectedSegmentId, selectedGroupId]);
+  // Fetch Subjects when Group changes
+  useEffect(() => {
+    if (!selectedGroupId) {
+      setSubjects([]);
+      return;
+    }
+    const fetchSubjects = async () => {
+      setIsHierarchyLoading(true);
+      const { data } = await supabase.from('subjects').select('*').eq('group_id', selectedGroupId).order('id');
+      setSubjects(data || []);
+      setIsHierarchyLoading(false);
+    };
+    fetchSubjects();
+  }, [selectedGroupId]);
 
   
   // Modal states
@@ -73,6 +95,12 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
   // Expanded state for tree
   const [expandedUnits, setExpandedUnits] = useState<Record<number, boolean>>({});
   const [expandedLessons, setExpandedLessons] = useState<Record<number, boolean>>({});
+
+  // Related Books Modal
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [books, setBooks] = useState<any[]>([]);
+  const [isBooksLoading, setIsBooksLoading] = useState(false);
+  const [editingBook, setEditingBook] = useState<any>(null);
 
   // Version filter
   const [versionFilter, setVersionFilter] = useState<'en' | 'bn'>('bn');
@@ -241,6 +269,65 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
     }
   };
 
+  // --- Handlers for Books ---
+  const fetchBooks = useCallback(async () => {
+    if (!selectedSubject) return;
+    setIsBooksLoading(true);
+    const { data } = await supabase
+      .from('lesson_plan_subject_books')
+      .select('*')
+      .eq('subject_id', selectedSubject.id)
+      .order('order_index');
+    setBooks(data || []);
+    setIsBooksLoading(false);
+  }, [selectedSubject]);
+
+  useEffect(() => {
+    if (isBookModalOpen) {
+      fetchBooks();
+    }
+  }, [isBookModalOpen, fetchBooks]);
+
+  const handleSaveBook = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get('title') as string;
+    const subtitle = formData.get('subtitle') as string;
+    const url = formData.get('url') as string;
+    const orderIndex = parseInt(formData.get('order_index') as string || '0');
+
+    try {
+      if (editingBook) {
+        const { error } = await supabase
+          .from('lesson_plan_subject_books')
+          .update({ title, subtitle, url, order_index: orderIndex })
+          .eq('id', editingBook.id);
+        if (error) throw error;
+        toast.success("Book updated");
+      } else {
+        const { error } = await supabase
+          .from('lesson_plan_subject_books')
+          .insert([{ title, subtitle, url, order_index: orderIndex, subject_id: selectedSubject.id }]);
+        if (error) throw error;
+        toast.success("Book added");
+      }
+      setEditingBook(null);
+      fetchBooks();
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      toast.error("Operation failed");
+    }
+  };
+
+  const handleDeleteBook = async (id: number) => {
+    if (!confirm("Remove this related book?")) return;
+    const { error } = await supabase.from('lesson_plan_subject_books').delete().eq('id', id);
+    if (!error) {
+      toast.success("Book removed");
+      fetchBooks();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -289,9 +376,10 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
               const sub = subjects.find(s => s.id.toString() === e.target.value);
               setSelectedSubject(sub);
             }}
+            disabled={!selectedGroupId || isHierarchyLoading}
           >
             <option value="">Select Subject</option>
-            {filteredSubjects.map(s => (
+            {subjects.map(s => (
               <option key={s.id} value={s.id}>{s.title}</option>
             ))}
           </select>
@@ -321,17 +409,25 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-wrap gap-4">
             <div>
                <h3 className="text-lg font-bold text-slate-900">{selectedSubject.title} Planning</h3>
                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">{versionFilter === 'en' ? 'English' : 'Bengali'} Version</p>
             </div>
-            <button 
-              onClick={() => { setEditingUnit(null); setIsUnitModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100"
-            >
-              <Plus className="w-4 h-4" /> ADD UNIT
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => { setEditingBook(null); setIsBookModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all text-nowrap"
+              >
+                <Book className="w-4 h-4" /> RELATED BOOKS
+              </button>
+              <button 
+                onClick={() => { setEditingUnit(null); setIsUnitModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100 text-nowrap"
+              >
+                <Plus className="w-4 h-4" /> ADD UNIT
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-slate-50">
@@ -519,6 +615,78 @@ export default function LessonPlanManager({ subjects }: LessonPlanManagerProps) 
                 <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Save</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Related Books Modal */}
+      {isBookModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+               <div>
+                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Related Books</h3>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subject: {selectedSubject?.title}</p>
+               </div>
+               <button onClick={() => { setIsBookModalOpen(false); setEditingBook(null); }} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-900"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+              {/* Form */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">{editingBook ? 'Edit Book' : 'Add New Book link'}</h4>
+                <form onSubmit={handleSaveBook} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Title *</label>
+                      <input name="title" defaultValue={editingBook?.title || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 font-bold" placeholder="e.g. HSC Physics 1st Paper" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Subtitle / Type</label>
+                      <input name="subtitle" defaultValue={editingBook?.subtitle || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="e.g. NCTB BOARD TEXTBOOK" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">URL Link</label>
+                      <input name="url" defaultValue={editingBook?.url || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="https://" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Order Index</label>
+                      <input name="order_index" type="number" defaultValue={editingBook?.order_index || 0} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    {editingBook && <button type="button" onClick={() => setEditingBook(null)} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-lg font-bold text-xs">Cancel Edit</button>}
+                    <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs">{editingBook ? 'Save Changes' : 'Add Book'}</button>
+                  </div>
+                </form>
+              </div>
+
+              {/* List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Current Books Linked ({books.length})</h4>
+                {isBooksLoading ? <div className="text-center text-slate-400 py-4 text-xs font-bold">Loading...</div> : null}
+                {books.length === 0 && !isBooksLoading ? <div className="text-center text-slate-400 py-8 bg-white border border-dashed border-slate-200 rounded-2xl text-sm font-bold">No books linked yet</div> : null}
+                {books.map(book => (
+                  <div key={book.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-200 transition-all shadow-sm">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                       <div className="w-8 h-8 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                         <Book className="w-4 h-4"/>
+                       </div>
+                       <div className="min-w-0">
+                         <p className="font-bold text-sm text-slate-900 truncate">{book.title}</p>
+                         {book.subtitle && <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold truncate">{book.subtitle}</p>}
+                       </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => setEditingBook(book)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-md transition-colors"><Edit className="w-4 h-4"/></button>
+                      <button onClick={() => handleDeleteBook(book.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"><Trash2 className="w-4 h-4"/></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
