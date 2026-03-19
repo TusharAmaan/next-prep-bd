@@ -15,6 +15,9 @@ import {
   FileText,
   Link as LinkIcon,
   HelpCircle,
+  Copy,
+  Globe,
+  Download
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import { toast } from "sonner";
@@ -105,6 +108,21 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
   // Version filter
   const [versionFilter, setVersionFilter] = useState<'en' | 'bn'>('bn');
 
+  // Clone Modal
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [cloneSourceId, setCloneSourceId] = useState('');
+  const [allSubjects, setAllSubjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isCloneModalOpen) {
+      const fetchAll = async () => {
+        const { data } = await supabase.from('subjects').select('id, title, groups(title, segments(title))').order('id');
+        setAllSubjects(data || []);
+      };
+      fetchAll();
+    }
+  }, [isCloneModalOpen]);
+
   const fetchHierarchy = useCallback(async () => {
     if (!selectedSubject) return;
     setIsLoading(true);
@@ -180,6 +198,103 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
     if (!error) {
       toast.success("Unit deleted");
       fetchHierarchy();
+    }
+  };
+
+  const handleDuplicateUnitToOtherVersion = async (unit: any) => {
+    const targetVersion = unit.version === 'bn' ? 'en' : 'bn';
+    if (!confirm(`Duplicate this unit and all its contents to the ${targetVersion.toUpperCase()} version?`)) return;
+    setIsLoading(true);
+    try {
+       // 1. Insert Unit
+       const { data: newUnit, error: ue } = await supabase.from('lesson_plan_units').insert([{
+         subject_id: unit.subject_id,
+         title: unit.title,
+         order_index: unit.order_index,
+         version: targetVersion
+       }]).select().single();
+       if (ue) throw ue;
+
+       // 2. Loop Lessons
+       for (const lesson of unit.lesson_plan_lessons || []) {
+          const { data: newLesson, error: le } = await supabase.from('lesson_plan_lessons').insert([{
+             unit_id: newUnit.id,
+             title: lesson.title,
+             order_index: lesson.order_index,
+             version: targetVersion
+          }]).select().single();
+          if (le) throw le;
+
+          // 3. Loop Contents
+          const contentsToInsert = (lesson.lesson_plan_contents || []).map((c: any) => ({
+             lesson_id: newLesson.id,
+             title: c.title,
+             type: c.type,
+             content_body: c.content_body,
+             order_index: c.order_index,
+             version: targetVersion
+          }));
+
+          if (contentsToInsert.length > 0) {
+             const { error: ce } = await supabase.from('lesson_plan_contents').insert(contentsToInsert);
+             if (ce) throw ce;
+          }
+       }
+       toast.success(`Unit duplicated to ${targetVersion.toUpperCase()} successfully!`);
+    } catch (e) {
+       console.error(e);
+       toast.error("Error duplicating unit");
+    } finally {
+       setIsLoading(false);
+    }
+  };
+
+  const handleCloneStructure = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cloneSourceId) return;
+    setIsLoading(true);
+    setIsCloneModalOpen(false);
+    try {
+      // Fetch source subjects unit and lessons for the current version
+      const { data: sourceUnits } = await supabase.from('lesson_plan_units').select(`
+        *,
+        lesson_plan_lessons (*)
+      `).eq('subject_id', cloneSourceId).eq('version', versionFilter).order('order_index');
+
+      if (!sourceUnits || sourceUnits.length === 0) {
+         toast.error("Source subject has no units to clone in this version.");
+         setIsLoading(false);
+         return;
+      }
+
+      for (const su of sourceUnits) {
+         const { data: newUnit, error: ue } = await supabase.from('lesson_plan_units').insert([{
+            subject_id: selectedSubject.id,
+            title: su.title,
+            order_index: su.order_index,
+            version: versionFilter
+         }]).select().single();
+         if (ue) throw ue;
+
+         const lessonsToInsert = (su.lesson_plan_lessons || []).map((sl: any) => ({
+            unit_id: newUnit.id,
+            title: sl.title,
+            order_index: sl.order_index,
+            version: versionFilter
+         }));
+
+         if (lessonsToInsert.length > 0) {
+            const { error: le } = await supabase.from('lesson_plan_lessons').insert(lessonsToInsert);
+            if (le) throw le;
+         }
+      }
+      toast.success("Structure cloned successfully!");
+      fetchHierarchy();
+    } catch(e) {
+      console.error(e);
+      toast.error("Error cloning structure");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -422,6 +537,12 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                 <Book className="w-4 h-4" /> RELATED BOOKS
               </button>
               <button 
+                onClick={() => { setIsCloneModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all text-nowrap"
+              >
+                <Download className="w-4 h-4" /> CLONE INDEX
+              </button>
+              <button 
                 onClick={() => { setEditingUnit(null); setIsUnitModalOpen(true); }}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100 text-nowrap"
               >
@@ -447,6 +568,12 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover/unit:opacity-100 transition-all">
+                    <button 
+                      onClick={() => handleDuplicateUnitToOtherVersion(unit)}
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all" title={`Duplicate to ${unit.version === 'bn' ? 'EN' : 'BN'}`}
+                    >
+                      <Globe className="w-3.5 h-3.5" /> To {unit.version === 'bn' ? 'EN' : 'BN'}
+                    </button>
                     <button 
                       onClick={() => { setParentUnit(unit); setEditingLesson(null); setIsLessonModalOpen(true); }}
                       className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Add Lesson"
@@ -761,6 +888,39 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
           </div>
         </div>
       )}
+
+      {/* Clone Structure Modal */}
+      {isCloneModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-4">Clone Structure</h3>
+            <p className="text-xs font-medium text-slate-500 mb-6">Import the Units and Lessons index from another subject into <strong>{selectedSubject?.title}</strong> ({versionFilter.toUpperCase()}). Contents inside lessons will not be copied.</p>
+            <form onSubmit={handleCloneStructure} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Source Subject</label>
+                <select 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
+                  value={cloneSourceId}
+                  onChange={(e) => setCloneSourceId(e.target.value)}
+                  required
+                >
+                   <option value="">-- Select Source Subject --</option>
+                   {allSubjects.map(sub => (
+                      <option key={sub.id} value={sub.id}>
+                         {sub.groups?.segments?.title && sub.groups?.title ? `${sub.groups.segments.title} > ${sub.groups.title} > ` : ''}{sub.title}
+                      </option>
+                   ))}
+                </select>
+              </div>
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setIsCloneModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-xs">Cancel</button>
+                <button type="submit" disabled={!cloneSourceId} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100 disabled:opacity-50">Clone Index</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

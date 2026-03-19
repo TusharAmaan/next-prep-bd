@@ -282,7 +282,6 @@ export default function SubjectHierarchyPage() {
                                <BookOpen className="w-5 h-5" />
                             </div>
                             <div>
-                               <p className="text-[10px] sm:text-xs font-black text-indigo-400 uppercase tracking-widest mb-1 shadow-indigo-900 drop-shadow-md">Unit {unit.order_index}</p>
                                <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">{unit.title}</h3>
                             </div>
                          </div>
@@ -293,35 +292,62 @@ export default function SubjectHierarchyPage() {
 
                        {expandedUnits[unit.id] && (
                          <div className="px-6 pb-8 sm:px-8 space-y-4 animate-in fade-in slide-in-from-top-4">
-                            {unit.lesson_plan_lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => (
-                              <div key={lesson.id} className="bg-slate-900/60 border border-slate-700/50 rounded-2xl p-5 sm:p-6 hover:border-indigo-500/40 transition-all relative overflow-hidden shadow-inner">
-                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                                    <div className="flex items-center gap-3">
-                                       <span className="text-[10px] font-black text-slate-400 bg-slate-800 uppercase tracking-widest px-2.5 py-1 rounded-md">Lesson {lesson.order_index}</span>
-                                       <h4 className="text-base sm:text-lg font-bold text-slate-100">{lesson.title}</h4>
-                                    </div>
-                                 </div>
-                                 
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {lesson.lesson_plan_contents?.sort((a: any, b: any) => a.order_index - b.order_index).map((content: any) => (
-                                      <Link 
-                                        key={content.id} 
-                                        href={`/curriculum/${subjectId}/${content.id}`}
-                                        className="flex items-center gap-3 p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:bg-slate-800 hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all group/it shadow-sm"
-                                      >
-                                         <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">
-                                            {content.type === 'passage' ? <FileText className="w-4 h-4 text-emerald-400" /> : (content.type === 'exercise' ? <HelpCircle className="w-4 h-4 text-orange-400" /> : <LinkIcon className="w-4 h-4 text-blue-400" />)}
-                                         </div>
-                                         <span className="text-xs font-bold text-slate-300 group-hover/it:text-white transition-colors truncate">{content.title}</span>
-                                         <ArrowRight className="w-3 h-3 ml-auto opacity-0 group-hover/it:opacity-100 transition-all text-indigo-400" />
-                                      </Link>
-                                    ))}
-                                    {(!lesson.lesson_plan_contents || lesson.lesson_plan_contents.length === 0) && (
-                                       <div className="col-span-full py-4 text-center text-slate-600 text-xs font-bold uppercase tracking-widest">No contents yet</div>
-                                    )}
-                                 </div>
-                              </div>
-                            ))}
+                            {unit.lesson_plan_lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => {
+                              const contents = lesson.lesson_plan_contents?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
+                              
+                              // Compact View for single content
+                              if (contents.length === 1) {
+                                const content = contents[0];
+                                return (
+                                  <Link 
+                                    key={lesson.id} 
+                                    href={`/curriculum/${subjectId}/${content.id}`}
+                                    className="flex items-center justify-between p-5 sm:p-6 bg-slate-900/60 border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all group/single shadow-sm mb-4"
+                                  >
+                                     <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 shadow-inner group-hover/single:bg-indigo-600 group-hover/single:text-white transition-colors">
+                                           {content.type === 'passage' ? <FileText className="w-5 h-5 text-emerald-400 group-hover/single:text-white" /> : (content.type === 'exercise' ? <HelpCircle className="w-5 h-5 text-orange-400 group-hover/single:text-white" /> : <LinkIcon className="w-5 h-5 text-blue-400 group-hover/single:text-white" />)}
+                                        </div>
+                                        <div>
+                                           <h4 className="text-base sm:text-lg font-bold text-slate-100 group-hover/single:text-white transition-colors">{lesson.title}</h4>
+                                        </div>
+                                     </div>
+                                     <ArrowRight className="w-5 h-5 opacity-0 group-hover/single:opacity-100 group-hover/single:translate-x-1 transition-all text-indigo-400" />
+                                  </Link>
+                                );
+                              }
+
+                              // Expanded View
+                              return (
+                                <div key={lesson.id} className="bg-slate-900/60 border border-slate-700/50 rounded-2xl p-5 sm:p-6 hover:border-indigo-500/40 transition-all relative overflow-hidden shadow-inner mb-4">
+                                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                                      <div className="flex items-center gap-3">
+                                         <h4 className="text-base sm:text-lg font-bold text-slate-100">{lesson.title}</h4>
+                                      </div>
+                                   </div>
+                                   
+                                   {contents.length > 0 ? (
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {contents.map((content: any) => (
+                                          <Link 
+                                            key={content.id} 
+                                            href={`/curriculum/${subjectId}/${content.id}`}
+                                            className="flex items-center gap-3 p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:bg-slate-800 hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all group/it shadow-sm"
+                                          >
+                                             <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">
+                                                {content.type === 'passage' ? <FileText className="w-4 h-4 text-emerald-400" /> : (content.type === 'exercise' ? <HelpCircle className="w-4 h-4 text-orange-400" /> : <LinkIcon className="w-4 h-4 text-blue-400" />)}
+                                             </div>
+                                             <span className="text-xs font-bold text-slate-300 group-hover/it:text-white transition-colors truncate">{content.title}</span>
+                                             <ArrowRight className="w-3 h-3 ml-auto opacity-0 group-hover/it:opacity-100 transition-all text-indigo-400" />
+                                          </Link>
+                                        ))}
+                                     </div>
+                                   ) : (
+                                     <div className="col-span-full py-4 text-center text-slate-600 text-xs font-bold uppercase tracking-widest border border-dashed border-slate-700/50 rounded-xl">No contents yet</div>
+                                   )}
+                                </div>
+                              );
+                            })}
                             {(!unit.lesson_plan_lessons || unit.lesson_plan_lessons.length === 0) && (
                                <div className="py-6 text-center text-slate-600 text-xs font-bold uppercase tracking-widest bg-slate-900/50 rounded-2xl border border-slate-700/30">No lessons planned</div>
                             )}
