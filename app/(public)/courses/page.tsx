@@ -10,7 +10,7 @@ export default async function CoursesPage() {
   const { data: courses, error } = await supabase
     .from("courses")
     .select("*")
-    .eq("status", "approved") // <--- CRITICAL FIX: Only show live, approved courses
+    .eq("is_published", true) 
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -74,9 +74,9 @@ export default async function CoursesPage() {
                       
                       {/* IMAGE AREA - Fixed Aspect Ratio (16:9) */}
                       <Link href={`/courses/${course.id}`} className="block relative aspect-video bg-slate-100 overflow-hidden">
-                          {course.thumbnail_url ? (
+                          {course.image_url ? (
                               <img 
-                                  src={course.thumbnail_url} 
+                                  src={course.image_url} 
                                   alt={course.title} 
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                               />

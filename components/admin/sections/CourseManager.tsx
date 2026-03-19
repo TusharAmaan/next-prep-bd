@@ -19,6 +19,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
 import CourseBuilder from "@/components/admin/sections/CourseBuilder";
 
 export default function CourseManager() {
@@ -34,16 +35,23 @@ export default function CourseManager() {
 
     const fetchCourses = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-            .from('courses')
-            .select(`
-                *,
-                course_enrollments (count)
-            `)
-            .order('created_at', { ascending: false });
-        
-        if (!error) setCourses(data || []);
-        setIsLoading(false);
+        try {
+            const { data, error } = await supabase
+                .from('courses')
+                .select(`
+                    *,
+                    course_enrollments(id)
+                `)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            setCourses(data || []);
+        } catch (err: any) {
+            console.error("Error fetching courses:", err);
+            toast.error("Failed to load courses. Check database logs.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleCreateNew = () => {
@@ -61,12 +69,15 @@ export default function CourseManager() {
         const { error } = await supabase.from('courses').delete().eq('id', id);
         if (!error) {
             setCourses(prev => prev.filter(c => c.id !== id));
+            toast.success("Course deleted successfully.");
+        } else {
+            toast.error("Error deleting course.");
         }
     };
 
     const filteredCourses = courses.filter(c => 
-        c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.level?.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (c.level?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     );
 
     if (view === 'builder') {
@@ -153,7 +164,7 @@ export default function CourseManager() {
 
                                 <div className="flex flex-wrap gap-4 mb-6">
                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                                        <Users size={14} /> {course.course_enrollments?.[0]?.count || 0} Students
+                                        <Users size={14} /> {course.course_enrollments?.length || 0} Students
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
                                         <Clock size={14} /> {course.duration || 'Self-paced'}

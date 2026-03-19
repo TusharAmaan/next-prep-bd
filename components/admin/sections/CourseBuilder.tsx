@@ -16,7 +16,8 @@ import {
     Image as ImageIcon,
     Rocket,
     GraduationCap,
-    Globe
+    Globe,
+    Eye
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
@@ -45,6 +46,113 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
 
     // Curriculum State
     const [lessons, setLessons] = useState<any[]>([]);
+    const [isPreviewing, setIsPreviewing] = useState<string | null>(null);
+
+    const CertificatePreview = ({ template }: { template: string }) => (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[3rem] w-full max-w-4xl aspect-[1.414/1] relative p-12 overflow-hidden shadow-2xl">
+                {/* Decorative border */}
+                <div className="absolute inset-8 border-[16px] border-double border-indigo-50 leading-relaxed rounded-2xl flex flex-col items-center justify-center text-center">
+                    <Trophy size={80} className="text-amber-400 mb-8" />
+                    <h1 className="text-5xl font-black text-slate-800 uppercase tracking-tighter mb-4 italic">Certificate of Completion</h1>
+                    <div className="w-24 h-1 bg-indigo-600 mb-8"></div>
+                    <p className="text-slate-400 uppercase tracking-[0.3em] text-sm font-black mb-12">This is to certify that</p>
+                    <div className="text-4xl font-serif text-slate-900 mb-12 border-b-2 border-slate-100 px-12 pb-2 min-w-[300px]">Student Name</div>
+                    <p className="text-slate-500 max-w-lg font-medium leading-relaxed">
+                        has successfully completed the comprehensive professional course titled
+                        <br/>
+                        <span className="text-indigo-600 font-black uppercase text-xl mt-4 block">{courseData.title || "Selected Course Name"}</span>
+                    </p>
+                    <div className="absolute bottom-16 w-full px-24 flex justify-between items-end">
+                        <div className="text-left border-t border-slate-200 pt-4 w-40">
+                            <p className="text-[10px] font-black uppercase text-slate-400">Date Issued</p>
+                            <p className="font-bold text-slate-800">Sept 19, 2026</p>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-xl">
+                             <GraduationCap className="h-10 opacity-30 text-indigo-200" size={40} />
+                        </div>
+                        <div className="text-right border-t border-slate-200 pt-4 w-40">
+                            <p className="text-[10px] font-black uppercase text-slate-400">Verified By</p>
+                            <p className="font-bold text-slate-800">NextPrep Director</p>
+                        </div>
+                    </div>
+                </div>
+                <button onClick={() => setIsPreviewing(null)} className="absolute top-8 right-8 p-4 bg-slate-900 text-white rounded-full hover:bg-indigo-600 transition-all shadow-xl"><X size={24} /></button>
+            </div>
+        </div>
+    );
+
+    useEffect(() => {
+        if (course?.id) {
+            fetchLessons();
+        }
+    }, [course]);
+
+    const fetchLessons = async () => {
+        const { data, error } = await supabase
+            .from('course_lessons')
+            .select('*, course_contents(*)')
+            .eq('course_id', course.id)
+            .order('order_index', { ascending: true });
+        
+        if (!error) setLessons(data || []);
+    };
+
+    const handleAddLesson = async () => {
+        if (!course?.id) {
+            toast.error("Please save general info first.");
+            return;
+        }
+        const { data, error } = await supabase.from('course_lessons').insert({
+            course_id: course.id,
+            title: "New Lesson",
+            order_index: lessons.length
+        }).select().single();
+
+        if (!error) {
+            setLessons([...lessons, { ...data, course_contents: [] }]);
+            toast.success("Lesson added.");
+        }
+    };
+
+    const handleUpdateLesson = async (id: string, updates: any) => {
+        const { error } = await supabase.from('course_lessons').update(updates).eq('id', id);
+        if (!error) {
+            setLessons(lessons.map(l => l.id === id ? { ...l, ...updates } : l));
+        }
+    };
+
+    const handleDeleteLesson = async (id: string) => {
+        const { error } = await supabase.from('course_lessons').delete().eq('id', id);
+        if (!error) {
+            setLessons(lessons.filter(l => l.id !== id));
+            toast.success("Lesson removed.");
+        }
+    };
+
+    const handleAddContent = async (lessonId: string) => {
+        const { data, error } = await supabase.from('course_contents').insert({
+            lesson_id: lessonId,
+            title: "New Content Item",
+            content_type: 'video',
+            order_index: 0
+        }).select().single();
+
+        if (!error) {
+            setLessons(lessons.map(l => l.id === lessonId ? { ...l, course_contents: [...(l.course_contents || []), data] } : l));
+            toast.success("Content added.");
+        }
+    };
+
+    const handleDeleteContent = async (id: string) => {
+        const { error } = await supabase.from('course_contents').delete().eq('id', id);
+        if (!error) {
+            setLessons(lessons.map(l => ({
+                ...l,
+                course_contents: l.course_contents?.filter((c: any) => c.id !== id)
+            })));
+        }
+    };
 
     useEffect(() => {
         if (course?.id) {
@@ -231,7 +339,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                     </div>
                 )}
 
-                {/* STEP 2: CURRICULUM BUILDR (Skeleton) */}
+                {/* STEP 2: CURRICULUM BUILDER */}
                 {activeStep === 2 && (
                     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Summary Bar */}
@@ -240,17 +348,23 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                 <h3 className="text-xl font-black uppercase tracking-tight italic">Content Builder</h3>
                                 <p className="text-indigo-100 text-xs font-medium">Add units, lessons, and content to structure your course.</p>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 text-right">
                                 <div className="bg-white/20 px-4 py-2 rounded-xl backdrop-blur-md">
                                     <span className="text-[10px] font-black uppercase tracking-widest block opacity-70">Total Lessons</span>
                                     <span className="text-lg font-black">{lessons.length}</span>
                                 </div>
+                                <button 
+                                    onClick={handleAddLesson}
+                                    className="bg-white text-indigo-600 px-6 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 transition-all flex items-center gap-2"
+                                >
+                                    <Plus size={14} /> New Lesson
+                                </button>
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 min-h-[400px]">
+                        <div className="space-y-4 min-h-[400px]">
                             {lessons.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-6">
+                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-20 text-center flex flex-col items-center justify-center space-y-6">
                                     <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center text-slate-300">
                                         <Plus size={40} />
                                     </div>
@@ -258,18 +372,64 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Structured Learning</h4>
                                         <p className="text-slate-500 text-sm max-w-xs mx-auto mt-1">Start building your course structure by adding the first lesson.</p>
                                     </div>
-                                    <button className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-600 transition-all">Add First Lesson</button>
+                                    <button 
+                                        onClick={handleAddLesson}
+                                        className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-600 transition-all"
+                                    >
+                                        Add First Lesson
+                                    </button>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    {/* Map actual lessons here */}
-                                </div>
+                                lessons.map((lesson, lIndex) => (
+                                    <div key={lesson.id} className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm group/lesson">
+                                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-black text-xs">
+                                                    {lIndex + 1}
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    defaultValue={lesson.title}
+                                                    onBlur={(e) => handleUpdateLesson(lesson.id, { title: e.target.value })}
+                                                    className="bg-transparent border-none font-black uppercase tracking-tight text-slate-800 dark:text-white outline-none focus:ring-0 w-64"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleDeleteLesson(lesson.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                                                <button className="p-2 text-slate-400 cursor-grab active:cursor-grabbing"><GripVertical size={18} /></button>
+                                            </div>
+                                        </div>
+                                        <div className="p-6 space-y-3">
+                                            {lesson.course_contents?.map((content: any, cIndex: number) => (
+                                                <div key={content.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl group/content border border-transparent hover:border-indigo-100 transition-all">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-indigo-500">
+                                                            {content.content_type === 'video' && <Rocket size={16} />}
+                                                            {content.content_type === 'article' && <BookOpen size={16} />}
+                                                            {content.content_type === 'quiz' && <CheckCircle2 size={16} />}
+                                                        </div>
+                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{content.title}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover/content:opacity-100 transition-opacity">
+                                                        <button onClick={() => handleDeleteContent(content.id)} className="p-1.5 text-slate-400 hover:text-red-500"><X size={14} /></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button 
+                                                onClick={() => handleAddContent(lesson.id)}
+                                                className="w-full py-3 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={14} /> Add Content Item
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
                             )}
                         </div>
 
-                        <div className="flex justify-between gap-4">
+                        <div className="flex justify-between gap-4 pt-6">
                             <button onClick={() => setActiveStep(1)} className="px-8 py-5 bg-white dark:bg-slate-900 text-slate-500 border border-slate-100 dark:border-slate-800 rounded-2xl font-black uppercase tracking-widest text-[10px]">Previous</button>
-                            <button onClick={() => setActiveStep(3)} className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3">Continue to Pricing <ChevronRight size={18} /></button>
+                            <button onClick={() => setActiveStep(3)} className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl">Continue to Pricing <ChevronRight size={18} /></button>
                         </div>
                     </div>
                 )}
@@ -319,7 +479,6 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                     </div>
                 )}
 
-                {/* STEP 4: CERTIFICATES */}
                 {activeStep === 4 && (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="bg-indigo-600 rounded-[2.5rem] p-10 text-white flex flex-col items-center text-center shadow-2xl">
@@ -335,9 +494,15 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     onClick={() => setCourseData({ ...courseData, certificate_template: `template_${id}` })}
                                     className={`aspect-[1.4/1] rounded-[2rem] border-4 cursor-pointer p-1 transition-all flex items-center justify-center overflow-hidden relative group ${courseData.certificate_template === `template_${id}` ? 'border-indigo-600 ring-8 ring-indigo-500/10 scale-105' : 'border-slate-100 dark:border-slate-800 grayscale hover:grayscale-0'}`}
                                 >
-                                    <div className="w-full h-full bg-slate-50 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center font-black text-slate-300 uppercase tracking-tighter text-center">
-                                        <Trophy size={32} className="mb-2 opacity-20" />
+                                    <div className="w-full h-full bg-slate-50 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center font-black text-slate-300 uppercase tracking-tighter text-center gap-4">
+                                        <Trophy size={32} className="opacity-20" />
                                         TEMPLATE {id}
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setIsPreviewing(`template_${id}`); }}
+                                            className="px-4 py-2 bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black flex items-center gap-2 hover:bg-slate-100 transition-all"
+                                        >
+                                            <Eye size={12} /> Preview
+                                        </button>
                                     </div>
                                     {courseData.certificate_template === `template_${id}` && (
                                         <div className="absolute inset-0 bg-indigo-600/10 flex items-center justify-center backdrop-blur-[2px]">
@@ -356,6 +521,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                         </div>
                     </div>
                 )}
+                {isPreviewing && <CertificatePreview template={isPreviewing} />}
             </div>
         </div>
     );
