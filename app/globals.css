@@ -15,6 +15,10 @@ body {
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
+.font-bangla {
+  font-family: var(--font-bangla), serif;
+}
+
 
 /* =========================================
    1. WEB STYLES (For the Browser)

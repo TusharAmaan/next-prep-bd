@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 mb-1 last:mb-0">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 capitalize">{entry.name}:</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 capitalize">{entry.name}:</span>
             <span className="text-sm font-black text-slate-900 dark:text-white">{entry.value}</span>
           </div>
         ))}
@@ -89,9 +89,9 @@ export default function AnalyticsChart() {
       {/* 1. HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-            <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 Platform Insights
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wide">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wide">
                     Live
                 </span>
             </h3>
@@ -105,7 +105,7 @@ export default function AnalyticsChart() {
                     <button
                         key={range}
                         onClick={() => setTimeRange(range)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${timeRange === range ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:text-slate-500'}`}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${timeRange === range ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     >
                         {range.toUpperCase()}
                     </button>
@@ -131,7 +131,7 @@ export default function AnalyticsChart() {
                 <button 
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)} 
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-800/50'}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                 >
                     <tab.icon className="w-4 h-4" /> {tab.label}
                 </button>
@@ -152,7 +152,7 @@ export default function AnalyticsChart() {
       </div>
 
       {/* 3. CHART AREA */}
-      <div className="flex-1 w-full min-h-[300px] relative bg-slate-50 dark:bg-slate-800/50/30 rounded-xl border border-slate-100 dark:border-slate-800/50 p-2">
+      <div className="flex-1 w-full min-h-[300px] relative bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-100 dark:border-slate-800/50 p-2">
         {loading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />

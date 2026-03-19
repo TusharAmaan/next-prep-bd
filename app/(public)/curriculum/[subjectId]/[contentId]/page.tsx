@@ -24,7 +24,9 @@ import {
   Link as LinkIcon,
   Facebook,
   MessageCircle,
-  HelpCircle
+  HelpCircle,
+  CheckCircle2,
+  GraduationCap
 } from "lucide-react";
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -42,6 +44,7 @@ export default function ContentDetailPage() {
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [reachedBoundary, setReachedBoundary] = useState(false); // New state for topic boundaries
   
   // UI States
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -124,10 +127,10 @@ export default function ContentDetailPage() {
   // Infinite Scroll Logic
   const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
     const target = entries[0];
-    if (target.isIntersecting && !isLoadingMore && hasMore && loadedContents.length > 0 && flatContentIndex.length > 0) {
+    if (target.isIntersecting && !isLoadingMore && hasMore && loadedContents.length > 0 && flatContentIndex.length > 0 && !reachedBoundary) {
        loadNextContent();
     }
-  }, [isLoadingMore, hasMore, loadedContents, flatContentIndex]);
+  }, [isLoadingMore, hasMore, loadedContents, flatContentIndex, reachedBoundary]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleObserver, { root: null, rootMargin: '20px', threshold: 0.1 });
@@ -173,7 +176,8 @@ export default function ContentDetailPage() {
 
   const loadNextContent = async () => {
      if (loadedContents.length === 0 || flatContentIndex.length === 0) return;
-     const lastLoadedId = loadedContents[loadedContents.length - 1].id;
+     const lastLoaded = loadedContents[loadedContents.length - 1];
+     const lastLoadedId = lastLoaded.id;
      
      const currentIndex = flatContentIndex.findIndex(c => c.id.toString() === lastLoadedId.toString());
      if (currentIndex === -1 || currentIndex >= flatContentIndex.length - 1) {
@@ -182,7 +186,18 @@ export default function ContentDetailPage() {
      }
 
      const nextContentMeta = flatContentIndex[currentIndex + 1];
+
+     // --- TOPIC BOUNDARY CHECK ---
+     // If the next content belongs to a different lesson or unit, we stop and show a trigger
+     if (nextContentMeta.lesson_id !== lastLoaded.lesson_id || nextContentMeta.lesson?.unit_id !== lastLoaded.lesson_plan_lessons?.unit_id) {
+        if (!reachedBoundary) {
+            setReachedBoundary(true);
+            return; // Stop here, wait for manual click
+        }
+     }
+
      setIsLoadingMore(true);
+     setReachedBoundary(false);
 
      try {
         const { data: nextContent } = await supabase
@@ -397,14 +412,34 @@ export default function ContentDetailPage() {
              })}
 
              {/* Intersection Observer Target */}
-             {hasMore && user && (
+             {hasMore && user && !reachedBoundary && (
                <div ref={loaderRef} className={`py-12 flex justify-center items-center gap-3 ${textMuted} font-bold text-xs uppercase tracking-widest`}>
-                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Scroll for next lesson
+                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Scroll for more lessons
                </div>
              )}
+
+             {/* Topic Boundary Indicator */}
+             {reachedBoundary && (
+                <div className={`p-10 rounded-[3rem] border-2 border-dashed ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-indigo-50/50 border-indigo-100'} text-center animate-in zoom-in-95`}>
+                   <div className="w-16 h-16 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/20">
+                      <CheckCircle2 className="w-8 h-8" />
+                   </div>
+                   <h3 className={`text-2xl font-black uppercase tracking-tighter mb-2 ${textMain}`}>Topic Completed!</h3>
+                   <p className={`text-sm font-medium mb-8 max-w-xs mx-auto ${textMuted}`}>You've reached the end of this sub-topic. Ready to move to the next part of the curriculum?</p>
+                   
+                   <button 
+                    onClick={loadNextContent}
+                    className="group px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 mx-auto hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
+                   >
+                     Proceed to Next Topic <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                   </button>
+                </div>
+             )}
+
              {!hasMore && (
                <div className={`py-12 text-center font-bold text-xs uppercase tracking-widest ${textMuted}`}>
-                  End of Lesson Plan
+                  <GraduationCap className="w-8 h-8 mx-auto mb-4 opacity-20" />
+                  Great job! You've completed the lesson plan.
                </div>
              )}
           </article>

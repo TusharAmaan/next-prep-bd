@@ -75,10 +75,10 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden">
       
       {/* HEADER */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50/50">
-        <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+        <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
             System Updates
-            <span className="text-xs font-normal text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 border px-2 py-0.5 rounded-full">v{history[0]?.version_number || '0.0'}</span>
+            <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">v{history[0]?.version_number || '0.0'}</span>
         </h3>
         {mode === 'view' ? (
             <button 
@@ -88,25 +88,25 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
                 <Plus size={14}/> New Version
             </button>
         ) : (
-            <button onClick={() => setMode('view')} className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:text-slate-100 px-3 py-1.5">Cancel</button>
+            <button onClick={() => setMode('view')} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
         )}
       </div>
 
       <div className="flex flex-1 h-[320px]"> {/* Fixed height for consistency */}
         
         {/* LEFT: LIST (History) */}
-        <div className="w-1/3 border-r border-slate-100 dark:border-slate-800 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-800/50/30">
+        <div className="w-1/3 border-r border-slate-100 dark:border-slate-800 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
             {history.map((item) => (
                 <button 
                     key={item.id}
                     onClick={() => { setMode('view'); setSelectedUpdate(item); }}
-                    className={`w-full text-left p-3 border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:bg-slate-800/50 transition-colors relative group ${selectedUpdate?.id === item.id && mode === 'view' ? 'bg-indigo-50/50 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
+                    className={`w-full text-left p-3 border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-white dark:hover:bg-slate-800 transition-colors relative group ${selectedUpdate?.id === item.id && mode === 'view' ? 'bg-white dark:bg-slate-800 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
                 >
-                    <div className="flex justify-between items-center mb-1">
-                        <span className={`font-bold ${selectedUpdate?.id === item.id ? 'text-indigo-700' : 'text-slate-700 dark:text-slate-300'}`}>{item.version_number}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</span>
+                    <div className="flex justify-between items-center mb-1 text-[11px] font-black uppercase tracking-tight text-slate-400 dark:text-slate-600">
+                        <span className={`${selectedUpdate?.id === item.id ? 'text-indigo-600 dark:text-indigo-400' : ''}`}>{item.version_number}</span>
+                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 line-clamp-1 h-4 overflow-hidden" dangerouslySetInnerHTML={{__html: item.content?.replace(/<[^>]+>/g, '') || 'No details'}}></div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 h-4 overflow-hidden" dangerouslySetInnerHTML={{__html: item.content?.replace(/<[^>]+>/g, '') || 'No details'}}></div>
                     
                     {/* Delete Action (Hover only) */}
                     <div 

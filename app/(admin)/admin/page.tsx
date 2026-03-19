@@ -25,6 +25,7 @@ import PendingManager from "@/components/admin/sections/PendingManager";
 import QuestionBankManager from "@/components/admin/sections/QuestionBankManager"; 
 import LectureSheetManager from "@/components/admin/sections/LectureSheetManager";
 import LessonPlanManager from "@/components/admin/sections/LessonPlanManager";
+import CourseManager from "@/components/admin/sections/CourseManager";
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -199,33 +200,33 @@ export default function AdminDashboard() {
     if (isLoading && !currentUser) return <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
+        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
             
             {/* SIDEBAR */}
-            <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-[#0F172A] border-slate-800'}`}>
+            <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="px-6 py-4 mb-4 flex justify-between items-center">
                     <div>
-                        <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
-                        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">NextPrep Control</p>
+                        <h2 className={`font-black text-xl tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Admin<span className="text-indigo-600">Panel</span></h2>
+                        <p className={`text-[10px] uppercase tracking-widest font-bold mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control</p>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
+                    <button onClick={() => setIsSidebarOpen(false)} className={`lg:hidden hover:text-red-500 transition-colors ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><X className="w-5 h-5"/></button>
                 </div>
                 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <button onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                    <button onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600')}`}>
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
 
                     {/* QUESTION BANK TAB */}
-                    <button onClick={() => { setActiveTab('question_bank'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'question_bank' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:bg-slate-800 hover:text-white'}`}>
+                    <button onClick={() => { setActiveTab('question_bank'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'question_bank' ? 'bg-purple-600 text-white shadow-lg shadow-purple-200 dark:shadow-none' : (darkMode ? 'text-purple-400 hover:bg-slate-800 hover:text-white' : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700')}`}>
                         <Database className="w-5 h-5"/> Question Bank
                     </button>
 
-                    <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-slate-800 hover:text-white'}`}>
+                    <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white shadow-lg shadow-amber-200 dark:shadow-none' : (darkMode ? 'text-amber-500 hover:bg-slate-800 hover:text-white' : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700')}`}>
                         <AlertTriangle className="w-5 h-5"/> Pending Reviews
                     </button>
 
-                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Content</div>
+                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase px-4 py-4 mt-4 tracking-widest">Content</div>
                     {[
                       { id: 'materials', label: 'Study Materials', icon: FileStack },
                       { id: 'lecture_sheets', label: 'Lecture Sheets', icon: FileText },
@@ -235,19 +236,19 @@ export default function AdminDashboard() {
                       { id: 'courses', label: 'Courses', icon: GraduationCap },
                       { id: 'news', label: 'Newsroom', icon: Newspaper }
                     ].map(item => (
-                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
                             <item.icon className="w-5 h-5"/> {item.label}
                         </button>
                     ))}
 
-                    <div className="text-xs font-bold text-slate-600 uppercase px-3 py-2 mt-4">Configuration</div>
+                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase px-4 py-4 mt-4 tracking-widest">Configuration</div>
                     {[
                       { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
                       { id: 'categories', label: 'Categories', icon: Settings },
                       { id: 'users', label: 'User Management', icon: Users },
                       { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare }
                     ].map(item => (
-                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
                             <item.icon className="w-5 h-5"/> {item.label}
                         </button>
                     ))}
@@ -255,7 +256,7 @@ export default function AdminDashboard() {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className={`flex-1 lg:ml-64 min-h-screen flex flex-col transition-colors duration-300 ${darkMode ? 'bg-slate-950' : 'bg-[#F8FAFC]'}`}>
+            <main className={`flex-1 lg:ml-64 min-h-screen flex flex-col transition-colors duration-300 ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
                 
                 {/* 1. ADMIN HEADER */}
                 <AdminHeader 
@@ -306,7 +307,9 @@ export default function AdminDashboard() {
                     { activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} /> }
                     { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} /> }
 
-                    {['materials', 'news', 'ebooks', 'segment_updates', 'courses'].includes(activeTab) && (
+                    { activeTab === 'courses' && <CourseManager /> }
+
+                    {['materials', 'news', 'ebooks', 'segment_updates'].includes(activeTab) && (
                         <ContentManager 
                             key={activeTab} 
                             activeTab={activeTab}

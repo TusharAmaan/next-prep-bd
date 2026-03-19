@@ -60,16 +60,16 @@ export default function AdminHeader({
 
   return (
     <>
-    <header className={`sticky top-0 z-30 backdrop-blur-md border-b px-6 py-3 flex items-center justify-between transition-all ${darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-700'}`}>
+    <header className={`sticky top-0 z-30 backdrop-blur-md border-b px-6 py-3 flex items-center justify-between transition-all ${darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
       
       {/* LEFT: Sidebar Toggle & Title */}
       <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className={`lg:hidden p-2 rounded-lg transition-colors ${darkMode ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-800' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:bg-slate-800'}`}>
+        <button onClick={toggleSidebar} className={`lg:hidden p-2 rounded-lg transition-colors ${darkMode ? 'text-slate-400 hover:bg-slate-900' : 'text-slate-500 hover:bg-slate-100'}`}>
             <Menu className="w-5 h-5"/>
         </button>
         <div>
-            <h2 className={`text-lg font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>{title || "Dashboard"}</h2>
-            <p className={`text-xs font-medium hidden sm:block ${darkMode ? 'text-slate-500 dark:text-slate-400 dark:text-slate-500' : 'text-slate-400 dark:text-slate-500'}`}>Manage your platform content</p>
+            <h2 className={`text-lg font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>{title || "Dashboard"}</h2>
+            <p className={`text-[10px] font-bold uppercase tracking-widest hidden sm:block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control Center</p>
         </div>
       </div>
 

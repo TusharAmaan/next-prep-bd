@@ -35,7 +35,7 @@ const getActivityStyle = (type: string) => {
     case 'news':
       return { icon: <Newspaper className="w-4 h-4" />, bg: 'bg-sky-100', text: 'text-sky-600' };
     default:
-      return { icon: <File className="w-4 h-4" />, bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400 dark:text-slate-500' };
+      return { icon: <File className="w-4 h-4" />, bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400' };
   }
 };
 
@@ -46,12 +46,12 @@ interface ActivityFeedProps {
 
 export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 h-full flex flex-col transition-colors">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-slate-800 dark:text-slate-100">Recent Activity</h3>
+        <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
         <button 
             onClick={onViewAll} 
-            className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+            className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-2 py-1 rounded transition-colors"
         >
             View All
         </button>
@@ -69,11 +69,11 @@ export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProp
                 {style.icon}
               </div>
               <div className="pt-1">
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 line-clamp-1">
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-100 line-clamp-1">
                   {item.title || "Untitled Item"} 
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
-                   <span className="font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wide text-[10px]">{item.action}</span> 
+                   <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide text-[10px]">{item.action}</span> 
                    <span>•</span>
                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeAgo(item.created_at)}</span>
                 </p>
