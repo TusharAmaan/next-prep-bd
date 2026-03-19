@@ -432,7 +432,7 @@ export default function ContentDetailPage() {
       {/* MOBILE FLOATING TOC BUBBLE */}
       <button 
          onClick={() => setIsTocOpenMobile(true)}
-         className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white dark:border-slate-800 z-50 hover:scale-105 transition-transform"
+         className="lg:hidden fixed bottom-6 left-6 w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white dark:border-slate-800 z-50 hover:scale-105 transition-transform"
       >
          <BookOpen className="w-6 h-6" />
       </button>

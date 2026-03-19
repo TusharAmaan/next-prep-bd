@@ -7,7 +7,7 @@ import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle, Database, GraduationCap, Newspaper
+  AlertTriangle, Database, GraduationCap, Newspaper, Moon, Sun
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -39,6 +39,21 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [darkMode, setDarkMode] = useState(false);
+
+    // Persist dark mode preference
+    useEffect(() => {
+        const saved = localStorage.getItem('admin-dark-mode');
+        if (saved === 'true') setDarkMode(true);
+    }, []);
+
+    const toggleDarkMode = () => {
+        setDarkMode(prev => {
+            const next = !prev;
+            localStorage.setItem('admin-dark-mode', String(next));
+            return next;
+        });
+    };
 
     // --- DASHBOARD DATA ---
     const [stats, setStats] = useState({
@@ -181,13 +196,13 @@ export default function AdminDashboard() {
         init();
     }, [router, fetchDashboardData, fetchDropdowns]);
 
-    if (isLoading && !currentUser) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+    if (isLoading && !currentUser) return <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
+        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
             
             {/* SIDEBAR */}
-            <aside className={`w-64 bg-[#0F172A] border-r border-slate-800 fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-[#0F172A] border-slate-800'}`}>
                 <div className="px-6 py-4 mb-4 flex justify-between items-center">
                     <div>
                         <h2 className="text-white font-black text-xl tracking-tight">Admin<span className="text-indigo-500">Panel</span></h2>
@@ -240,7 +255,7 @@ export default function AdminDashboard() {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 lg:ml-64 bg-[#F8FAFC] min-h-screen flex flex-col">
+            <main className={`flex-1 lg:ml-64 min-h-screen flex flex-col transition-colors duration-300 ${darkMode ? 'bg-slate-950' : 'bg-[#F8FAFC]'}`}>
                 
                 {/* 1. ADMIN HEADER */}
                 <AdminHeader 
@@ -250,6 +265,8 @@ export default function AdminDashboard() {
                     notifications={notifications}        
                     onMarkRead={markNotificationRead}
                     onDelete={deleteNotification}
+                    darkMode={darkMode}
+                    toggleDarkMode={toggleDarkMode}
                 />
 
                 {/* 2. PAGE CONTENT */}
@@ -303,27 +320,26 @@ export default function AdminDashboard() {
                 </div>
             </main>
 
-            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className="text-slate-600 mb-6">{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold">Okay</button></div></div>}
+            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className={`rounded-2xl p-8 max-w-sm w-full text-center ${darkMode ? 'bg-slate-800' : 'bg-white'}`}><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className={`mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold">Okay</button></div></div>}
             
             {/* FULL ACTIVITY MODAL */}
             {showActivityModal && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="font-bold text-lg text-slate-800">All Recent Activities</h3>
+                    <div className={`rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+                        <div className={`p-6 border-b flex justify-between items-center ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                            <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-slate-800'}`}>All Recent Activities</h3>
                             <button onClick={() => setShowActivityModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-red-500"/></button>
                         </div>
                         <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
-                            {/* Uses the same combined activity list */}
                             {activities.map((item, i) => (
-                                <div key={i} className="flex gap-4 items-start border-b border-slate-50 pb-4 last:border-0 last:pb-0">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-slate-100 text-slate-600`}>
+                                <div key={i} className={`flex gap-4 items-start border-b pb-4 last:border-0 last:pb-0 ${darkMode ? 'border-slate-700' : 'border-slate-50'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                                         <Clock className="w-4 h-4"/>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-800">{item.title}</p>
-                                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                            <span className="uppercase font-bold text-[10px] bg-slate-100 px-1 rounded">{item.type}</span> 
+                                        <p className={`text-sm font-bold ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>{item.title}</p>
+                                        <p className={`text-xs mt-1 flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            <span className={`uppercase font-bold text-[10px] px-1 rounded ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>{item.type}</span> 
                                             {item.action} • {new Date(item.created_at).toLocaleDateString()}
                                         </p>
                                     </div>
