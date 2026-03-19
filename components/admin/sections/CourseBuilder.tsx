@@ -19,7 +19,7 @@ import {
     Globe,
     Eye
 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
 interface CourseBuilderProps {
@@ -28,6 +28,7 @@ interface CourseBuilderProps {
 }
 
 export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
+    const supabase = createClient();
     const [activeStep, setActiveStep] = useState(1); // 1: Info, 2: Curriculum, 3: Pricing, 4: Certificates
     const [saving, setSaving] = useState(false);
 
@@ -104,15 +105,20 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
             toast.error("Please save general info first.");
             return;
         }
-        const { data, error } = await supabase.from('course_lessons').insert({
-            course_id: courseData.id,
-            title: "New Lesson",
-            order_index: lessons.length
-        }).select().single();
+        try {
+            const { data, error } = await supabase.from('course_lessons').insert({
+                course_id: Number(courseData.id),
+                title: "New Lesson",
+                order_index: lessons.length
+            }).select().single();
 
-        if (!error) {
+            if (error) throw error;
+
             setLessons([...lessons, { ...data, course_contents: [] }]);
             toast.success("Lesson added.");
+        } catch (error: any) {
+            console.error("Insert error:", error);
+            toast.error(`Error adding lesson: ${error.message}`);
         }
     };
 
