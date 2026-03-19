@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dodopayments": "^2.14.3",
+    "fabric": "^7.2.0",
     "framer-motion": "^12.24.7",
     "geist": "^1.5.1",
     "katex": "^0.16.27",

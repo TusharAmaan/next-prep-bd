@@ -83,28 +83,29 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
     );
 
     useEffect(() => {
-        if (course?.id) {
+        if (courseData?.id) {
             fetchLessons();
         }
-    }, [course]);
+    }, [courseData.id]);
 
     const fetchLessons = async () => {
+        if (!courseData?.id) return;
         const { data, error } = await supabase
             .from('course_lessons')
             .select('*, course_contents(*)')
-            .eq('course_id', course.id)
+            .eq('course_id', courseData.id)
             .order('order_index', { ascending: true });
         
         if (!error) setLessons(data || []);
     };
 
     const handleAddLesson = async () => {
-        if (!course?.id) {
+        if (!courseData?.id) {
             toast.error("Please save general info first.");
             return;
         }
         const { data, error } = await supabase.from('course_lessons').insert({
-            course_id: course.id,
+            course_id: courseData.id,
             title: "New Lesson",
             order_index: lessons.length
         }).select().single();
@@ -167,7 +168,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                 *,
                 course_contents (*)
             `)
-            .eq('course_id', course.id)
+            .eq('course_id', courseData.id)
             .order('order_index');
 
         if (!error) setLessons(data || []);

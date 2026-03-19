@@ -163,13 +163,13 @@ export default function CourseManager() {
                                 </h3>
 
                                 <div className="flex flex-wrap gap-4 mb-6">
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                         <Users size={14} /> {course.course_enrollments?.length || 0} Students
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                         <Clock size={14} /> {course.duration || 'Self-paced'}
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                         <BookOpen size={14} /> {course.total_lessons || 0} Lessons
                                     </div>
                                 </div>

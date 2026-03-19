@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Save, CheckCircle, 
   ChevronLeft, Edit3, Search, Filter, X, 
   BookOpen, HelpCircle, AlertCircle, 
-  Tag, Layers, ArrowRight, Loader2, MoreHorizontal
+  Tag, Layers, ArrowRight, Loader2, MoreHorizontal, FileUp, UploadCloud
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 
@@ -272,6 +272,117 @@ export default function QuestionBankManager() {
       });
   };
 
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setLoading(true);
+      const reader = new FileReader();
+      reader.onload = async (f) => {
+          const content = f.target?.result as string;
+          const lines = content.split('\n').filter(l => l.trim());
+          
+          const csvSplit = (text: string) => {
+              const result = [];
+              let current = '';
+              let inQuotes = false;
+              for (let i = 0; i < text.length; i++) {
+                  const char = text[i];
+                  if (char === '"') inQuotes = !inQuotes;
+                  else if (char === ',' && !inQuotes) {
+                      result.push(current.trim().replace(/^"|"$/g, ''));
+                      current = '';
+                  } else current += char;
+              }
+              result.push(current.trim().replace(/^"|"$/g, ''));
+              return result;
+          };
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (let i = 1; i < lines.length; i++) {
+              try {
+                  const row = csvSplit(lines[i]);
+                  if (row.length < 6) continue;
+
+                  const [
+                      type, segment_id, group_id, subject_id, topic_tag, 
+                      question_text, marks, explanation, 
+                      optA, optB, optC, optD, correct, sub_qs_raw
+                  ] = row;
+
+                  const payload = {
+                      question_type: type as QuestionType,
+                      segment_id: segment_id ? Number(segment_id) : null,
+                      group_id: group_id ? Number(group_id) : null,
+                      subject_id: subject_id ? Number(subject_id) : null,
+                      topic_tag: topic_tag,
+                      question_text: question_text,
+                      marks: Number(marks) || 0,
+                      explanation: explanation
+                  };
+
+                  const { data: q, error } = await supabase.from('question_bank').insert(payload).select().single();
+                  if (error) throw error;
+
+                  if (type === 'mcq' && q) {
+                      const opts = [
+                          { text: optA, correct: correct === 'A' },
+                          { text: optB, correct: correct === 'B' },
+                          { text: optC, correct: correct === 'C' },
+                          { text: optD, correct: correct === 'D' }
+                      ].filter(o => o.text).map((o, idx) => ({
+                          question_id: q.id,
+                          option_text: o.text,
+                          is_correct: o.correct,
+                          order_index: idx
+                      }));
+                      if (opts.length) await supabase.from('question_options').insert(opts);
+                  }
+
+                  if (type === 'passage' && q && sub_qs_raw) {
+                      const subQs = sub_qs_raw.split(';;;');
+                      for (const subStr of subQs) {
+                          const [sType, sText, sMarks, sExp, sA, sB, sC, sD, sCorrect] = subStr.split('||');
+                          const { data: sq } = await supabase.from('question_bank').insert({
+                              parent_id: q.id,
+                              question_type: sType as QuestionType,
+                              question_text: sText,
+                              marks: Number(sMarks) || 0,
+                              explanation: sExp
+                          }).select().single();
+
+                          if (sq && sType === 'mcq') {
+                              const sOpts = [
+                                  { text: sA, correct: sCorrect === 'A' },
+                                  { text: sB, correct: sCorrect === 'B' },
+                                  { text: sC, correct: sCorrect === 'C' },
+                                  { text: sD, correct: sCorrect === 'D' }
+                              ].filter(o => o.text).map((o, idx) => ({
+                                  question_id: sq.id,
+                                  option_text: o.text,
+                                  is_correct: o.correct,
+                                  order_index: idx
+                              }));
+                              if (sOpts.length) await supabase.from('question_options').insert(sOpts);
+                          }
+                      }
+                  }
+                  successCount++;
+              } catch (err) {
+                  console.error("Row error:", err);
+                  errorCount++;
+              }
+          }
+
+          setLoading(false);
+          showModal('success', `Import complete: ${successCount} success, ${errorCount} errors`);
+          fetchQuestions();
+      };
+      reader.readAsText(file);
+  };
+
   // --- SUB QUESTION ACTIONS ---
   const openSubForm = (question?: Question, index?: number) => {
       if (question) {
@@ -395,9 +506,16 @@ export default function QuestionBankManager() {
           </div>
           <div className="flex gap-3">
               {view === 'list' && (
-                  <button onClick={() => { handleReset(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-all">
-                      <Plus size={18}/> New Question
-                  </button>
+                  <div className="flex gap-2">
+                      <label className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
+                          <FileUp size={18} /> 
+                          <span className="hidden sm:inline">Import CSV</span>
+                          <input type="file" accept=".csv" hidden onChange={handleImportCSV} />
+                      </label>
+                      <button onClick={() => { handleReset(); setView('create'); }} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex items-center gap-2 transition-all">
+                          <Plus size={18}/> New Question
+                      </button>
+                  </div>
               )}
               {view === 'create' && (
                   <button onClick={() => setView('list')} className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold hover:text-slate-800 dark:text-slate-100 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
@@ -533,7 +651,7 @@ export default function QuestionBankManager() {
                                        </div>
 
                                        <div className="space-y-2">
-                                           <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Question Text</label>
+                                           <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Question Text</label>
                                            <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-edit-${subQForm.editIndex}` : 'sub-new'} initialContent={subQForm.text} onChange={val => setSubQForm(p => ({...p, text: val}))} />
                                        </div>
                                        
@@ -546,7 +664,7 @@ export default function QuestionBankManager() {
 
                                        {subQForm.type === 'mcq' && (
                                            <div className="mt-4 space-y-2">
-                                               <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Options</label>
+                                               <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Options</label>
                                                {subQForm.options.map((opt, i) => (
                                                    <div key={i} className="flex gap-2 items-center">
                                                        <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300'}`}><CheckCircle size={14}/></button>
@@ -558,7 +676,7 @@ export default function QuestionBankManager() {
                                        )}
 
                                        <div className="mt-4 space-y-1">
-                                            <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Explanation</label>
+                                            <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Explanation</label>
                                             <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-expl-${subQForm.editIndex}` : 'sub-expl-new'} initialContent={subQForm.explanation} onChange={val => setSubQForm(p => ({...p, explanation: val}))} />
                                        </div>
 

@@ -7,7 +7,7 @@ import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle, Database, GraduationCap, Newspaper, Moon, Sun
+  AlertTriangle, Database, GraduationCap, Newspaper, Moon, Sun, Palette
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -26,6 +26,9 @@ import QuestionBankManager from "@/components/admin/sections/QuestionBankManager
 import LectureSheetManager from "@/components/admin/sections/LectureSheetManager";
 import LessonPlanManager from "@/components/admin/sections/LessonPlanManager";
 import CourseManager from "@/components/admin/sections/CourseManager";
+import CertificateDesigner from "@/components/admin/sections/CertificateDesigner";
+
+
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -234,6 +237,7 @@ export default function AdminDashboard() {
                       { id: 'ebooks', label: 'eBooks', icon: BookOpen },
                       { id: 'segment_updates', label: 'Segment Updates', icon: RefreshCw },
                       { id: 'courses', label: 'Courses', icon: GraduationCap },
+                      { id: 'certificates', label: 'Cert Designer', icon: Palette },
                       { id: 'news', label: 'Newsroom', icon: Newspaper }
                     ].map(item => (
                         <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
@@ -308,6 +312,7 @@ export default function AdminDashboard() {
                     { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} /> }
 
                     { activeTab === 'courses' && <CourseManager /> }
+                    { activeTab === 'certificates' && <CertificateDesigner /> }
 
                     {['materials', 'news', 'ebooks', 'segment_updates'].includes(activeTab) && (
                         <ContentManager 
