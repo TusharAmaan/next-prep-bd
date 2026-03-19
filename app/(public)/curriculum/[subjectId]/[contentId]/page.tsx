@@ -252,7 +252,7 @@ export default function ContentDetailPage() {
       {/* TOP NAVIGATION BREADCRUMB */}
       <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50/80 border-slate-200'} backdrop-blur-md border-b pt-20 pb-4`}>
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className={`flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+            <div className={`flex flex-wrap items-center gap-2 text-[10px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
                <Link href="/curriculum" className="hover:text-indigo-500 transition-colors">Curriculum</Link>
                <ChevronRight className="w-3 h-3" />
                <Link href={`/curriculum/${subjectId}`} className="hover:text-indigo-500 transition-colors">{subject?.title}</Link>
@@ -261,9 +261,9 @@ export default function ContentDetailPage() {
             {/* Theme Toggle */}
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-full border transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-slate-800 border-slate-700 text-yellow-500 hover:bg-slate-700' : 'bg-white border-slate-200 text-indigo-900 hover:bg-slate-100'}`}
+              className={`p-2 rounded-full border transition-all flex items-center gap-2 text-[10px] font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-yellow-500 hover:bg-slate-700' : 'bg-white border-slate-200 text-indigo-900 hover:bg-slate-100'}`}
             >
-              {isDarkMode ? <><Sun className="w-4 h-4" /> Light Mode</> : <><Moon className="w-4 h-4" /> Dark Mode</>}
+              {isDarkMode ? <><Sun className="w-4 h-4" /> Light mode</> : <><Moon className="w-4 h-4" /> Dark mode</>}
             </button>
          </div>
       </div>
@@ -294,26 +294,26 @@ export default function ContentDetailPage() {
                  <div key={c.id} id={`content-${c.id}`} className={`scroll-mt-32 ${index > 0 ? 'pt-24 border-t ' + borderCol : ''}`}>
                    <header className="mb-10">
                       <div className="flex items-center gap-3 mb-4 flex-wrap">
-                         <div className={`px-3 py-1 text-[10px] font-black uppercase rounded-lg border ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                         <div className={`px-3 py-1 text-[10px] font-bold rounded-lg border ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
                             {c.lesson_plan_lessons?.lesson_plan_units?.title} • {c.lesson_plan_lessons?.title}
                          </div>
-                         <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase ${textMuted}`}>
+                         <div className={`flex items-center gap-1.5 text-[10px] font-bold ${textMuted}`}>
                             <Clock className="w-3 h-3" /> 5 min read
                          </div>
-                         <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase ml-auto ${textMuted}`}>
+                         <div className={`flex items-center gap-1.5 text-[10px] font-bold ml-auto ${textMuted}`}>
                             <Eye className="w-3 h-3" /> {c.view_count || 0}
                          </div>
                       </div>
                       
-                      <h1 className={`text-3xl md:text-5xl font-black tracking-tighter uppercase mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
+                      <h1 className={`text-3xl md:text-5xl font-black mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
                          {c.title}
                       </h1>
 
                       <div className={`flex items-center gap-4 py-6 border-y ${borderCol}`}>
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}><User className="w-5 h-5 text-slate-400" /></div>
                           <div>
-                              <p className={`text-xs font-black uppercase ${textMain}`}>Academic Team</p>
-                              <p className={`text-[10px] font-bold uppercase tracking-tight ${textMuted}`}>Updated {new Date(c.created_at).toLocaleDateString()}</p>
+                              <p className={`text-xs font-bold ${textMain}`}>Academic Team</p>
+                              <p className={`text-[10px] font-bold tracking-tight ${textMuted}`}>Updated {new Date(c.created_at).toLocaleDateString()}</p>
                           </div>
                           
                           <div className="ml-auto flex gap-2 relative">
@@ -326,9 +326,9 @@ export default function ContentDetailPage() {
                              </button>
                              {showShareMenu?.id === c.id && (
                                 <div className={`absolute top-full right-12 mt-2 w-48 rounded-2xl shadow-xl border overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                                   <button onClick={() => handleShare('copy', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans uppercase flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><LinkIcon className="w-4 h-4"/> Copy Link</button>
-                                   <button onClick={() => handleShare('fb', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans uppercase flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><Facebook className="w-4 h-4 text-blue-500"/> Facebook</button>
-                                   <button onClick={() => handleShare('wa', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans uppercase flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><MessageCircle className="w-4 h-4 text-emerald-500"/> WhatsApp</button>
+                                   <button onClick={() => handleShare('copy', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><LinkIcon className="w-4 h-4"/> Copy Link</button>
+                                   <button onClick={() => handleShare('fb', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><Facebook className="w-4 h-4 text-blue-500"/> Facebook</button>
+                                   <button onClick={() => handleShare('wa', `/curriculum/${subjectId}/${c.id}`)} className={`w-full text-left px-4 py-3 text-xs font-bold font-sans flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}><MessageCircle className="w-4 h-4 text-emerald-500"/> WhatsApp</button>
                                 </div>
                              )}
 
@@ -349,13 +349,13 @@ export default function ContentDetailPage() {
                          // If locked and scrolled to next item
                          <div className={`p-10 rounded-[2rem] text-center border ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
                             <Lock className="w-8 h-8 mx-auto mb-4 opacity-50" />
-                            <h4 className="text-xl font-black uppercase mb-2">Login Required</h4>
+                            <h4 className="text-xl font-bold mb-2">Login required</h4>
                             <p className="text-sm font-medium mb-6 max-w-sm mx-auto">This section continues the lesson, but is reserved for authenticated students.</p>
-                            <Link href="/login" className="inline-block px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-xs">Login to Read</Link>
+                            <Link href="/login" className="inline-block px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs">Login to read</Link>
                          </div>
                       ) : (
                          <div 
-                          className={`prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
+                          className={`prose max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
                           dangerouslySetInnerHTML={{ __html: htmlBody }}
                         />
                       )}
@@ -373,12 +373,12 @@ export default function ContentDetailPage() {
                                      <Lock className="w-8 h-8 text-white" />
                                   </div>
                                   <div>
-                                     <h3 className="text-2xl font-black uppercase tracking-tighter mb-2 italic">Want to Continue Reading?</h3>
+                                     <h3 className={`text-2xl font-black mb-2 italic`}>Want to continue reading?</h3>
                                      <p className="text-indigo-100 font-medium max-w-sm mx-auto">This is just 30% of the content. Log in to unlock the full lesson, exercises, and exams!</p>
                                   </div>
                                   <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                     <Link href="/login" className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-50 transition-all shadow-lg">Login to Account</Link>
-                                     <Link href="/signup" className="px-8 py-4 bg-indigo-500 text-white border border-indigo-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-400 transition-all">Create Account</Link>
+                                     <Link href="/login" className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all shadow-lg">Login to account</Link>
+                                     <Link href="/signup" className="px-8 py-4 bg-indigo-500 text-white border border-indigo-400 rounded-2xl font-black text-xs hover:bg-indigo-400 transition-all">Create account</Link>
                                   </div>
                                </div>
                             </div>
@@ -391,16 +391,16 @@ export default function ContentDetailPage() {
                       <div className={`mt-16 rounded-[3rem] p-10 relative overflow-hidden ${isDarkMode ? 'bg-slate-900 border border-slate-800 text-white' : 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20'}`}>
                          <div className="absolute top-0 right-0 p-8 opacity-10"><BookOpen className="w-32 h-32" /></div>
                          <div className="relative z-10">
-                            <h4 className="text-xl font-black uppercase tracking-tight mb-6 italic">Master this Topic</h4>
+                            <h4 className="text-xl font-bold tracking-tight mb-6 italic">Master this topic</h4>
                             <div className="flex flex-wrap gap-4">
                                {c.linked_exam_id && (
                                  <button className="px-6 py-4 bg-indigo-600 rounded-2xl flex items-center gap-3 font-bold hover:bg-white hover:text-indigo-600 transition-all shadow-xl">
-                                    <FileText className="w-5 h-5" /> TAKE TOPIC EXAM
+                                    <FileText className="w-5 h-5" /> Take topic exam
                                  </button>
                                )}
                                {c.linked_sheet_id && (
                                  <button className="px-6 py-4 bg-slate-800 rounded-2xl flex items-center gap-3 font-bold hover:bg-slate-700 transition-all border border-slate-700">
-                                    <FileText className="w-5 h-5" /> DOWNLOAD LECTURE SHEET
+                                    <FileText className="w-5 h-5" /> Download lecture sheet
                                  </button>
                                )}
                             </div>
@@ -413,7 +413,7 @@ export default function ContentDetailPage() {
 
              {/* Intersection Observer Target */}
              {hasMore && user && !reachedBoundary && (
-               <div ref={loaderRef} className={`py-12 flex justify-center items-center gap-3 ${textMuted} font-bold text-xs uppercase tracking-widest`}>
+               <div ref={loaderRef} className={`py-12 flex justify-center items-center gap-3 ${textMuted} font-bold text-xs tracking-wide`}>
                  <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Scroll for more lessons
                </div>
              )}
@@ -424,12 +424,12 @@ export default function ContentDetailPage() {
                    <div className="w-16 h-16 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/20">
                       <CheckCircle2 className="w-8 h-8" />
                    </div>
-                   <h3 className={`text-2xl font-black uppercase tracking-tighter mb-2 ${textMain}`}>Topic Completed!</h3>
+                   <h3 className={`text-2xl font-bold mb-2 ${textMain}`}>Topic completed!</h3>
                    <p className={`text-sm font-medium mb-8 max-w-xs mx-auto ${textMuted}`}>You've reached the end of this sub-topic. Ready to move to the next part of the curriculum?</p>
                    
                    <button 
                     onClick={loadNextContent}
-                    className="group px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 mx-auto hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
+                    className="group px-10 py-5 bg-indigo-600 text-white rounded-2xl font-bold tracking-wide text-xs flex items-center gap-3 mx-auto hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
                    >
                      Proceed to Next Topic <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                    </button>
@@ -437,7 +437,7 @@ export default function ContentDetailPage() {
              )}
 
              {!hasMore && (
-               <div className={`py-12 text-center font-bold text-xs uppercase tracking-widest ${textMuted}`}>
+               <div className={`py-12 text-center font-bold text-xs tracking-wide ${textMuted}`}>
                   <GraduationCap className="w-8 h-8 mx-auto mb-4 opacity-20" />
                   Great job! You've completed the lesson plan.
                </div>
@@ -450,8 +450,8 @@ export default function ContentDetailPage() {
                 <div className="flex items-center gap-3 mb-8">
                    <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white"><BookOpen className="w-5 h-5" /></div>
                    <div>
-                      <h3 className={`text-sm font-black uppercase ${textMain}`}>Table of Contents</h3>
-                      <p className={`text-[10px] font-bold uppercase tracking-tight italic ${textMuted}`}>Course Progression</p>
+                      <h3 className={`text-sm font-bold ${textMain}`}>Table of contents</h3>
+                      <p className={`text-[10px] font-bold tracking-tight italic ${textMuted}`}>Course progression</p>
                    </div>
                 </div>
 
@@ -469,7 +469,7 @@ export default function ContentDetailPage() {
                            className={`w-full flex items-center gap-2 px-3 py-3 rounded-xl transition-all text-left group ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                          >
                              <div className={`w-1 h-5 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                             <h4 className={`text-xs font-black uppercase tracking-wide flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <h4 className={`text-xs font-bold tracking-tight flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
                              <span className={`text-[10px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
                              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
                          </button>
@@ -489,7 +489,7 @@ export default function ContentDetailPage() {
                                     className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
                                   >
                                      <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
-                                     <span className="text-[11px] font-bold uppercase truncate flex-1 font-bangla">{l.title}</span>
+                                     <span className="text-[11px] font-bold truncate flex-1 font-bangla">{l.title}</span>
                                      <span className={`text-[10px] font-medium ${textMuted}`}>{contentCount}</span>
                                   </button>
 
@@ -527,8 +527,8 @@ export default function ContentDetailPage() {
                    })}
                 </div>
 
-                <Link href={`/curriculum/${subjectId}`} className="mt-8 flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
-                   <Languages className="w-4 h-4" /> BACK TO SUBJECT
+                <Link href={`/curriculum/${subjectId}`} className="mt-8 flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-[2rem] text-[10px] font-bold tracking-wide hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
+                   <Languages className="w-4 h-4" /> Back to subject
                 </Link>
              </div>
           </aside>
@@ -552,7 +552,7 @@ export default function ContentDetailPage() {
                   <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white"><BookOpen className="w-5 h-5" /></div>
                      <div>
-                        <h3 className={`text-sm font-black uppercase ${textMain}`}>Table of Contents</h3>
+                        <h3 className={`text-sm font-bold ${textMain}`}>Table of contents</h3>
                      </div>
                   </div>
                   <button onClick={() => setIsTocOpenMobile(false)} className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}><X className="w-5 h-5" /></button>
@@ -572,7 +572,7 @@ export default function ContentDetailPage() {
                            className={`w-full flex items-center gap-2 px-3 py-3 rounded-xl transition-all text-left ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : ''}`}
                          >
                              <div className={`w-1 h-5 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                             <h4 className={`text-xs font-black uppercase tracking-wide flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <h4 className={`text-xs font-bold tracking-tight flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
                              <span className={`text-[10px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
                              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
                          </button>
@@ -592,7 +592,7 @@ export default function ContentDetailPage() {
                                     className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
                                   >
                                      <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
-                                     <span className="text-[11px] font-bold uppercase truncate flex-1 font-bangla">{l.title}</span>
+                                     <span className="text-[11px] font-bold truncate flex-1 font-bangla">{l.title}</span>
                                      <span className={`text-[10px] font-medium ${textMuted}`}>{contentCount}</span>
                                   </button>
 

@@ -174,7 +174,7 @@ export default function SubjectHierarchyPage() {
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
            <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-           <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Loading Details...</p>
+           <p className="text-slate-400 font-bold text-xs">Loading details...</p>
         </div>
       </div>
     );
@@ -189,8 +189,8 @@ export default function SubjectHierarchyPage() {
            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsAllBooksOpen(false)}></div>
            <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
              <div className="flex justify-between items-center mb-6 shrink-0 border-b border-slate-800 pb-4">
-                <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-                  <Book className="w-5 h-5 text-indigo-400" /> All Related Books
+                <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <Book className="w-5 h-5 text-indigo-400" /> All related books
                 </h3>
                 <button onClick={() => setIsAllBooksOpen(false)} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-xl transition-colors"><X className="w-4 h-4" /></button>
              </div>
@@ -203,7 +203,7 @@ export default function SubjectHierarchyPage() {
                      </div>
                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-100 group-hover:text-indigo-300 transition-colors truncate">{book.title}</p>
-                        {book.subtitle && <p className="text-[10px] text-slate-500 mt-0.5 uppercase font-bold tracking-widest truncate">{book.subtitle}</p>}
+                        {book.subtitle && <p className="text-[10px] text-slate-500 mt-0.5 font-bold truncate">{book.subtitle}</p>}
                      </div>
                      <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition-colors shrink-0" />
                   </a>
@@ -219,14 +219,14 @@ export default function SubjectHierarchyPage() {
         {/* HEADER SECTION */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10 border-b border-slate-800 pb-10">
            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-4">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-indigo-400 mb-4">
                  <Link href="/curriculum" className="hover:text-white transition-colors">Curriculum</Link>
                  <ChevronRight className="w-3 h-3" />
                  <span>{subject?.groups?.segments?.title || 'Segment'}</span>
                  <ChevronRight className="w-3 h-3" />
                  <span>{subject?.groups?.title || 'Group'}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase leading-tight md:leading-none font-bangla">
+              <h1 className="text-4xl md:text-5xl font-black text-white leading-tight md:leading-none font-bangla">
                  {subject?.title}
               </h1>
            </div>
@@ -236,13 +236,13 @@ export default function SubjectHierarchyPage() {
               <div className="flex p-1 bg-slate-800/80 backdrop-blur-sm rounded-xl border border-slate-700/50 w-full sm:w-auto shadow-inner">
                 <button 
                    onClick={() => setVersion('bn')}
-                   className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${version === 'bn' ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]' : 'text-slate-400 hover:text-white'}`}
+                   className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${version === 'bn' ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]' : 'text-slate-400 hover:text-white'}`}
                 >
                    BN
                 </button>
                 <button 
                    onClick={() => setVersion('en')}
-                   className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${version === 'en' ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]' : 'text-slate-400 hover:text-white'}`}
+                   className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${version === 'en' ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]' : 'text-slate-400 hover:text-white'}`}
                 >
                    EN
                 </button>
@@ -251,12 +251,12 @@ export default function SubjectHierarchyPage() {
               {/* Stats */}
               <div className="flex items-center gap-6 px-6 py-3 bg-slate-800/30 rounded-xl border border-slate-700/50 w-full sm:w-auto mt-4 sm:mt-0">
                  <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1 justify-center"><Layers className="w-3 h-3"/> Lessons</p>
+                    <p className="text-[10px] font-bold text-slate-500 flex items-center gap-1 justify-center"><Layers className="w-3 h-3"/> Lessons</p>
                     <p className="text-lg font-black text-white">{units.reduce((acc, curr) => acc + (curr.lesson_plan_lessons?.length || 0), 0)}+</p>
                  </div>
                  <div className="w-px h-8 bg-slate-700/50"></div>
                  <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1 justify-center"><Eye className="w-3 h-3"/> Viewed</p>
+                    <p className="text-[10px] font-bold text-slate-500 flex items-center gap-1 justify-center"><Eye className="w-3 h-3"/> Viewed</p>
                     <p className="text-lg font-black text-white">{subject?.view_count || 0}</p>
                  </div>
               </div>
@@ -265,8 +265,8 @@ export default function SubjectHierarchyPage() {
               {linkedCourses.length > 0 && (
                 <div className="space-y-6 pt-6 border-t border-slate-800">
                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                         <GraduationCap className="w-6 h-6 text-indigo-400" /> Subject Specific Courses
+                      <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
+                         <GraduationCap className="w-6 h-6 text-indigo-400" /> Subject-specific courses
                       </h3>
                       <Link href="/courses" className="text-xs font-bold text-indigo-400 hover:text-white transition-colors">Explore All</Link>
                    </div>
@@ -289,10 +289,10 @@ export default function SubjectHierarchyPage() {
                                  <h4 className="text-lg font-black text-white group-hover:text-indigo-300 transition-colors truncate">{course.title}</h4>
                                  <p className="text-xs text-slate-500 mt-1 line-clamp-1">{course.instructor_name || 'NextPrep Expert'}</p>
                                  <div className="flex items-center gap-3 mt-3">
-                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-1 rounded">
+                                    <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
                                        {course.price_type === 'free' ? 'Free Course' : `$${course.price}`}
                                     </span>
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
                                        <Users className="w-3 h-3"/> 2.4k+
                                     </span>
                                  </div>
@@ -340,7 +340,7 @@ export default function SubjectHierarchyPage() {
                                <BookOpen className="w-5 h-5" />
                             </div>
                             <div>
-                               <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight font-bangla">{unit.title}</h3>
+                               <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-bangla">{unit.title}</h3>
                             </div>
                          </div>
                          <div className={`w-10 h-10 rounded-full border flex items-center justify-center shrink-0 transition-transform duration-300 ${expandedUnits[unit.id] ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-600 text-slate-400'}`}>
@@ -401,13 +401,13 @@ export default function SubjectHierarchyPage() {
                                         ))}
                                      </div>
                                    ) : (
-                                     <div className="col-span-full py-4 text-center text-slate-600 text-xs font-bold uppercase tracking-widest border border-dashed border-slate-700/50 rounded-xl">No contents yet</div>
+                                     <div className="col-span-full py-4 text-center text-slate-600 text-xs font-bold border border-dashed border-slate-700/50 rounded-xl">No contents yet</div>
                                    )}
                                 </div>
                               );
                             })}
                             {(!unit.lesson_plan_lessons || unit.lesson_plan_lessons.length === 0) && (
-                               <div className="py-6 text-center text-slate-600 text-xs font-bold uppercase tracking-widest bg-slate-900/50 rounded-2xl border border-slate-700/30">No lessons planned</div>
+                               <div className="py-6 text-center text-slate-600 text-xs font-bold bg-slate-900/50 rounded-2xl border border-slate-700/30">No lessons planned</div>
                             )}
                          </div>
                        )}
@@ -418,7 +418,7 @@ export default function SubjectHierarchyPage() {
                 {units.length === 0 && !isLoading && (
                   <div className="py-32 text-center bg-slate-800/20 rounded-3xl border border-dashed border-slate-700/50 backdrop-blur-sm">
                      <Book className="w-16 h-16 text-slate-600 mx-auto mb-6 opacity-50" />
-                     <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Planning in Progress</h3>
+                     <h3 className="text-2xl font-black text-white italic">Planning in progress</h3>
                      <p className="text-slate-400 mt-2 font-medium max-w-sm mx-auto">This version of the syllabus is currently being organized by our master teachers. Check back soon!</p>
                   </div>
                 )}
@@ -430,11 +430,11 @@ export default function SubjectHierarchyPage() {
              {/* Relevant Books */}
              <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-6 shadow-xl">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
                      <Book className="w-4 h-4 text-indigo-400" /> Textbooks
                   </h3>
                   {relatedBooks.length > 3 && (
-                    <button onClick={() => setIsAllBooksOpen(true)} className="text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors bg-indigo-500/10 px-3 py-1.5 rounded-full">See All</button>
+                    <button onClick={() => setIsAllBooksOpen(true)} className="text-[10px] font-bold text-indigo-400 hover:text-white transition-colors bg-indigo-500/10 px-3 py-1.5 rounded-full">See all</button>
                   )}
                 </div>
                 <div className="space-y-3">
@@ -445,7 +445,7 @@ export default function SubjectHierarchyPage() {
                         </div>
                         <div className="py-1 flex-1 min-w-0">
                            <p className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors truncate">{book.title}</p>
-                           {book.subtitle && <p className="text-[9px] text-slate-500 mt-1 uppercase font-black tracking-widest truncate">{book.subtitle}</p>}
+                           {book.subtitle && <p className="text-[9px] text-slate-500 mt-1 font-bold truncate">{book.subtitle}</p>}
                         </div>
                      </a>
                    ))}
@@ -467,9 +467,9 @@ export default function SubjectHierarchyPage() {
                      <p className="text-indigo-100 text-xs font-medium mb-6">Gain mastery in {subject?.title} with our professional curated course.</p>
                      <Link 
                         href={`/courses/${linkedCourses[0].slug}`}
-                        className="inline-flex items-center gap-2 bg-white text-indigo-600 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95"
+                        className="inline-flex items-center gap-2 bg-white text-indigo-600 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all active:scale-95"
                      >
-                        Enroll Now <ArrowRight className="w-4 h-4" />
+                        Enroll now <ArrowRight className="w-4 h-4" />
                      </Link>
                   </div>
                </div>
@@ -478,7 +478,7 @@ export default function SubjectHierarchyPage() {
              {/* Other Subjects in Group */}
              {otherSubjects.length > 0 && (
                <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-6 shadow-xl">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6">Explore Group</h3>
+                  <h3 className="text-sm font-bold text-white mb-6">Explore group</h3>
                   <div className="space-y-2">
                      {otherSubjects.map(sub => (
                        <Link 
@@ -497,7 +497,7 @@ export default function SubjectHierarchyPage() {
              {/* Contact Mini-Form */}
              <div className="bg-slate-800/40 backdrop-blur-md border border-indigo-500/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 pointer-events-none group-hover:scale-110 transition-transform"></div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2 flex items-center gap-2 relative z-10">
+                <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2 relative z-10">
                    <MessageSquare className="w-4 h-4 text-indigo-400" /> Suggestion / Query
                 </h3>
                 <p className="text-xs text-slate-400 font-medium mb-6 relative z-10">Found an error or have an academic inquiry regarding {subject?.title}? Message our support.</p>
@@ -519,9 +519,9 @@ export default function SubjectHierarchyPage() {
                    <button 
                      disabled={isSubmitting}
                      type="submit" 
-                     className="w-full py-3.5 bg-indigo-500 text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-indigo-600 transition-all shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                     className="w-full py-3.5 bg-indigo-500 text-white rounded-xl font-bold text-xs hover:bg-indigo-600 transition-all shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                    >
-                     {isSubmitting ? 'Sending...' : 'Send Message'}
+                     {isSubmitting ? 'Sending...' : 'Send message'}
                    </button>
                 </form>
              </div>
