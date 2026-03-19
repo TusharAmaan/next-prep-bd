@@ -28,7 +28,8 @@ export default function ContentManager({
     segments, groups, subjects, categories,
     fetchGroups, fetchSubjects, 
     showSuccess, showError, 
-    openCategoryModal
+    openCategoryModal,
+    darkMode = false
 }: any) {
     
     // --- LOCAL STATE ---

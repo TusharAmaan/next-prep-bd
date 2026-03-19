@@ -35,7 +35,7 @@ type Invitation = {
 // Tab Types
 type TabType = 'active' | 'pending' | 'suspended' | 'invitations';
 
-export default function UserManagement({ onShowError, onShowSuccess }: any) {
+export default function UserManagement({ onShowError, onShowSuccess, darkMode = false }: any) {
   // --- STATE ---
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [loading, setLoading] = useState(true);

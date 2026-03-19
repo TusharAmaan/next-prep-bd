@@ -18,16 +18,18 @@ import {
   Copy,
   Globe,
   Download,
-  GraduationCap
+  GraduationCap,
+  Check
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import { toast } from "sonner";
 
 interface LessonPlanManagerProps {
   subjects: any[];
+  darkMode?: boolean;
 }
 
-export default function LessonPlanManager({ subjects: initialSubjects }: LessonPlanManagerProps) {
+export default function LessonPlanManager({ subjects: initialSubjects, darkMode = false }: LessonPlanManagerProps) {
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
@@ -119,6 +121,9 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
   const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
   const [cloneSourceId, setCloneSourceId] = useState('');
   const [allSubjects, setAllSubjects] = useState<any[]>([]);
+  const [cloneSourceUnits, setCloneSourceUnits] = useState<any[]>([]);
+  const [selectedUnitsToClone, setSelectedUnitsToClone] = useState<Record<number, boolean>>({});
+  const [isCloneFetching, setIsCloneFetching] = useState(false);
 
   useEffect(() => {
     if (isCloneModalOpen) {
@@ -127,8 +132,45 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
         setAllSubjects(data || []);
       };
       fetchAll();
+    } else {
+      setCloneSourceId('');
+      setCloneSourceUnits([]);
+      setSelectedUnitsToClone({});
     }
   }, [isCloneModalOpen]);
+
+  useEffect(() => {
+    if (!cloneSourceId) {
+      setCloneSourceUnits([]);
+      setSelectedUnitsToClone({});
+      return;
+    }
+
+    const fetchSourceUnits = async () => {
+      setIsCloneFetching(true);
+      const { data } = await supabase
+        .from('lesson_plan_units')
+        .select(`
+          *,
+          lesson_plan_lessons (*)
+        `)
+        .eq('subject_id', cloneSourceId)
+        .eq('version', versionFilter)
+        .order('order_index');
+      
+      setCloneSourceUnits(data || []);
+      
+      // Auto-select all by default
+      const initialSelection: Record<number, boolean> = {};
+      (data || []).forEach((u: any) => {
+        initialSelection[u.id] = true;
+      });
+      setSelectedUnitsToClone(initialSelection);
+      setIsCloneFetching(false);
+    };
+
+    fetchSourceUnits();
+  }, [cloneSourceId, versionFilter]);
 
   const fetchHierarchy = useCallback(async () => {
     if (!selectedSubject) return;
@@ -259,22 +301,17 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
   const handleCloneStructure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cloneSourceId) return;
+    
+    const unitsToClone = cloneSourceUnits.filter(u => selectedUnitsToClone[u.id]);
+    if (unitsToClone.length === 0) {
+      toast.error("Please select at least one unit to clone.");
+      return;
+    }
+
     setIsLoading(true);
     setIsCloneModalOpen(false);
     try {
-      // Fetch source subjects unit and lessons for the current version
-      const { data: sourceUnits } = await supabase.from('lesson_plan_units').select(`
-        *,
-        lesson_plan_lessons (*)
-      `).eq('subject_id', cloneSourceId).eq('version', versionFilter).order('order_index');
-
-      if (!sourceUnits || sourceUnits.length === 0) {
-         toast.error("Source subject has no units to clone in this version.");
-         setIsLoading(false);
-         return;
-      }
-
-      for (const su of sourceUnits) {
+      for (const su of unitsToClone) {
          const { data: newUnit, error: ue } = await supabase.from('lesson_plan_units').insert([{
             subject_id: selectedSubject.id,
             title: su.title,
@@ -295,7 +332,7 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
             if (le) throw le;
          }
       }
-      toast.success("Structure cloned successfully!");
+      toast.success("Selected structure cloned successfully!");
       fetchHierarchy();
     } catch(e) {
       console.error(e);
@@ -968,14 +1005,24 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Clone Structure Modal */}
       {isCloneModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4">Clone Structure</h3>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-6">Import the Units and Lessons index from another subject into <strong>{selectedSubject?.title}</strong> ({versionFilter.toUpperCase()}). Contents inside lessons will not be copied.</p>
-            <form onSubmit={handleCloneStructure} className="space-y-6">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Clone Structure</h3>
+              <button onClick={() => setIsCloneModalOpen(false)} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-6 shrink-0">
+              Import Units and Lessons index from another subject into <strong>{selectedSubject?.title}</strong> ({versionFilter.toUpperCase()}). 
+              <br/><span className="text-indigo-600 dark:text-indigo-400 font-bold mt-1 inline-block">Contents inside lessons will not be copied.</span>
+            </p>
+            
+            <div className="space-y-6 overflow-y-auto flex-1 pr-1 custom-scrollbar">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Source Subject</label>
+                <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest pl-1">Source Subject</label>
                 <select 
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm text-slate-800 dark:text-white transition-all"
                   value={cloneSourceId}
                   onChange={(e) => setCloneSourceId(e.target.value)}
                   required
@@ -988,11 +1035,93 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                    ))}
                 </select>
               </div>
-              <div className="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setIsCloneModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs">Cancel</button>
-                <button type="submit" disabled={!cloneSourceId} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100 disabled:opacity-50">Clone Index</button>
-              </div>
-            </form>
+
+              {cloneSourceId && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex justify-between items-end px-1">
+                    <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Select Units to Clone</label>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const allSelected = cloneSourceUnits.every(u => selectedUnitsToClone[u.id]);
+                        const newSelection = { ...selectedUnitsToClone };
+                        cloneSourceUnits.forEach(u => newSelection[u.id] = !allSelected);
+                        setSelectedUnitsToClone(newSelection);
+                      }}
+                      className="text-[10px] font-black text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:text-indigo-400 uppercase tracking-widest transition-colors"
+                    >
+                      {cloneSourceUnits.length > 0 && cloneSourceUnits.every(u => selectedUnitsToClone[u.id]) ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+
+                  {isCloneFetching ? (
+                    <div className="py-10 text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2 uppercase tracking-widest">Fetching Source Units...</p>
+                    </div>
+                  ) : cloneSourceUnits.length === 0 ? (
+                    <div className="py-8 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-center">
+                      <HelpCircle className="w-8 h-8 text-slate-200 dark:text-slate-700 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-4">No Units found in this source subject.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                      {cloneSourceUnits.map(unit => (
+                        <label 
+                          key={unit.id} 
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group ${
+                            selectedUnitsToClone[unit.id] 
+                              ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              selectedUnitsToClone[unit.id] 
+                                ? 'bg-indigo-600 border-indigo-600 text-white' 
+                                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 group-hover:border-indigo-400'
+                            }`}>
+                              {selectedUnitsToClone[unit.id] && <Check className="w-3 h-3" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-bold truncate ${selectedUnitsToClone[unit.id] ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                {unit.title}
+                              </p>
+                              <p className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                {unit.lesson_plan_lessons?.length || 0} Lessons
+                              </p>
+                            </div>
+                          </div>
+                          <input 
+                            type="checkbox" 
+                            className="hidden"
+                            checked={!!selectedUnitsToClone[unit.id]}
+                            onChange={() => setSelectedUnitsToClone(prev => ({ ...prev, [unit.id]: !prev[unit.id] }))}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-4 pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <button 
+                type="button" 
+                onClick={() => setIsCloneModalOpen(false)} 
+                className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCloneStructure}
+                disabled={!cloneSourceId || isCloneFetching || cloneSourceUnits.length === 0 || !Object.values(selectedUnitsToClone).some(Boolean)} 
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-indigo-100 disabled:opacity-50 hover:bg-indigo-700 transition-all active:scale-95"
+              >
+                Clone {Object.values(selectedUnitsToClone).filter(Boolean).length} Units
+              </button>
+            </div>
           </div>
         </div>
       )}

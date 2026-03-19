@@ -28,7 +28,7 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
-export default function CertificateDesigner() {
+export default function CertificateDesigner({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<Canvas | null>(null);

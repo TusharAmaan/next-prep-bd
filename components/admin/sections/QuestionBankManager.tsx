@@ -35,17 +35,18 @@ interface Question {
 }
 
 // --- 1. STABLE EDITOR (Prevents Cursor Jumping) ---
-const StableEditor = memo(({ initialContent, onChange, uniqueKey }: { initialContent: string, onChange: (val: string) => void, uniqueKey: string }) => {
+const StableEditor = memo(({ initialContent, onChange, uniqueKey, darkMode }: { initialContent: string, onChange: (val: string) => void, uniqueKey: string, darkMode?: boolean }) => {
     return (
         <div className="prose-editor-wrapper min-h-[140px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
             <RichTextEditor 
                 key={uniqueKey} 
                 initialValue={initialContent} 
                 onChange={onChange} 
+                darkMode={darkMode}
             />
         </div>
     );
-}, (prev, next) => prev.uniqueKey === next.uniqueKey); 
+}, (prev, next) => prev.uniqueKey === next.uniqueKey && prev.darkMode === next.darkMode); 
 StableEditor.displayName = "StableEditor";
 
 // --- 2. MULTI TAG INPUT ---
@@ -125,7 +126,7 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: any) {
 }
 
 // --- MAIN COMPONENT ---
-export default function QuestionBankManager() {
+export default function QuestionBankManager({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'list' | 'create'>('list');

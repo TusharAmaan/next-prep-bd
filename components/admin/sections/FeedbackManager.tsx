@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Trash2, CheckCircle, Mail, Clock, Loader2, MessageSquare } from "lucide-react";
 
-export default function FeedbackManager({ onUpdate }: { onUpdate?: () => void }) {
+export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpdate?: () => void, darkMode?: boolean }) {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // 'all', 'new', 'read'

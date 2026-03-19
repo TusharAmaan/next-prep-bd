@@ -22,7 +22,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import CourseBuilder from "@/components/admin/sections/CourseBuilder";
 
-export default function CourseManager() {
+export default function CourseManager({ darkMode = false }: { darkMode?: boolean }) {
     const [view, setView] = useState<'list' | 'builder'>('list');
     const [courses, setCourses] = useState<any[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<any>(null);

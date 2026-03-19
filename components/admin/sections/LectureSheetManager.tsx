@@ -57,9 +57,10 @@ interface LectureSheetManagerProps {
   segments: any[];
   groups: any[];
   subjects: any[];
+  darkMode?: boolean;
 }
 
-const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, groups, subjects }) => {
+const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, groups, subjects, darkMode = false }) => {
   const [activeView, setActiveView] = useState<'requests' | 'sheets'>('requests');
   const [requests, setRequests] = useState<any[]>([]);
   const [sheets, setSheets] = useState<any[]>([]);

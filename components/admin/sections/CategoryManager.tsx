@@ -10,7 +10,8 @@ import {
 export default function CategoryManager({ 
   categories = [], 
   search, setSearch, 
-  fetchCategories 
+  fetchCategories,
+  darkMode = false
 }: any) {
   
   // --- 1. STATE ---

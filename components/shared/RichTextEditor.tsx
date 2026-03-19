@@ -3,11 +3,12 @@
 import { Editor } from "@tinymce/tinymce-react";
 
 interface RichTextEditorProps {
-  initialValue?: string; // Changed from 'content' to match your parent component
+  initialValue?: string;
   onChange: (content: string) => void;
+  darkMode?: boolean;
 }
 
-export default function RichTextEditor({ initialValue, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ initialValue, onChange, darkMode = false }: RichTextEditorProps) {
   return (
     <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-600 shadow-sm">
       <Editor
@@ -33,7 +34,9 @@ export default function RichTextEditor({ initialValue, onChange }: RichTextEdito
             'bold italic underline | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'link image | removeformat | code',
-          content_style: 'body { font-family:Inter,sans-serif; font-size:16px; color: #334155; }',
+          skin: darkMode ? "oxide-dark" : "oxide",
+          content_css: darkMode ? "dark" : "default",
+          content_style: `body { font-family:Inter,sans-serif; font-size:16px; color: ${darkMode ? '#f1f5f9' : '#334155'}; background: ${darkMode ? '#0f172a' : '#ffffff'}; }`,
           branding: false,
           statusbar: true,
         }}

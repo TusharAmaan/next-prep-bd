@@ -7,7 +7,8 @@ export default function HierarchyManager({
   segments, groups, subjects, 
   selectedSegment, setSelectedSegment, 
   selectedGroup, setSelectedGroup, 
-  fetchDropdowns, fetchGroups, fetchSubjects 
+  fetchDropdowns, fetchGroups, fetchSubjects,
+  darkMode = false
 }: any) {
   const [newName, setNewName] = useState("");
   const [activeLevel, setActiveLevel] = useState<'segment' | 'group' | 'subject'>('segment');

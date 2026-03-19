@@ -80,24 +80,24 @@ export default function AdminHeader({
         {toggleDarkMode && (
           <button 
             onClick={toggleDarkMode}
-            className={`p-2 rounded-full border transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:bg-slate-800'}`}
+            className={`p-2 rounded-full border transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         )}
 
-        <Link href="/" target="_blank" className={`hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${darkMode ? 'text-slate-300 bg-slate-800 hover:bg-slate-700' : 'text-slate-600 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700'}`} title="Open Public Site">
+        <Link href="/" target="_blank" className={`hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${darkMode ? 'text-slate-300 bg-slate-800 hover:bg-slate-700' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`} title="Open Public Site">
             <ExternalLink className="w-3.5 h-3.5"/> View Site
         </Link>
 
-        <div className={`h-6 w-px hidden md:block ${darkMode ? 'bg-slate-700' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+        <div className={`h-6 w-px hidden md:block ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
 
         {/* --- NOTIFICATIONS --- */}
         <div className="relative" ref={notifRef}>
             <button 
                 onClick={() => setShowNotif(!showNotif)} 
-                className={`relative p-2.5 rounded-full transition-all ${showNotif ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:bg-slate-800'}`}
+                className={`relative p-2.5 rounded-full transition-all ${showNotif ? 'bg-indigo-50 text-indigo-600' : darkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
             >
                 <Bell className="w-5 h-5"/>
                 {unreadCount > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse"></span>}

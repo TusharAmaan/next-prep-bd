@@ -7,7 +7,7 @@ import {
   FileText, Video, BookOpen, HelpCircle, Layers, AlertTriangle, Loader2
 } from "lucide-react";
 
-export default function PendingManager() {
+export default function PendingManager({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState<'resources' | 'courses'>('resources');
   const [items, setItems] = useState<any[]>([]);

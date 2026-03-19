@@ -302,17 +302,17 @@ export default function AdminDashboard() {
                     )}
 
                     {/* COMPONENT LOADING */}
-                    {activeTab === 'question_bank' && <QuestionBankManager />}
-                    {activeTab === 'pending' && <PendingManager />}
-                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} />}
-                    {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} />}
-                    {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} />}
-                    {activeTab === 'feedbacks' && <FeedbackManager />}
-                    { activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} /> }
-                    { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} /> }
+                    {activeTab === 'question_bank' && <QuestionBankManager darkMode={darkMode} />}
+                    {activeTab === 'pending' && <PendingManager darkMode={darkMode} />}
+                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={darkMode} />}
+                    {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} darkMode={darkMode} />}
+                    {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} darkMode={darkMode} />}
+                    {activeTab === 'feedbacks' && <FeedbackManager darkMode={darkMode} />}
+                    { activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} darkMode={darkMode} /> }
+                    { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} darkMode={darkMode} /> }
 
-                    { activeTab === 'courses' && <CourseManager /> }
-                    { activeTab === 'certificates' && <CertificateDesigner /> }
+                    { activeTab === 'courses' && <CourseManager darkMode={darkMode} /> }
+                    { activeTab === 'certificates' && <CertificateDesigner darkMode={darkMode} /> }
 
                     {['materials', 'news', 'ebooks', 'segment_updates'].includes(activeTab) && (
                         <ContentManager 
@@ -322,6 +322,7 @@ export default function AdminDashboard() {
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                             showSuccess={showSuccess} showError={showError} confirmAction={()=>{}}
                             openCategoryModal={() => setActiveTab('categories')}
+                            darkMode={darkMode}
                         />
                     )}
 
