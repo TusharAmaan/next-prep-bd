@@ -290,7 +290,7 @@ export default function ContentDetailPage() {
                          </div>
                       </div>
                       
-                      <h1 className={`text-3xl md:text-5xl font-black tracking-tighter uppercase mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-bangla-serif' : ''}`}>
+                      <h1 className={`text-3xl md:text-5xl font-black tracking-tighter uppercase mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
                          {c.title}
                       </h1>
 
@@ -340,7 +340,7 @@ export default function ContentDetailPage() {
                          </div>
                       ) : (
                          <div 
-                          className={`prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla-serif' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
+                          className={`prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
                           dangerouslySetInnerHTML={{ __html: htmlBody }}
                         />
                       )}

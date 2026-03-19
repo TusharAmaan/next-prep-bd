@@ -12,21 +12,13 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 // 1) Fonts - FIXED IMPORTS
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Noto_Serif_Bengali, Hind_Siliguri } from "next/font/google";
+import { Noto_Serif_Bengali } from "next/font/google";
 
 import { Analytics } from "@vercel/analytics/next"
 
-// Bangla heading font — elegant, book-like serif
-const banglaSerif = Noto_Serif_Bengali({
+const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-bangla-serif",
-});
-
-// Bangla body font — clean, readable sans-serif (like textbooks)
-const banglaSans = Hind_Siliguri({
-  subsets: ["bengali"],
-  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-bangla",
 });
 
@@ -88,7 +80,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${banglaSans.variable} ${banglaSerif.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${bangla.variable}`}
     >
       <body className={`${GeistSans.className} antialiased`}>
         

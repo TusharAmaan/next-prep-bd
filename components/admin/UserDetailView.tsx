@@ -213,39 +213,39 @@ export default function UserDetailView({
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
         
         {/* HEADER */}
-        <div className="bg-white p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
+        <div className="bg-white dark:bg-slate-900 p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
-             <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2">
+             <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 flex items-center gap-2">
                 <User className="w-4 h-4"/> User Details
              </h3>
-             <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button onClick={() => setActiveTab('profile')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Overview</button>
-                <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+             <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                <button onClick={() => setActiveTab('profile')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'profile' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>Overview</button>
+                <button onClick={() => setActiveTab('likes')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'likes' ? 'bg-white dark:bg-slate-900 text-rose-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>
                     <Heart className="w-3 h-3" /> Activity
                 </button>
-                <button onClick={() => setActiveTab('billing')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'billing' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                <button onClick={() => setActiveTab('billing')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'billing' ? 'bg-white dark:bg-slate-900 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>
                     <CreditCard className="w-3 h-3" /> Billing
                 </button>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 flex items-center justify-center font-bold transition-colors">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 hover:text-red-500 flex items-center justify-center font-bold transition-colors">✕</button>
         </div>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
            
            {/* HERO SECTION */}
-           <div className="p-8 pb-6 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-start gap-6">
+           <div className="p-8 pb-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start gap-6">
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-4 border-white shadow-sm ${role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
                   {user.full_name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex-1">
                   <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-2xl font-black text-slate-900">{user.full_name}</h4>
-                        <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
+                        <h4 className="text-2xl font-black text-slate-900 dark:text-white">{user.full_name}</h4>
+                        <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
                             <Mail className="w-3.5 h-3.5"/> {user.email}
                         </p>
                       </div>
@@ -259,7 +259,7 @@ export default function UserDetailView({
                           <select 
                             value={role} 
                             onChange={(e) => handleUpdateProfile('role', e.target.value)} 
-                            className="appearance-none pl-9 pr-8 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 outline-none cursor-pointer uppercase tracking-wider hover:bg-white transition-all shadow-sm"
+                            className="appearance-none pl-9 pr-8 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 outline-none cursor-pointer uppercase tracking-wider hover:bg-white dark:bg-slate-900 transition-all shadow-sm"
                           >
                               <option value="student">Student</option>
                               <option value="tutor">Tutor</option>
@@ -267,7 +267,7 @@ export default function UserDetailView({
                               <option value="editor">Editor</option>
                               <option value="admin">Admin</option>
                           </select>
-                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{getRoleIcon(role)}</div>
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">{getRoleIcon(role)}</div>
                       </div>
 
                       {/* STATUS */}
@@ -297,7 +297,7 @@ export default function UserDetailView({
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all shadow-sm ${
                             isFeatured 
                             ? 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-200' 
-                            : 'bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                            : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-600'
                         }`}
                       >
                           <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-current' : ''}`} /> 
@@ -318,7 +318,7 @@ export default function UserDetailView({
                                   <FileText className="w-4 h-4"/> Admin Private Notes
                               </h5>
                               <textarea 
-                                  className="w-full bg-white border border-amber-200 rounded-xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-amber-200 outline-none resize-none placeholder:text-slate-400"
+                                  className="w-full bg-white dark:bg-slate-900 border border-amber-200 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-amber-200 outline-none resize-none placeholder:text-slate-400 dark:text-slate-500"
                                   rows={3}
                                   placeholder="Write notes here. Click outside to save."
                                   value={notes}
@@ -327,13 +327,13 @@ export default function UserDetailView({
                               />
                           </div>
 
-                          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
-                              <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm space-y-5">
+                              <h5 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                   <User className="w-4 h-4"/> Profile Details
                               </h5>
                               <div className="grid grid-cols-2 gap-4 pb-4">
-                                  <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Phone</p><p className="font-bold text-slate-800">{user.phone || "—"}</p></div>
-                                  <div><p className="text-xs text-slate-400 font-bold uppercase mb-1">Institution</p><p className="font-bold text-slate-800">{user.institution || "—"}</p></div>
+                                  <div><p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase mb-1">Phone</p><p className="font-bold text-slate-800 dark:text-slate-100">{user.phone || "—"}</p></div>
+                                  <div><p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase mb-1">Institution</p><p className="font-bold text-slate-800 dark:text-slate-100">{user.institution || "—"}</p></div>
                               </div>
                           </div>
                       </div>
@@ -341,11 +341,11 @@ export default function UserDetailView({
                       {/* RIGHT */}
                       <div className="md:col-span-5 space-y-6">
                           <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl">
-                              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Security & Access</h5>
+                              <h5 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Security & Access</h5>
                               <div className="space-y-3">
                                 <button onClick={() => onSendReset(user.email)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all text-left group">
                                     <KeyRound className="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors"/>
-                                    <div><p className="text-sm font-bold">Reset Password</p><p className="text-[10px] text-slate-400">Send recovery email</p></div>
+                                    <div><p className="text-sm font-bold">Reset Password</p><p className="text-[10px] text-slate-400 dark:text-slate-500">Send recovery email</p></div>
                                 </button>
                                 <button onClick={() => onDeleteUser(user.id)} className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-red-900/40 transition-all text-left group">
                                     <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-200 transition-colors"/>
@@ -362,21 +362,21 @@ export default function UserDetailView({
                   <div className="animate-in fade-in space-y-8">
                       
                       {/* 1. MANUAL SUBSCRIPTION CONTROL */}
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
+                      <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
                           <div className="flex justify-between items-center mb-4">
-                              <h5 className="text-sm font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                                  <Activity className="w-4 h-4 text-slate-400"/> Manual Subscription Control
+                              <h5 className="text-sm font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                  <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500"/> Manual Subscription Control
                               </h5>
-                              <span className="text-[10px] bg-white border px-2 py-1 rounded text-slate-400 font-medium">Use for manual upgrades</span>
+                              <span className="text-[10px] bg-white dark:bg-slate-900 border px-2 py-1 rounded text-slate-400 dark:text-slate-500 font-medium">Use for manual upgrades</span>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                               <div>
-                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Plan</label>
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1 block">Plan</label>
                                   <select 
                                       value={subPlan} 
                                       onChange={(e) => setSubPlan(e.target.value)} 
-                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-full text-sm border-slate-300 dark:border-slate-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                                   >
                                       <option value="free">Free</option>
                                       <option value="trial">Trial</option>
@@ -384,11 +384,11 @@ export default function UserDetailView({
                                   </select>
                               </div>
                               <div>
-                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Status</label>
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1 block">Status</label>
                                   <select 
                                       value={subStatus} 
                                       onChange={(e) => setSubStatus(e.target.value)} 
-                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-full text-sm border-slate-300 dark:border-slate-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                                   >
                                       <option value="active">Active</option>
                                       <option value="expired">Expired</option>
@@ -396,12 +396,12 @@ export default function UserDetailView({
                                   </select>
                               </div>
                               <div>
-                                  <label className="text-xs font-bold text-slate-500 mb-1 block">Expiry Date</label>
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1 block">Expiry Date</label>
                                   <input 
                                       type="date" 
                                       value={subExpiry} 
                                       onChange={(e) => setSubExpiry(e.target.value)} 
-                                      className="w-full text-sm border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-full text-sm border-slate-300 dark:border-slate-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                                   />
                               </div>
                               <button 
@@ -415,9 +415,9 @@ export default function UserDetailView({
                       </div>
 
                       {/* 2. TRANSACTION TABLE */}
-                      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                           <table className="w-full text-sm text-left">
-                              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-xs">
+                              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800 uppercase text-xs">
                                   <tr>
                                       <th className="px-6 py-4">Date</th>
                                       <th className="px-6 py-4">Transaction Details</th>
@@ -428,19 +428,19 @@ export default function UserDetailView({
                               </thead>
                               <tbody className="divide-y divide-slate-100">
                                   {transactions.length === 0 ? (
-                                      <tr><td colSpan={5} className="p-8 text-center text-slate-400 italic">No transactions found.</td></tr>
+                                      <tr><td colSpan={5} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">No transactions found.</td></tr>
                                   ) : (
                                       transactions.map(t => (
-                                          <tr key={t.id} className="hover:bg-slate-50">
-                                              <td className="px-6 py-4 text-slate-600">{new Date(t.created_at).toLocaleDateString()}</td>
+                                          <tr key={t.id} className="hover:bg-slate-50 dark:bg-slate-800/50">
+                                              <td className="px-6 py-4 text-slate-600 dark:text-slate-400 dark:text-slate-500">{new Date(t.created_at).toLocaleDateString()}</td>
                                               <td className="px-6 py-4">
-                                                  <p className="font-bold text-slate-800 capitalize">{t.plan_name}</p>
-                                                  <div className="flex gap-2 text-xs text-slate-500 mt-1">
-                                                      <span className="font-mono bg-slate-100 px-1 rounded">{t.transaction_id}</span>
+                                                  <p className="font-bold text-slate-800 dark:text-slate-100 capitalize">{t.plan_name}</p>
+                                                  <div className="flex gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
+                                                      <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">{t.transaction_id}</span>
                                                       <span className="font-mono">{t.sender_number}</span>
                                                   </div>
                                               </td>
-                                              <td className="px-6 py-4 text-slate-600 font-mono">৳{t.amount}</td>
+                                              <td className="px-6 py-4 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-mono">৳{t.amount}</td>
                                               <td className="px-6 py-4 text-right">
                                                   <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
                                                       t.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :

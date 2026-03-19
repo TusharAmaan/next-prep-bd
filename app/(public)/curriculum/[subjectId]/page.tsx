@@ -23,7 +23,8 @@ import {
   ExternalLink,
   MessageSquare,
   CheckCircle2,
-  Layers
+  Layers,
+  GraduationCap
 } from "lucide-react";
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -34,6 +35,7 @@ export default function SubjectHierarchyPage() {
   const [subject, setSubject] = useState<any>(null);
   const [units, setUnits] = useState<any[]>([]);
   const [relatedBooks, setRelatedBooks] = useState<any[]>([]);
+  const [linkedCourses, setLinkedCourses] = useState<any[]>([]);
   const [otherSubjects, setOtherSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [version, setVersion] = useState<'en' | 'bn'>('bn');
@@ -109,6 +111,18 @@ export default function SubjectHierarchyPage() {
         setOtherSubjects(others || []);
       }
 
+      // 5. Fetch Linked Courses
+      const { data: coursesData } = await supabase
+        .from('lesson_plan_subject_courses')
+        .select(`
+          course_id,
+          courses (*)
+        `)
+        .eq('subject_id', subjectId)
+        .order('order_index');
+      
+      setLinkedCourses(coursesData?.map(item => item.courses) || []);
+
     } catch (error) {
       console.error("Error fetching subject details:", error);
     } finally {
@@ -131,8 +145,8 @@ export default function SubjectHierarchyPage() {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('feedbacks').insert([{
-         role: 'student', // Assuming general public feedback aligns with student role logic
-         full_name: feedbackEmail ? `Guest (${feedbackEmail})` : 'Anonymous Curriculum User',
+         role: 'student',
+         full_name: feedbackEmail || 'Anonymous', // Reusing email field as name now
          category: 'Curriculum query',
          message: `[Subject: ${subject?.title} (${subject?.groups?.title})]\n${feedbackMessage}`,
          status: 'new'
@@ -141,7 +155,7 @@ export default function SubjectHierarchyPage() {
       if (error) throw error;
       toast.success("Message sent! Our admins will review it soon.");
       setFeedbackMessage('');
-      setFeedbackEmail('');
+      setFeedbackEmail(''); // This is now 'Name'
     } catch (error) {
        toast.error("Failed to send message. Please try again.");
     } finally {
@@ -246,7 +260,51 @@ export default function SubjectHierarchyPage() {
                     <p className="text-lg font-black text-white">{subject?.view_count || 0}</p>
                  </div>
               </div>
-           </div>
+
+              {/* LINKED COURSES SECTION */}
+              {linkedCourses.length > 0 && (
+                <div className="space-y-6 pt-6 border-t border-slate-800">
+                   <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                         <GraduationCap className="w-6 h-6 text-indigo-400" /> Subject Specific Courses
+                      </h3>
+                      <Link href="/courses" className="text-xs font-bold text-indigo-400 hover:text-white transition-colors">Explore All</Link>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {linkedCourses.map(course => (
+                        <Link 
+                          key={course.id} 
+                          href={`/courses/${course.slug}`}
+                          className="group relative bg-slate-800/20 border border-slate-700/50 rounded-2xl p-6 hover:border-indigo-500/50 hover:bg-slate-800/40 transition-all overflow-hidden"
+                        >
+                           <div className="relative z-10 flex items-start gap-4">
+                              <div className="w-16 h-16 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center group-hover:border-indigo-500 transition-colors overflow-hidden">
+                                 {course.thumbnail_url ? (
+                                   <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                                 ) : (
+                                   <GraduationCap className="w-8 h-8 text-indigo-500" />
+                                 )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <h4 className="text-lg font-black text-white group-hover:text-indigo-300 transition-colors truncate">{course.title}</h4>
+                                 <p className="text-xs text-slate-500 mt-1 line-clamp-1">{course.instructor_name || 'NextPrep Expert'}</p>
+                                 <div className="flex items-center gap-3 mt-3">
+                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-1 rounded">
+                                       {course.price_type === 'free' ? 'Free Course' : `$${course.price}`}
+                                    </span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                       <Users className="w-3 h-3"/> 2.4k+
+                                    </span>
+                                 </div>
+                              </div>
+                           </div>
+                           <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-indigo-500 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
+                        </Link>
+                      ))}
+                   </div>
+                </div>
+              )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -397,6 +455,26 @@ export default function SubjectHierarchyPage() {
                 </div>
              </div>
 
+             {/* Sidebar Course Feature */}
+             {linkedCourses.length > 0 && (
+               <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                  <div className="relative z-10">
+                     <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white mb-4">
+                        <GraduationCap className="w-6 h-6" />
+                     </div>
+                     <h3 className="text-lg font-black text-white leading-tight mb-2">Advance your skills with {linkedCourses[0].title}</h3>
+                     <p className="text-indigo-100 text-xs font-medium mb-6">Gain mastery in {subject?.title} with our professional curated course.</p>
+                     <Link 
+                        href={`/courses/${linkedCourses[0].slug}`}
+                        className="inline-flex items-center gap-2 bg-white text-indigo-600 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95"
+                     >
+                        Enroll Now <ArrowRight className="w-4 h-4" />
+                     </Link>
+                  </div>
+               </div>
+             )}
+
              {/* Other Subjects in Group */}
              {otherSubjects.length > 0 && (
                <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-6 shadow-xl">
@@ -429,7 +507,7 @@ export default function SubjectHierarchyPage() {
                      value={feedbackEmail}
                      onChange={(e) => setFeedbackEmail(e.target.value)}
                      className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-500" 
-                     placeholder="Your Contact Email (Optional)" 
+                     placeholder="Your Name / Student ID" 
                    />
                    <textarea 
                      required

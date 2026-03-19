@@ -74,7 +74,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({ itemType, itemId, metad
     }
   };
 
-  if (loading) return <div className="w-5 h-5 animate-pulse bg-slate-100 rounded-full" />;
+  if (loading) return <div className="w-5 h-5 animate-pulse bg-slate-100 dark:bg-slate-800 rounded-full" />;
 
   return (
     <button 
@@ -82,7 +82,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({ itemType, itemId, metad
       className={`p-2 rounded-full transition-all duration-300 ${
         isBookmarked 
           ? 'bg-indigo-600 text-white shadow-lg' 
-          : 'bg-white/80 backdrop-blur-sm text-slate-400 hover:text-indigo-600 border border-slate-100'
+          : 'bg-white dark:bg-slate-900/80 backdrop-blur-sm text-slate-400 dark:text-slate-500 hover:text-indigo-600 border border-slate-100 dark:border-slate-800'
       }`}
       title={isBookmarked ? "Remove from Library" : "Save to Library"}
     >

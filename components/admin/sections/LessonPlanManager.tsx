@@ -17,7 +17,8 @@ import {
   HelpCircle,
   Copy,
   Globe,
-  Download
+  Download,
+  GraduationCap
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import { toast } from "sonner";
@@ -104,6 +105,12 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
   const [books, setBooks] = useState<any[]>([]);
   const [isBooksLoading, setIsBooksLoading] = useState(false);
   const [editingBook, setEditingBook] = useState<any>(null);
+
+  // Related Courses Modal
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [linkedCourses, setLinkedCourses] = useState<any[]>([]);
+  const [isCoursesLoading, setIsCoursesLoading] = useState(false);
+  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
 
   // Version filter
   const [versionFilter, setVersionFilter] = useState<'en' | 'bn'>('bn');
@@ -443,20 +450,83 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
     }
   };
 
+  // --- Handlers for Courses ---
+  const fetchLinkedCourses = useCallback(async () => {
+    if (!selectedSubject) return;
+    setIsCoursesLoading(true);
+    const { data } = await supabase
+      .from('lesson_plan_subject_courses')
+      .select('*, courses(*)')
+      .eq('subject_id', selectedSubject.id)
+      .order('order_index');
+    setLinkedCourses(data || []);
+    setIsCoursesLoading(false);
+  }, [selectedSubject]);
+
+  const fetchAvailableCourses = async () => {
+    const { data } = await supabase.from('courses').select('id, title, instructor_name').eq('is_published', true);
+    setAvailableCourses(data || []);
+  };
+
+  useEffect(() => {
+    if (isCourseModalOpen) {
+      fetchLinkedCourses();
+      fetchAvailableCourses();
+    }
+  }, [isCourseModalOpen, fetchLinkedCourses]);
+
+  const handleLinkCourse = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const courseId = formData.get('course_id') as string;
+    const orderIndex = parseInt(formData.get('order_index') as string || '0');
+
+    if (!courseId) return toast.error("Select a course");
+
+    try {
+      const { error } = await supabase
+        .from('lesson_plan_subject_courses')
+        .insert([{ 
+           subject_id: selectedSubject.id, 
+           course_id: Number(courseId), 
+           order_index: orderIndex 
+        }]);
+      
+      if (error) {
+        if (error.code === '23505') throw new Error("Course already linked to this subject");
+        throw error;
+      }
+      toast.success("Course linked successfully");
+      fetchLinkedCourses();
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to link course");
+    }
+  };
+
+  const handleUnlinkCourse = async (id: number) => {
+    if (!confirm("Unlink this course?")) return;
+    const { error } = await supabase.from('lesson_plan_subject_courses').delete().eq('id', id);
+    if (!error) {
+      toast.success("Course unlinked");
+      fetchLinkedCourses();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-indigo-600" />
             Lesson Plan Explorer
           </h2>
-          <p className="text-sm text-slate-500 mt-1">Manage curriculum hierarchy and content</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Manage curriculum hierarchy and content</p>
         </div>
         
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
           <select 
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
             value={selectedSegmentId}
             onChange={(e) => {
               setSelectedSegmentId(e.target.value);
@@ -471,7 +541,7 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
           </select>
 
           <select 
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
             value={selectedGroupId}
             onChange={(e) => {
               setSelectedGroupId(e.target.value);
@@ -485,7 +555,7 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
           </select>
 
           <select 
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+            className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
             value={selectedSubject?.id || ''}
             onChange={(e) => {
               const sub = subjects.find(s => s.id.toString() === e.target.value);
@@ -499,16 +569,16 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
             ))}
           </select>
 
-          <div className="flex p-1 bg-slate-100 rounded-xl">
+          <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
              <button 
                 onClick={() => setVersionFilter('bn')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${versionFilter === 'bn' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${versionFilter === 'bn' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
              >
                 BN
              </button>
              <button 
                 onClick={() => setVersionFilter('en')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${versionFilter === 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${versionFilter === 'en' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
              >
                 EN
              </button>
@@ -517,28 +587,34 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       </div>
 
       {!selectedSubject ? (
-        <div className="bg-white rounded-3xl p-20 text-center border border-dashed border-slate-200">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-20 text-center border border-dashed border-slate-200 dark:border-slate-700">
           <Book className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-slate-900">Get Started</h3>
-          <p className="text-slate-500 mt-2 max-w-sm mx-auto">Select a subject from the list to start building or managing its lesson plan.</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Get Started</h3>
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2 max-w-sm mx-auto">Select a subject from the list to start building or managing its lesson plan.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-wrap gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50/50 flex-wrap gap-4">
             <div>
-               <h3 className="text-lg font-bold text-slate-900">{selectedSubject.title} Planning</h3>
-               <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">{versionFilter === 'en' ? 'English' : 'Bengali'} Version</p>
+               <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedSubject.title} Planning</h3>
+               <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest">{versionFilter === 'en' ? 'English' : 'Bengali'} Version</p>
             </div>
             <div className="flex gap-2">
               <button 
                 onClick={() => { setEditingBook(null); setIsBookModalOpen(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all text-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:bg-slate-700 transition-all text-nowrap"
               >
                 <Book className="w-4 h-4" /> RELATED BOOKS
               </button>
               <button 
+                onClick={() => { setIsCourseModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-xl text-sm font-bold hover:bg-indigo-100 dark:bg-indigo-900/50 transition-all text-nowrap"
+              >
+                <GraduationCap className="w-4 h-4" /> RELATED COURSES
+              </button>
+              <button 
                 onClick={() => { setIsCloneModalOpen(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all text-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:bg-slate-700 transition-all text-nowrap"
               >
                 <Download className="w-4 h-4" /> CLONE INDEX
               </button>
@@ -553,18 +629,18 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
 
           <div className="divide-y divide-slate-50">
             {units.length === 0 && (
-              <div className="p-12 text-center text-slate-400 font-medium">No units found in this version.</div>
+              <div className="p-12 text-center text-slate-400 dark:text-slate-500 font-medium">No units found in this version.</div>
             )}
             
             {units.map((unit) => (
               <div key={unit.id} className="group/unit">
                 {/* Unit Header */}
-                <div className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                <div className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:bg-slate-800/50 transition-all">
                   <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => toggleUnit(unit.id)}>
-                    {expandedUnits[unit.id] ? <ChevronDown className="w-5 h-5 text-indigo-600" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedUnits[unit.id] ? <ChevronDown className="w-5 h-5 text-indigo-600" /> : <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
                     <div className="flex items-center gap-3">
                        <span className="w-6 h-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black">{unit.order_index}</span>
-                       <h4 className="font-bold text-slate-900">{unit.title}</h4>
+                       <h4 className="font-bold text-slate-900 dark:text-white">{unit.title}</h4>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover/unit:opacity-100 transition-all">
@@ -582,13 +658,13 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                     </button>
                     <button 
                       onClick={() => { setEditingUnit(unit); setIsUnitModalOpen(true); }}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:bg-slate-800/50 rounded-lg transition-all"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => handleDeleteUnit(unit.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -597,17 +673,17 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
 
                 {/* Lessons */}
                 {expandedUnits[unit.id] && (
-                  <div className="bg-slate-50/30 pl-12 pr-6 py-2 space-y-2">
+                  <div className="bg-slate-50 dark:bg-slate-800/50/30 pl-12 pr-6 py-2 space-y-2">
                     {unit.lesson_plan_lessons?.length === 0 && (
                       <div className="py-4 text-xs font-bold text-slate-300 uppercase tracking-widest text-center">No lessons added</div>
                     )}
                     {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((lesson: any) => (
-                      <div key={lesson.id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden group/lesson">
+                      <div key={lesson.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden group/lesson">
                         <div className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/20 transition-all">
                           <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => toggleLesson(lesson.id)}>
                              {expandedLessons[lesson.id] ? <ChevronDown className="w-4 h-4 text-indigo-500" /> : <ChevronRight className="w-4 h-4 text-slate-300" />}
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Lesson {lesson.order_index}:</span>
-                             <h5 className="font-bold text-slate-800 text-sm">{lesson.title}</h5>
+                             <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tight">Lesson {lesson.order_index}:</span>
+                             <h5 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{lesson.title}</h5>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover/lesson:opacity-100 transition-all">
                              <button 
@@ -618,13 +694,13 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                              </button>
                              <button 
                                 onClick={() => { setEditingLesson(lesson); setIsLessonModalOpen(true); }}
-                                className="p-1 text-slate-400 hover:text-indigo-600 rounded-md"
+                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 rounded-md"
                              >
                                 <Edit className="w-3.5 h-3.5" />
                              </button>
                              <button 
                                 onClick={() => handleDeleteLesson(lesson.id)}
-                                className="p-1 text-slate-400 hover:text-red-500 rounded-md"
+                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded-md"
                              >
                                 <Trash2 className="w-3.5 h-3.5" />
                              </button>
@@ -638,24 +714,24 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                                 <p className="text-[10px] font-bold text-slate-300 uppercase w-full text-center py-2">No components added yet</p>
                              )}
                              {lesson.lesson_plan_contents?.sort((a: any, b: any) => a.order_index - b.order_index).map((content: any) => (
-                               <div key={content.id} className="flex-1 min-w-[200px] bg-white border border-slate-200 p-3 rounded-xl hover:border-indigo-300 transition-all relative group/item shadow-sm">
+                               <div key={content.id} className="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl hover:border-indigo-300 transition-all relative group/item shadow-sm">
                                   <div className="flex items-center gap-3">
                                       {content.type === 'passage' ? <FileText className="w-4 h-4 text-blue-500" /> : (content.type === 'exercise' ? <HelpCircle className="w-4 h-4 text-orange-500" /> : <LinkIcon className="w-4 h-4 text-purple-500" />)}
                                       <div className="min-w-0 flex-1">
-                                         <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{content.type}</p>
-                                         <p className="text-xs font-bold text-slate-800 truncate">{content.title}</p>
+                                         <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase leading-none mb-1">{content.type}</p>
+                                         <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{content.title}</p>
                                       </div>
                                   </div>
-                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover/item:opacity-100 transition-all bg-white/90 backdrop-blur rounded p-1 shadow-sm border border-slate-100">
+                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover/item:opacity-100 transition-all bg-white dark:bg-slate-900/90 backdrop-blur rounded p-1 shadow-sm border border-slate-100 dark:border-slate-800">
                                      <button 
                                        onClick={() => { setEditingContent(content); setContentBody(content.content_body || ''); setIsContentModalOpen(true); }}
-                                       className="p-1 text-slate-500 hover:text-indigo-600"
+                                       className="p-1 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-indigo-600"
                                      >
                                         <Edit className="w-3.5 h-3.5" />
                                      </button>
                                      <button 
                                        onClick={() => handleDeleteContent(content.id)}
-                                       className="p-1 text-slate-500 hover:text-red-500"
+                                       className="p-1 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500"
                                      >
                                         <Trash2 className="w-3.5 h-3.5" />
                                      </button>
@@ -679,15 +755,15 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Unit Modal */}
       {isUnitModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-6">{editingUnit ? 'Edit Unit' : 'New Unit'}</h3>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-6">{editingUnit ? 'Edit Unit' : 'New Unit'}</h3>
             <form onSubmit={handleSaveUnit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Title</label>
                 <input 
                   name="title" 
                   defaultValue={editingUnit?.title} 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
                   placeholder="e.g. Unit 1: Introduction"
                   required 
                 />
@@ -698,12 +774,12 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                   name="order_index" 
                   type="number"
                   defaultValue={editingUnit?.order_index || 0} 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
                   required 
                 />
               </div>
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsUnitModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-xs">Cancel</button>
+                <button type="button" onClick={() => setIsUnitModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs">Cancel</button>
                 <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Save</button>
               </div>
             </form>
@@ -714,16 +790,16 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Lesson Modal */}
       {isLessonModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-6">{editingLesson ? 'Edit Lesson' : 'New Lesson'}</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Under Unit: {parentUnit?.title || 'Current'}</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-6">{editingLesson ? 'Edit Lesson' : 'New Lesson'}</h3>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Under Unit: {parentUnit?.title || 'Current'}</p>
             <form onSubmit={handleSaveLesson} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Title</label>
                 <input 
                   name="title" 
                   defaultValue={editingLesson?.title} 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
                   required 
                 />
               </div>
@@ -733,12 +809,12 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                   name="order_index" 
                   type="number"
                   defaultValue={editingLesson?.order_index || 0} 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
                   required 
                 />
               </div>
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsLessonModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-xs">Cancel</button>
+                <button type="button" onClick={() => setIsLessonModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs">Cancel</button>
                 <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Save</button>
               </div>
             </form>
@@ -749,42 +825,42 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Related Books Modal */}
       {isBookModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-6 shrink-0">
                <div>
-                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Related Books</h3>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subject: {selectedSubject?.title}</p>
+                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Related Books</h3>
+                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Subject: {selectedSubject?.title}</p>
                </div>
-               <button onClick={() => { setIsBookModalOpen(false); setEditingBook(null); }} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-900"><X className="w-5 h-5" /></button>
+               <button onClick={() => { setIsBookModalOpen(false); setEditingBook(null); }} className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:text-white"><X className="w-5 h-5" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-6">
               {/* Form */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">{editingBook ? 'Edit Book' : 'Add New Book link'}</h4>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">{editingBook ? 'Edit Book' : 'Add New Book link'}</h4>
                 <form onSubmit={handleSaveBook} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Title *</label>
-                      <input name="title" defaultValue={editingBook?.title || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 font-bold" placeholder="e.g. HSC Physics 1st Paper" required />
+                      <input name="title" defaultValue={editingBook?.title || ''} className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-indigo-500 font-bold" placeholder="e.g. HSC Physics 1st Paper" required />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Subtitle / Type</label>
-                      <input name="subtitle" defaultValue={editingBook?.subtitle || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="e.g. NCTB BOARD TEXTBOOK" />
+                      <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Subtitle / Type</label>
+                      <input name="subtitle" defaultValue={editingBook?.subtitle || ''} className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-indigo-500" placeholder="e.g. NCTB BOARD TEXTBOOK" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">URL Link</label>
-                      <input name="url" defaultValue={editingBook?.url || ''} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="https://" />
+                      <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">URL Link</label>
+                      <input name="url" defaultValue={editingBook?.url || ''} className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-indigo-500" placeholder="https://" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Order Index</label>
-                      <input name="order_index" type="number" defaultValue={editingBook?.order_index || 0} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500" />
+                      <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Order Index</label>
+                      <input name="order_index" type="number" defaultValue={editingBook?.order_index || 0} className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-indigo-500" />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
-                    {editingBook && <button type="button" onClick={() => setEditingBook(null)} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-lg font-bold text-xs">Cancel Edit</button>}
+                    {editingBook && <button type="button" onClick={() => setEditingBook(null)} className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-lg font-bold text-xs">Cancel Edit</button>}
                     <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs">{editingBook ? 'Save Changes' : 'Add Book'}</button>
                   </div>
                 </form>
@@ -792,23 +868,23 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
 
               {/* List */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Current Books Linked ({books.length})</h4>
-                {isBooksLoading ? <div className="text-center text-slate-400 py-4 text-xs font-bold">Loading...</div> : null}
-                {books.length === 0 && !isBooksLoading ? <div className="text-center text-slate-400 py-8 bg-white border border-dashed border-slate-200 rounded-2xl text-sm font-bold">No books linked yet</div> : null}
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest">Current Books Linked ({books.length})</h4>
+                {isBooksLoading ? <div className="text-center text-slate-400 dark:text-slate-500 py-4 text-xs font-bold">Loading...</div> : null}
+                {books.length === 0 && !isBooksLoading ? <div className="text-center text-slate-400 dark:text-slate-500 py-8 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold">No books linked yet</div> : null}
                 {books.map(book => (
-                  <div key={book.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-200 transition-all shadow-sm">
+                  <div key={book.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-indigo-200 transition-all shadow-sm">
                     <div className="flex items-center gap-3 overflow-hidden">
                        <div className="w-8 h-8 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                          <Book className="w-4 h-4"/>
                        </div>
                        <div className="min-w-0">
-                         <p className="font-bold text-sm text-slate-900 truncate">{book.title}</p>
-                         {book.subtitle && <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold truncate">{book.subtitle}</p>}
+                         <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{book.title}</p>
+                         {book.subtitle && <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold truncate">{book.subtitle}</p>}
                        </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <button onClick={() => setEditingBook(book)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-md transition-colors"><Edit className="w-4 h-4"/></button>
-                      <button onClick={() => handleDeleteBook(book.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"><Trash2 className="w-4 h-4"/></button>
+                      <button onClick={() => setEditingBook(book)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:bg-slate-800/50 rounded-md transition-colors"><Edit className="w-4 h-4"/></button>
+                      <button onClick={() => handleDeleteBook(book.id)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"><Trash2 className="w-4 h-4"/></button>
                     </div>
                   </div>
                 ))}
@@ -821,13 +897,13 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Content Modal */}
       {isContentModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-10 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col my-auto h-auto max-h-[90vh]">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col my-auto h-auto max-h-[90vh]">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
                <div>
-                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{editingContent ? 'Edit Content' : 'New Component'}</h3>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lesson: {parentLesson?.title || 'Current'}</p>
+                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingContent ? 'Edit Content' : 'New Component'}</h3>
+                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Lesson: {parentLesson?.title || 'Current'}</p>
                </div>
-               <button onClick={() => setIsContentModalOpen(false)} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-900"><X className="w-6 h-6" /></button>
+               <button onClick={() => setIsContentModalOpen(false)} className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:text-white"><X className="w-6 h-6" /></button>
             </div>
             
             <form onSubmit={handleSaveContent} className="p-8 space-y-6 overflow-y-auto">
@@ -837,7 +913,7 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                    <input 
                      name="title" 
                      defaultValue={editingContent?.title} 
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
+                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
                      required 
                    />
                  </div>
@@ -846,7 +922,7 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                    <select 
                      name="type" 
                      defaultValue={editingContent?.type || 'passage'}
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
                    >
                       <option value="passage">Passage/Content</option>
                       <option value="exercise">Exercise/Question</option>
@@ -872,14 +948,14 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                     name="order_index" 
                     type="number"
                     defaultValue={editingContent?.order_index || 0} 
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm" 
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm" 
                     required 
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-6 border-t border-slate-100">
-                <button type="button" onClick={() => setIsContentModalOpen(false)} className="px-8 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-xs">Cancel</button>
+              <div className="flex gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onClick={() => setIsContentModalOpen(false)} className="px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs">Cancel</button>
                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-indigo-100 flex items-center justify-center gap-2">
                    <Save className="w-4 h-4" /> SAVE COMPONENT
                 </button>
@@ -892,14 +968,14 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
       {/* Clone Structure Modal */}
       {isCloneModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-4">Clone Structure</h3>
-            <p className="text-xs font-medium text-slate-500 mb-6">Import the Units and Lessons index from another subject into <strong>{selectedSubject?.title}</strong> ({versionFilter.toUpperCase()}). Contents inside lessons will not be copied.</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4">Clone Structure</h3>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-6">Import the Units and Lessons index from another subject into <strong>{selectedSubject?.title}</strong> ({versionFilter.toUpperCase()}). Contents inside lessons will not be copied.</p>
             <form onSubmit={handleCloneStructure} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Source Subject</label>
                 <select 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
                   value={cloneSourceId}
                   onChange={(e) => setCloneSourceId(e.target.value)}
                   required
@@ -912,11 +988,80 @@ export default function LessonPlanManager({ subjects: initialSubjects }: LessonP
                    ))}
                 </select>
               </div>
-              <div className="flex gap-4 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setIsCloneModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-xs">Cancel</button>
+              <div className="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onClick={() => setIsCloneModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black uppercase text-xs">Cancel</button>
                 <button type="submit" disabled={!cloneSourceId} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100 disabled:opacity-50">Clone Index</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Related Courses Modal */}
+      {isCourseModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] flex flex-col border border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+               <div>
+                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Related Courses</h3>
+                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Subject: {selectedSubject?.title}</p>
+               </div>
+               <button onClick={() => { setIsCourseModalOpen(false); }} className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:text-white"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+              {/* Link Form */}
+              <div className="bg-indigo-50/30 dark:bg-indigo-950/20 p-5 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/30">
+                <h4 className="text-xs font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-4">Link Expert Course</h4>
+                <form onSubmit={handleLinkCourse} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Select Published Course *</label>
+                      <select name="course_id" className="w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" required>
+                         <option value="">-- Select Course --</option>
+                         {availableCourses.map(c => (
+                           <option key={c.id} value={c.id}>{c.title} ({c.instructor_name})</option>
+                         ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Display Order</label>
+                      <input name="order_index" type="number" defaultValue={0} className="w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <button type="submit" className="w-full md:w-auto px-10 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">Link Course</button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Linked List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Currently Linked Courses ({linkedCourses.length})</h4>
+                {isCoursesLoading ? <div className="text-center text-slate-400 py-10 text-xs font-bold bg-slate-50 dark:bg-slate-800/50 animate-pulse rounded-2xl">Loading courses...</div> : null}
+                {linkedCourses.length === 0 && !isCoursesLoading ? <div className="text-center text-slate-400 py-12 bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold uppercase tracking-widest">No expert courses linked to this subject.</div> : null}
+                {linkedCourses.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-indigo-300 transition-all shadow-sm group">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600">
+                          <GraduationCap className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.courses?.title}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{item.courses?.instructor_name} • Order: {item.order_index}</p>
+                       </div>
+                    </div>
+                    <button onClick={() => handleUnlinkCourse(item.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                       <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+               <button onClick={() => setIsCourseModalOpen(false)} className="px-10 py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all">Close</button>
+            </div>
           </div>
         </div>
       )}

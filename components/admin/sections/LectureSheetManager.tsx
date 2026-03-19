@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
 import { 
   FileText, 
   MessageSquare, 
@@ -19,8 +20,38 @@ import {
   X,
   Upload,
   Link as LinkIcon,
-  Edit
+  Edit,
+  Globe,
+  Lock
 } from "lucide-react";
+
+const slugify = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+// --- Custom Modal Component (Internal) ---
+const CustomConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", type = "danger" }: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in-95">
+        <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-6 ${type === 'danger' ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
+           <AlertCircle size={28} />
+        </div>
+        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">{title}</h3>
+        <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-8 text-sm font-medium leading-relaxed">{message}</p>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 px-6 py-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all">CANCEL</button>
+          <button onClick={onConfirm} className={`flex-1 px-6 py-3.5 ${type === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-100' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'} text-white rounded-2xl text-sm font-black transition-all shadow-lg`}>{confirmText}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface LectureSheetManagerProps {
   segments: any[];
@@ -60,6 +91,12 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const [targetUserEmail, setTargetUserEmail] = useState('');
   const [grantedUsers, setGrantedUsers] = useState<any[]>([]);
   const [isSearchingUser, setIsSearchingUser] = useState(false);
+
+  // Custom UI States
+  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void, type: 'danger' | 'primary'}>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'danger'
+  });
+  const [promptValue, setPromptValue] = useState('');
 
   // Fetch Hierarchy Helpers
   const fetchLocalGroups = async (segId: string) => {
@@ -134,14 +171,24 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   };
 
   const handleDeleteSheet = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lecture sheet?")) return;
-    try {
-      const { error } = await supabase.from('lecture_sheets').delete().eq('id', id);
-      if (error) throw error;
-      fetchData();
-    } catch (err) {
-      console.error("Error deleting sheet:", err);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Sheet?",
+      message: "This action cannot be undone. All user access logs for this sheet will also be removed.",
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('lecture_sheets').delete().eq('id', id);
+          if (error) throw error;
+          fetchData();
+          toast.success("Sheet deleted successfully");
+        } catch (err) {
+          console.error("Error deleting sheet:", err);
+          toast.error("Failed to delete sheet");
+        }
+        setConfirmModal(p => ({ ...p, isOpen: false }));
+      }
+    });
   };
 
   const handleOpenAccessModal = async (sheet: any) => {
@@ -245,8 +292,10 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const handleSaveSheet = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const slug = slugify(formData.title);
       const sheetData: any = {
         ...formData,
+        slug,
         is_published: true,
         updated_at: new Date().toISOString()
       };
@@ -257,12 +306,14 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           .update(sheetData)
           .eq('id', editingSheet.id);
         if (error) throw error;
+        toast.success("Sheet updated successfully");
       } else {
         sheetData.created_at = new Date().toISOString();
         const { error } = await supabase
           .from('lecture_sheets')
           .insert([sheetData]);
         if (error) throw error;
+        toast.success("Lecture sheet published successfully");
       }
 
       // If published from a request, update the request status
@@ -275,29 +326,28 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
 
       setIsModalOpen(false);
       fetchData();
-      alert(editingSheet ? "Sheet updated successfully!" : "Lecture sheet published successfully!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving sheet:", err);
-      alert("Failed to save sheet.");
+      toast.error(err.message || "Failed to save sheet.");
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-slate-50 dark:bg-slate-900/50 min-h-screen p-1">
       {/* Header & Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-6 h-6 text-indigo-600" />
             Lecture Sheet System
           </h2>
-          <p className="text-sm text-slate-500 font-medium">Manage student requests and repository</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Manage student requests and repository</p>
         </div>
         
-        <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
           <button 
             onClick={() => setActiveView('requests')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
           >
             <MessageSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Requests {requests.filter(r => r.status === 'pending').length > 0 && (
@@ -308,7 +358,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           </button>
           <button 
             onClick={() => setActiveView('sheets')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
           >
             <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
             All Sheets
@@ -319,19 +369,19 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
       {/* Filters Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
           <input 
             type="text" 
             placeholder="Search by topic, student, or subject..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400 ml-2" />
+          <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-2" />
           <select 
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -361,9 +411,9 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
         <div className="grid grid-cols-1 gap-4">
           {activeView === 'requests' ? (
             requests.length === 0 ? (
-              <div className="bg-white p-12 rounded-3xl border border-dashed border-slate-200 text-center">
+              <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
                 <MessageSquare className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">No requests found yet.</p>
+                <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">No requests found yet.</p>
               </div>
             ) : (
               requests.filter(r => {
@@ -371,7 +421,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
                 return matchesSearch && matchesStatus;
               }).map((req) => (
-                <div key={req.id} className="bg-white border border-slate-100 rounded-2xl p-6 hover:shadow-lg transition-all group">
+                <div key={req.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all group">
                   <div className="flex flex-col md:flex-row justify-between gap-6">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
@@ -379,32 +429,32 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                           req.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                           req.status === 'taking_time' ? 'bg-indigo-100 text-indigo-700' :
                           req.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                          'bg-slate-100 text-slate-700'
+                          'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                         }`}>
                           {req.status}
                         </span>
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {new Date(req.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       
-                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
                         {req.topic}
                       </h3>
                       
-                      <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
-                        <span className="bg-slate-50 px-2 py-1 rounded-md">{req.segments?.title}</span>
-                        {req.groups?.title && <span className="bg-slate-50 px-2 py-1 rounded-md">{req.groups.title}</span>}
+                      <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                        <span className="bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{req.segments?.title}</span>
+                        {req.groups?.title && <span className="bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{req.groups.title}</span>}
                         <span className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md">{req.subjects?.title}</span>
                       </div>
 
-                      <p className="text-sm text-slate-600 italic">"{req.comment}"</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500 italic">"{req.comment}"</p>
                       
-                      <div className="pt-2 flex items-center gap-4 text-xs font-medium text-slate-400">
+                      <div className="pt-2 flex items-center gap-4 text-xs font-medium text-slate-400 dark:text-slate-500">
                         <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Requested by: {req.profiles?.full_name || 'Unknown User'}</span>
                         {req.user_deadline && (
-                          <span className={`flex items-center gap-1 font-bold ${new Date(req.user_deadline) < new Date() ? 'text-red-500' : 'text-slate-500'}`}>
+                          <span className={`flex items-center gap-1 font-bold ${new Date(req.user_deadline) < new Date() ? 'text-red-500' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
                             <Clock className="w-3 h-3" /> 
                             Student Deadline: {new Date(req.user_deadline).toLocaleDateString()}
                           </span>
@@ -412,7 +462,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                       </div>
                     </div>
 
-                    <div className="md:w-64 flex flex-col gap-2 justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
+                    <div className="md:w-64 flex flex-col gap-2 justify-center border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 md:pl-6">
                       {req.status === 'pending' && (
                         <>
                           <button 
@@ -466,7 +516,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                       {req.status === 'published' && (
                         <div className="flex flex-col items-center text-center py-2">
                           <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" />
-                          <p className="text-xs font-bold text-slate-500 italic">This request is fulfilled</p>
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">This request is fulfilled</p>
                         </div>
                       )}
                     </div>
@@ -477,14 +527,14 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sheets.length === 0 ? (
-                <div className="col-span-full bg-white p-12 rounded-3xl border border-dashed border-slate-200 text-center">
+                <div className="col-span-full bg-white dark:bg-slate-900 p-12 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
                   <FileText className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No lecture sheets published yet.</p>
+                  <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">No lecture sheets published yet.</p>
                 </div>
               ) : (
                 sheets.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase())).map((sheet) => (
-                  <div key={sheet.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all group">
-                    <div className="h-40 bg-slate-100 relative overflow-hidden">
+                  <div key={sheet.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all group">
+                    <div className="h-40 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
                        {sheet.thumbnail_url ? (
                          <img src={sheet.thumbnail_url} alt={sheet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                        ) : (
@@ -493,24 +543,24 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                          </div>
                        )}
                        <div className="absolute top-2 right-2">
-                          <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg backdrop-blur-md bg-white/80 ${sheet.is_published ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg backdrop-blur-md bg-white dark:bg-slate-900/80 ${sheet.is_published ? 'text-emerald-600' : 'text-amber-600'}`}>
                              {sheet.is_published ? 'Published' : 'Draft'}
                           </span>
                        </div>
                     </div>
                     <div className="p-5">
-                       <h3 className="font-bold text-slate-900 mb-2 truncate group-hover:text-indigo-600 transition-colors">
+                       <h3 className="font-bold text-slate-900 dark:text-white mb-2 truncate group-hover:text-indigo-600 transition-colors">
                          {sheet.title}
                        </h3>
                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase">{sheet.subjects?.title}</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 rounded uppercase">{sheet.subjects?.title}</span>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${sheet.access_type === 'public' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50'}`}>
                              {sheet.access_type}
                           </span>
                        </div>
                        <div className="flex items-center justify-between border-t border-slate-50 pt-4 mt-auto">
                            <div className="flex gap-2">
-                              <button onClick={() => window.open(sheet.file_url, '_blank')} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all" title="View File">
+                              <button onClick={() => window.open(sheet.file_url, '_blank')} className="p-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 transition-all" title="View File">
                                  <ExternalLink className="w-4 h-4" />
                               </button>
                               <button 
@@ -540,7 +590,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                                   }); 
                                   setIsModalOpen(true); 
                                 }} 
-                                className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-600 transition-all"
+                                className="p-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 transition-all"
                                 title="Edit Sheet"
                               >
                                  <Edit className="w-4 h-4" />
@@ -565,40 +615,40 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
       {/* MODAL SYSTEM */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+              className="absolute top-6 right-6 p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
 
             <form onSubmit={handleSaveSheet} className="p-8 space-y-6">
               <div className="space-y-1 text-center md:text-left">
-                <h3 className="text-2xl font-black text-slate-900">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   {editingSheet ? 'Edit Lecture Sheet' : selectedRequest ? 'Publish from Request' : 'Create New Lecture Sheet'}
                 </h3>
-                <p className="text-sm text-slate-500 font-medium">Fill in the details for the students</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Fill in the details for the students</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-full space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Sheet Title</label>
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Sheet Title</label>
                   <input 
                     required
                     type="text" 
                     placeholder="Enter descriptive title"
-                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 dark:text-slate-100"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                   />
                 </div>
 
                 <div className="space-y-2 text-left">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Segment</label>
+                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Segment</label>
                    <select 
                      required
-                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 dark:text-slate-100"
                      value={formData.segment_id}
                      onChange={(e) => {
                        const segId = e.target.value;
@@ -613,9 +663,9 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 </div>
 
                 <div className="space-y-2 text-left">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Group (Optional)</label>
+                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Group (Optional)</label>
                    <select 
-                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 dark:text-slate-100"
                      value={formData.group_id}
                      onChange={(e) => {
                        const grpId = e.target.value;
@@ -632,10 +682,10 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 </div>
 
                 <div className="col-span-full md:col-span-1 space-y-2 text-left">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Subject</label>
+                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Subject</label>
                    <select 
                      required
-                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800"
+                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 dark:text-slate-100"
                      value={formData.subject_id}
                      onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
                    >
@@ -647,25 +697,25 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 </div>
 
                 <div className="col-span-full space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">File URL / Link</label>
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">File URL / Link</label>
                   <div className="relative">
-                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
                     <input 
                       required
                       type="url" 
                       placeholder="Google Drive link or PDF URL"
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800"
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800 dark:text-slate-100"
                       value={formData.file_url}
                       onChange={(e) => setFormData({...formData, file_url: e.target.value})}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 pl-1">Ensure the link is accessible and shared with "Anyone with the link"</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 pl-1">Ensure the link is accessible and shared with "Anyone with the link"</p>
                 </div>
 
                 <div className="space-y-2">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Access Type</label>
+                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Access Type</label>
                    <select 
-                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 uppercase text-xs"
+                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-800 dark:text-slate-100 uppercase text-xs"
                      value={formData.access_type}
                      onChange={(e) => setFormData({...formData, access_type: e.target.value})}
                    >
@@ -675,11 +725,11 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Thumbnail (Optional)</label>
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Thumbnail (Optional)</label>
                   <input 
                     type="text" 
                     placeholder="Image URL"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800 dark:text-slate-100"
                     value={formData.thumbnail_url}
                     onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})}
                   />
@@ -690,7 +740,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-8 py-4 bg-slate-50 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all"
+                  className="flex-1 px-8 py-4 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 dark:text-slate-500 rounded-2xl font-black text-sm hover:bg-slate-100 dark:bg-slate-800 transition-all"
                 >
                   CANCEL
                 </button>
@@ -710,23 +760,23 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
       {/* Access Management Modal */}
       {isAccessModalOpen && (
         <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95 border border-slate-100 dark:border-slate-800">
              <div className="flex justify-between items-start mb-6">
                 <div>
-                   <h2 className="text-xl font-black text-slate-900">Manage Manual Access</h2>
-                   <p className="text-xs text-slate-500 font-medium mt-1">{selectedSheetForAccess?.title}</p>
+                   <h2 className="text-xl font-black text-slate-900 dark:text-white">Manage Manual Access</h2>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium mt-1">{selectedSheetForAccess?.title}</p>
                 </div>
                 <button onClick={() => setIsAccessModalOpen(false)} className="text-slate-300 hover:text-red-500 transition-colors"><X className="w-6 h-6" /></button>
              </div>
 
              <div className="space-y-6">
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Grant Access (User Email)</label>
+                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">Grant Access (User Email)</label>
                    <div className="flex gap-2">
                       <input 
                         type="email" 
                         placeholder="student@example.com"
-                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800"
+                        className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 dark:text-white"
                         value={targetUserEmail}
                         onChange={(e) => setTargetUserEmail(e.target.value)}
                       />
@@ -741,16 +791,16 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                 </div>
 
                 <div className="space-y-3">
-                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest pl-1">Users with Access</h3>
+                   <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest pl-1">Users with Access</h3>
                    <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 pr-2">
                       {grantedUsers.length === 0 ? (
-                        <p className="text-center py-8 text-xs text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">No manual access granted yet.</p>
+                        <p className="text-center py-8 text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">No manual access granted yet.</p>
                       ) : (
                         grantedUsers.map(access => (
-                          <div key={access.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl group">
+                          <div key={access.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl group">
                              <div>
-                                <p className="text-sm font-bold text-slate-800">{access.profiles?.full_name}</p>
-                                <p className="text-[10px] text-slate-500">{access.profiles?.email}</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{access.profiles?.full_name}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">{access.profiles?.email}</p>
                              </div>
                              <button 
                                onClick={() => handleRevokeAccess(access.id)}
@@ -766,7 +816,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
 
                 <button 
                   onClick={() => setIsAccessModalOpen(false)}
-                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                  className="w-full py-4 bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
                 >
                    Close
                 </button>
@@ -774,6 +824,16 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           </div>
         </div>
       )}
+
+      {/* Global Confirmation Modal */}
+      <CustomConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(p => ({ ...p, isOpen: false }))}
+        type={confirmModal.type}
+      />
     </div>
   );
 };

@@ -18,8 +18,8 @@ const slugify = (text: string) => {
 };
 
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
-    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
-        <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key === sortKey && currentSort.direction === 'asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key === sortKey && currentSort.direction === 'desc' ? 'text-blue-600' : ''}>▼</span></span></div>
+    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:bg-slate-800 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
+        <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 dark:text-slate-500 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key === sortKey && currentSort.direction === 'asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key === sortKey && currentSort.direction === 'desc' ? 'text-blue-600' : ''}>▼</span></span></div>
     </th>
 );
 
@@ -453,27 +453,27 @@ export default function ContentManager({
                     { val: 'exam_result', label: '🏆 Result' }
                 ]}
             />
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 border-b border-gray-100 tracking-wider">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
+                    <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 dark:text-slate-500 border-b border-gray-100 tracking-wider">
                         <tr>
                             <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
                             {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
                             <SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} />
-                            <th className="px-6 py-4 text-right font-extrabold text-slate-400">ACTIONS</th>
+                            <th className="px-6 py-4 text-right font-extrabold text-slate-400 dark:text-slate-500">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {displayList.length > 0 ? displayList.map(item => (
-                            <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                            <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-bold text-slate-800">{item.title}</div>
-                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">/{item.slug || '-'}</div>
+                                    <div className="font-bold text-slate-800 dark:text-slate-100">{item.title}</div>
+                                    <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">/{item.slug || '-'}</div>
                                     {/* Visual Indicator for Pending Posts (Only visible to Admin who posted it) */}
                                     {item.status === 'pending' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded ml-2">Pending (Yours)</span>}
                                 </td>
-                                {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
-                                <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
+                                {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
+                                <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 text-right flex justify-end gap-2">
                                     {activeTab === 'materials' && (
                                         <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">Likes</button>
@@ -483,7 +483,7 @@ export default function ContentManager({
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={4} className="p-8 text-center text-slate-400">No items found matching your filters.</td></tr>
+                            <tr><td colSpan={4} className="p-8 text-center text-slate-400 dark:text-slate-500">No items found matching your filters.</td></tr>
                         )}
                     </tbody>
                 </table>

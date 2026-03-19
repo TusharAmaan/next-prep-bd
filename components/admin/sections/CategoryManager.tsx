@@ -155,25 +155,25 @@ export default function CategoryManager({
     <div className="animate-fade-in space-y-6">
       
       {/* HEADER TOOLBAR */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col xl:flex-row items-center gap-6 justify-between">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col xl:flex-row items-center gap-6 justify-between">
          
          {/* Search & Filter */}
          <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
             <div className="relative w-full md:w-64">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"/>
                 <input 
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 transition-colors"
                     placeholder="Search categories..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar border-b md:border-b-0 border-slate-100">
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar border-b md:border-b-0 border-slate-100 dark:border-slate-800">
                 {tabs.map(t => (
                     <button 
                         key={t}
                         onClick={() => setActiveFilter(t)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600'}`}
                     >
                         {t === 'resource' ? 'Materials' : (t === 'blog' ? 'Blogs' : (t === 'pdf' ? 'PDFs' : (t === 'video' ? 'Videos' : (t === 'question' ? 'Questions' : t))))}
                     </button>
@@ -183,7 +183,7 @@ export default function CategoryManager({
 
          {/* Actions */}
          <div className="flex gap-2 w-full md:w-auto">
-             <button onClick={() => { fetchCategories(); fetchCounts(); }} className="p-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors" title="Refresh Data">
+             <button onClick={() => { fetchCategories(); fetchCounts(); }} className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 hover:text-indigo-600 transition-colors" title="Refresh Data">
                 <RefreshCw className={`w-4 h-4 ${loadingCounts ? 'animate-spin' : ''}`} />
              </button>
              <button onClick={() => setIsCreateModalOpen(true)} className="flex-1 md:flex-none bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
@@ -194,9 +194,9 @@ export default function CategoryManager({
 
       {/* CATEGORY GRID */}
       {filteredList.length === 0 ? (
-          <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+          <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-600">
               <Filter className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No categories found for this type.</p>
+              <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">No categories found for this type.</p>
           </div>
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -204,7 +204,7 @@ export default function CategoryManager({
                 <div 
                     key={cat.id} 
                     onClick={() => openCategoryDetails(cat)} 
-                    className="bg-white p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group relative flex flex-col justify-between h-32 cursor-pointer"
+                    className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:shadow-md transition-all group relative flex flex-col justify-between h-32 cursor-pointer"
                 >
                     <div className="flex justify-between items-start">
                         <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider ${
@@ -212,7 +212,7 @@ export default function CategoryManager({
                             (cat.type || 'general') === 'ebook' ? 'bg-orange-50 text-orange-600' :
                             (cat.type || 'general') === 'resource' ? 'bg-purple-50 text-purple-600' :
                             (cat.type || 'general') === 'course' ? 'bg-emerald-50 text-emerald-600' :
-                            'bg-slate-100 text-slate-500'
+                            'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500'
                         }`}>
                             {cat.type === 'resource' ? 'Material' : (cat.type === 'blog' ? 'Blog' : (cat.type === 'pdf' ? 'PDF' : (cat.type === 'video' ? 'Video' : (cat.type === 'question' ? 'Question' : cat.type || 'General'))))}
                         </span>
@@ -226,8 +226,8 @@ export default function CategoryManager({
                     </div>
 
                     <div>
-                        <h3 className="font-bold text-slate-800 text-lg truncate" title={cat.name}>{cat.name}</h3>
-                        <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg truncate" title={cat.name}>{cat.name}</h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1 flex items-center gap-1">
                             <Tag className="w-3 h-3" />
                             {loadingCounts ? '...' : (localCounts[cat.id] || 0)} items linked
                         </p>
@@ -240,16 +240,16 @@ export default function CategoryManager({
       {/* --- MODAL: CREATE CATEGORY --- */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
-                <div className="p-5 border-b bg-slate-50 flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-slate-900">Add Category</h3>
-                    <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                <div className="p-5 border-b bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Add Category</h3>
+                    <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:text-slate-500">✕</button>
                 </div>
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Category Type</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase block mb-1">Category Type</label>
                         <select 
-                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
+                            className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
                             value={newCatType} 
                             onChange={e => setNewCatType(e.target.value)}
                         >
@@ -262,12 +262,12 @@ export default function CategoryManager({
                             <option value="course">🎓 Course</option>
                             <option value="news">📰 News</option>
                         </select>
-                        <p className="text-[10px] text-slate-400 mt-1">This ensures the category appears in the correct editor dropdown.</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">This ensures the category appears in the correct editor dropdown.</p>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Name</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase block mb-1">Name</label>
                         <input 
-                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
+                            className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 transition-all" 
                             placeholder="e.g. Mathematics" 
                             value={newCatName} 
                             onChange={e => setNewCatName(e.target.value)} 
@@ -284,47 +284,47 @@ export default function CategoryManager({
       {/* --- MODAL: CATEGORY DETAILS & POSTS (Popup Logic Unchanged) --- */}
       {viewingCategory && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
                 
                 {/* Modal Header */}
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] font-black uppercase bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded">{viewingCategory.type}</span>
-                            <span className="text-xs text-slate-400 font-bold">ID: {viewingCategory.id}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">ID: {viewingCategory.id}</span>
                         </div>
-                        <h3 className="text-2xl font-black text-slate-800">{viewingCategory.name}</h3>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">{viewingCategory.name}</h3>
                     </div>
-                    <button onClick={() => setViewingCategory(null)} className="p-2 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                    <button onClick={() => setViewingCategory(null)} className="p-2 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 transition-colors">
                         <X className="w-5 h-5"/>
                     </button>
                 </div>
 
                 {/* Modal Body */}
-                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-800/50/50">
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-bold text-slate-700 flex items-center gap-2">
-                            Linked Content <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">{totalLinked}</span>
+                        <h4 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            Linked Content <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs px-2 py-0.5 rounded-full">{totalLinked}</span>
                         </h4>
                     </div>
 
                     {postsLoading ? (
-                        <div className="py-12 flex justify-center text-slate-400"><Loader2 className="w-8 h-8 animate-spin"/></div>
+                        <div className="py-12 flex justify-center text-slate-400 dark:text-slate-500"><Loader2 className="w-8 h-8 animate-spin"/></div>
                     ) : linkedPosts.length === 0 ? (
-                        <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
+                        <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
                             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2"/>
-                            <p className="text-slate-500 font-medium">No posts linked to this category yet.</p>
+                            <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">No posts linked to this category yet.</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
                             {linkedPosts.map((post) => (
-                                <div key={post.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 hover:border-indigo-200 transition-colors">
+                                <div key={post.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:border-indigo-200 transition-colors">
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                                         post.type === 'video' ? 'bg-red-50 text-red-500' : 
                                         post.type === 'pdf' ? 'bg-blue-50 text-blue-500' : 
                                         viewingCategory.type === 'course' ? 'bg-emerald-50 text-emerald-600' :
                                         viewingCategory.type === 'ebook' ? 'bg-orange-50 text-orange-600' :
-                                        'bg-slate-100 text-slate-500'
+                                        'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500'
                                     }`}>
                                         {viewingCategory.type === 'course' ? <Briefcase className="w-5 h-5"/> : 
                                          viewingCategory.type === 'ebook' ? <BookOpen className="w-5 h-5"/> : 
@@ -332,14 +332,14 @@ export default function CategoryManager({
                                          <FileText className="w-5 h-5"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h5 className="font-bold text-slate-800 truncate">{post.title || "Untitled"}</h5>
-                                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
+                                        <h5 className="font-bold text-slate-800 dark:text-slate-100 truncate">{post.title || "Untitled"}</h5>
+                                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-slate-500 font-medium">
                                             <span className="uppercase">{viewingCategory.type === 'general' ? post.type : viewingCategory.type}</span>
                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(post.created_at).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                     {(post.content_url || post.pdf_url || post.enrollment_link) && (
-                                        <a href={post.content_url || post.pdf_url || post.enrollment_link} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-600">
+                                        <a href={post.content_url || post.pdf_url || post.enrollment_link} target="_blank" rel="noreferrer" className="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600">
                                             <ExternalLink className="w-4 h-4"/>
                                         </a>
                                     )}
@@ -350,21 +350,21 @@ export default function CategoryManager({
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-4 border-t border-slate-100 bg-white flex justify-between items-center">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center">
                     <button 
                         disabled={postPage === 0}
                         onClick={() => handlePageChange(postPage - 1)}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm disabled:opacity-50 hover:bg-slate-50"
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:bg-slate-800/50"
                     >
                         <ChevronLeft className="w-4 h-4"/> Prev
                     </button>
-                    <span className="text-xs font-bold text-slate-400">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
                         Page {postPage + 1} of {Math.max(1, Math.ceil(totalLinked / POSTS_PER_PAGE))}
                     </span>
                     <button 
                         disabled={(postPage + 1) * POSTS_PER_PAGE >= totalLinked}
                         onClick={() => handlePageChange(postPage + 1)}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm disabled:opacity-50 hover:bg-slate-50"
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:bg-slate-800/50"
                     >
                         Next <ChevronRight className="w-4 h-4"/>
                     </button>

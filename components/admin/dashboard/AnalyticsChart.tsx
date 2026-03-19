@@ -14,13 +14,13 @@ import {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 border border-slate-100 shadow-xl rounded-xl">
-        <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">{label}</p>
+      <div className="bg-white dark:bg-slate-900 p-4 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl">
+        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wider">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 mb-1 last:mb-0">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-sm font-medium text-slate-600 capitalize">{entry.name}:</span>
-            <span className="text-sm font-black text-slate-900">{entry.value}</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 capitalize">{entry.name}:</span>
+            <span className="text-sm font-black text-slate-900 dark:text-white">{entry.value}</span>
           </div>
         ))}
       </div>
@@ -77,35 +77,35 @@ export default function AnalyticsChart() {
           const topCategory = [...data.distribution].sort((a: any, b: any) => b.value - a.value)[0];
           return [
               { label: 'Dominant Type', value: topCategory?.name || 'N/A', color: 'text-blue-600' },
-              { label: 'Diversity', value: `${data.distribution.length} Types`, color: 'text-slate-600' }
+              { label: 'Diversity', value: `${data.distribution.length} Types`, color: 'text-slate-600 dark:text-slate-400 dark:text-slate-500' }
           ];
       }
       return [];
   }, [activeTab, data]);
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col min-h-[450px]">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm h-full flex flex-col min-h-[450px]">
       
       {/* 1. HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 Platform Insights
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wide">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wide">
                     Live
                 </span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">Real-time performance metrics across the system.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Real-time performance metrics across the system.</p>
         </div>
         
         <div className="flex items-center gap-2">
             {/* Time Filter (Visual Only unless backend supports it) */}
-            <div className="hidden md:flex items-center bg-slate-50 rounded-lg p-1 border border-slate-200">
+            <div className="hidden md:flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
                 {['7d', '30d', '90d'].map((range) => (
                     <button
                         key={range}
                         onClick={() => setTimeRange(range)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${timeRange === range ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${timeRange === range ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:text-slate-500'}`}
                     >
                         {range.toUpperCase()}
                     </button>
@@ -113,7 +113,7 @@ export default function AnalyticsChart() {
             </div>
 
             {/* Export Button (Placeholder for functionality) */}
-            <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-200 transition-all" title="Export CSV">
+            <button className="p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-transparent hover:border-slate-200 dark:border-slate-700 transition-all" title="Export CSV">
                 <Download className="w-4 h-4" />
             </button>
         </div>
@@ -121,7 +121,7 @@ export default function AnalyticsChart() {
 
       {/* 2. NAVIGATION TABS & SUMMARY */}
       <div className="space-y-4 mb-6">
-          <div className="flex overflow-x-auto pb-1 gap-1 border-b border-slate-100">
+          <div className="flex overflow-x-auto pb-1 gap-1 border-b border-slate-100 dark:border-slate-800">
             {[
                 { id: 'growth', label: 'Growth Trends', icon: TrendingUp },
                 { id: 'dist', label: 'Content Mix', icon: PieIcon },
@@ -131,7 +131,7 @@ export default function AnalyticsChart() {
                 <button 
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)} 
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-800/50'}`}
                 >
                     <tab.icon className="w-4 h-4" /> {tab.label}
                 </button>
@@ -143,7 +143,7 @@ export default function AnalyticsChart() {
               <div className="flex gap-6 animate-in fade-in slide-in-from-left-2">
                   {summaryStats.map((stat, i) => (
                       <div key={i}>
-                          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{stat.label}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{stat.label}</p>
                           <p className={`text-lg font-black ${stat.color}`}>{stat.value}</p>
                       </div>
                   ))}
@@ -152,9 +152,9 @@ export default function AnalyticsChart() {
       </div>
 
       {/* 3. CHART AREA */}
-      <div className="flex-1 w-full min-h-[300px] relative bg-slate-50/30 rounded-xl border border-slate-100/50 p-2">
+      <div className="flex-1 w-full min-h-[300px] relative bg-slate-50 dark:bg-slate-800/50/30 rounded-xl border border-slate-100 dark:border-slate-800/50 p-2">
         {loading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                 <span className="text-xs font-medium">Crunching numbers...</span>
             </div>

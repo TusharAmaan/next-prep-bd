@@ -35,7 +35,7 @@ const getActivityStyle = (type: string) => {
     case 'news':
       return { icon: <Newspaper className="w-4 h-4" />, bg: 'bg-sky-100', text: 'text-sky-600' };
     default:
-      return { icon: <File className="w-4 h-4" />, bg: 'bg-slate-100', text: 'text-slate-600' };
+      return { icon: <File className="w-4 h-4" />, bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400 dark:text-slate-500' };
   }
 };
 
@@ -46,9 +46,9 @@ interface ActivityFeedProps {
 
 export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-slate-800">Recent Activity</h3>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100">Recent Activity</h3>
         <button 
             onClick={onViewAll} 
             className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
@@ -59,7 +59,7 @@ export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProp
       
       <div className="space-y-6 relative flex-1 overflow-hidden overflow-y-auto pr-2 custom-scrollbar">
         {/* Vertical Line */}
-        <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-slate-100"></div>
+        <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-slate-100 dark:bg-slate-800"></div>
 
         {activities.map((item, i) => {
           const style = getActivityStyle(item.type);
@@ -69,11 +69,11 @@ export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProp
                 {style.icon}
               </div>
               <div className="pt-1">
-                <p className="text-sm font-bold text-slate-700 line-clamp-1">
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 line-clamp-1">
                   {item.title || "Untitled Item"} 
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                   <span className="font-medium text-slate-500 uppercase tracking-wide text-[10px]">{item.action}</span> 
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+                   <span className="font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wide text-[10px]">{item.action}</span> 
                    <span>•</span>
                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeAgo(item.created_at)}</span>
                 </p>
@@ -81,7 +81,7 @@ export default function ActivityFeed({ activities, onViewAll }: ActivityFeedProp
             </div>
           );
         })}
-        {activities.length === 0 && <div className="text-center text-slate-400 text-sm py-4">No recent activity found.</div>}
+        {activities.length === 0 && <div className="text-center text-slate-400 dark:text-slate-500 text-sm py-4">No recent activity found.</div>}
       </div>
     </div>
   );

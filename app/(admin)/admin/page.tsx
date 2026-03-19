@@ -199,7 +199,7 @@ export default function AdminDashboard() {
     if (isLoading && !currentUser) return <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
 
     return (
-        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
+        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
             
             {/* SIDEBAR */}
             <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-2xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-[#0F172A] border-slate-800'}`}>

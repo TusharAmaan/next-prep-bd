@@ -18,21 +18,21 @@ export default function ContentFilterBar({
 }: any) {
 
     return (
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-6 space-y-4">
             
             {/* TOP ROW: Date & Type Filters */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter Content</h3>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Filter Content</h3>
                 
                 <div className="flex flex-wrap gap-2">
                     {/* Date Inputs */}
-                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
-                        <input type="date" className="bg-transparent text-xs font-bold text-slate-600 outline-none px-2" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <input type="date" className="bg-transparent text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 outline-none px-2" value={startDate} onChange={e => setStartDate(e.target.value)} />
                         <span className="text-slate-300 text-[10px] font-bold">TO</span>
-                        <input type="date" className="bg-transparent text-xs font-bold text-slate-600 outline-none px-2" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        <input type="date" className="bg-transparent text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 outline-none px-2" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
 
-                    <select className="bg-slate-50 border border-slate-200 text-xs font-bold rounded-lg px-3 py-2 text-slate-700 outline-none cursor-pointer hover:bg-slate-100" value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
+                    <select className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 outline-none cursor-pointer hover:bg-slate-100 dark:bg-slate-800" value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
                         <option value="all">📅 Any Time</option>
                         <option value="this_month">This Month</option>
                         <option value="last_6_months">Last 6 Months</option>
@@ -69,9 +69,9 @@ export default function ContentFilterBar({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Segment Selector (Always visible if enabled) */}
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Segment</label>
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Segment</label>
                         <select 
-                            className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 transition-colors" 
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 transition-colors" 
                             value={selSeg} 
                             onChange={e => { setSelSeg(e.target.value); onFetchGroups(e.target.value); }}
                         >
@@ -84,15 +84,15 @@ export default function ContentFilterBar({
                     {showHierarchy && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Group</label>
-                                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none disabled:opacity-50" value={selGrp} onChange={e => { setSelGrp(e.target.value); onFetchSubjects(e.target.value); }} disabled={!selSeg}>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Group</label>
+                                <select className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm font-bold outline-none disabled:opacity-50" value={selGrp} onChange={e => { setSelGrp(e.target.value); onFetchSubjects(e.target.value); }} disabled={!selSeg}>
                                     <option value="">All Groups</option>
                                     {groups.map((g: any) => <option key={g.id} value={g.id}>{g.title}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Subject</label>
-                                <select className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm font-bold outline-none disabled:opacity-50" value={selSub} onChange={e => setSelSub(e.target.value)} disabled={!selGrp}>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Subject</label>
+                                <select className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm font-bold outline-none disabled:opacity-50" value={selSub} onChange={e => setSelSub(e.target.value)} disabled={!selGrp}>
                                     <option value="">All Subjects</option>
                                     {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                                 </select>

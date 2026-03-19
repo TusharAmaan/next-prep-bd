@@ -24,12 +24,12 @@ export default function QuickStats() {
     <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden flex flex-col justify-between h-full group">
       
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-40 h-40 bg-white dark:bg-slate-900/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
 
       <div className="relative z-10 flex justify-between items-start">
         <div>
-          <div className="flex items-center gap-1.5 text-indigo-200 text-xs font-bold uppercase tracking-widest mb-2 bg-white/10 w-fit px-2 py-1 rounded-full border border-white/10">
+          <div className="flex items-center gap-1.5 text-indigo-200 text-xs font-bold uppercase tracking-widest mb-2 bg-white dark:bg-slate-900/10 w-fit px-2 py-1 rounded-full border border-white/10">
             <Calendar className="w-3 h-3" /> Today
           </div>
           <h2 className="text-3xl font-black tracking-tight">{dateStr}</h2>
@@ -54,7 +54,7 @@ export default function QuickStats() {
       </div>
 
       <div className="mt-6 relative z-10">
-        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-between group-hover:bg-white/15 transition-colors">
+        <div className="p-3 bg-white dark:bg-slate-900/10 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-between group-hover:bg-white dark:bg-slate-900/15 transition-colors">
             <div className="flex items-center gap-3">
                <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
                  <span className="font-bold text-sm">✓</span>

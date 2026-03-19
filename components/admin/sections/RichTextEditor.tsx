@@ -9,7 +9,7 @@ interface RichTextEditorProps {
 
 export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-300 shadow-sm">
+    <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-600 shadow-sm">
       <Editor
         apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" // Get a free key at tiny.cloud to remove the warning, or leave empty for dev
         value={content}

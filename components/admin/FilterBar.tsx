@@ -10,11 +10,11 @@ export default function FilterBar({ search, setSearch, roleFilter, setRoleFilter
       
       {/* Search Input */}
       <div className="relative flex-1 group">
-         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors">
             <Search className="w-4 h-4" />
          </div>
          <input 
-           className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm" 
+           className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-10 pr-4 py-2.5 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm" 
            placeholder={isUserView ? "Search users by name or email..." : "Search invites by email..."} 
            value={search} 
            onChange={(e) => setSearch(e.target.value)} 
@@ -24,11 +24,11 @@ export default function FilterBar({ search, setSearch, roleFilter, setRoleFilter
       {/* Role Filter - Show this for Active, Pending, and Suspended tabs */}
       {isUserView && (
           <div className="relative min-w-[180px]">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
                   <Filter className="w-3.5 h-3.5" />
               </div>
               <select 
-                className="w-full bg-white border border-slate-200 pl-9 pr-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 uppercase outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 appearance-none cursor-pointer shadow-sm transition-all" 
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-9 pr-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 appearance-none cursor-pointer shadow-sm transition-all" 
                 value={roleFilter} 
                 onChange={(e) => setRoleFilter(e.target.value)}
               >

@@ -51,14 +51,14 @@ export default function HierarchyManager({
   // --- RENDER HELPERS ---
   const Column = ({ title, level, items, selectedId, onSelect, onDelete }: any) => (
     <div 
-        className={`bg-white border rounded-2xl flex flex-col overflow-hidden shadow-sm transition-all duration-200 ${
+        className={`bg-white dark:bg-slate-900 border rounded-2xl flex flex-col overflow-hidden shadow-sm transition-all duration-200 ${
             (level === 'group' && !selectedSegment) || (level === 'subject' && !selectedGroup) 
             ? 'opacity-50 pointer-events-none grayscale' 
             : 'opacity-100'
         }`}
         onClick={() => setActiveLevel(level)}
     >
-        <div className={`p-4 font-bold border-b text-sm uppercase tracking-wider ${activeLevel === level ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 text-slate-500'}`}>
+        <div className={`p-4 font-bold border-b text-sm uppercase tracking-wider ${activeLevel === level ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
             {title}
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1 h-[400px]">
@@ -69,33 +69,33 @@ export default function HierarchyManager({
                     className={`p-3 rounded-xl cursor-pointer flex justify-between items-center text-sm font-medium transition-colors ${
                         selectedId === String(item.id) 
                         ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'text-slate-700 hover:bg-slate-50'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800/50'
                     }`}
                 >
                     <span>{item.title}</span>
                     <button 
                         onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} 
-                        className={`p-1.5 rounded-lg transition-colors ${selectedId === String(item.id) ? 'text-indigo-200 hover:text-white hover:bg-white/20' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+                        className={`p-1.5 rounded-lg transition-colors ${selectedId === String(item.id) ? 'text-indigo-200 hover:text-white hover:bg-white dark:bg-slate-900/20' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 </div>
             ))}
-            {items.length === 0 && <div className="text-center text-xs text-slate-400 py-10">No items yet</div>}
+            {items.length === 0 && <div className="text-center text-xs text-slate-400 dark:text-slate-500 py-10">No items yet</div>}
         </div>
     </div>
   );
 
   return (
     <div className="animate-fade-in h-full flex flex-col">
-        <div className="mb-6 flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div className="mb-6 flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div>
-                <h2 className="text-xl font-black text-slate-800">Hierarchy Manager</h2>
-                <p className="text-xs text-slate-500 font-bold">Organize your content structure</p>
+                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Hierarchy Manager</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold">Organize your content structure</p>
             </div>
             <div className="flex gap-2">
                 <input 
-                    className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm outline-none w-64 focus:ring-2 focus:ring-indigo-500 font-medium" 
+                    className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm outline-none w-64 focus:ring-2 focus:ring-indigo-500 font-medium" 
                     placeholder={`New ${activeLevel} name...`} 
                     value={newName} 
                     onChange={e => setNewName(e.target.value)} 
