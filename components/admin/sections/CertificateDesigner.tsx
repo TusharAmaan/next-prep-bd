@@ -61,16 +61,12 @@ export default function CertificateDesigner() {
       name: 'Classic Gold',
       description: 'Formal gold border with serif fonts',
       json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 20, top: 20, width: 1016, height: 776, fill: 'transparent', stroke: '#d4af37', strokeWidth: 15, rx: 20, ry: 20, selectable: false },
-        { type: 'IText', text: 'CERTIFICATE OF COMPLETION', left: 528, top: 150, fontFamily: 'Old Standard TT', fontSize: 60, fill: '#1e293b', originX: 'center', fontWeight: 'bold' },
-        { type: 'IText', text: 'This is to certify that', left: 528, top: 250, fontFamily: 'Inter', fontSize: 20, fill: '#64748b', originX: 'center' },
-        { type: 'IText', text: '{{student_name}}', left: 528, top: 350, fontFamily: 'Playfair Display', fontSize: 50, fill: '#0f172a', originX: 'center', fontWeight: 'bold' },
-        { type: 'IText', text: 'has successfully completed the course', left: 528, top: 430, fontFamily: 'Inter', fontSize: 18, fill: '#64748b', originX: 'center' },
-        { type: 'IText', text: '{{course_title}}', left: 528, top: 500, fontFamily: 'Montserrat', fontSize: 32, fill: '#4f46e5', originX: 'center', fontWeight: 'bold' },
-        { type: 'IText', text: 'Issued on: {{completion_date}}', left: 250, top: 650, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8' },
-        { type: 'IText', text: 'ID: {{certificate_id}}', left: 250, top: 680, fontFamily: 'Inter', fontSize: 12, fill: '#94a3b8' },
-        { type: 'IText', text: 'Director Signature', left: 800, top: 650, fontFamily: 'Dancing Script', fontSize: 24, fill: '#1e293b' },
-        { type: 'Rect', left: 750, top: 680, width: 150, height: 1, fill: '#cbd5e1' }
+        { type: 'FabricImage', src: '/certificates/gold_border.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'CERTIFICATE OF COMPLETION', left: 528, top: 180, fontFamily: 'Old Standard TT', fontSize: 60, fill: '#1e293b', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: 'This is to certify that', left: 528, top: 280, fontFamily: 'Inter', fontSize: 20, fill: '#64748b', originX: 'center' },
+        { type: 'IText', text: '{{student_name}}', left: 528, top: 380, fontFamily: 'Playfair Display', fontSize: 50, fill: '#0f172a', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: 'has successfully completed the course', left: 528, top: 460, fontFamily: 'Inter', fontSize: 18, fill: '#64748b', originX: 'center' },
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 520, fontFamily: 'Montserrat', fontSize: 32, fill: '#4f46e5', originX: 'center', fontWeight: 'bold' }
       ]}
     },
     {
@@ -78,116 +74,98 @@ export default function CertificateDesigner() {
       name: 'Modern Blue',
       description: 'Clean design with indigo sidebar',
       json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 0, top: 0, width: 300, height: 816, fill: '#4f46e5', selectable: false },
-        { type: 'IText', text: 'CERTIFICATE', left: 350, top: 150, fontFamily: 'Montserrat', fontSize: 70, fill: '#1e293b', fontWeight: 'black' },
-        { type: 'IText', text: 'COMPLETION', left: 350, top: 220, fontFamily: 'Montserrat', fontSize: 40, fill: '#6366f1', fontWeight: 'bold' },
-        { type: 'IText', text: 'AWARDED TO', left: 350, top: 350, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8', charSpacing: 200 },
-        { type: 'IText', text: '{{student_name}}', left: 350, top: 400, fontFamily: 'Inter', fontSize: 50, fill: '#000000', fontWeight: 'bold' },
-        { type: 'IText', text: 'FOR COMPLETING THE COURSE', left: 350, top: 480, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8' },
-        { type: 'IText', text: '{{course_title}}', left: 350, top: 520, fontFamily: 'Inter', fontSize: 24, fill: '#1e293b', fontWeight: 'bold' }
+        { type: 'FabricImage', src: '/certificates/blue_sidebar.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'CERTIFICATE', left: 380, top: 150, fontFamily: 'Montserrat', fontSize: 70, fill: '#1e293b', fontWeight: 'black' },
+        { type: 'IText', text: '{{student_name}}', left: 380, top: 400, fontFamily: 'Inter', fontSize: 50, fill: '#000000', fontWeight: 'bold' },
+        { type: 'IText', text: '{{course_title}}', left: 380, top: 520, fontFamily: 'Inter', fontSize: 24, fill: '#1e293b', fontWeight: 'bold' }
       ]}
     },
     {
-      id: 'minimalist',
-      name: 'Minimalist Clean',
-      description: 'Simple and elegant layout',
+      id: 'elite_crimson',
+      name: 'Elite Crimson',
+      description: 'Classic crimson and gold heritage',
       json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/crimson_border.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'ACADEMIC ACHIEVEMENT', left: 528, top: 160, fontFamily: 'Libre Baskerville', fontSize: 48, fill: '#7f1d1d', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: '{{student_name}}', left: 528, top: 350, fontFamily: 'Libre Baskerville', fontSize: 60, fill: '#000000', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 480, fontFamily: 'Inter', fontSize: 24, fill: '#4b5563', originX: 'center' }
+      ]}
+    },
+    {
+      id: 'silver_tech',
+      name: 'Silver Tech',
+      description: 'Modern silver and blue tech theme',
+      json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/tech_border.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'TECHNICAL MASTERY', left: 100, top: 100, fontFamily: 'Roboto', fontSize: 64, fill: '#1e293b', fontWeight: 'black' },
+        { type: 'IText', text: '{{student_name}}', left: 100, top: 300, fontFamily: 'Roboto', fontSize: 56, fill: '#3b82f6', fontWeight: 'bold' },
+        { type: 'IText', text: '{{course_title}}', left: 100, top: 450, fontFamily: 'Roboto', fontSize: 24, fill: '#64748b' }
+      ]}
+    },
+    {
+      id: 'academic_parchment',
+      name: 'Academic Parchment',
+      description: 'Traditional university aged style',
+      json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/parchment_border.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'The Board of Education', left: 528, top: 120, fontFamily: 'Old Standard TT', fontSize: 32, fill: '#1e293b', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: '{{student_name}}', left: 528, top: 320, fontFamily: 'Old Standard TT', fontSize: 50, fill: '#0f172a', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 480, fontFamily: 'Libre Baskerville', fontSize: 28, fill: '#1e293b', originX: 'center', fontWeight: 'bold' }
+      ]}
+    },
+    {
+      id: 'minimal_gold',
+      name: 'Minimal Gold',
+      description: 'Thin gold line modern elegance',
+      json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/gold_line.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
         { type: 'IText', text: 'CERTIFICATE', left: 528, top: 200, fontFamily: 'Inter', fontSize: 24, fill: '#94a3b8', originX: 'center', charSpacing: 400 },
         { type: 'IText', text: '{{student_name}}', left: 528, top: 300, fontFamily: 'Playfair Display', fontSize: 56, fill: '#000000', originX: 'center', fontWeight: 'bold' },
-        { type: 'Rect', left: 428, top: 380, width: 200, height: 2, fill: '#e2e8f0', originX: 'center' },
-        { type: 'IText', text: 'FOR COMPLETING {{course_title}}', left: 528, top: 450, fontFamily: 'Inter', fontSize: 16, fill: '#64748b', originX: 'center' }
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 450, fontFamily: 'Inter', fontSize: 16, fill: '#64748b', originX: 'center' }
       ]}
     },
     {
-      id: 'elite_dark',
-      name: 'Elite Dark',
-      description: 'Premium black and gold theme',
+      id: 'navy_executive',
+      name: 'Navy Executive',
+      description: 'Formal navy and gold badge theme',
       json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 0, top: 0, width: 1056, height: 816, fill: '#0f172a', selectable: false },
-        { type: 'Rect', left: 40, top: 40, width: 976, height: 736, fill: 'transparent', stroke: '#d4af37', strokeWidth: 4, selectable: false },
-        { type: 'IText', text: 'ELITE PERFORMANCE AWARD', left: 528, top: 150, fontFamily: 'Montserrat', fontSize: 40, fill: '#d4af37', originX: 'center', fontWeight: 'black', charSpacing: 100 },
+        { type: 'FabricImage', src: '/certificates/navy_executive.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'EXECUTIVE COMPLETION', left: 528, top: 150, fontFamily: 'Montserrat', fontSize: 40, fill: '#d4af37', originX: 'center', fontWeight: 'black' },
         { type: 'IText', text: '{{student_name}}', left: 528, top: 350, fontFamily: 'Libre Baskerville', fontSize: 64, fill: '#ffffff', originX: 'center', fontWeight: 'bold' },
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 480, fontFamily: 'Inter', fontSize: 24, fill: '#cbd5e1', originX: 'center' }
+      ]}
+    },
+    {
+      id: 'modern_floral',
+      name: 'Modern Floral',
+      description: 'Artistic flower patterns and script',
+      json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/floral_corners.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'Achievement Award', left: 528, top: 180, fontFamily: 'Dancing Script', fontSize: 48, fill: '#8b5cf6', originX: 'center' },
+        { type: 'IText', text: '{{student_name}}', left: 528, top: 320, fontFamily: 'Inter', fontSize: 56, fill: '#1e293b', originX: 'center', fontWeight: 'black' },
+        { type: 'IText', text: '{{course_title}}', left: 528, top: 480, fontFamily: 'Inter', fontSize: 20, fill: '#64748b', originX: 'center' }
+      ]}
+    },
+    {
+      id: 'carbon_metallic',
+      name: 'Carbon Metallic',
+      description: 'Dark luxury with silver accents',
+      json: { version: '6.0.0', objects: [
+        { type: 'FabricImage', src: '/certificates/carbon_metallic.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'MASTERY CERTIFICATION', left: 528, top: 150, fontFamily: 'Montserrat', fontSize: 40, fill: '#ffffff', originX: 'center', fontWeight: 'black' },
+        { type: 'IText', text: '{{student_name}}', left: 528, top: 350, fontFamily: 'Inter', fontSize: 64, fill: '#f1f5f9', originX: 'center', fontWeight: 'bold' },
         { type: 'IText', text: '{{course_title}}', left: 528, top: 480, fontFamily: 'Inter', fontSize: 24, fill: '#94a3b8', originX: 'center' }
       ]}
     },
     {
-      id: 'vibrant_gradient',
-      name: 'Vibrant Modern',
-      description: 'Colorful and energetic design',
+      id: 'global_blue',
+      name: 'Global Recognition',
+      description: 'International formal blue theme',
       json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 0, top: 0, width: 1056, height: 200, fill: '#6366f1', selectable: false },
-        { type: 'Circle', left: 900, top: -100, radius: 200, fill: '#d946ef', opacity: 0.5, selectable: false },
-        { type: 'IText', text: 'ACHIEVEMENT', left: 60, top: 60, fontFamily: 'Montserrat', fontSize: 80, fill: '#ffffff', fontWeight: 'black' },
-        { type: 'IText', text: 'THIS CERTIFIES THAT', left: 60, top: 300, fontFamily: 'Inter', fontSize: 16, fill: '#94a3b8', fontWeight: 'bold' },
-        { type: 'IText', text: '{{student_name}}', left: 60, top: 360, fontFamily: 'Inter', fontSize: 60, fill: '#1e293b', fontWeight: 'black' },
-        { type: 'IText', text: 'SUCCESSFULLY COMPLETED', left: 60, top: 460, fontFamily: 'Inter', fontSize: 16, fill: '#94a3b8', fontWeight: 'bold' },
-        { type: 'IText', text: '{{course_title}}', left: 60, top: 500, fontFamily: 'Inter', fontSize: 32, fill: '#6366f1', fontWeight: 'bold' }
-      ]}
-    },
-    {
-      id: 'academic',
-      name: 'Academic Excellence',
-      description: 'Traditional university-style certificate',
-      json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 50, top: 50, width: 956, height: 716, fill: 'transparent', stroke: '#1e293b', strokeWidth: 2, selectable: false },
-        { type: 'IText', text: 'NextPrep Academic Institute', left: 528, top: 120, fontFamily: 'Old Standard TT', fontSize: 32, fill: '#1e293b', originX: 'center', fontWeight: 'bold' },
-        { type: 'IText', text: 'Upon recommendation of the faculty, be it known that', left: 528, top: 220, fontFamily: 'Libre Baskerville', fontSize: 18, fill: '#475569', originX: 'center', fontStyle: 'italic' },
-        { type: 'IText', text: '{{student_name}}', left: 528, top: 320, fontFamily: 'Old Standard TT', fontSize: 50, fill: '#0f172a', originX: 'center', fontWeight: 'bold', borderBottom: 1 },
-        { type: 'IText', text: 'has been awarded the specialization in', left: 528, top: 400, fontFamily: 'Libre Baskerville', fontSize: 18, fill: '#475569', originX: 'center', fontStyle: 'italic' },
-        { type: 'IText', text: '{{course_title}}', left: 528, top: 460, fontFamily: 'Old Standard TT', fontSize: 36, fill: '#1e293b', originX: 'center', fontWeight: 'bold' }
-      ]}
-    },
-    {
-      id: 'corporate_clean',
-      name: 'Corporate Professional',
-      description: 'Sleek and professional business style',
-      json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 0, top: 766, width: 1056, height: 50, fill: '#1e293b', selectable: false },
-        { type: 'IText', text: 'OFFICIAL CERTIFICATE', left: 50, top: 50, fontFamily: 'Inter', fontSize: 12, fill: '#94a3b8', fontWeight: 'bold', charSpacing: 200 },
-        { type: 'IText', text: 'COURSE COMPLETION', left: 50, top: 80, fontFamily: 'Inter', fontSize: 32, fill: '#1e293b', fontWeight: 'black' },
-        { type: 'IText', text: 'Recipient Name', left: 50, top: 250, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8' },
+        { type: 'FabricImage', src: '/certificates/global_blue.png', left: 0, top: 0, width: 1056, height: 816, selectable: false },
+        { type: 'IText', text: 'GLOBAL ACHIEVEMENT', left: 50, top: 80, fontFamily: 'Inter', fontSize: 32, fill: '#1e3a8a', fontWeight: 'black' },
         { type: 'IText', text: '{{student_name}}', left: 50, top: 280, fontFamily: 'Inter', fontSize: 48, fill: '#1e293b', fontWeight: 'bold' },
-        { type: 'IText', text: 'Program Title', left: 50, top: 400, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8' },
-        { type: 'IText', text: '{{course_title}}', left: 50, top: 430, fontFamily: 'Inter', fontSize: 24, fill: '#1e293b', fontWeight: 'bold' }
-      ]}
-    },
-    {
-      id: 'creative_badge',
-      name: 'Creative Badge',
-      description: 'Bold design with achievement badge',
-      json: { version: '6.0.0', objects: [
-        { type: 'Circle', left: 528, top: 150, radius: 80, fill: '#f59e0b', originX: 'center' },
-        { type: 'IText', text: '★', left: 528, top: 150, fontFamily: 'Inter', fontSize: 60, fill: '#ffffff', originX: 'center', originY: 'center' },
-        { type: 'IText', text: 'GREAT JOB!', left: 528, top: 260, fontFamily: 'Montserrat', fontSize: 40, fill: '#f59e0b', originX: 'center', fontWeight: 'black' },
-        { type: 'IText', text: '{{student_name}}', left: 528, top: 380, fontFamily: 'Inter', fontSize: 56, fill: '#1e293b', originX: 'center', fontWeight: 'black' },
-        { type: 'IText', text: 'You completed {{course_title}}', left: 528, top: 480, fontFamily: 'Inter', fontSize: 20, fill: '#64748b', originX: 'center' }
-      ]}
-    },
-    {
-      id: 'signature_elite',
-      name: 'Signature Elite',
-      description: 'Elegant with dedicated signature area',
-      json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 30, top: 30, width: 996, height: 756, fill: 'transparent', stroke: '#1e293b', strokeWidth: 1, selectable: false },
-        { type: 'IText', text: '{{student_name}}', left: 528, top: 320, fontFamily: 'Dancing Script', fontSize: 80, fill: '#1e293b', originX: 'center' },
-        { type: 'Rect', left: 328, top: 410, width: 400, height: 2, fill: '#1e293b', originX: 'center' },
-        { type: 'IText', text: 'has demonstrated mastery in', left: 528, top: 450, fontFamily: 'Inter', fontSize: 18, fill: '#64748b', originX: 'center' },
-        { type: 'IText', text: '{{course_title}}', left: 528, top: 500, fontFamily: 'Montserrat', fontSize: 32, fill: '#1e293b', originX: 'center', fontWeight: 'bold' },
-        { type: 'IText', text: 'Issued By: NextPrep', left: 300, top: 680, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8', originX: 'center' },
-        { type: 'IText', text: 'Director', left: 756, top: 680, fontFamily: 'Inter', fontSize: 14, fill: '#94a3b8', originX: 'center' }
-      ]}
-    },
-    {
-      id: 'geometrical',
-      name: 'Geometric Tech',
-      description: 'Abstract geometric shapes and tech fonts',
-      json: { version: '6.0.0', objects: [
-        { type: 'Rect', left: 800, top: 0, width: 256, height: 816, fill: '#f8fafc', selectable: false },
-        { type: 'Rect', left: 850, top: 100, width: 100, height: 100, fill: '#e2e8f0', angle: 45, selectable: false },
-        { type: 'IText', text: 'COMPLETED', left: 100, top: 100, fontFamily: 'Roboto', fontSize: 80, fill: '#0f172a', fontWeight: 'black' },
-        { type: 'IText', text: '{{student_name}}', left: 100, top: 300, fontFamily: 'Roboto', fontSize: 56, fill: '#334155', fontWeight: 'bold' },
-        { type: 'IText', text: 'Course: {{course_title}}', left: 100, top: 450, fontFamily: 'Roboto', fontSize: 24, fill: '#64748b' },
-        { type: 'IText', text: 'VERIFIED CERTIFICATE', left: 100, top: 700, fontFamily: 'Roboto', fontSize: 12, fill: '#94a3b8', charSpacing: 300 }
+        { type: 'IText', text: '{{course_title}}', left: 50, top: 430, fontFamily: 'Inter', fontSize: 24, fill: '#3b82f6', fontWeight: 'bold' }
       ]}
     }
   ];

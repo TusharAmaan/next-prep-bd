@@ -158,10 +158,10 @@ export default function ModernStudentDashboard() {
       if (profileData) setProfile(profileData as Profile);
 
       // 2. Fetch Enrolled Courses
-      // We check the 'enrollments' table (assumed schema)
+      // We check the 'course_enrollments' table (aligned with schema)
       const { data: enrollmentData } = await supabase
-        .from("enrollments")
-        .select("course_id, progress")
+        .from("course_enrollments")
+        .select("course_id, status")
         .eq("user_id", userId)
         .eq("status", "active");
 
@@ -172,9 +172,28 @@ export default function ModernStudentDashboard() {
           .select("id, title, description, thumbnail_url, instructor, category")
           .in("id", courseIds);
         
+        // 3. Fetch All Course Contents (to count total items)
+        const { data: contentsData } = await supabase
+          .from("course_contents")
+          .select("id, lesson_id, course_lessons!inner(course_id)")
+          .in("course_lessons.course_id", courseIds);
+
+        // 4. Fetch User Progress
+        const { data: progressData } = await supabase
+          .from("course_user_progress")
+          .select("content_id, is_completed")
+          .eq("user_id", userId)
+          .eq("is_completed", true);
+
         const mergedCourses = (coursesData || []).map(c => {
-          const enroll = enrollmentData.find(e => e.course_id === c.id);
-          return { ...c, progress: enroll?.progress || 0 };
+          const totalItems = contentsData?.filter((cnt: any) => cnt.course_lessons.course_id === c.id).length || 0;
+          const completedItems = progressData?.filter((p: any) => 
+            contentsData?.some((cnt: any) => cnt.id === p.content_id && cnt.course_lessons.course_id === c.id)
+          ).length || 0;
+
+          const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+          
+          return { ...c, progress: progressPercent };
         });
         setCourses(mergedCourses);
       } else {

@@ -106,9 +106,12 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
             return;
         }
         try {
+            const title = "New Lesson";
+            const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
             const { data, error } = await supabase.from('course_lessons').insert({
                 course_id: Number(courseData.id),
-                title: "New Lesson",
+                title,
+                slug,
                 order_index: lessons.length
             }).select().single();
 
@@ -157,6 +160,16 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
             setLessons(lessons.map(l => ({
                 ...l,
                 course_contents: l.course_contents?.filter((c: any) => c.id !== id)
+            })));
+        }
+    };
+
+    const handleUpdateContent = async (id: string, updates: any) => {
+        const { error } = await supabase.from('course_contents').update(updates).eq('id', id);
+        if (!error) {
+            setLessons(lessons.map(l => ({
+                ...l,
+                course_contents: l.course_contents?.map((c: any) => c.id === id ? { ...c, ...updates } : c)
             })));
         }
     };
@@ -410,12 +423,17 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                             {lesson.course_contents?.map((content: any, cIndex: number) => (
                                                 <div key={content.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl group/content border border-transparent hover:border-indigo-100 transition-all">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="text-indigo-500">
+                                                         <div className="text-indigo-500">
                                                             {content.content_type === 'video' && <Rocket size={16} />}
                                                             {content.content_type === 'article' && <BookOpen size={16} />}
                                                             {content.content_type === 'quiz' && <CheckCircle2 size={16} />}
                                                         </div>
-                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{content.title}</span>
+                                                        <input 
+                                                            type="text" 
+                                                            defaultValue={content.title}
+                                                            onBlur={(e) => handleUpdateContent(content.id, { title: e.target.value })}
+                                                            className="bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-0 w-full"
+                                                        />
                                                     </div>
                                                     <div className="flex items-center gap-2 opacity-0 group-hover/content:opacity-100 transition-opacity">
                                                         <button onClick={() => handleDeleteContent(content.id)} className="p-1.5 text-slate-400 hover:text-red-500"><X size={14} /></button>
