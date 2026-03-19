@@ -11,6 +11,8 @@ const config: Config = {
       // 1. THIS IS THE NEW FONT SETUP
       fontFamily: {
         sans: ["var(--font-geist-sans)", "var(--font-bangla)", "sans-serif"],
+        'bangla': ["var(--font-bangla)", "sans-serif"],
+        'bangla-serif': ["var(--font-bangla-serif)", "serif"],
       },
       // (Your existing background images)
       backgroundImage: {

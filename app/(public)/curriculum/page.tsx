@@ -230,7 +230,7 @@ export default function CurriculumPage() {
                  
                  <div className="relative z-10">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{sub.groups?.title || 'No Group'}</p>
-                    <h3 className="text-2xl font-black text-white group-hover:text-indigo-300 transition-colors uppercase tracking-tight leading-none mb-4">{sub.title}</h3>
+                    <h3 className="text-2xl font-black text-white group-hover:text-indigo-300 transition-colors uppercase tracking-tight leading-none mb-4 font-bangla">{sub.title}</h3>
                     
                     <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm group-hover:translate-x-2 transition-transform">
                       Explore Topics <ChevronRight className="w-4 h-4" />

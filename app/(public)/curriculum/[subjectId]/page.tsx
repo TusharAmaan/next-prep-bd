@@ -212,7 +212,7 @@ export default function SubjectHierarchyPage() {
                  <ChevronRight className="w-3 h-3" />
                  <span>{subject?.groups?.title || 'Group'}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase leading-tight md:leading-none">
+              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase leading-tight md:leading-none font-bangla">
                  {subject?.title}
               </h1>
            </div>
@@ -282,7 +282,7 @@ export default function SubjectHierarchyPage() {
                                <BookOpen className="w-5 h-5" />
                             </div>
                             <div>
-                               <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">{unit.title}</h3>
+                               <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight font-bangla">{unit.title}</h3>
                             </div>
                          </div>
                          <div className={`w-10 h-10 rounded-full border flex items-center justify-center shrink-0 transition-transform duration-300 ${expandedUnits[unit.id] ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-600 text-slate-400'}`}>
@@ -309,7 +309,7 @@ export default function SubjectHierarchyPage() {
                                            {content.type === 'passage' ? <FileText className="w-5 h-5 text-emerald-400 group-hover/single:text-white" /> : (content.type === 'exercise' ? <HelpCircle className="w-5 h-5 text-orange-400 group-hover/single:text-white" /> : <LinkIcon className="w-5 h-5 text-blue-400 group-hover/single:text-white" />)}
                                         </div>
                                         <div>
-                                           <h4 className="text-base sm:text-lg font-bold text-slate-100 group-hover/single:text-white transition-colors">{lesson.title}</h4>
+                                           <h4 className="text-base sm:text-lg font-bold text-slate-100 group-hover/single:text-white transition-colors font-bangla">{lesson.title}</h4>
                                         </div>
                                      </div>
                                      <ArrowRight className="w-5 h-5 opacity-0 group-hover/single:opacity-100 group-hover/single:translate-x-1 transition-all text-indigo-400" />
@@ -322,7 +322,7 @@ export default function SubjectHierarchyPage() {
                                 <div key={lesson.id} className="bg-slate-900/60 border border-slate-700/50 rounded-2xl p-5 sm:p-6 hover:border-indigo-500/40 transition-all relative overflow-hidden shadow-inner mb-4">
                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                                       <div className="flex items-center gap-3">
-                                         <h4 className="text-base sm:text-lg font-bold text-slate-100">{lesson.title}</h4>
+                                         <h4 className="text-base sm:text-lg font-bold text-slate-100 font-bangla">{lesson.title}</h4>
                                       </div>
                                    </div>
                                    
@@ -337,7 +337,7 @@ export default function SubjectHierarchyPage() {
                                              <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">
                                                 {content.type === 'passage' ? <FileText className="w-4 h-4 text-emerald-400" /> : (content.type === 'exercise' ? <HelpCircle className="w-4 h-4 text-orange-400" /> : <LinkIcon className="w-4 h-4 text-blue-400" />)}
                                              </div>
-                                             <span className="text-xs font-bold text-slate-300 group-hover/it:text-white transition-colors truncate">{content.title}</span>
+                                             <span className="text-xs font-bold text-slate-300 group-hover/it:text-white transition-colors truncate font-bangla">{content.title}</span>
                                              <ArrowRight className="w-3 h-3 ml-auto opacity-0 group-hover/it:opacity-100 transition-all text-indigo-400" />
                                           </Link>
                                         ))}

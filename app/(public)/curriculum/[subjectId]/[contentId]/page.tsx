@@ -290,7 +290,7 @@ export default function ContentDetailPage() {
                          </div>
                       </div>
                       
-                      <h1 className={`text-3xl md:text-5xl font-black tracking-tighter uppercase mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-noto-serif-bengali' : ''}`}>
+                      <h1 className={`text-3xl md:text-5xl font-black tracking-tighter uppercase mb-6 leading-[1.1] ${textMain} ${isBengali ? 'font-bangla-serif' : ''}`}>
                          {c.title}
                       </h1>
 
@@ -340,7 +340,7 @@ export default function ContentDetailPage() {
                          </div>
                       ) : (
                          <div 
-                          className={`prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-noto-serif-bengali' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
+                          className={`prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla-serif' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
                           dangerouslySetInnerHTML={{ __html: htmlBody }}
                         />
                       )}
@@ -431,12 +431,12 @@ export default function ContentDetailPage() {
                         <div key={unit.id}>
                          <button
                            onClick={() => toggleUnit(unitKey)}
-                           className={`w-full flex items-center gap-2 px-2 py-2.5 rounded-xl transition-all text-left group ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                           className={`w-full flex items-center gap-2 px-3 py-3 rounded-xl transition-all text-left group ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                          >
-                             <div className={`w-1 h-4 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                             <h4 className={`text-[10px] font-black uppercase tracking-widest flex-1 truncate ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
-                             <span className={`text-[9px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
-                             <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
+                             <div className={`w-1 h-5 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                             <h4 className={`text-xs font-black uppercase tracking-wide flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <span className={`text-[10px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
+                             <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
                          </button>
                          
                          {isUnitOpen && (
@@ -451,11 +451,11 @@ export default function ContentDetailPage() {
                                  <div key={l.id}>
                                   <button
                                     onClick={() => toggleLesson(lessonKey)}
-                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
+                                    className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
                                   >
-                                     <ChevronDown className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
-                                     <span className="text-[10px] font-bold uppercase truncate flex-1">{l.title}</span>
-                                     <span className={`text-[9px] font-medium ${textMuted}`}>{contentCount}</span>
+                                     <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
+                                     <span className="text-[11px] font-bold uppercase truncate flex-1 font-bangla">{l.title}</span>
+                                     <span className={`text-[10px] font-medium ${textMuted}`}>{contentCount}</span>
                                   </button>
 
                                   {isLessonOpen && (
@@ -473,7 +473,7 @@ export default function ContentDetailPage() {
                                                 router.push(`/curriculum/${subjectId}/${c.id}`);
                                              }
                                           }}
-                                          className={`group w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
+                                          className={`group w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all font-bangla ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
                                         >
                                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
                                            <span className="truncate">{c.title}</span>
@@ -534,12 +534,12 @@ export default function ContentDetailPage() {
                         <div key={unit.id}>
                          <button
                            onClick={() => toggleUnit(unitKey)}
-                           className={`w-full flex items-center gap-2 px-2 py-2.5 rounded-xl transition-all text-left ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : ''}`}
+                           className={`w-full flex items-center gap-2 px-3 py-3 rounded-xl transition-all text-left ${unitHasViewed ? (isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50') : ''}`}
                          >
-                             <div className={`w-1 h-4 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
-                             <h4 className={`text-[10px] font-black uppercase tracking-widest flex-1 truncate ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
-                             <span className={`text-[9px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
-                             <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
+                             <div className={`w-1 h-5 rounded-full shrink-0 ${unitHasViewed ? 'bg-indigo-600' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
+                             <h4 className={`text-xs font-black uppercase tracking-wide flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600' : textMain}`}>{unit.title}</h4>
+                             <span className={`text-[10px] font-bold ${textMuted} mr-1`}>{lessonCount}</span>
+                             <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${textMuted} ${isUnitOpen ? 'rotate-0' : '-rotate-90'}`} />
                          </button>
                          
                          {isUnitOpen && (
@@ -554,11 +554,11 @@ export default function ContentDetailPage() {
                                  <div key={l.id}>
                                   <button
                                     onClick={() => toggleLesson(lessonKey)}
-                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
+                                    className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : textMuted}`}
                                   >
-                                     <ChevronDown className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
-                                     <span className="text-[10px] font-bold uppercase truncate flex-1">{l.title}</span>
-                                     <span className={`text-[9px] font-medium ${textMuted}`}>{contentCount}</span>
+                                     <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isLessonOpen ? 'rotate-0' : '-rotate-90'}`} />
+                                     <span className="text-[11px] font-bold uppercase truncate flex-1 font-bangla">{l.title}</span>
+                                     <span className={`text-[10px] font-medium ${textMuted}`}>{contentCount}</span>
                                   </button>
 
                                   {isLessonOpen && (
@@ -577,7 +577,7 @@ export default function ContentDetailPage() {
                                                 router.push(`/curriculum/${subjectId}/${c.id}`);
                                              }
                                           }}
-                                          className={`group w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
+                                          className={`group w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all font-bangla ${isViewed ? 'bg-indigo-600 text-white shadow-md' : `${textMuted} hover:text-indigo-500`}`}
                                         >
                                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isViewed ? 'bg-white scale-125' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')}`} />
                                            <span className="truncate">{c.title}</span>
