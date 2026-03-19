@@ -29,24 +29,28 @@ import {
   PlayCircle,
   Sparkles
 } from "lucide-react";
-import LectureSheetEcosystem from "@/components/lecture-sheets/LectureSheetEcosystem";
+import { createClient } from "@/lib/supabaseServer";
+import CurriculumShowcase from "@/components/homepage/CurriculumShowcase";
+import LectureSheetShowcase from "@/components/homepage/LectureSheetShowcase";
 
 export const revalidate = 0; 
 
 export default async function HomePage() {
   
-  // 1. FETCH DATA
-  const [segmentsData, latestResources, latestNews, ebooksData] = await Promise.all([
-    supabase.from("segments").select("*").order("id"),
-    supabase.from("resources")
+  // 1. FETCH DATA & AUTH
+  const supabaseServer = await createClient();
+  const [segmentsData, latestResources, latestNews, ebooksData, { data: { user } }] = await Promise.all([
+    supabaseServer.from("segments").select("*").order("id"),
+    supabaseServer.from("resources")
       .select("*, subjects ( title, groups ( segments ( id, title, slug ) ) )")
       .limit(50) 
       .order("created_at", { ascending: false }),
-    supabase.from("news").select("*").limit(5).order("created_at", { ascending: false }),
-    supabase.from("ebooks")
+    supabaseServer.from("news").select("*").limit(5).order("created_at", { ascending: false }),
+    supabaseServer.from("ebooks")
       .select("id, title, author, cover_url, created_at, category")
       .limit(5)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabaseServer.auth.getUser()
   ]);
 
   const segments = segmentsData.data || [];
@@ -211,8 +215,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. NEXTPREP ECOSYSTEM - MARKETING */}
-      <LectureSheetEcosystem />
+      {/* 5. CURRICULUM SHOWCASE */}
+      <CurriculumShowcase isLoggedIn={!!user} />
+
+      {/* 6. LECTURE SHEET SYSTEM */}
+      <LectureSheetShowcase isLoggedIn={!!user} />
 
       {/* 6. MAIN CONTENT AREA */}
       <section className="pt-16 pb-20 max-w-7xl mx-auto px-4 md:px-6">
