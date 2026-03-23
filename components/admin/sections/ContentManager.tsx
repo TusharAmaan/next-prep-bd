@@ -5,6 +5,7 @@ import ListHeader from "../shared/ListHeader";
 import ContentFilterBar from "../shared/ContentFilterBar";
 import ContentEditor from "./ContentEditor";
 import PostLikersModal from "@/components/PostLikersModal";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 // --- UTILITY: Slugify ---
 const slugify = (text: string) => {
@@ -83,6 +84,7 @@ export default function ContentManager({
     const [editSub, setEditSub] = useState("");
     
     const [showLikers, setShowLikers] = useState<{id: string, title: string} | null>(null);
+    const [modalConfig, setModalConfig] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void, isDangerous?: boolean} | null>(null);
     
     // --- CATEGORY FILTER LOGIC ---
     const filteredCategories = useMemo(() => {
@@ -246,19 +248,25 @@ export default function ContentManager({
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this item? This cannot be undone.")) return;
-
-        let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
-        
-        try {
-            const { error } = await supabase.from(table).delete().eq("id", id);
-            if (error) throw error;
-            showSuccess("Deleted Successfully!");
-            setDataList(prev => prev.filter(item => item.id !== id));
-            fetchContent();
-        } catch (error: any) {
-            showError("Failed to delete: " + error.message);
-        }
+        setModalConfig({
+            isOpen: true,
+            title: "System Wipe",
+            message: "This unit will be permanently purged from the database. This action is irreversible. Proceed?",
+            isDangerous: true,
+            onConfirm: async () => {
+                let table = activeTab === 'materials' ? 'resources' : activeTab === 'segment_updates' ? 'segment_updates' : activeTab;
+                try {
+                    const { error } = await supabase.from(table).delete().eq("id", id);
+                    if (error) throw error;
+                    showSuccess("Deleted Successfully!");
+                    setDataList(prev => prev.filter(item => item.id !== id));
+                    fetchContent();
+                } catch (error: any) {
+                    showError("Failed to delete: " + error.message);
+                }
+                setModalConfig(null);
+            }
+        });
     };
 
     const handleSave = async () => {
@@ -395,7 +403,14 @@ export default function ContentManager({
             <ContentEditor 
                 activeTab={activeTab}
                 isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
-                confirmAction={(msg: string, cb: any) => { if(window.confirm(msg)) cb(); }} 
+                confirmAction={(msg: string, cb: any) => { 
+                    setModalConfig({
+                        isOpen: true,
+                        title: "Confirm Action",
+                        message: msg,
+                        onConfirm: () => { cb(); setModalConfig(null); }
+                    });
+                }} 
                 title={title} setTitle={setTitle} 
                 slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))}
                 content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
@@ -490,6 +505,17 @@ export default function ContentManager({
                 </table>
             </div>
             {showLikers && <PostLikersModal resourceId={showLikers.id} resourceTitle={showLikers.title} onClose={() => setShowLikers(null)} />}
+            
+            {modalConfig && (
+                <ConfirmModal 
+                    isOpen={modalConfig.isOpen}
+                    title={modalConfig.title}
+                    message={modalConfig.message}
+                    onConfirm={modalConfig.onConfirm}
+                    onCancel={() => setModalConfig(null)}
+                    isDangerous={modalConfig.isDangerous}
+                />
+            )}
         </div>
     );
 }

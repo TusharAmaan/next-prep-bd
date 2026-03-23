@@ -23,12 +23,15 @@ export async function POST(request: NextRequest) {
       timestamp: timestamp || new Date().toISOString(),
     });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Analytics mapping missing, skipping insert');
+      return NextResponse.json({ success: false, error: 'Analytics table missing' }, { status: 200 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Analytics error:', error);
-    return NextResponse.json({ error: 'Failed to track search' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to track search' }, { status: 200 });
   }
 }
 

@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import Link from 'next/link';
 import { toast } from 'sonner';
+import Discussion from '@/components/shared/Discussion';
 
 export default function ContentDetailPage() {
   const { subjectId, contentId } = useParams();
@@ -407,7 +408,14 @@ export default function ContentDetailPage() {
                             </div>
                          </div>
                       </div>
-                   )}
+                    )}
+
+                    {/* DISCUSSION UNIT FOR THIS CONTENT */}
+                    {!isPaywalled && (
+                      <div className="mt-12">
+                        <Discussion itemType="curriculum" itemId={c.id.toString()} />
+                      </div>
+                    )}
                  </div>
                 );
              })}

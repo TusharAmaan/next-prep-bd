@@ -40,7 +40,7 @@ export default function LikeButton({ resourceId }: LikeButtonProps) {
           .select('id')
           .eq('user_id', user.id)
           .eq('resource_id', resourceId)
-          .single();
+          .maybeSingle();
 
         if (userLike) setLiked(true);
       }

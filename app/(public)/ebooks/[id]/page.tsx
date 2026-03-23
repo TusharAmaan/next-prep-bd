@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from 'next'; // Import Metadata type
 import BookmarkButton from "@/components/shared/BookmarkButton";
+import Discussion from "@/components/shared/Discussion";
 
 export const dynamic = "force-dynamic";
 
@@ -114,10 +115,13 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
                     <div dangerouslySetInnerHTML={{ __html: book.description ? parseHashtagsToHTML(book.description) : "" }} />
                 </div>
             </div>
+        </div>
 
+        {/* DISCUSSION SECTION */}
+        <div className="mt-16 border-t border-slate-100 pt-16">
+          <Discussion itemType="ebook" itemId={book.id} />
         </div>
       </div>
     </div>
-    
   );
 }

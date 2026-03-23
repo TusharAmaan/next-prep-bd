@@ -7,6 +7,8 @@ import {
   HelpCircle, Edit3, AlertTriangle, CheckCircle 
 } from "lucide-react";
 import QuestionLinker from "@/components/admin/sections/QuestionLinker"; 
+import RichTextEditor from "@/components/shared/RichTextEditor";
+import { toast } from "sonner";
 
 export default function ContentEditor({
   activeTab,
@@ -141,7 +143,7 @@ export default function ContentEditor({
                   </button>
                   <button 
                     onClick={() => {
-                        if(!resourceId) return alert("Please save the content first before adding questions.");
+                    if(!resourceId) return toast.error("Please save the content first before adding questions.");
                         setEditorTab('questions');
                     }}
                     className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${editorTab === 'questions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
@@ -189,24 +191,11 @@ export default function ContentEditor({
                     </div>
 
                     {/* RICH TEXT EDITOR */}
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[500px] shadow-inner relative">
-                        <Editor
-                            apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
-                            value={content}
-                            onEditorChange={(c) => { setContent(c); markDirty(); }}
-                            init={{
-                                height: 500,
-                                menubar: true,
-                                plugins: [ 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount', 'autosave', 'codesample', 'directionality', 'visualchars' ],
-                                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough forecolor backcolor | insertMath insertBlockMath | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table charmap codesample | superscript subscript | removeformat | fullscreen preview code',
-                                content_style: `body { font-family:Inter,sans-serif; font-size:16px; line-height:1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; } .math-tex { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: #6366f1; }`,
-                                branding: false,
-                                placeholder: 'Start writing your content here...',
-                                setup: (editor: any) => {
-                                    editor.ui.registry.addButton('insertMath', { text: 'Σ Inline', tooltip: 'Insert Inline Math', onAction: () => editor.insertContent('<span class="math-tex">\\( x^2 \\)</span>&nbsp;') });
-                                    editor.ui.registry.addButton('insertBlockMath', { text: 'Σ Block', tooltip: 'Insert Centered Equation', onAction: () => editor.insertContent('<span class="math-tex">$$ E = mc^2 $$</span>&nbsp;') });
-                                },
-                            }}
+                    <div className="min-h-[500px] relative">
+                        <RichTextEditor 
+                            initialValue={content}
+                            onChange={(c) => { setContent(c); markDirty(); }}
+                            darkMode={false} // Adjust based on theme if needed
                         />
                     </div>
 

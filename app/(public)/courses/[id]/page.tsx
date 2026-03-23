@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { parseHashtagsToHTML } from '@/utils/hashtagParser';
-import FacebookComments from "@/components/FacebookComments";
 import BookmarkButton from "@/components/shared/BookmarkButton";
+import Discussion from "@/components/shared/Discussion";
 import { headers } from 'next/headers';
 import { Metadata } from 'next';
 import { checkEnrollmentStatus } from "@/app/actions/enrollment";
@@ -125,7 +125,7 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
 
             <div className="pt-8">
                 <h3 className="text-xl font-black text-slate-900 mb-8 uppercase tracking-tight border-l-4 border-indigo-600 pl-4">Community Discussion</h3>
-                <FacebookComments url={absoluteUrl} />
+                <Discussion itemType="course" itemId={course.id.toString()} />
             </div>
         </div>
 

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { MessageSquare, Trash2, Edit2, AlertCircle, Loader2 } from 'lucide-react';
+import { MessageSquare, Trash2, AlertCircle, Loader2, Send, CornerDownRight } from 'lucide-react';
 import { toast } from 'sonner';
+import ConfirmModal from './ConfirmModal';
 
 interface DiscussionProps {
   itemType: string;
@@ -33,6 +34,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -104,7 +106,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
 
       if (error) throw error;
 
-      toast.success('Comment posted successfully');
+      toast.success('Posted successfully!');
       setNewComment("");
       setReplyContent("");
       setReplyingTo(null);
@@ -118,7 +120,6 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
     try {
       const { error } = await supabase.from('comments').delete().eq('id', commentId);
       if (error) throw error;
@@ -127,6 +128,8 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
     } catch (error) {
       console.error('Error deleting comment:', error);
       toast.error('Failed to delete comment');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -135,73 +138,116 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
 
   return (
-    <div className="mt-12 bg-gray-50 dark:bg-slate-900/50 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-      <div className="flex items-center gap-3 mb-8">
-        <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Discussion</h3>
-        <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-3 py-1 rounded-full">{comments.length}</span>
-      </div>
-
-      {/* Comment Input */}
-      {session ? (
-        <div className="mb-10 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-300 transition-all">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Share your thoughts with the community..."
-            className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 min-h-[80px]"
-          />
-          <div className="flex justify-between items-center mt-2 pt-3 border-t border-slate-100 dark:border-slate-700/50">
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-medium">Logged in as {session.user.email}</div>
-            <button
-              onClick={() => handleSubmit(null, newComment)}
-              disabled={submitting || !newComment.trim()}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-700 hover:shadow-indigo-500/25 disabled:opacity-50 transition-all flex items-center gap-2"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Post Comment
-            </button>
+    <div className="mt-16 bg-slate-50 dark:bg-slate-900/40 p-1 md:p-12 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all duration-500">
+      {/* BACKGROUND DECORATION */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] pointer-events-none" />
+      
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-end gap-3 mb-10 overflow-hidden">
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-50 dark:border-slate-700 animate-slide-in-left">
+            <MessageSquare className="w-6 h-6 text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-blue-600" />
+          </div>
+          <div className="animate-slide-in-bottom">
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic leading-none">
+              The Discussion
+            </h3>
+            <div className="h-1 w-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mt-1 opacity-20" />
+          </div>
+          <div className="ml-auto bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-xs font-black text-slate-400 uppercase tracking-widest animate-fade-in">
+            {comments.length} <span className="opacity-50">Units</span>
           </div>
         </div>
-      ) : (
-        <div className="mb-10 p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-indigo-800 dark:text-indigo-200">
-            <AlertCircle className="w-6 h-6 shrink-0" />
-            <p className="font-bold text-sm">Want to join the discussion? Log in to leave a comment!</p>
-          </div>
-          <a href="/login" className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition">Log In</a>
-        </div>
-      )}
 
-      {/* Comment List */}
-      <div className="space-y-6">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-          </div>
-        ) : rootComments.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-            <MessageSquare className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 font-bold">No comments yet. Be the first to start the discussion!</p>
+        {/* Comment Input */}
+        {session ? (
+          <div className="mb-12 group bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] shadow-2xl shadow-indigo-500/5 border border-slate-100 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-300">
+            <div className="flex gap-4 items-start mb-4">
+               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-sm border border-white dark:border-slate-600 shadow-inner">
+                 {session.user.email?.charAt(0).toUpperCase()}
+               </div>
+               <div className="flex-1">
+                 <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Share your insights..."
+                  className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-lg min-h-[100px]"
+                />
+               </div>
+            </div>
+            
+            <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">Verified Identity Active</div>
+              <button
+                onClick={() => handleSubmit(null, newComment)}
+                disabled={submitting || !newComment.trim()}
+                className="bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-500 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/30 active:scale-95 disabled:opacity-30 transition-all flex items-center gap-3"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Post Analysis
+              </button>
+            </div>
           </div>
         ) : (
-          rootComments.map(comment => (
-            <CommentItem 
-              key={comment.id} 
-              comment={comment} 
-              replies={getReplies(comment.id)} 
-              session={session}
-              onReply={(id: string | null) => setReplyingTo(id)}
-              replyingTo={replyingTo}
-              replyContent={replyContent}
-              setReplyContent={setReplyContent}
-              onSubmitReply={(parentId: string, content: string) => handleSubmit(parentId, content)}
-              onDelete={handleDelete}
-              submitting={submitting}
-            />
-          ))
+          <div className="mb-12 p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900/50 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/20 shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row items-center gap-6 justify-between group">
+            <div className="flex items-center gap-6 text-center md:text-left">
+              <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-indigo-50 dark:border-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <AlertCircle className="w-8 h-8 text-indigo-600 animate-pulse" />
+              </div>
+              <div>
+                <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl italic leading-tight mb-1">Join the community</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Authentication required to leave feedback.</p>
+              </div>
+            </div>
+            <a href="/login" className="whitespace-nowrap bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg border border-indigo-50 dark:border-slate-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-95">Authenticate Now</a>
+          </div>
         )}
+
+        {/* Comment List */}
+        <div className="space-y-10 relative">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin shadow-xl" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Fetching Discussion</span>
+            </div>
+          ) : rootComments.length === 0 ? (
+            <div className="text-center py-20 bg-white/50 dark:bg-slate-800/30 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-700/50 group">
+              <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-slate-100 dark:border-slate-700 group-hover:rotate-12 transition-transform duration-500">
+                <MessageSquare className="w-8 h-8 text-slate-200 dark:text-slate-600 shadow-sm" />
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-xs">Knowledge Gap Detected</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1 font-medium italic">Be the FIRST to initiate the analysis loop.</p>
+            </div>
+          ) : (
+            rootComments.map(comment => (
+              <CommentItem 
+                key={comment.id} 
+                comment={comment} 
+                replies={getReplies(comment.id)} 
+                session={session}
+                onReply={(id: string | null) => setReplyingTo(id)}
+                replyingTo={replyingTo}
+                replyContent={replyContent}
+                setReplyContent={setReplyContent}
+                onSubmitReply={(parentId: string, content: string) => handleSubmit(parentId, content)}
+                onDelete={(id: string) => setDeleteConfirm(id)}
+                submitting={submitting}
+              />
+            ))
+          )}
+        </div>
       </div>
+      
+      <ConfirmModal 
+        isOpen={!!deleteConfirm}
+        title="Delete Insight"
+        message="This comment and all nested replies will be permanently erased. Proceed?"
+        confirmText="Confirm Delete"
+        cancelText="Keep Comment"
+        isDangerous={true}
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
@@ -210,43 +256,50 @@ function CommentItem({ comment, replies, session, onReply, replyingTo, replyCont
   const isOwner = session?.user?.id === comment.user_id;
 
   return (
-    <div className="flex gap-4 group">
-      <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border-2 border-white dark:border-slate-800 shadow-sm">
+    <div className="flex gap-6 group relative">
+      <div className="w-14 h-14 rounded-3xl overflow-hidden bg-white dark:bg-slate-800 shrink-0 border-4 border-white dark:border-slate-700 shadow-xl transition-transform duration-500 group-hover:scale-105 z-10">
         {comment.profiles?.avatar_url ? (
           <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center font-bold text-slate-500 dark:text-slate-300 uppercase text-lg">
+          <div className="w-full h-full flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 uppercase md:text-xl italic">
             {comment.profiles?.full_name?.charAt(0) || 'U'}
           </div>
         )}
       </div>
+
       <div className="flex-1 w-full min-w-0">
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-700 shadow-sm relative">
-          <div className="flex items-center justify-between mb-3 border-b border-slate-50 dark:border-slate-700/50 pb-2">
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{comment.profiles?.full_name || 'Unknown User'}</h4>
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-900/50 px-2 py-1 rounded-md">
-              {new Date(comment.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-            </span>
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] rounded-tl-sm border border-slate-100 dark:border-slate-700 shadow-xl shadow-indigo-500/5 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500">
+          <div className="flex items-center justify-between mb-5 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+            <div>
+              <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight italic text-lg">{comment.profiles?.full_name || 'Anonymous Contributor'}</h4>
+              <p className="text-[8px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.3em] mt-0.5">Verified Intelligence</p>
+            </div>
+            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 opacity-60">
+              {new Date(comment.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
           </div>
-          <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+          <p className="text-slate-600 dark:text-slate-300 text-base whitespace-pre-wrap leading-relaxed font-medium">{comment.content}</p>
           
-          <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-50 dark:border-slate-700/50">
+          <div className="flex items-center gap-4 mt-8 pt-4 border-t border-slate-50 dark:border-slate-700/30">
             <button 
               onClick={() => {
                 onReply(replyingTo === comment.id ? null : comment.id);
                 setReplyContent("");
               }} 
-              className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-lg"
+              className={`text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 
+                ${replyingTo === comment.id 
+                  ? 'bg-indigo-600 text-white shadow-lg' 
+                  : 'bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 hover:text-indigo-600'}`}
             >
-              💬 Reply
+              <Send className="w-3.5 h-3.5" />
+              Reply
             </button>
             {isOwner && (
               <button 
                 onClick={() => onDelete(comment.id)} 
-                className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors bg-slate-50 dark:bg-slate-900 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100"
-                title="Delete comment"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors px-3 py-2.5 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -254,23 +307,28 @@ function CommentItem({ comment, replies, session, onReply, replyingTo, replyCont
 
         {/* Reply Box */}
         {replyingTo === comment.id && session && (
-          <div className="mt-4 animate-in slide-in-from-top-2">
-            <div className="bg-indigo-50/50 dark:bg-slate-800/80 p-4 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-inner relative before:absolute before:-top-2 before:left-6 before:w-4 before:h-4 before:bg-indigo-50/50 dark:before:bg-slate-800/80 before:border-t before:border-l before:border-indigo-100 dark:before:border-slate-700 before:rotate-45">
+          <div className="mt-4 animate-slide-in-top">
+            <div className="bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-800 dark:to-slate-900/50 p-6 rounded-[2rem] border-2 border-indigo-100 dark:border-slate-700 shadow-2xl relative">
+              <div className="flex gap-3 items-center mb-4 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+                <CornerDownRight className="w-3.5 h-3.5" />
+                Drafting Response to {comment.profiles?.full_name}
+              </div>
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                placeholder={`Replying to ${comment.profiles?.full_name}...`}
-                className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm min-h-[60px]"
+                placeholder="Compose your response..."
+                className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm min-h-[80px] font-medium"
                 autoFocus
               />
-              <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-indigo-100/50 dark:border-slate-700">
-                <button onClick={() => onReply(null)} className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition">Cancel</button>
+              <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-indigo-100/50 dark:border-slate-700">
+                <button onClick={() => onReply(null)} className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition">Dismiss</button>
                 <button
                   onClick={() => onSubmitReply(comment.id, replyContent)}
                   disabled={submitting || !replyContent.trim()}
-                  className="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md disabled:opacity-50 hover:bg-indigo-700 transition"
+                  className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/20 disabled:opacity-30 hover:bg-slate-900 transition-all flex items-center gap-2"
                 >
-                  Send Reply
+                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Submit Response
                 </button>
               </div>
             </div>
@@ -279,9 +337,10 @@ function CommentItem({ comment, replies, session, onReply, replyingTo, replyCont
 
         {/* Nested Replies */}
         {replies?.length > 0 && (
-          <div className="mt-4 space-y-4 pl-6 relative before:absolute before:left-0 before:top-2 before:w-px before:h-[calc(100%-2rem)] before:bg-slate-200 dark:before:bg-slate-700">
+          <div className="mt-8 space-y-8 pl-10 md:pl-16 relative">
+            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-100 via-slate-50 to-transparent dark:from-slate-700 dark:via-slate-800 dark:to-transparent rounded-full opacity-50" />
             {replies.map((reply: any) => (
-              <div key={reply.id} className="relative before:absolute before:-left-6 before:top-6 before:w-6 before:h-px before:bg-slate-200 dark:before:bg-slate-700">
+              <div key={reply.id} className="relative before:absolute before:-left-10 before:top-10 before:w-10 before:h-1 before:bg-indigo-50 dark:before:bg-slate-800 before:rounded-full">
                 <CommentItem 
                   comment={reply} 
                   replies={[]} 

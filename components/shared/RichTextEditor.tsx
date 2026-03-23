@@ -39,9 +39,28 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
           content_style: `body { font-family:Inter,sans-serif; font-size:16px; color: ${darkMode ? '#f1f5f9' : '#334155'}; background: ${darkMode ? '#0f172a' : '#ffffff'}; }`,
           branding: false,
           statusbar: true,
-          convert_urls: false, // Ensures absolute URLs remain absolute
+          convert_urls: false,
           relative_urls: false,
           remove_script_host: false,
+          link_assume_external_targets: true,
+          link_context_toolbar: true,
+          target_list: [
+            { title: 'New window', value: '_blank' },
+            { title: 'Same window', value: '_self' }
+          ],
+          default_link_target: '_blank',
+          setup: (editor: any) => {
+            editor.ui.registry.addButton('insertMath', { 
+              text: 'Σ Inline', 
+              tooltip: 'Insert Inline Math', 
+              onAction: () => editor.insertContent('<span class="math-tex">\\( x^2 \\)</span>&nbsp;') 
+            });
+            editor.ui.registry.addButton('insertBlockMath', { 
+              text: 'Σ Block', 
+              tooltip: 'Insert Centered Equation', 
+              onAction: () => editor.insertContent('<span class="math-tex">$$ E = mc^2 $$</span>&nbsp;') 
+            });
+          },
         }}
       />
     </div>

@@ -20,12 +20,12 @@ CREATE POLICY "Users can delete their own comments" ON public.comments FOR DELET
 
 -- Create a generic function to update updated_at if it doesnt exist
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$ language 'plpgsql';
+$$ language 'plpgsql';
 
 DROP TRIGGER IF EXISTS set_updated_at ON public.comments;
 CREATE TRIGGER set_updated_at

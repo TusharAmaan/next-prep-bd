@@ -33,7 +33,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({ itemType, itemId, metad
         .eq('user_id', user.id)
         .eq('item_type', itemType)
         .eq('item_id', itemId.toString())
-        .single();
+        .maybeSingle();
 
       if (data) setIsBookmarked(true);
       setLoading(false);

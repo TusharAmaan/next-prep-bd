@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE OR REPLACE FUNCTION get_search_suggestion(search_term text)
-RETURNS text AS $
+RETURNS text AS $$
 DECLARE
   suggestion text;
 BEGIN
@@ -25,4 +25,4 @@ BEGIN
     RETURN NULL;
   END IF;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;

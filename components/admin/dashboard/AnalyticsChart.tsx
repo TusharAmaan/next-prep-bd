@@ -127,7 +127,7 @@ export default function AnalyticsChart() {
                     <span className="text-sm font-bold tracking-widest uppercase">Aggregating Data...</span>
                 </div>
             ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={50}>
                     {activeTab === 'overview' ? (
                         <AreaChart data={data.growth} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                             <defs>
