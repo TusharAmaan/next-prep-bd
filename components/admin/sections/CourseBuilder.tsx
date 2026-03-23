@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 interface CourseBuilderProps {
     course: any;
@@ -31,6 +32,15 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
     const supabase = createClient();
     const [activeStep, setActiveStep] = useState(1); // 1: Info, 2: Curriculum, 3: Pricing, 4: Certificates
     const [saving, setSaving] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    } | null>(null);
+
+    const markDirty = () => !isDirty && setIsDirty(true);
 
     // Course State
     const [courseData, setCourseData] = useState<any>(course || {
@@ -217,6 +227,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                 }).select().single();
                 if (error) throw error;
                 setCourseData(data);
+                setIsDirty(false);
                 toast.success("Course created successfully!");
             }
             setActiveStep(2);
@@ -240,7 +251,12 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={onBack}
+                        onClick={() => isDirty ? setModalConfig({
+                            isOpen: true,
+                            title: "Discard Changes?",
+                            message: "You have unsaved changes. Are you sure you want to go back?",
+                            onConfirm: onBack
+                        }) : onBack()}
                         className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm"
                     >
                         <ArrowLeft size={20} />
@@ -281,8 +297,8 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     <input
                                         type="text"
                                         value={courseData.title}
-                                        onChange={e => setCourseData({ ...courseData, title: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all font-bangla"
+                                        onChange={e => { setCourseData({ ...courseData, title: e.target.value }); markDirty(); }}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all"
                                         placeholder="Enter course name..."
                                     />
                                 </div>
@@ -291,7 +307,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Level</label>
                                         <select
                                             value={courseData.level}
-                                            onChange={e => setCourseData({ ...courseData, level: e.target.value })}
+                                            onChange={e => { setCourseData({ ...courseData, level: e.target.value }); markDirty(); }}
                                             className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none"
                                         >
                                             <option>Beginner</option>
@@ -546,8 +562,18 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                         </div>
                     </div>
                 )}
-                {isPreviewing && <CertificatePreview template={isPreviewing} />}
+
+                {modalConfig && (
+                    <ConfirmModal 
+                        isOpen={modalConfig.isOpen}
+                        title={modalConfig.title}
+                        message={modalConfig.message}
+                        onConfirm={modalConfig.onConfirm}
+                        onCancel={() => setModalConfig(null)}
+                    />
+                )}
             </div>
+            {isPreviewing && <CertificatePreview template={isPreviewing} />}
         </div>
     );
 }

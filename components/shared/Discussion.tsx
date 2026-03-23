@@ -138,24 +138,28 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
 
   return (
-    <div className="mt-16 bg-slate-50 dark:bg-slate-900/40 p-1 md:p-12 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all duration-500">
-      {/* BACKGROUND DECORATION */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] pointer-events-none" />
+    <div className="mt-20 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 md:p-14 rounded-[4rem] border border-slate-200/60 dark:border-slate-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden transition-all duration-500">
+      {/* PREMIUM DECORATION */}
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-end gap-3 mb-10 overflow-hidden">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-indigo-500/10 border border-slate-50 dark:border-slate-700 animate-slide-in-left">
-            <MessageSquare className="w-6 h-6 text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-blue-600" />
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center gap-5 mb-14">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-slide-in-left">
+              <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
           </div>
           <div className="animate-slide-in-bottom">
-            <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic leading-none">
-              The Discussion
+            <h3 className="text-4xl font-black text-slate-950 dark:text-white items-baseline flex gap-2 tracking-tight italic">
+              DISCUSSION <span className="text-indigo-600 dark:text-indigo-400 not-italic grow-0">HUB</span>
             </h3>
-            <div className="h-1 w-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mt-1 opacity-20" />
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mt-1 ml-1 opacity-60">Verified Exchange Program</p>
           </div>
-          <div className="ml-auto bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-xs font-black text-slate-400 uppercase tracking-widest animate-fade-in">
-            {comments.length} <span className="opacity-50">Units</span>
+          <div className="ml-auto flex items-center gap-2 bg-indigo-50 dark:bg-slate-800/80 px-5 py-2.5 rounded-full border border-indigo-100 dark:border-slate-700 shadow-sm animate-fade-in group">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{comments.length} <span className="text-slate-400">THREADS</span></span>
           </div>
         </div>
 

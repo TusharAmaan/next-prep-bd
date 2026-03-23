@@ -32,6 +32,7 @@ import {
 import Link from 'next/link';
 import { toast } from 'sonner';
 import Discussion from '@/components/shared/Discussion';
+import TypographyScaler from '@/components/shared/TypographyScaler';
 
 export default function ContentDetailPage() {
   const { subjectId, contentId } = useParams();
@@ -250,6 +251,7 @@ export default function ContentDetailPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${bgMain}`}>
+      <TypographyScaler />
       
       {/* TOP NAVIGATION BREADCRUMB */}
       <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50/80 border-slate-200'} backdrop-blur-md border-b pt-20 pb-4`}>

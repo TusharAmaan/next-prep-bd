@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import Link from "next/link";
@@ -298,80 +299,114 @@ function AdvancedSearchContent() {
         </div>
       )}
 
-      {/* Results Grid */}
+      {/* Results Section */}
       {!loading && results.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {results.map((item) => (
-            <Link
-              key={`${item.type}-${item.id}`}
-              href={item.url}
-              target={
-                item.type === "ebook" ||
-                (item.type === "resource" && item.subtype === "pdf")
-                  ? "_blank"
-                  : "_self"
-              }
-              className="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
-            >
-              {/* Top Badge & Meta */}
-              <div className="flex justify-between items-start mb-4">
-                <span
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ring-1 ${getStyle(
-                    item.type
-                  )}`}
-                >
-                  {getIcon(item.type)}
-                  {item.sourceTable}
-                </span>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(item.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </div>
-              </div>
+        <div className="space-y-16">
+          {/* Grouped Results */}
+          {["course", "news", "ebook", "resource", "update"].map((type) => {
+            const filtered = results.filter((r) => r.type === type);
+            if (filtered.length === 0) return null;
 
-              {/* Content */}
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-800 leading-snug mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
-                  {item.title}
-                </h3>
-                {item.subject && (
-                  <p className="text-xs text-blue-600 font-bold mb-2">{item.subject}</p>
-                )}
-                <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed mb-4">
-                  {item.description}
-                </p>
-              </div>
-
-              {/* Footer Tags & Meta */}
-              <div className="pt-4 border-t border-slate-50">
-                {item.tags && item.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {item.tags.slice(0, 2).map((tag, i) => (
-                      <span
-                        key={i}
-                        className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-md"
-                      >
-                        <Tag className="w-3 h-3 opacity-50" /> {tag}
-                      </span>
-                    ))}
+            return (
+              <div key={type} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className={`p-3 rounded-2xl ${getStyle(type)} shadow-sm`}>
+                    {getIcon(type)}
                   </div>
-                )}
-                <div className="flex items-center justify-between">
-                  {item.popularity && (
-                    <span className="text-xs text-slate-400 font-medium">
-                      ★ {(item.popularity / 1000).toFixed(1)}k
-                    </span>
-                  )}
-                  <span className="ml-auto text-sm font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Read <ArrowRight className="w-4 h-4 inline ml-1" />
-                  </span>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight italic">
+                      {type === 'resource' ? 'Questions & Materials' : `${type}s`}
+                    </h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                      {filtered.length} matching entries found
+                    </p>
+                  </div>
+                  <div className="flex-1 h-px bg-slate-100 ml-4 hidden md:block" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filtered.map((item) => (
+                    <Link
+                      key={`${item.type}-${item.id}`}
+                      href={item.url}
+                      target={
+                        item.type === "ebook" ||
+                        (item.type === "resource" && item.subtype === "pdf")
+                          ? "_blank"
+                          : "_self"
+                      }
+                      className="group bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                         {React.cloneElement(getIcon(item.type) as React.ReactElement<any>, { size: 64 })}
+                      </div>
+
+                      {/* Top Badge & Meta */}
+                      <div className="flex justify-between items-start mb-4 relative z-10">
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ring-1 ${getStyle(
+                            item.type
+                          )}`}
+                        >
+                          {item.subtype || item.type}
+                        </span>
+                        <div className="flex items-center gap-1 text-[10px] font-black text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(item.date).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 relative z-10">
+                        <h3 className="text-xl font-black text-slate-800 leading-tight mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 italic">
+                          {item.title}
+                        </h3>
+                        {item.subject && (
+                          <div className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 bg-blue-50/50 w-fit px-2 py-1 rounded-lg">
+                            <BookOpen className="w-3 h-3" /> {item.subject}
+                          </div>
+                        )}
+                        <p className="text-sm font-medium text-slate-500 line-clamp-3 leading-relaxed mb-6">
+                          {item.description}
+                        </p>
+                      </div>
+
+                      {/* Footer Tags & Meta */}
+                      <div className="pt-6 border-t border-slate-50 relative z-10">
+                        {item.tags && item.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {item.tags.slice(0, 2).map((tag, i) => (
+                              <span
+                                key={i}
+                                className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100"
+                              >
+                                <Tag className="w-2.5 h-2.5 opacity-40" /> {tag.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {item.popularity !== undefined && item.popularity > 0 && (
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                {item.popularity} Views
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
+                            Explore <ArrowRight className="w-4 h-4" />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       ) : (
         !loading &&

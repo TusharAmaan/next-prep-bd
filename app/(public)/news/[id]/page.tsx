@@ -6,6 +6,7 @@ import Discussion from "@/components/shared/Discussion";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import { Metadata } from 'next';
 import { parseHashtagsToHTML } from '@/utils/hashtagParser';
+import TypographyScaler from "@/components/shared/TypographyScaler";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,8 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
 
   return (
-    <div className="min-h-screen bg-white font-sans pb-20 pt-20"> {/* Added pt-20 for fixed header */}
+    <div className="min-h-screen bg-white font-sans pb-20 pt-20"> 
+      <TypographyScaler />
       
       {/* HERO SECTION */}
       <div className="w-full h-[400px] bg-gray-900 relative">

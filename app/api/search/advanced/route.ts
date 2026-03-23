@@ -58,13 +58,17 @@ export async function GET(request: NextRequest) {
 
     const limit = filters.limit || 50;
     const offset = filters.offset || 0;
-    const searchTerm = `%${filters.q}%`;
-    const words = filters.q.trim().split(/\s+/).filter(w => w.length > 2);
+    const isHashtag = filters.q.startsWith('#');
+    const searchTerm = isHashtag ? filters.q.substring(1) : filters.q;
+    const words = searchTerm.trim().split(/\s+/).filter(w => w.length >= 2);
     
     // Create robust OR conditions for multiple words
-    const searchConditions = words.length > 0
-      ? words.map(w => `title.ilike.%${w}%,seo_title.ilike.%${w}%,description.ilike.%${w}%`).join(',')
-      : `title.ilike.${searchTerm},seo_title.ilike.${searchTerm},description.ilike.${searchTerm}`;
+    // If it's a hashtag, we specifically search tags column
+    const searchConditions = isHashtag
+      ? `tags.cs.{"${searchTerm}"}`
+      : words.length > 0
+        ? words.map(w => `title.ilike.%${w}%,seo_title.ilike.%${w}%,description.ilike.%${w}%,tags.cs.{"${w}"}`).join(',')
+        : `title.ilike.%${searchTerm}%,seo_title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`;
 
     let combinedResults: any[] = [];
 

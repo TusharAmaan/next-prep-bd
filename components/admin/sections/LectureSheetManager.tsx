@@ -24,6 +24,8 @@ import {
   Globe,
   Lock
 } from "lucide-react";
+import ConfirmModal from "@/components/shared/ConfirmModal";
+import Discussion from "@/components/shared/Discussion";
 
 const slugify = (text: string) => {
   return text
@@ -33,25 +35,7 @@ const slugify = (text: string) => {
     .replace(/^-+|-+$/g, '');
 };
 
-// --- Custom Modal Component (Internal) ---
-const CustomConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", type = "danger" }: any) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in-95">
-        <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-6 ${type === 'danger' ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
-           <AlertCircle size={28} />
-        </div>
-        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">{title}</h3>
-        <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-8 text-sm font-medium leading-relaxed">{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 px-6 py-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all">CANCEL</button>
-          <button onClick={onConfirm} className={`flex-1 px-6 py-3.5 ${type === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-100' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'} text-white rounded-2xl text-sm font-black transition-all shadow-lg`}>{confirmText}</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Removed internal CustomConfirmModal to use shared component
 
 interface LectureSheetManagerProps {
   segments: any[];
@@ -94,10 +78,15 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   // Custom UI States
-  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void, type: 'danger' | 'primary'}>({
-    isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'danger'
-  });
-  const [promptValue, setPromptValue] = useState('');
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean, 
+    title: string, 
+    message: string, 
+    onConfirm: (val?: string) => void, 
+    isDangerous?: boolean,
+    showInput?: boolean,
+    inputPlaceholder?: string
+  } | null>(null);
 
   // Fetch Hierarchy Helpers
   const fetchLocalGroups = async (segId: string) => {
@@ -172,11 +161,11 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   };
 
   const handleDeleteSheet = async (id: string) => {
-    setConfirmModal({
+    setModalConfig({
       isOpen: true,
       title: "Delete Sheet?",
       message: "This action cannot be undone. All user access logs for this sheet will also be removed.",
-      type: 'danger',
+      isDangerous: true,
       onConfirm: async () => {
         try {
           const { error } = await supabase.from('lecture_sheets').delete().eq('id', id);
@@ -187,7 +176,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           console.error("Error deleting sheet:", err);
           toast.error("Failed to delete sheet");
         }
-        setConfirmModal(p => ({ ...p, isOpen: false }));
+        setModalConfig(null);
       }
     });
   };
@@ -217,7 +206,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
         .single();
       
       if (pError || !profile) {
-        alert("User not found with this email.");
+        toast.error("User not found with this email.");
         return;
       }
 
@@ -229,7 +218,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
         }]);
       
       if (aError) {
-        if (aError.code === '23505') alert("User already has access.");
+        if (aError.code === '23505') toast.error("User already has access.");
         else throw aError;
       } else {
         setTargetUserEmail('');
@@ -474,8 +463,19 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                           </button>
                           <button 
                             onClick={() => {
-                              const comment = prompt("Reason for rejection?");
-                              if (comment) updateRequestStatus(req.id, 'rejected', comment);
+                              setModalConfig({
+                                isOpen: true,
+                                title: "Reject Request",
+                                message: "Please provide a reason for rejecting this request. The student will see this comment.",
+                                isDangerous: true,
+                                showInput: true,
+                                inputPlaceholder: "e.g. Out of syllabus, Already covered...",
+                                onConfirm: (reason) => {
+                                  if (!reason) return toast.error("Reason is required.");
+                                  updateRequestStatus(req.id, 'rejected', reason);
+                                  setModalConfig(null);
+                                }
+                              });
                             }}
                             className="w-full border border-red-200 hover:bg-red-50 text-red-600 py-3 rounded-xl text-xs font-bold transition-all"
                           >
@@ -504,12 +504,23 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                            </button>
                            <button 
                              onClick={() => {
-                               const comment = prompt("Reason for cancellation?");
-                               if (comment) updateRequestStatus(req.id, 'rejected', comment);
+                               setModalConfig({
+                                 isOpen: true,
+                                 title: "Cancel Request",
+                                 message: "Are you sure you want to cancel this request? Provide a cancellation reason.",
+                                 isDangerous: true,
+                                 showInput: true,
+                                 inputPlaceholder: "Reason for cancellation...",
+                                 onConfirm: (reason) => {
+                                   if (!reason) return toast.error("Reason is required.");
+                                   updateRequestStatus(req.id, 'rejected', reason);
+                                   setModalConfig(null);
+                                 }
+                               });
                              }}
                              className="w-full border border-red-100 hover:bg-red-50 text-red-400 py-2 rounded-xl text-[10px] font-bold transition-all"
                            >
-                              Cancel Request
+                               Cancel Request
                            </button>
                         </div>
                       )}
@@ -827,14 +838,18 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
       )}
 
       {/* Global Confirmation Modal */}
-      <CustomConfirmModal 
-        isOpen={confirmModal.isOpen}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        onCancel={() => setConfirmModal(p => ({ ...p, isOpen: false }))}
-        type={confirmModal.type}
-      />
+      {modalConfig && (
+        <ConfirmModal 
+          isOpen={modalConfig.isOpen}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          onConfirm={modalConfig.onConfirm}
+          onCancel={() => setModalConfig(null)}
+          isDangerous={modalConfig.isDangerous}
+          showInput={modalConfig.showInput}
+          inputPlaceholder={modalConfig.inputPlaceholder}
+        />
+      )}
     </div>
   );
 };

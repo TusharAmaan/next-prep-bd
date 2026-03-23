@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 
 interface RichTextEditorProps {
@@ -9,16 +10,15 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ initialValue, onChange, darkMode = false }: RichTextEditorProps) {
+  // Use a ref to store the initial value so it doesn't trigger re-renders if the prop changes
+  const initialRef = useRef(initialValue);
+
   return (
     <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-600 shadow-sm">
       <Editor
         apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
-        
-        // FIX: Use 'initialValue' instead of 'value'. 
-        // This makes it Uncontrolled (better for performance & prevents cursor jumping)
-        initialValue={initialValue || ""}
-        
-        onEditorChange={(newValue, editor) => {
+        initialValue={initialRef.current || ""}
+        onEditorChange={(newValue) => {
           onChange(newValue);
         }}
         

@@ -7,11 +7,22 @@ import {
   Layout, Save, Image as ImageIcon, Loader2, 
   DollarSign, Clock, User, ChevronLeft, AlertCircle 
 } from "lucide-react";
+import { toast } from "sonner";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 export default function CourseEditor({ existingCourse }: { existingCourse?: any }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const markDirty = () => !isDirty && setIsDirty(true);
 
   // --- FORM STATE ---
   const [title, setTitle] = useState(existingCourse?.title || "");
@@ -96,7 +107,8 @@ export default function CourseEditor({ existingCourse }: { existingCourse?: any 
       if (result.error) throw result.error;
 
       // 5. Success
-      alert("Course submitted for review!");
+      toast.success("Course submitted for review!");
+      setIsDirty(false);
       router.push('/tutor/dashboard/courses'); // Redirect ONLY after success
 
     } catch (err: any) {
@@ -111,9 +123,17 @@ export default function CourseEditor({ existingCourse }: { existingCourse?: any 
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
       
       {/* HEADER */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300">
         <div>
-          <button onClick={() => router.back()} className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-slate-600 mb-1">
+          <button 
+            onClick={() => isDirty ? setModalConfig({
+              isOpen: true,
+              title: "Discard Changes?",
+              message: "You have unsaved changes. Are you sure you want to cancel?",
+              onConfirm: () => router.back()
+            }) : router.back()} 
+            className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-slate-600 mb-1 transition-colors"
+          >
             <ChevronLeft className="w-3 h-3"/> Cancel
           </button>
           <h1 className="text-2xl font-black text-slate-800">
@@ -149,7 +169,7 @@ export default function CourseEditor({ existingCourse }: { existingCourse?: any 
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-lg outline-none focus:border-emerald-500"
                 placeholder="e.g. Complete Web Development Bootcamp"
                 value={title}
-                onChange={e => setTitle(e.target.value)}
+                onChange={e => { setTitle(e.target.value); markDirty(); }}
                 onBlur={generateSlug}
               />
             </div>
@@ -169,7 +189,7 @@ export default function CourseEditor({ existingCourse }: { existingCourse?: any 
             <Editor
               apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1"
               value={description}
-              onEditorChange={(c) => setDescription(c)}
+              onEditorChange={(c) => { setDescription(c); markDirty(); }}
               init={{
                 height: 400,
                 menubar: false,
@@ -252,6 +272,16 @@ export default function CourseEditor({ existingCourse }: { existingCourse?: any 
 
         </div>
       </div>
+
+      {modalConfig && (
+        <ConfirmModal 
+          isOpen={modalConfig.isOpen}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          onConfirm={modalConfig.onConfirm}
+          onCancel={() => setModalConfig(null)}
+        />
+      )}
     </div>
   );
 }

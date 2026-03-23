@@ -398,112 +398,118 @@ export default function ContentManager({
         }
     };
 
-    if (editorMode) {
-        return (
-            <ContentEditor 
-                activeTab={activeTab}
-                isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
-                confirmAction={(msg: string, cb: any) => { 
-                    setModalConfig({
-                        isOpen: true,
-                        title: "Confirm Action",
-                        message: msg,
-                        onConfirm: () => { cb(); setModalConfig(null); }
-                    });
-                }} 
-                title={title} setTitle={setTitle} 
-                slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))}
-                content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
-                imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
-                author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
-                seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDesc={seoDesc} setSeoDesc={setSeoDesc} tags={tags} setTags={setTags} markDirty={markDirty}
-                // --- PASS FILTERED CATEGORIES TO EDITOR ---
-                categories={filteredCategories} openCategoryModal={openCategoryModal}
-                segments={segments} selectedSegment={editSeg} 
-                handleSegmentClick={(id: string) => { setEditSeg(id); setEditGrp(""); setEditSub(""); fetchGroups(id); }}
-                groups={groups} selectedGroup={editGrp} 
-                handleGroupClick={(id: string) => { setEditGrp(id); setEditSub(""); fetchSubjects(id); }}
-                subjects={subjects} selectedSubject={editSub} 
-                handleSubjectClick={setEditSub}
-                resourceId={editingId}
-            />
-        );
-    }
-
     // --- CLIENT-SIDE FILTERING TO HIDE PENDING FROM OTHERS ---
     // This is where we implement the logic: "Neither of them should show the pending post here. Only the post that I will make ... should appear here"
-    const displayList = dataList.filter(item => {
-        // Always show non-pending items
-        if (item.status !== 'pending') return true;
-        // If pending, ONLY show if I am the author
-        return currentUser && item.author_id === currentUser.id;
-    });
+    // The displayList constant is removed, and filtering is applied directly in the JSX.
 
     return (
         <div className="animate-fade-in space-y-6">
-            <ListHeader title={activeTab === 'segment_updates' ? 'UPDATES' : activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
-            <ContentFilterBar 
-                activeTab={activeTab}
-                segments={segments} groups={groups} subjects={subjects}
-                selSeg={selSeg} setSelSeg={setSelSeg} selGrp={selGrp} setSelGrp={setSelGrp} selSub={selSub} setSelSub={setSelSub}
-                onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects}
-                dateFilter={dateFilter} setDateFilter={setDateFilter}
-                startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
-                typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-                updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
-                // --- PASS FILTERED CATEGORIES TO FILTER BAR ---
-                catFilter={catFilter} setCatFilter={setCatFilter} categories={filteredCategories}
-                showHierarchy={['materials', 'courses', 'segment_updates'].includes(activeTab)}
-                showSegmentOnly={activeTab === 'segment_updates'}
-                showType={activeTab === 'materials'}
-                showUpdateType={activeTab === 'segment_updates'}
-                showCategory={activeTab === 'ebooks' || activeTab === 'news'}
-                typeOptions={activeTab === 'materials' ? [
-                    { val: 'blog', label: '✍️ Blogs' }, 
-                    { val: 'pdf', label: '📄 PDFs' }, 
-                    { val: 'video', label: '🎬 Videos' }, 
-                    { val: 'question', label: '❓ Questions' }
-                ] : [
-                    { val: 'routine', label: '📅 Routine' }, 
-                    { val: 'syllabus', label: '📝 Syllabus' }, 
-                    { val: 'exam_result', label: '🏆 Result' }
-                ]}
-            />
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-                    <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 dark:text-slate-500 border-b border-gray-100 tracking-wider">
-                        <tr>
-                            <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
-                            {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
-                            <SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} />
-                            <th className="px-6 py-4 text-right font-extrabold text-slate-400 dark:text-slate-500">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {displayList.length > 0 ? displayList.map(item => (
-                            <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="font-bold text-slate-800 dark:text-slate-100">{item.title}</div>
-                                    <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">/{item.slug || '-'}</div>
-                                    {/* Visual Indicator for Pending Posts (Only visible to Admin who posted it) */}
-                                    {item.status === 'pending' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded ml-2">Pending (Yours)</span>}
-                                </td>
-                                {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
-                                <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                    {activeTab === 'materials' && (
-                                        <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">Likes</button>
-                                    )}
-                                    <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
-                                    <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
-                                </td>
-                            </tr>
-                        )) : (
-                            <tr><td colSpan={4} className="p-8 text-center text-slate-400 dark:text-slate-500">No items found matching your filters.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            {editorMode ? (
+                <ContentEditor 
+                    activeTab={activeTab}
+                    isDirty={isDirty} setEditorMode={setEditorMode} handleSave={handleSave} submitting={submitting} 
+                    confirmAction={(msg: string, cb: any) => { 
+                        setModalConfig({
+                            isOpen: true,
+                            title: "Confirm Action",
+                            message: msg,
+                            onConfirm: () => { cb(); setModalConfig(null); }
+                        });
+                    }} 
+                    title={title} setTitle={setTitle} 
+                    slug={slug} setSlug={setSlug} generateSlug={() => setSlug(slugify(title))}
+                    content={content} setContent={setContent} link={link} setLink={setLink} type={type} setType={setType} category={category} setCategory={setCategory}
+                    imageMethod={imageMethod} setImageMethod={setImageMethod} imageFile={imageFile} setImageFile={setImageFile} imageLink={imageLink} setImageLink={setImageLink} file={file} setFile={setFile}
+                    author={author} setAuthor={setAuthor} instructor={instructor} setInstructor={setInstructor} price={price} setPrice={setPrice} discountPrice={discountPrice} setDiscountPrice={setDiscountPrice} duration={duration} setDuration={setDuration}
+                    seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDesc={seoDesc} setSeoDesc={setSeoDesc} tags={tags} setTags={setTags} markDirty={markDirty}
+                    // --- PASS FILTERED CATEGORIES TO EDITOR ---
+                    categories={filteredCategories} openCategoryModal={openCategoryModal}
+                    segments={segments} selectedSegment={editSeg} 
+                    handleSegmentClick={(id: string) => { setEditSeg(id); setEditGrp(""); setEditSub(""); fetchGroups(id); }}
+                    groups={groups} selectedGroup={editGrp} 
+                    handleGroupClick={(id: string) => { setEditGrp(id); setEditSub(""); fetchSubjects(id); }}
+                    subjects={subjects} selectedSubject={editSub} 
+                    handleSubjectClick={setEditSub}
+                    resourceId={editingId}
+                />
+            ) : (
+                <>
+                    <ListHeader title={activeTab === 'segment_updates' ? 'UPDATES' : activeTab.toUpperCase()} onAdd={handleAddNew} onSearch={setSearch} searchVal={search} />
+                    <ContentFilterBar 
+                        activeTab={activeTab}
+                        segments={segments} groups={groups} subjects={subjects}
+                        selSeg={selSeg} setSelSeg={setSelSeg} selGrp={selGrp} setSelGrp={setSelGrp} selSub={selSub} setSelSub={setSelSub}
+                        onFetchGroups={fetchGroups} onFetchSubjects={fetchSubjects}
+                        dateFilter={dateFilter} setDateFilter={setDateFilter}
+                        startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
+                        typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                        updateTypeFilter={updateTypeFilter} setUpdateTypeFilter={setUpdateTypeFilter}
+                        // --- PASS FILTERED CATEGORIES TO FILTER BAR ---
+                        catFilter={catFilter} setCatFilter={setCatFilter} categories={filteredCategories}
+                        showHierarchy={['materials', 'courses', 'segment_updates'].includes(activeTab)}
+                        showSegmentOnly={activeTab === 'segment_updates'}
+                        showType={activeTab === 'materials'}
+                        showUpdateType={activeTab === 'segment_updates'}
+                        showCategory={activeTab === 'ebooks' || activeTab === 'news'}
+                        typeOptions={activeTab === 'materials' ? [
+                            { val: 'blog', label: '✍️ Blogs' }, 
+                            { val: 'pdf', label: '📄 PDFs' }, 
+                            { val: 'video', label: '🎬 Videos' }, 
+                            { val: 'question', label: '❓ Questions' }
+                        ] : [
+                            { val: 'routine', label: '📅 Routine' }, 
+                            { val: 'syllabus', label: '📝 Syllabus' }, 
+                            { val: 'exam_result', label: '🏆 Result' }
+                        ]}
+                    />
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
+                            <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 dark:text-slate-500 border-b border-gray-100 tracking-wider">
+                                <tr>
+                                    <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
+                                    {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
+                                    <SortableHeader label="DATE" sortKey="created_at" currentSort={sortConfig} setSort={setSortConfig} />
+                                    <th className="px-6 py-4 text-right font-extrabold text-slate-400 dark:text-slate-500">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {dataList.filter(item => {
+                                    // Always show non-pending items
+                                    if (item.status !== 'pending') return true;
+                                    // If pending, ONLY show if I am the author
+                                    return currentUser && item.author_id === currentUser.id;
+                                }).length > 0 ? dataList.filter(item => {
+                                    // Always show non-pending items
+                                    if (item.status !== 'pending') return true;
+                                    // If pending, ONLY show if I am the author
+                                    return currentUser && item.author_id === currentUser.id;
+                                }).map(item => (
+                                    <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="font-bold text-slate-800 dark:text-slate-100">{item.title}</div>
+                                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">/{item.slug || '-'}</div>
+                                            {/* Visual Indicator for Pending Posts (Only visible to Admin who posted it) */}
+                                            {item.status === 'pending' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded ml-2">Pending (Yours)</span>}
+                                        </td>
+                                        {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
+                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                            {activeTab === 'materials' && (
+                                                <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">Likes</button>
+                                            )}
+                                            <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
+                                            <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan={4} className="p-8 text-center text-slate-400 dark:text-slate-500">No items found matching your filters.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
             {showLikers && <PostLikersModal resourceId={showLikers.id} resourceTitle={showLikers.title} onClose={() => setShowLikers(null)} />}
             
             {modalConfig && (

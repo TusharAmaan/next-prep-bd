@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar"; 
-import FacebookComments from "@/components/FacebookComments"; 
 import BlogTOC from "@/components/BlogTOC"; 
 import BlogContentWrapper from "@/components/public/BlogContentWrapper"; 
+import Discussion from "@/components/shared/Discussion";
+import TypographyScaler from "@/components/shared/TypographyScaler";
 import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
@@ -94,6 +95,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   return (
     <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 ${bengaliFont.className}`}>
+      <TypographyScaler />
       <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
         <aside className="hidden xl:block xl:col-span-2 relative">
             <BlogTOC content={post.content_body || ""} />
@@ -109,7 +111,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                isLoggedIn={isLoggedIn}
             />
             <div className="mt-12 comments-section print:hidden">
-                <FacebookComments url={absoluteUrl} />
+                <Discussion itemType="blog" itemId={post.id.toString()} />
             </div>
             <div className="xl:hidden">
                 <BlogTOC content={post.content_body || ""} />
