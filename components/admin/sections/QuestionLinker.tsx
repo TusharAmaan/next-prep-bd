@@ -19,6 +19,9 @@ export default function QuestionLinker({ resourceId }: QuestionLinkerProps) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const itemsPerPage = 6;
 
   // --- INITIAL LOAD ---
   useEffect(() => {
@@ -45,24 +48,43 @@ export default function QuestionLinker({ resourceId }: QuestionLinkerProps) {
     if (data) setLinkedQuestions(data);
   };
 
-  const searchBank = async (query: string) => {
+  const searchBank = async (query: string, pageNum: number = 0) => {
     setSearchQuery(query);
-    if (query.length < 2) return;
+    setPage(pageNum);
+    
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      setHasMore(false);
+      return;
+    }
 
-    // Search available questions (exclude ones already linked ideally, but simple search first)
-    // We filter for PARENTS only (standalone questions or passage containers)
-    const { data } = await supabase
+    setLoading(true);
+    const from = pageNum * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    // Search available questions
+    // We search both text and topic_tag as requested
+    const { data, count } = await supabase
       .from('question_bank')
-      .select('*')
-      .ilike('question_text', `%${query}%`)
+      .select('*', { count: 'exact' })
+      .or(`question_text.ilike.%${query}%,topic_tag.ilike.%${query}%`)
       .is('parent_id', null) 
-      .limit(10);
+      .range(from, to);
 
     if (data) {
       // Filter out questions that are already linked
       const linkedIds = new Set(linkedQuestions.map(lq => lq.question.id));
-      setSearchResults(data.filter(q => !linkedIds.has(q.id)));
+      const filteredResults = data.filter(q => !linkedIds.has(q.id));
+      
+      if (pageNum === 0) {
+        setSearchResults(filteredResults);
+      } else {
+        setSearchResults(prev => [...prev, ...filteredResults]);
+      }
+      
+      setHasMore(count ? (pageNum + 1) * itemsPerPage < count : false);
     }
+    setLoading(false);
   };
 
   // --- ACTIONS ---
@@ -111,7 +133,7 @@ export default function QuestionLinker({ resourceId }: QuestionLinkerProps) {
                 <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${q.question_type === 'passage' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                     {q.question_type}
                 </span>
-                {q.topic_tag && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded">{q.topic_tag}</span>}
+                {q.topic_tag && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">{q.topic_tag}</span>}
             </div>
             <div className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-2" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
         </div>
@@ -181,7 +203,20 @@ export default function QuestionLinker({ resourceId }: QuestionLinkerProps) {
                     {searchQuery ? "No matching questions found." : "Type to search..."}
                 </div>
             ) : (
-                searchResults.map(q => renderQuestionCard(q, false))
+                <>
+                    {searchResults.map(q => renderQuestionCard(q, false))}
+                    
+                    {hasMore && (
+                        <div className="pt-2 pb-4">
+                            <button 
+                                onClick={() => searchBank(searchQuery, page + 1)}
+                                className="w-full py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-colors"
+                            >
+                                {loading ? "Loading..." : "Load More Questions"}
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
       </div>
