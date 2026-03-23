@@ -1,5 +1,6 @@
 "use client";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useTheme } from "@/components/shared/ThemeProvider";
 
 interface StatsCardProps {
   title: string;
@@ -7,15 +8,17 @@ interface StatsCardProps {
   trend: string;
   trendUp: boolean;
   icon: React.ReactNode;
-  gradient: string; // New Prop for the color
+  gradient: string;
 }
 
 export default function StatsCard({ title, value, trend, trendUp, icon, gradient }: StatsCardProps) {
+  const { isDark } = useTheme();
+
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${gradient} group`}>
+    <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${gradient} group`}>
       
-      {/* DECORATIVE BACKGROUND SHAPES */}
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white dark:bg-slate-900 opacity-10 blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+      {/* Decorative shapes */}
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white opacity-10 blur-xl group-hover:scale-150 transition-transform duration-500"></div>
       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 rounded-full bg-black opacity-5 blur-xl"></div>
 
       <div className="relative z-10 flex justify-between items-start">
@@ -24,15 +27,13 @@ export default function StatsCard({ title, value, trend, trendUp, icon, gradient
           <h3 className="text-3xl font-black text-white tracking-tight">{value}</h3>
         </div>
         
-        {/* ICON CONTAINER */}
-        <div className="p-3 bg-white dark:bg-slate-900/20 backdrop-blur-sm rounded-xl text-white shadow-inner border border-white/10">
+        <div className="p-3 bg-white/15 backdrop-blur-sm rounded-xl text-white shadow-inner border border-white/10">
           {icon}
         </div>
       </div>
 
-      {/* FOOTER TREND */}
       <div className="relative z-10 mt-4 flex items-center gap-2">
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trendUp ? 'bg-white dark:bg-slate-900/20 text-white' : 'bg-red-500/20 text-white'}`}>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trendUp ? 'bg-white/15 text-white' : 'bg-red-500/20 text-white'}`}>
           {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
           {trend}
         </div>

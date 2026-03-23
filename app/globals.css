@@ -1,4 +1,4 @@
-@import 'katex/dist/katex.min.css'; /* <--- MUST BE LINE 1 */
+@import 'katex/dist/katex.min.css'; /* MUST BE LINE 1 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +6,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
 }
 
 body {
@@ -19,6 +24,83 @@ body {
   font-family: var(--font-bangla), serif;
 }
 
+/* =========================================
+   CUSTOM SCROLLBAR
+   ========================================= */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* =========================================
+   SCROLL REVEAL
+   ========================================= */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+.scroll-reveal-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+.scroll-reveal-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* =========================================
+   SHIMMER LOADING
+   ========================================= */
+.shimmer-bg {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+.dark .shimmer-bg {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* =========================================
+   ADMIN TABLE FIXES
+   ========================================= */
+/* Fix table hover for dark mode */
+.dark .admin-table-row:hover {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+.admin-table-row:hover {
+  background-color: #f8fafc !important;
+}
 
 /* =========================================
    1. WEB STYLES (For the Browser)
@@ -30,10 +112,9 @@ body {
   font-size: 1rem; 
 }
 
-/* Desktop Font Size Adjustment */
 @media (min-width: 768px) {
   .blog-content {
-    font-size: 1.125rem; /* Increased to 18px for better desktop readability */
+    font-size: 1.125rem;
   }
 }
 
@@ -43,45 +124,53 @@ body {
 .blog-content h3 { font-size: 1.5em; font-weight: 600; color: #000;}
 .blog-content h4 { font-size: 1.25em; font-weight: 600; color: #000;}
 
+.dark .blog-content h1,
+.dark .blog-content h2,
+.dark .blog-content h3,
+.dark .blog-content h4 {
+  color: #f1f5f9;
+}
+
 /* Lists (Web) */
 .blog-content ul { list-style-type: disc; padding-left: 1.625rem;}
 .blog-content ol { list-style-type: decimal; padding-left: 1.625rem;}
 .blog-content ol[type="a"] { list-style-type: lower-alpha; }
 .blog-content li { padding-left: 0.25em; }
 
-
 /* Links (Web) */
 .blog-content a { color: #2563eb; text-decoration: underline; font-weight: 500; }
 
 /* Formatting (Web) */
 .blog-content strong, .blog-content b { font-weight: 700; color: #000; }
+.dark .blog-content strong, .dark .blog-content b { color: #f1f5f9; }
 .blog-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; font-style: italic; color: #4b5563; margin: 1.5rem 0; }
+.dark .blog-content blockquote { border-left-color: #334155; color: #94a3b8; }
 
 /* Tables (Web) */
 .blog-content table { width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; margin: 1.5rem 0; }
 .blog-content th, .blog-content td { border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left; vertical-align: top; }
 .blog-content th { background-color: #f9fafb; font-weight: 600; }
+.dark .blog-content table { border-color: #334155; }
+.dark .blog-content th, .dark .blog-content td { border-color: #334155; }
+.dark .blog-content th { background-color: #1e293b; }
 
 /* Images (Web) */
 .blog-content img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1.5rem 0; display: inline-block; }
 
 
 /* =========================================
-   2. PRINT STYLES (The "Formal" PDF Look)
+   2. PRINT STYLES
    ========================================= */
 @media print {
-  /* A. Paper Setup */
   @page {
     size: auto;
-    margin: 20mm; /* Standard 2cm margins */
+    margin: 20mm;
   }
 
-  /* B. Hide Website Elements */
   nav, aside, .comments-section, .no-print, button, footer {
     display: none !important;
   }
 
-  /* C. Layout Reset */
   body, .min-h-screen, .lg\:col-span-8, .max-w-7xl, .p-8, .md\:p-12 {
     display: block !important;
     width: 100% !important;
@@ -91,11 +180,10 @@ body {
     overflow: visible !important;
   }
 
-  /* D. FORMAL TYPOGRAPHY */
   .blog-content {
     font-size: 11pt !important;
     color: #000000 !important;
-    text-align: justify; /* Makes it look like a book */
+    text-align: justify;
   }
 
   .blog-content p, .blog-content li, .blog-content td {
@@ -103,12 +191,10 @@ body {
     color: #000000 !important;
   }
 
-  /* Scale Headings */
   .blog-content h1 { font-size: 18pt !important;}
   .blog-content h2 { font-size: 14pt !important; page-break-after: avoid; }
   .blog-content h3 { font-size: 12pt !important; page-break-after: avoid; }
 
-  /* E. FORCE PURE BLACK */
   * {
     color: #000000 !important;
     text-shadow: none !important;
@@ -116,25 +202,20 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* F. TABLE FIXES */
   .blog-content table {border: 1px solid #000 !important; width: 100% !important; border-collapse: collapse !important;}
   .blog-content th { background-color: #eee !important; font-weight: bold !important; font-size: 10pt !important; }
   .blog-content td { font-size: 10pt !important; }
   .blog-content th, .blog-content td { border: 1px solid #000 !important; padding: 4px 8px !important; }
 
-  /* G. PREVENT CUT-OFFS (FIXED!) */
-  /* We removed 'div' from this list to prevent the empty page bug */
   p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, td {
     break-inside: avoid;       
     page-break-inside: avoid;  
   }
 
-  /* Allow the main content container to split across pages naturally */
   div {
     break-inside: auto; 
   }
 
-  /* Ensure images don't break and look professional */
   img {
     break-inside: avoid;
     page-break-inside: avoid;
@@ -143,10 +224,8 @@ body {
     margin: 10px auto; 
   }
 
-  /* H. LINKS */
   .blog-content a { text-decoration: none !important; color: #000 !important; font-weight: bold !important; }
 
-  /* I. FOOTER */
   .print-footer {
     display: flex !important;
     justify-content: space-between;
@@ -162,7 +241,9 @@ body {
   }
 }
 
-    /* Container styles */
+/* =========================================
+   QUESTION BANK STYLES
+   ========================================= */
 .question-bank-container {
   font-family: var(--font-bangla), var(--font-geist-sans),
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -170,63 +251,62 @@ body {
   max-width: 800px;
   margin: 0 auto;
 }
+.dark .question-bank-container { color: #cbd5e1; }
     
-    /* Header for each exam year */
-    .exam-header {
-        background-color: #f4f4f4;
-        padding: 12px 15px;
-        border-left: 5px solid #007bff;
-        font-size: 1.2em;
-        font-weight: bold;
-    }
+.exam-header {
+  background-color: #f4f4f4;
+  padding: 12px 15px;
+  border-left: 5px solid #007bff;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.dark .exam-header { background-color: #1e293b; }
 
-    /* Individual Question Card */
-    .question-card {
-        border-bottom: 1px solid #e0e0e0;
-        padding: 20px 0;
-    }
+.question-card {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 20px 0;
+}
+.dark .question-card { border-bottom-color: #334155; }
 
-    /* Question Text */
-    .question-text {
-        font-weight: bold;
-        font-size: 1.1em;
-        margin-top: 0;
-        color: #000;
-    }
+.question-text {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-top: 0;
+  color: #000;
+}
+.dark .question-text { color: #f1f5f9; }
 
-    /* Options Container (Grid) - Replaces UL */
-    .options-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* Two columns */
-        gap: 10px;
-        margin-bottom: 15px;
-    }
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
 
-    /* Individual Option styling - Replaces LI */
-    .option-item {
-        background: #fafafa;
-        padding: 8px 12px;
-        border-radius: 5px;
-        border: 1px solid #eee;
-        margin: 0; /* Remove default paragraph margin */
-    }
+.option-item {
+  background: #fafafa;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid #eee;
+  margin: 0;
+}
+.dark .option-item { background: #1e293b; border-color: #334155; }
 
-    /* Correct Answer styling */
-    .correct-answer {
-        font-size: 0.95em;
-        color: #2e7d32; /* Green color */
-        font-weight: bold;
-        background-color: #e8f5e9;
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 4px;
-        border: 1px solid #c8e6c9;
-        margin: 0;
-    }
+.correct-answer {
+  font-size: 0.95em;
+  color: #2e7d32;
+  font-weight: bold;
+  background-color: #e8f5e9;
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid #c8e6c9;
+  margin: 0;
+}
+.dark .correct-answer { background-color: #064e3b; border-color: #065f46; color: #6ee7b7; }
 
-    /* Mobile responsive: stack options on small screens */
-    @media (max-width: 600px) {
-        .options-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+@media (max-width: 600px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+}

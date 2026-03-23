@@ -117,7 +117,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
       {/* DISCUSSION COMMENTS SECTION */}
       <div className="max-w-3xl mx-auto px-6">
         <hr className="border-gray-100 dark:border-slate-800 mb-6" />
-        <Discussion itemType="news" itemId={post.id} />
+        <Discussion itemType="news" itemId={post.id.toString()} />
       </div>
     </div>
   );

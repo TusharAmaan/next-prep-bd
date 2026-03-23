@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/utils/supabase/client"; // Use Client Supabase
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/shared/ThemeProvider";
 import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle, Database, GraduationCap, Newspaper, Moon, Sun, Palette
+  AlertTriangle, Database, GraduationCap, Newspaper, Palette
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
 import ActivityFeed from "@/components/admin/dashboard/ActivityFeed";
-import QuickStats from "@/components/admin/dashboard/QuickStats";
+import PlatformInsights from "@/components/admin/dashboard/PlatformInsights";
 import VersionNote from "@/components/admin/dashboard/VersionNote";
 import AdminHeader from "@/components/admin/AdminHeader"; 
 
@@ -28,8 +29,6 @@ import LessonPlanManager from "@/components/admin/sections/LessonPlanManager";
 import CourseManager from "@/components/admin/sections/CourseManager";
 import CertificateDesigner from "@/components/admin/sections/CertificateDesigner";
 
-
-
 const getMonthRanges = () => {
     const now = new Date();
     const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -39,25 +38,11 @@ const getMonthRanges = () => {
 export default function AdminDashboard() {
     const supabase = createClient();
     const router = useRouter();
+    const { isDark } = useTheme();
     const [activeTab, setActiveTab] = useState("overview"); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
-
-    // Persist dark mode preference
-    useEffect(() => {
-        const saved = localStorage.getItem('admin-dark-mode');
-        if (saved === 'true') setDarkMode(true);
-    }, []);
-
-    const toggleDarkMode = () => {
-        setDarkMode(prev => {
-            const next = !prev;
-            localStorage.setItem('admin-dark-mode', String(next));
-            return next;
-        });
-    };
 
     // --- DASHBOARD DATA ---
     const [stats, setStats] = useState({
@@ -86,52 +71,39 @@ export default function AdminDashboard() {
     const showError = (msg: string) => setModal({ isOpen: true, type: 'error', message: msg });
     const closeModal = () => setModal({ ...modal, isOpen: false });
 
-    // --- FETCH DATA (The Big Fix) ---
+    // --- FETCH DATA ---
     const fetchDashboardData = useCallback(async () => {
         setIsLoading(true);
         const { startThisMonth } = getMonthRanges();
         
         try {
-            // We use Promise.all to fetch EVERYTHING in parallel for speed
             const [
-                // 1. Current Totals
                 matTotal, quesTotal, ebookTotal, userTotal,
-                // 2. Previous Totals (For Trend)
                 matLast, quesLast, ebookLast, userLast,
-                // 3. Activity Feed Sources
                 recentUsers, recentResources, recentCourses, recentEbooks, recentNews,
-                // 4. Misc
                 sysUpdate, recentFeedbacks
             ] = await Promise.all([
-                // Current Counts
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
-                supabase.from("question_bank").select('*', { count: 'exact', head: true }), // FIXED: Query question_bank
+                supabase.from("question_bank").select('*', { count: 'exact', head: true }),
                 supabase.from("ebooks").select('*', { count: 'exact', head: true }),
                 supabase.from("profiles").select('*', { count: 'exact', head: true }),
 
-                // Previous Counts (Before this month)
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).lt('created_at', startThisMonth),
                 supabase.from("question_bank").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
                 supabase.from("ebooks").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
                 supabase.from("profiles").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
                 
-                // Activity Feed Data (Fetch 5 of each)
                 supabase.from("profiles").select('id, full_name, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("resources").select('id, title, type, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("courses").select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("ebooks").select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("news").select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
 
-                // System
                 supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single(),
                 supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10)
             ]);
 
-            // Calculate Trends
-            const calcTrend = (total: number, prevTotal: number) => {
-                const diff = total - prevTotal;
-                return diff; // Returns simple difference (e.g. +5 or -2)
-            };
+            const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
 
             setStats({
                 materials: { total: matTotal.count || 0, trend: calcTrend(matTotal.count || 0, matLast.count || 0) },
@@ -140,7 +112,6 @@ export default function AdminDashboard() {
                 users: { total: userTotal.count || 0, trend: calcTrend(userTotal.count || 0, userLast.count || 0) },
             });
 
-            // Combine Activities
             const rawActivities = [
                 ...(recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'New Registration', created_at: u.created_at })),
                 ...(recentResources.data || []).map(r => ({ type: 'blog', title: r.title, action: `New ${r.type}`, created_at: r.created_at })),
@@ -149,7 +120,6 @@ export default function AdminDashboard() {
                 ...(recentNews.data || []).map(n => ({ type: 'news', title: n.title, action: 'News Update', created_at: n.created_at })),
             ];
 
-            // Sort by Date (Newest First)
             const sortedActivities = rawActivities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 15);
             
             setActivities(sortedActivities);
@@ -200,36 +170,39 @@ export default function AdminDashboard() {
         init();
     }, [router, fetchDashboardData, fetchDropdowns]);
 
-    if (isLoading && !currentUser) return <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+    if (isLoading && !currentUser) return (
+        <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+            <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
+        </div>
+    );
 
     return (
-        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`flex min-h-screen font-sans transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
             
             {/* SIDEBAR */}
-            <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <aside className={`w-64 border-r fixed top-0 bottom-0 z-50 flex flex-col pt-6 shadow-xl transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="px-6 py-4 mb-4 flex justify-between items-center">
                     <div>
-                        <h2 className={`font-black text-xl tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Admin<span className="text-indigo-600">Panel</span></h2>
-                        <p className={`text-[10px] uppercase tracking-widest font-bold mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control</p>
+                        <h2 className={`font-black text-xl tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Admin<span className="text-indigo-600">Panel</span></h2>
+                        <p className={`text-[10px] uppercase tracking-widest font-bold mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control</p>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className={`lg:hidden hover:text-red-500 transition-colors ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><X className="w-5 h-5"/></button>
+                    <button onClick={() => setIsSidebarOpen(false)} className={`lg:hidden hover:text-red-500 transition-colors ${isDark ? 'text-slate-400' : 'text-slate-500'}`}><X className="w-5 h-5"/></button>
                 </div>
                 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <button onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600')}`}>
+                    <button onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600')}`}>
                         <LayoutDashboard className="w-5 h-5"/> Dashboard
                     </button>
 
-                    {/* QUESTION BANK TAB */}
-                    <button onClick={() => { setActiveTab('question_bank'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'question_bank' ? 'bg-purple-600 text-white shadow-lg shadow-purple-200 dark:shadow-none' : (darkMode ? 'text-purple-400 hover:bg-slate-800 hover:text-white' : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700')}`}>
+                    <button onClick={() => { setActiveTab('question_bank'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'question_bank' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : (isDark ? 'text-purple-400 hover:bg-slate-800 hover:text-white' : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700')}`}>
                         <Database className="w-5 h-5"/> Question Bank
                     </button>
 
-                    <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white shadow-lg shadow-amber-200 dark:shadow-none' : (darkMode ? 'text-amber-500 hover:bg-slate-800 hover:text-white' : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700')}`}>
+                    <button onClick={() => { setActiveTab('pending'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-2 ${activeTab === 'pending' ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20' : (isDark ? 'text-amber-500 hover:bg-slate-800 hover:text-white' : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700')}`}>
                         <AlertTriangle className="w-5 h-5"/> Pending Reviews
                     </button>
 
-                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase px-4 py-4 mt-4 tracking-widest">Content</div>
+                    <div className={`text-[10px] font-black uppercase px-4 py-4 mt-4 tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>Content</div>
                     {[
                       { id: 'materials', label: 'Study Materials', icon: FileStack },
                       { id: 'lecture_sheets', label: 'Lecture Sheets', icon: FileText },
@@ -240,19 +213,19 @@ export default function AdminDashboard() {
                       { id: 'certificates', label: 'Cert Designer', icon: Palette },
                       { id: 'news', label: 'Newsroom', icon: Newspaper }
                     ].map(item => (
-                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
                             <item.icon className="w-5 h-5"/> {item.label}
                         </button>
                     ))}
 
-                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase px-4 py-4 mt-4 tracking-widest">Configuration</div>
+                    <div className={`text-[10px] font-black uppercase px-4 py-4 mt-4 tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>Configuration</div>
                     {[
                       { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
                       { id: 'categories', label: 'Categories', icon: Settings },
                       { id: 'users', label: 'User Management', icon: Users },
                       { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare }
                     ].map(item => (
-                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none' : (darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
+                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600')}`}>
                             <item.icon className="w-5 h-5"/> {item.label}
                         </button>
                     ))}
@@ -260,9 +233,8 @@ export default function AdminDashboard() {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className={`flex-1 lg:ml-64 min-h-screen flex flex-col transition-colors duration-300 ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+            <main className={`flex-1 lg:ml-64 min-h-screen flex flex-col transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
                 
-                {/* 1. ADMIN HEADER */}
                 <AdminHeader 
                     user={currentUser} 
                     activeTab={activeTab} 
@@ -270,31 +242,32 @@ export default function AdminDashboard() {
                     notifications={notifications}        
                     onMarkRead={markNotificationRead}
                     onDelete={deleteNotification}
-                    darkMode={darkMode}
-                    toggleDarkMode={toggleDarkMode}
                 />
 
-                {/* 2. PAGE CONTENT */}
                 <div className="p-6 lg:p-10 max-w-[1600px] mx-auto w-full space-y-8">
                     
                     {activeTab === 'overview' && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                        <div className="space-y-8 animate-fade-in-up">
+                            {/* Stats Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <StatsCard title="Total Materials" value={stats.materials.total} icon={<FileText className="w-6 h-6"/>} gradient="bg-gradient-to-br from-blue-600 to-blue-800" trend={stats.materials.trend > 0 ? `+${stats.materials.trend}` : `${stats.materials.trend}`} trendUp={stats.materials.trend >= 0} />
                                 <StatsCard title="Total Questions" value={stats.questions.total} icon={<HelpCircle className="w-6 h-6"/>} gradient="bg-gradient-to-br from-amber-500 to-orange-600" trend={stats.questions.trend > 0 ? `+${stats.questions.trend}` : `${stats.questions.trend}`} trendUp={stats.questions.trend >= 0} />
                                 <StatsCard title="Total eBooks" value={stats.ebooks.total} icon={<BookOpen className="w-6 h-6"/>} gradient="bg-gradient-to-br from-emerald-500 to-teal-600" trend={stats.ebooks.trend > 0 ? `+${stats.ebooks.trend}` : `${stats.ebooks.trend}`} trendUp={stats.ebooks.trend >= 0} />
                                 <StatsCard title="Total Users" value={stats.users.total} icon={<Users className="w-6 h-6"/>} gradient="bg-gradient-to-br from-violet-600 to-purple-700" trend={stats.users.trend > 0 ? `+${stats.users.trend}` : `${stats.users.trend}`} trendUp={stats.users.trend >= 0} />
                             </div>
+
+                            {/* Main Grid: Left (Insights + Chart) | Right (Activity) */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
+                                    {/* Platform Insights + Version Notes */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <QuickStats />
+                                        <PlatformInsights />
                                         <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
                                     </div>
+                                    {/* Analytics Chart */}
                                     <div className="h-80"><AnalyticsChart /></div>
                                 </div>
                                 <div className="lg:col-span-1">
-                                    {/* ACTIVITY FEED */}
                                     <ActivityFeed activities={activities} onViewAll={() => setShowActivityModal(true)} />
                                 </div>
                             </div>
@@ -302,17 +275,16 @@ export default function AdminDashboard() {
                     )}
 
                     {/* COMPONENT LOADING */}
-                    {activeTab === 'question_bank' && <QuestionBankManager darkMode={darkMode} />}
-                    {activeTab === 'pending' && <PendingManager darkMode={darkMode} />}
-                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={darkMode} />}
-                    {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} darkMode={darkMode} />}
-                    {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} darkMode={darkMode} />}
-                    {activeTab === 'feedbacks' && <FeedbackManager darkMode={darkMode} />}
-                    { activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} darkMode={darkMode} /> }
-                    { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} darkMode={darkMode} /> }
-
-                    { activeTab === 'courses' && <CourseManager darkMode={darkMode} /> }
-                    { activeTab === 'certificates' && <CertificateDesigner darkMode={darkMode} /> }
+                    {activeTab === 'question_bank' && <QuestionBankManager darkMode={isDark} />}
+                    {activeTab === 'pending' && <PendingManager darkMode={isDark} />}
+                    {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={isDark} />}
+                    {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} darkMode={isDark} />}
+                    {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={categoryCounts} fetchCategories={fetchDropdowns} darkMode={isDark} />}
+                    {activeTab === 'feedbacks' && <FeedbackManager darkMode={isDark} />}
+                    { activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} /> }
+                    { activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} darkMode={isDark} /> }
+                    { activeTab === 'courses' && <CourseManager darkMode={isDark} /> }
+                    { activeTab === 'certificates' && <CertificateDesigner darkMode={isDark} /> }
 
                     {['materials', 'news', 'ebooks', 'segment_updates'].includes(activeTab) && (
                         <ContentManager 
@@ -322,39 +294,47 @@ export default function AdminDashboard() {
                             fetchGroups={fetchGroups} fetchSubjects={fetchSubjects}
                             showSuccess={showSuccess} showError={showError} confirmAction={()=>{}}
                             openCategoryModal={() => setActiveTab('categories')}
-                            darkMode={darkMode}
+                            darkMode={isDark}
                         />
                     )}
 
                 </div>
             </main>
 
-            {modal.isOpen && <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className={`rounded-2xl p-8 max-w-sm w-full text-center ${darkMode ? 'bg-slate-800' : 'bg-white'}`}><h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3><p className={`mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{modal.message}</p><button onClick={closeModal} className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold">Okay</button></div></div>}
+            {modal.isOpen && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                    <div className={`rounded-2xl p-8 max-w-sm w-full text-center animate-scale-in ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
+                        <h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{modal.type === 'error' ? 'Error' : 'Success'}</h3>
+                        <p className={`mb-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{modal.message}</p>
+                        <button onClick={closeModal} className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold">Okay</button>
+                    </div>
+                </div>
+            )}
             
             {/* FULL ACTIVITY MODAL */}
             {showActivityModal && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className={`rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-                        <div className={`p-6 border-b flex justify-between items-center ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                            <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-slate-800'}`}>All Recent Activities</h3>
-                            <button onClick={() => setShowActivityModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-red-500"/></button>
+                    <div className={`rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-scale-in ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
+                        <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+                            <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>All Recent Activities</h3>
+                            <button onClick={() => setShowActivityModal(false)}><X className={`w-5 h-5 hover:text-red-500 ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/></button>
                         </div>
                         <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
                             {activities.map((item, i) => (
-                                <div key={i} className={`flex gap-4 items-start border-b pb-4 last:border-0 last:pb-0 ${darkMode ? 'border-slate-700' : 'border-slate-50'}`}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                                <div key={i} className={`flex gap-4 items-start border-b pb-4 last:border-0 last:pb-0 ${isDark ? 'border-slate-700' : 'border-slate-50'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                                         <Clock className="w-4 h-4"/>
                                     </div>
                                     <div>
-                                        <p className={`text-sm font-bold ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>{item.title}</p>
-                                        <p className={`text-xs mt-1 flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                            <span className={`uppercase font-bold text-[10px] px-1 rounded ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>{item.type}</span> 
+                                        <p className={`text-sm font-bold ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{item.title}</p>
+                                        <p className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            <span className={`uppercase font-bold text-[10px] px-1 rounded ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>{item.type}</span> 
                                             {item.action} • {new Date(item.created_at).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>
                             ))}
-                            {activities.length === 0 && <p className="text-center text-slate-400">No activities found.</p>}
+                            {activities.length === 0 && <p className={`text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>No activities found.</p>}
                         </div>
                     </div>
                 </div>

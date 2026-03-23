@@ -14,6 +14,9 @@ BEGIN
     -- Add item_id if missing
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='comments' AND column_name='item_id') THEN
         ALTER TABLE public.comments ADD COLUMN item_id TEXT NOT NULL DEFAULT '';
+    ELSE
+        -- If item_id exists but is UUID type, convert to TEXT to support integer IDs
+        ALTER TABLE public.comments ALTER COLUMN item_id TYPE TEXT USING item_id::TEXT;
     END IF;
     -- Add parent_id if missing
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='comments' AND column_name='parent_id') THEN
@@ -24,6 +27,10 @@ BEGIN
         ALTER TABLE public.comments ADD COLUMN content TEXT NOT NULL DEFAULT '';
     END IF;
 END $BODY$;
+
+-- Drop NOT NULL on legacy columns (we use item_id/item_type now)
+ALTER TABLE public.comments ALTER COLUMN post_id DROP NOT NULL;
+ALTER TABLE public.comments ALTER COLUMN post_type DROP NOT NULL;
 
 -- ── 2. FIX USER_ID FK TO REFERENCE PROFILES ──
 -- This allows PostgREST to resolve the `profiles:user_id(...)` join

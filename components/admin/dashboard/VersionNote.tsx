@@ -1,21 +1,24 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Edit2, Save, X, Plus, Clock, Trash2, ChevronRight } from "lucide-react";
+import { Edit2, Save, X, Plus, Trash2, ChevronRight } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react"; 
 import { supabase } from "@/lib/supabaseClient";
+import { useTheme } from "@/components/shared/ThemeProvider";
+
+function ClockIcon(props: any) {
+    return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+}
 
 export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: any, onUpdate: () => void }) {
-  // --- STATE ---
+  const { isDark } = useTheme();
   const [mode, setMode] = useState<'view' | 'create'>('view');
   const [history, setHistory] = useState<any[]>([]);
   const [selectedUpdate, setSelectedUpdate] = useState<any>(null);
   
-  // Form State
   const [version, setVersion] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // --- FETCH HISTORY ---
   useEffect(() => {
     fetchHistory();
   }, [latestUpdate]);
@@ -29,14 +32,12 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
     
     if (data) {
         setHistory(data);
-        // Default to showing the latest one if in view mode
         if (mode === 'view' && data.length > 0 && !selectedUpdate) {
             setSelectedUpdate(data[0]);
         }
     }
   };
 
-  // --- ACTIONS ---
   const handleSave = async () => {
     if (!version || !content) return alert("Please fill in version and content");
     setSaving(true);
@@ -52,9 +53,8 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
         console.error("Failed to save:", error);
         alert(`Error: ${error.message}`);
     } else {
-        // Success
         await fetchHistory();
-        onUpdate(); // Refresh parent dashboard
+        onUpdate();
         setMode('view');
         setVersion("");
         setContent("");
@@ -72,71 +72,69 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden">
+    <div className={`rounded-2xl border flex flex-col h-full overflow-hidden transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
       
       {/* HEADER */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
-        <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+      <div className={`p-4 border-b flex justify-between items-center ${isDark ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50'}`}>
+        <h3 className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             System Updates
-            <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">v{history[0]?.version_number || '0.0'}</span>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm border ${isDark ? 'text-slate-400 bg-slate-950 border-slate-700' : 'text-slate-500 bg-white border-slate-200'}`}>v{history[0]?.version_number || '0.0'}</span>
         </h3>
         {mode === 'view' ? (
             <button 
                 onClick={() => { setMode('create'); setVersion(''); setContent(''); }} 
-                className="text-xs font-bold bg-slate-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-indigo-600 transition-colors"
+                className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors ${isDark ? 'bg-slate-700 text-white hover:bg-indigo-600' : 'bg-slate-900 text-white hover:bg-indigo-600'}`}
             >
                 <Plus size={14}/> New Version
             </button>
         ) : (
-            <button onClick={() => setMode('view')} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
+            <button onClick={() => setMode('view')} className={`text-xs font-bold px-3 py-1.5 transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`}>Cancel</button>
         )}
       </div>
 
-      <div className="flex flex-1 h-[320px]"> {/* Fixed height for consistency */}
+      <div className="flex flex-1 h-[320px]">
         
-        {/* LEFT: LIST (History) */}
-        <div className="w-1/3 border-r border-slate-100 dark:border-slate-800 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
+        {/* LEFT: LIST */}
+        <div className={`w-1/3 border-r overflow-y-auto custom-scrollbar ${isDark ? 'border-slate-800 bg-slate-950/20' : 'border-slate-100 bg-slate-50/50'}`}>
             {history.map((item) => (
                 <button 
                     key={item.id}
                     onClick={() => { setMode('view'); setSelectedUpdate(item); }}
-                    className={`w-full text-left p-3 border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-white dark:hover:bg-slate-800 transition-colors relative group ${selectedUpdate?.id === item.id && mode === 'view' ? 'bg-white dark:bg-slate-800 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
+                    className={`w-full text-left p-3 border-b text-sm transition-colors relative group ${isDark ? 'border-slate-800 hover:bg-slate-800' : 'border-slate-100 hover:bg-white'} ${selectedUpdate?.id === item.id && mode === 'view' ? (isDark ? 'bg-slate-800 border-l-4 border-l-indigo-500' : 'bg-white border-l-4 border-l-indigo-600') : 'border-l-4 border-l-transparent'}`}
                 >
-                    <div className="flex justify-between items-center mb-1 text-[11px] font-black uppercase tracking-tight text-slate-400 dark:text-slate-600">
-                        <span className={`${selectedUpdate?.id === item.id ? 'text-indigo-600 dark:text-indigo-400' : ''}`}>{item.version_number}</span>
+                    <div className={`flex justify-between items-center mb-1 text-[11px] font-black uppercase tracking-tight ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <span className={selectedUpdate?.id === item.id ? (isDark ? 'text-indigo-400' : 'text-indigo-600') : ''}>{item.version_number}</span>
                         <span>{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 h-4 overflow-hidden" dangerouslySetInnerHTML={{__html: item.content?.replace(/<[^>]+>/g, '') || 'No details'}}></div>
+                    <div className={`text-[11px] line-clamp-1 h-4 overflow-hidden ${isDark ? 'text-slate-400' : 'text-slate-500'}`} dangerouslySetInnerHTML={{__html: item.content?.replace(/<[^>]+>/g, '') || 'No details'}}></div>
                     
-                    {/* Delete Action (Hover only) */}
                     <div 
                         onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                        className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 p-1 bg-white dark:bg-slate-900 shadow-sm rounded text-red-500 hover:bg-red-50 cursor-pointer"
+                        className={`absolute right-2 top-3 opacity-0 group-hover:opacity-100 p-1 shadow-sm rounded text-red-500 hover:bg-red-50 cursor-pointer ${isDark ? 'bg-slate-900' : 'bg-white'}`}
                     >
                         <Trash2 size={12}/>
                     </div>
                 </button>
             ))}
-            {history.length === 0 && <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500">No updates yet.</div>}
+            {history.length === 0 && <div className={`p-4 text-center text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>No updates yet.</div>}
         </div>
 
-        {/* RIGHT: CONTENT (View or Edit) */}
+        {/* RIGHT */}
         <div className="w-2/3 flex flex-col relative">
             
             {mode === 'create' ? (
-                // --- CREATE MODE ---
-                <div className="p-4 space-y-4 animate-in fade-in h-full flex flex-col">
+                <div className="p-4 space-y-4 h-full flex flex-col">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase mb-1">Version Number</label>
+                        <label className={`block text-xs font-bold uppercase mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Version Number</label>
                         <input 
                             value={version} 
                             onChange={e => setVersion(e.target.value)} 
-                            className="w-full border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm font-bold focus:ring-2 focus:ring-indigo-100 outline-none"
+                            className={`w-full border rounded-lg p-2 text-sm font-bold outline-none transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:ring-2 focus:ring-indigo-500/30' : 'bg-white border-slate-200 text-slate-800 focus:ring-2 focus:ring-indigo-100'}`}
                             placeholder="e.g. v2.4.0"
                         />
                     </div>
                     <div className="flex-1 overflow-hidden flex flex-col">
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase mb-1">Release Notes</label>
+                        <label className={`block text-xs font-bold uppercase mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Release Notes</label>
                         <Editor
                             apiKey="koqq37jhe68hq8n77emqg0hbl97ivgtwz2fvvvnvtwapuur1" 
                             value={content}
@@ -147,7 +145,7 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
                                 statusbar: false,
                                 plugins: 'lists link',
                                 toolbar: 'bold italic bullist numlist',
-                                content_style: 'body { font-family:Inter,sans-serif; font-size:13px }'
+                                content_style: `body { font-family:Inter,sans-serif; font-size:13px; ${isDark ? 'background:#1e293b; color:#e2e8f0;' : ''} }`
                             }}
                         />
                     </div>
@@ -160,24 +158,23 @@ export default function VersionNote({ latestUpdate, onUpdate }: { latestUpdate: 
                     </button>
                 </div>
             ) : (
-                // --- VIEW MODE ---
                 <div className="p-6 h-full overflow-y-auto custom-scrollbar">
                     {selectedUpdate ? (
                         <>
-                            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-                                    <Clock size={20}/>
+                            <div className={`flex items-center gap-3 mb-6 pb-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                    <ClockIcon size={20}/>
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">{selectedUpdate.version_number}</h2>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Released on {new Date(selectedUpdate.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    <h2 className={`text-xl font-black ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{selectedUpdate.version_number}</h2>
+                                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Released on {new Date(selectedUpdate.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                 </div>
                             </div>
-                            <div className="prose prose-sm prose-indigo max-w-none text-slate-600 dark:text-slate-400 dark:text-slate-500" dangerouslySetInnerHTML={{ __html: selectedUpdate.content }}></div>
+                            <div className={`prose prose-sm prose-indigo max-w-none ${isDark ? 'text-slate-300 prose-invert' : 'text-slate-600'}`} dangerouslySetInnerHTML={{ __html: selectedUpdate.content }}></div>
                         </>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-                            <Clock size={48} className="mb-2 opacity-20"/>
+                        <div className={`h-full flex flex-col items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            <ClockIcon size={48} className="mb-2 opacity-20"/>
                             <p className="text-sm">Select a version to view details</p>
                         </div>
                     )}

@@ -19,7 +19,7 @@ const slugify = (text: string) => {
 };
 
 const SortableHeader = ({ label, sortKey, currentSort, setSort }: any) => (
-    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:bg-slate-800 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
+    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition select-none group" onClick={() => setSort({ key: sortKey, direction: currentSort.key === sortKey && currentSort.direction === 'asc' ? 'desc' : 'asc' })}>
         <div className="flex items-center gap-1">{label}<span className={`text-[10px] text-slate-400 dark:text-slate-500 flex flex-col leading-[6px] ${currentSort.key === sortKey ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}><span className={currentSort.key === sortKey && currentSort.direction === 'asc' ? 'text-blue-600' : ''}>▲</span><span className={currentSort.key === sortKey && currentSort.direction === 'desc' ? 'text-blue-600' : ''}>▼</span></span></div>
     </th>
 );
@@ -462,9 +462,9 @@ export default function ContentManager({
                             { val: 'exam_result', label: '🏆 Result' }
                         ]}
                     />
-                    <div className="bg-white dark:bg-slate-900 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-                            <thead className="bg-gray-50/50 text-xs uppercase font-extrabold text-slate-400 dark:text-slate-500 border-b border-gray-100 tracking-wider">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/30 text-xs uppercase font-extrabold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 tracking-wider">
                                 <tr>
                                     <SortableHeader label="TITLE" sortKey="title" currentSort={sortConfig} setSort={setSortConfig} />
                                     {(activeTab === 'materials' || activeTab === 'segment_updates') && <SortableHeader label="TYPE" sortKey="type" currentSort={sortConfig} setSort={setSortConfig} />}
@@ -472,7 +472,7 @@ export default function ContentManager({
                                     <th className="px-6 py-4 text-right font-extrabold text-slate-400 dark:text-slate-500">ACTIONS</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {dataList.filter(item => {
                                     // Always show non-pending items
                                     if (item.status !== 'pending') return true;
@@ -484,21 +484,21 @@ export default function ContentManager({
                                     // If pending, ONLY show if I am the author
                                     return currentUser && item.author_id === currentUser.id;
                                 }).map(item => (
-                                    <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
+                                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-slate-800 dark:text-slate-100">{item.title}</div>
                                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">/{item.slug || '-'}</div>
                                             {/* Visual Indicator for Pending Posts (Only visible to Admin who posted it) */}
                                             {item.status === 'pending' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded ml-2">Pending (Yours)</span>}
                                         </td>
-                                        {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
-                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
+                                        {(activeTab === 'materials' || activeTab === 'segment_updates') && <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-2 py-1 rounded text-[10px] font-bold uppercase">{item.type}</span></td>}
+                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400">{new Date(item.created_at).toLocaleDateString()}</td>
                                         <td className="px-6 py-4 text-right flex justify-end gap-2">
                                             {activeTab === 'materials' && (
-                                                <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">Likes</button>
+                                                <button onClick={() => setShowLikers({ id: String(item.id), title: item.title })} className="text-rose-600 dark:text-rose-400 font-bold text-xs bg-rose-50 dark:bg-rose-900/20 px-3 py-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30">Likes</button>
                                             )}
-                                            <button onClick={() => handleEdit(item)} className="text-indigo-600 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg">Edit</button>
-                                            <button onClick={() => handleDelete(item.id)} className="text-red-600 font-bold text-xs bg-red-50 px-3 py-1.5 rounded-lg">Del</button>
+                                            <button onClick={() => handleEdit(item)} className="text-indigo-600 dark:text-indigo-400 font-bold text-xs bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30">Edit</button>
+                                            <button onClick={() => handleDelete(item.id)} className="text-red-600 dark:text-red-400 font-bold text-xs bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30">Del</button>
                                         </td>
                                     </tr>
                                 )) : (

@@ -119,7 +119,7 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
 
         {/* DISCUSSION SECTION */}
         <div className="mt-16 border-t border-slate-100 pt-16">
-          <Discussion itemType="ebook" itemId={book.id} />
+          <Discussion itemType="ebook" itemId={book.id.toString()} />
         </div>
       </div>
     </div>

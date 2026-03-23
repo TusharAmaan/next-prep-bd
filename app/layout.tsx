@@ -9,12 +9,13 @@ import Script from "next/script";
 import ScrollToTop from "@/components/ScrollToTop";
 import { GoogleAnalytics } from "@next/third-parties/google";
 
-// 1) Fonts - FIXED IMPORTS
+// 1) Fonts
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
 import { Analytics } from "@vercel/analytics/next"
+import { ThemeProvider } from "@/components/shared/ThemeProvider";
 
 const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
@@ -81,71 +82,80 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable} ${bangla.variable}`}
+      suppressHydrationWarning
     >
-      <body className={`${GeistSans.className} antialiased`}>
-        
-        {/* --- 1. MathJax Configuration (MUST BE BEFORE THE MAIN SCRIPT) --- */}
-        {/* This config tells MathJax to treat single $ and \( \) as inline math */}
-        <Script id="mathjax-config" strategy="beforeInteractive">
-          {`
-            window.MathJax = {
-              tex: {
-                inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], 
-                displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
-                processEscapes: true,
-              },
-              options: {
-                ignoreHtmlClass: 'tex2jax_ignore',
-                processHtmlClass: 'tex2jax_process'
-              }
-            };
-          `}
-        </Script>
+      <head>
+        {/* Prevent FOUC: apply dark class before paint */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+            }
+          } catch(e) {}
+        `}} />
+      </head>
+      <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+        <ThemeProvider>
+          {/* MathJax Configuration */}
+          <Script id="mathjax-config" strategy="beforeInteractive">
+            {`
+              window.MathJax = {
+                tex: {
+                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+                  processEscapes: true,
+                },
+                options: {
+                  ignoreHtmlClass: 'tex2jax_ignore',
+                  processHtmlClass: 'tex2jax_process'
+                }
+              };
+            `}
+          </Script>
 
-        {/* --- 2. MathJax Main Script --- */}
-        <Script
-          id="mathjax-script"
-          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-          strategy="afterInteractive"
-        />
+          <Script
+            id="mathjax-script"
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+            strategy="afterInteractive"
+          />
 
-        {/* --- 3. AdSense --- */}
-        <Script
-          id="adsbygoogle-init"
-          strategy="afterInteractive"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3105440348785747"
-          crossOrigin="anonymous"
-        />
+          <Script
+            id="adsbygoogle-init"
+            strategy="afterInteractive"
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3105440348785747"
+            crossOrigin="anonymous"
+          />
 
-        {/* --- 4. JSON-LD for SEO --- */}
-        <Script
-          id="website-schema"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "NextPrepBD",
-              url: "https://nextprepbd.com",
-              potentialAction: {
-                "@type": "SearchAction",
-                target:
-                  "https://nextprepbd.com/search?q={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
-        />
+          <Script
+            id="website-schema"
+            type="application/ld+json"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "NextPrepBD",
+                url: "https://nextprepbd.com",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target:
+                    "https://nextprepbd.com/search?q={search_term_string}",
+                  "query-input": "required name=search_term_string",
+                },
+              }),
+            }}
+          />
 
-        <Header />
-        {children}
-        <Toaster position="top-right" />
-        <Footer />
-        <Analytics/>
-        <SpeedInsights />
-        <ScrollToTop />
-        <GoogleAnalytics gaId="G-9BGK82JB2D" />
+          <Header />
+          {children}
+          <Toaster position="top-right" />
+          <Footer />
+          <Analytics/>
+          <SpeedInsights />
+          <ScrollToTop />
+          <GoogleAnalytics gaId="G-9BGK82JB2D" />
+        </ThemeProvider>
       </body>
     </html>
   );
