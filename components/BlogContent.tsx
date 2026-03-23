@@ -2,6 +2,9 @@
 import { useEffect, useRef } from "react";
 import { slugify } from "@/utils/slugify";
 
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
+
 export default function BlogContent({ content, className }: { content: string, className?: string }) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -12,14 +15,26 @@ export default function BlogContent({ content, className }: { content: string, c
       
       headers.forEach((header) => {
         if (header.textContent) {
-          // 2. Generate ID keeping Bengali characters intact
           const id = slugify(header.textContent);
           header.id = id;
-          
-          // 3. Add scroll-margin for sticky header offset
           header.classList.add("scroll-mt-32"); 
         }
       });
+
+      // 2. Render Math (KaTeX)
+      try {
+        renderMathInElement(contentRef.current, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch (err) {
+        console.error("KaTeX auto-render error:", err);
+      }
     }
   }, [content]);
 

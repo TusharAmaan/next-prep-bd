@@ -36,7 +36,15 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
             'link image media table math | removeformat | codesample code fullscreen preview | help',
           skin: darkMode ? "oxide-dark" : "oxide",
           content_css: darkMode ? "dark" : "default",
-          content_style: `body { font-family:Inter,sans-serif; font-size:16px; color: ${darkMode ? '#f1f5f9' : '#334155'}; background: ${darkMode ? '#0f172a' : '#ffffff'}; }`,
+          content_style: `
+            @import url('https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css');
+            body { 
+              font-family:Inter,sans-serif; 
+              font-size:16px; 
+              color: ${darkMode ? '#f1f5f9' : '#334155'}; 
+              background: ${darkMode ? '#0f172a' : '#ffffff'}; 
+            }
+          `,
           branding: false,
           statusbar: true,
           convert_urls: false,
@@ -50,6 +58,37 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
           ],
           default_link_target: '_blank',
           setup: (editor: any) => {
+            editor.on('init', () => {
+              const doc = editor.getDoc();
+              const head = doc.head;
+              
+              // 1. Add KaTeX Script to Iframe
+              const script = doc.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
+              script.onload = () => {
+                const renderMath = () => {
+                  const body = editor.getBody();
+                  const win = editor.getWin();
+                  if (body && win.renderMathInElement) {
+                    win.renderMathInElement(body, {
+                      delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                        { left: "\\(", right: "\\)", display: false },
+                        { left: "\\[", right: "\\]", display: true },
+                      ],
+                      throwOnError: false,
+                    });
+                  }
+                };
+
+                // Initial render + on change
+                setTimeout(renderMath, 100);
+                editor.on('change keyup undo redo', renderMath);
+              };
+              head.appendChild(script);
+            });
+
             editor.ui.registry.addButton('insertMath', { 
               text: 'Σ Inline', 
               tooltip: 'Insert Inline Math', 

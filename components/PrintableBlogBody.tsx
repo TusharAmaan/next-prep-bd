@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import LikeButton from "./LikeButton";
 import BookmarkButton from "./shared/BookmarkButton";
-import BlogContent from "@/components/BlogContent"; 
+import BlogContent from "@/components/BlogContent"; // Corrected import path
+import renderMathInElement from "katex/dist/contrib/auto-render"; // Added KaTeX auto-render import
+import "katex/dist/katex.min.css"; // Added KaTeX CSS import
 
 interface PrintableBlogBodyProps {
   post: any;

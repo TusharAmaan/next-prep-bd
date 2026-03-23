@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import Link from 'next/link';
 import { toast } from 'sonner';
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
 import Discussion from '@/components/shared/Discussion';
 import TypographyScaler from '@/components/shared/TypographyScaler';
 
@@ -58,8 +60,28 @@ export default function ContentDetailPage() {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
 
-  // Intersection Observer Ref
+  // Refs
   const loaderRef = useRef<HTMLDivElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
+
+  // KaTeX Auto-render
+  useEffect(() => {
+    if (articleRef.current) {
+      try {
+        renderMathInElement(articleRef.current, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch (err) {
+        console.error("Curriculum Detail KaTeX error:", err);
+      }
+    }
+  }, [loadedContents, isDarkMode]);
 
   const fetchInitialData = useCallback(async () => {
     setIsLoadingInitial(true);
@@ -276,7 +298,7 @@ export default function ContentDetailPage() {
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* MAIN CONTINUOUS CONTENT AREA */}
-          <article className="flex-1 max-w-4xl space-y-24">
+          <article ref={articleRef} className="flex-1 max-w-4xl space-y-24">
              {loadedContents.map((c, index) => {
                 const isBengali = c.version === 'bn';
                 

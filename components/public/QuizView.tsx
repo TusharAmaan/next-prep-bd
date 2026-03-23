@@ -1,12 +1,13 @@
 "use client";
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
   CheckCircle, XCircle, HelpCircle, Lock, 
   ChevronRight, Download, FileQuestion, FileCheck, Eye, EyeOff 
 } from "lucide-react";
 import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
 
 interface Option {
   option_text: string;
@@ -33,8 +34,26 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
   const [revealed, setRevealed] = useState<{ [key: string]: boolean }>({});
   const [selectedOpts, setSelectedOpts] = useState<{ [key: string]: number }>({});
   const [printMode, setPrintMode] = useState<'solved' | 'blank' | null>(null);
-  
+
   const componentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (componentRef.current) {
+      try {
+        renderMathInElement(componentRef.current, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch (err) {
+        console.error("QuizView KaTeX render error:", err);
+      }
+    }
+  }, [questions, revealed, printMode]); // Re-render math when questions or visibility state changes
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
