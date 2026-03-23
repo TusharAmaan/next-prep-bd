@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { MessageSquare, Trash2, AlertCircle, Loader2, Send, CornerDownRight } from 'lucide-react';
+import { MessageSquare, Trash2, Send, CornerDownRight, Loader2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import ConfirmModal from './ConfirmModal';
 
@@ -11,19 +11,20 @@ interface DiscussionProps {
   itemId: string;
 }
 
-interface UserProfile {
-  id: string;
-  full_name: string;
-  avatar_url: string;
-}
-
 interface Comment {
   id: string;
   content: string;
   created_at: string;
   user_id: string;
   parent_id: string | null;
-  profiles: UserProfile;
+  profiles: { id: string; full_name: string } | null;
+}
+
+// Normalize Supabase join result (can be array or object)
+function normalizeComment(raw: any): Comment {
+  let profiles = raw.profiles;
+  if (Array.isArray(profiles)) profiles = profiles[0] || null;
+  return { ...raw, profiles };
 }
 
 export default function Discussion({ itemType, itemId }: DiscussionProps) {
@@ -35,18 +36,11 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -56,16 +50,16 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
       const { data, error } = await supabase
         .from('comments')
         .select(`
-          *,
-          profiles(id, full_name, avatar_url)
+          id, content, created_at, user_id, parent_id,
+          profiles:user_id(id, full_name)
         `)
         .eq('item_type', itemType)
         .eq('item_id', itemId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
-    } catch (error) {
+      setComments((data || []).map(normalizeComment));
+    } catch (error: any) {
       console.error('Error fetching comments:', error);
     } finally {
       setLoading(false);
@@ -73,44 +67,25 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   };
 
   useEffect(() => {
-    if (itemId) {
-      fetchComments();
-    }
+    if (itemId) fetchComments();
   }, [itemId]);
 
   const handleSubmit = async (parentId: string | null = null, content: string) => {
-    if (!session) {
-      toast.error('You must be logged in to comment');
-      return;
-    }
+    if (!session) { toast.error('You must be logged in to comment'); return; }
     if (!content.trim()) return;
 
     setSubmitting(true);
     try {
       const { data, error } = await supabase
         .from('comments')
-        .insert([
-          {
-            item_type: itemType,
-            item_id: itemId,
-            content: content.trim(),
-            parent_id: parentId,
-            user_id: session.user.id
-          }
-        ])
-        .select(`
-           *,
-           profiles(id, full_name, avatar_url)
-        `)
+        .insert([{ item_type: itemType, item_id: itemId, content: content.trim(), parent_id: parentId, user_id: session.user.id }])
+        .select(`id, content, created_at, user_id, parent_id, profiles:user_id(id, full_name)`)
         .single();
 
       if (error) throw error;
-
-      toast.success('Posted successfully!');
-      setNewComment("");
-      setReplyContent("");
-      setReplyingTo(null);
-      setComments([...comments, data]);
+      toast.success('Comment posted!');
+      setNewComment(""); setReplyContent(""); setReplyingTo(null);
+      setComments(prev => [...prev, normalizeComment(data)]);
     } catch (error: any) {
       console.error('Error adding comment:', error);
       toast.error(error.message || 'Failed to post comment');
@@ -123,7 +98,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
     try {
       const { error } = await supabase.from('comments').delete().eq('id', commentId);
       if (error) throw error;
-      setComments(comments.filter(c => c.id !== commentId && c.parent_id !== commentId));
+      setComments(prev => prev.filter(c => c.id !== commentId && c.parent_id !== commentId));
       toast.success('Comment deleted');
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -133,121 +108,135 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
     }
   };
 
-  // Group comments
   const rootComments = comments.filter(c => !c.parent_id);
   const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
+  const sortedRoots = [...rootComments].sort((a, b) => {
+    const da = new Date(a.created_at).getTime();
+    const db = new Date(b.created_at).getTime();
+    return sortOrder === 'newest' ? db - da : da - db;
+  });
+
+  const timeAgo = (dateStr: string) => {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getInitial = (comment: Comment) => {
+    return comment.profiles?.full_name?.charAt(0)?.toUpperCase() || 'U';
+  };
+
+  const getName = (comment: Comment) => {
+    return comment.profiles?.full_name || 'Anonymous';
+  };
 
   return (
-    <div className="mt-20 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 md:p-14 rounded-[4rem] border border-slate-200/60 dark:border-slate-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative overflow-hidden transition-all duration-500">
-      {/* PREMIUM DECORATION */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
-      
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-5 mb-14">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-slide-in-left">
-              <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            </div>
-          </div>
-          <div className="animate-slide-in-bottom">
-            <h3 className="text-4xl font-black text-slate-950 dark:text-white items-baseline flex gap-2 tracking-tight italic">
-              DISCUSSION <span className="text-indigo-600 dark:text-indigo-400 not-italic grow-0">HUB</span>
-            </h3>
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mt-1 ml-1 opacity-60">Verified Exchange Program</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2 bg-indigo-50 dark:bg-slate-800/80 px-5 py-2.5 rounded-full border border-indigo-100 dark:border-slate-700 shadow-sm animate-fade-in group">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{comments.length} <span className="text-slate-400">THREADS</span></span>
-          </div>
-        </div>
-
-        {/* Comment Input */}
-        {session ? (
-          <div className="mb-12 group bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] shadow-2xl shadow-indigo-500/5 border border-slate-100 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-300">
-            <div className="flex gap-4 items-start mb-4">
-               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-sm border border-white dark:border-slate-600 shadow-inner">
-                 {session.user.email?.charAt(0).toUpperCase()}
-               </div>
-               <div className="flex-1">
-                 <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Share your insights..."
-                  className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-lg min-h-[100px]"
-                />
-               </div>
-            </div>
-            
-            <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">Verified Identity Active</div>
-              <button
-                onClick={() => handleSubmit(null, newComment)}
-                disabled={submitting || !newComment.trim()}
-                className="bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-500 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/30 active:scale-95 disabled:opacity-30 transition-all flex items-center gap-3"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Post Analysis
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-12 p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900/50 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/20 shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row items-center gap-6 justify-between group">
-            <div className="flex items-center gap-6 text-center md:text-left">
-              <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-indigo-50 dark:border-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <AlertCircle className="w-8 h-8 text-indigo-600 animate-pulse" />
-              </div>
-              <div>
-                <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl italic leading-tight mb-1">Join the community</p>
-                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Authentication required to leave feedback.</p>
-              </div>
-            </div>
-            <a href="/login" className="whitespace-nowrap bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg border border-indigo-50 dark:border-slate-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-95">Authenticate Now</a>
-          </div>
-        )}
-
-        {/* Comment List */}
-        <div className="space-y-10 relative">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin shadow-xl" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Fetching Discussion</span>
-            </div>
-          ) : rootComments.length === 0 ? (
-            <div className="text-center py-20 bg-white/50 dark:bg-slate-800/30 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-700/50 group">
-              <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-slate-100 dark:border-slate-700 group-hover:rotate-12 transition-transform duration-500">
-                <MessageSquare className="w-8 h-8 text-slate-200 dark:text-slate-600 shadow-sm" />
-              </div>
-              <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-xs">Knowledge Gap Detected</p>
-              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1 font-medium italic">Be the FIRST to initiate the analysis loop.</p>
-            </div>
-          ) : (
-            rootComments.map(comment => (
-              <CommentItem 
-                key={comment.id} 
-                comment={comment} 
-                replies={getReplies(comment.id)} 
-                session={session}
-                onReply={(id: string | null) => setReplyingTo(id)}
-                replyingTo={replyingTo}
-                replyContent={replyContent}
-                setReplyContent={setReplyContent}
-                onSubmitReply={(parentId: string, content: string) => handleSubmit(parentId, content)}
-                onDelete={(id: string) => setDeleteConfirm(id)}
-                submitting={submitting}
-              />
-            ))
-          )}
+    <div className="mt-12">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-xl font-extrabold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+          {rootComments.length} <span className="text-gray-500 font-bold">Comments</span>
+        </h3>
+        <div className="relative">
+          <select
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value as 'newest' | 'oldest')}
+            className="appearance-none text-sm font-semibold text-gray-500 bg-transparent border-none outline-none cursor-pointer pr-6"
+          >
+            <option value="newest">Sort by: Newest</option>
+            <option value="oldest">Sort by: Oldest</option>
+          </select>
+          <ChevronDown className="w-4 h-4 text-gray-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
-      
-      <ConfirmModal 
+
+      {/* Comment Input */}
+      {session ? (
+        <div className="flex gap-3 mb-10">
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0">
+            {session.user.email?.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1">
+            <textarea
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              rows={2}
+              className="w-full bg-transparent border-b-2 border-gray-200 focus:border-gray-900 outline-none resize-none text-gray-800 placeholder:text-gray-400 text-[15px] py-2 transition-colors"
+            />
+            {newComment.trim() && (
+              <div className="flex justify-end gap-3 mt-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <button
+                  onClick={() => setNewComment("")}
+                  className="px-5 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors rounded-full"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSubmit(null, newComment)}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-gray-200 hover:bg-blue-600 hover:text-white text-sm font-bold text-gray-700 rounded-full transition-all disabled:opacity-40"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Publish'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="mb-10 p-6 bg-gray-50 rounded-xl text-center">
+          <p className="text-gray-600 font-medium mb-3">Sign in to join the discussion</p>
+          <a href="/login" className="inline-block px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-gray-800 transition-colors">
+            Sign In
+          </a>
+        </div>
+      )}
+
+      {/* Comments List */}
+      <div className="space-y-0">
+        {loading ? (
+          <div className="flex items-center justify-center py-16 gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            <span className="text-sm text-gray-400 font-medium">Loading comments...</span>
+          </div>
+        ) : sortedRoots.length === 0 ? (
+          <div className="text-center py-16">
+            <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <p className="text-gray-400 font-medium">No comments yet. Be the first to share your thoughts.</p>
+          </div>
+        ) : (
+          sortedRoots.map(comment => (
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              replies={getReplies(comment.id)}
+              session={session}
+              replyingTo={replyingTo}
+              replyContent={replyContent}
+              setReplyContent={setReplyContent}
+              onReply={(id: string | null) => { setReplyingTo(id); setReplyContent(""); }}
+              onSubmitReply={(parentId: string, content: string) => handleSubmit(parentId, content)}
+              onDelete={(id: string) => setDeleteConfirm(id)}
+              submitting={submitting}
+              timeAgo={timeAgo}
+              getInitial={getInitial}
+              getName={getName}
+            />
+          ))
+        )}
+      </div>
+
+      <ConfirmModal
         isOpen={!!deleteConfirm}
-        title="Delete Insight"
-        message="This comment and all nested replies will be permanently erased. Proceed?"
-        confirmText="Confirm Delete"
-        cancelText="Keep Comment"
+        title="Delete Comment"
+        message="Are you sure? This comment will be permanently removed."
+        confirmText="Delete"
+        cancelText="Cancel"
         isDangerous={true}
         onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
         onCancel={() => setDeleteConfirm(null)}
@@ -256,111 +245,112 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   );
 }
 
-function CommentItem({ comment, replies, session, onReply, replyingTo, replyContent, setReplyContent, onSubmitReply, onDelete, submitting }: any) {
+function CommentItem({ comment, replies, session, replyingTo, replyContent, setReplyContent, onReply, onSubmitReply, onDelete, submitting, timeAgo, getInitial, getName }: any) {
   const isOwner = session?.user?.id === comment.user_id;
 
   return (
-    <div className="flex gap-6 group relative">
-      <div className="w-14 h-14 rounded-3xl overflow-hidden bg-white dark:bg-slate-800 shrink-0 border-4 border-white dark:border-slate-700 shadow-xl transition-transform duration-500 group-hover:scale-105 z-10">
-        {comment.profiles?.avatar_url ? (
-          <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 uppercase md:text-xl italic">
-            {comment.profiles?.full_name?.charAt(0) || 'U'}
-          </div>
-        )}
-      </div>
+    <div className="py-6 border-b border-gray-100 last:border-b-0">
+      <div className="flex gap-3">
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-sm shrink-0 mt-0.5">
+          {getInitial(comment)}
+        </div>
 
-      <div className="flex-1 w-full min-w-0">
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] rounded-tl-sm border border-slate-100 dark:border-slate-700 shadow-xl shadow-indigo-500/5 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500">
-          <div className="flex items-center justify-between mb-5 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-            <div>
-              <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight italic text-lg">{comment.profiles?.full_name || 'Anonymous Contributor'}</h4>
-              <p className="text-[8px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.3em] mt-0.5">Verified Intelligence</p>
-            </div>
-            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 opacity-60">
-              {new Date(comment.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            </div>
+        <div className="flex-1 min-w-0">
+          {/* Name & Time */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-bold text-gray-900 text-sm">{getName(comment)}</span>
+            <span className="text-xs text-gray-400">{timeAgo(comment.created_at)}</span>
           </div>
-          <p className="text-slate-600 dark:text-slate-300 text-base whitespace-pre-wrap leading-relaxed font-medium">{comment.content}</p>
-          
-          <div className="flex items-center gap-4 mt-8 pt-4 border-t border-slate-50 dark:border-slate-700/30">
-            <button 
-              onClick={() => {
-                onReply(replyingTo === comment.id ? null : comment.id);
-                setReplyContent("");
-              }} 
-              className={`text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 
-                ${replyingTo === comment.id 
-                  ? 'bg-indigo-600 text-white shadow-lg' 
-                  : 'bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 hover:text-indigo-600'}`}
+
+          {/* Content */}
+          <p className="text-gray-700 text-[15px] leading-relaxed whitespace-pre-wrap mb-2">{comment.content}</p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onReply(replyingTo === comment.id ? null : comment.id)}
+              className="text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors"
             >
-              <Send className="w-3.5 h-3.5" />
               Reply
             </button>
             {isOwner && (
-              <button 
-                onClick={() => onDelete(comment.id)} 
-                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors px-3 py-2.5 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100"
+              <button
+                onClick={() => onDelete(comment.id)}
+                className="text-xs font-semibold text-gray-300 hover:text-red-500 transition-colors flex items-center gap-1"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3 h-3" /> Delete
               </button>
             )}
           </div>
-        </div>
 
-        {/* Reply Box */}
-        {replyingTo === comment.id && session && (
-          <div className="mt-4 animate-slide-in-top">
-            <div className="bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-800 dark:to-slate-900/50 p-6 rounded-[2rem] border-2 border-indigo-100 dark:border-slate-700 shadow-2xl relative">
-              <div className="flex gap-3 items-center mb-4 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                <CornerDownRight className="w-3.5 h-3.5" />
-                Drafting Response to {comment.profiles?.full_name}
+          {/* Reply Input */}
+          {replyingTo === comment.id && session && (
+            <div className="mt-4 flex gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-xs shrink-0 mt-1">
+                {session.user.email?.charAt(0).toUpperCase()}
               </div>
-              <textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Compose your response..."
-                className="w-full bg-transparent border-none outline-none resize-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm min-h-[80px] font-medium"
-                autoFocus
-              />
-              <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-indigo-100/50 dark:border-slate-700">
-                <button onClick={() => onReply(null)} className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition">Dismiss</button>
-                <button
-                  onClick={() => onSubmitReply(comment.id, replyContent)}
-                  disabled={submitting || !replyContent.trim()}
-                  className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/20 disabled:opacity-30 hover:bg-slate-900 transition-all flex items-center gap-2"
-                >
-                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  Submit Response
-                </button>
+              <div className="flex-1">
+                <textarea
+                  value={replyContent}
+                  onChange={e => setReplyContent(e.target.value)}
+                  placeholder={`Reply to ${getName(comment)}...`}
+                  rows={2}
+                  autoFocus
+                  className="w-full bg-transparent border-b-2 border-gray-200 focus:border-gray-900 outline-none resize-none text-gray-800 placeholder:text-gray-400 text-sm py-2 transition-colors"
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={() => onReply(null)} className="px-4 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 rounded-full transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => onSubmitReply(comment.id, replyContent)}
+                    disabled={submitting || !replyContent.trim()}
+                    className="px-5 py-1.5 bg-gray-200 hover:bg-blue-600 hover:text-white text-xs font-bold text-gray-700 rounded-full transition-all disabled:opacity-40"
+                  >
+                    {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Reply'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Nested Replies */}
-        {replies?.length > 0 && (
-          <div className="mt-8 space-y-8 pl-10 md:pl-16 relative">
-            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-100 via-slate-50 to-transparent dark:from-slate-700 dark:via-slate-800 dark:to-transparent rounded-full opacity-50" />
-            {replies.map((reply: any) => (
-              <div key={reply.id} className="relative before:absolute before:-left-10 before:top-10 before:w-10 before:h-1 before:bg-indigo-50 dark:before:bg-slate-800 before:rounded-full">
-                <CommentItem 
-                  comment={reply} 
-                  replies={[]} 
-                  session={session}
-                  onReply={onReply}
-                  replyingTo={replyingTo}
-                  replyContent={replyContent}
-                  setReplyContent={setReplyContent}
-                  onSubmitReply={onSubmitReply}
-                  onDelete={onDelete}
-                  submitting={submitting}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+          {/* Nested Replies */}
+          {replies?.length > 0 && (
+            <div className="mt-4 space-y-0 pl-0 md:pl-2 border-l-2 border-gray-100 ml-0">
+              {replies.map((reply: any) => (
+                <div key={reply.id} className="py-4 pl-4">
+                  <div className="flex gap-3">
+                    <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-xs shrink-0 mt-0.5">
+                      {getInitial(reply)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-gray-900 text-sm">{getName(reply)}</span>
+                        {/* Show "Replying to" */}
+                        <span className="text-xs text-gray-400">
+                          Replying to <span className="font-semibold text-gray-500">{getName(comment)}</span>
+                        </span>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-1">{reply.content}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-400">{timeAgo(reply.created_at)}</span>
+                        {session?.user?.id === reply.user_id && (
+                          <button
+                            onClick={() => onDelete(reply.id)}
+                            className="text-xs font-semibold text-gray-300 hover:text-red-500 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
