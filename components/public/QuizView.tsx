@@ -83,7 +83,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
     const isPrinting = printMode !== null;
 
     return (
-      <div key={q.id} className={`bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow ${isPrinting ? 'break-inside-avoid border-none shadow-none p-0 mb-6' : 'mb-6'} ${isSub ? 'mt-4 border-l-4 border-l-indigo-200 ml-0 md:ml-4 bg-slate-50/50' : ''}`}>
+      <div key={q.id} className={`bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow ${isPrinting ? 'break-inside-avoid border-none shadow-none p-0 mb-4' : 'mb-6'} ${isSub ? 'mt-4 border-l-4 border-l-indigo-200 ml-0 md:ml-4 bg-slate-50/50' : ''}`}>
         
         {/* Header Row */}
         <div className="flex justify-between items-start mb-4 gap-3">
@@ -96,7 +96,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
             <div className="w-full min-w-0">
               <div className="overflow-x-auto">
                  <h3 
-                   className="text-base md:text-lg font-bold text-slate-800 leading-relaxed print:text-black [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-300 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto" 
+                   className="text-base md:text-lg font-bold text-slate-800 leading-relaxed print:text-black print:text-[11pt] print:leading-tight [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-300 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto" 
                    dangerouslySetInnerHTML={{ __html: q.question_text }}
                  ></h3>
               </div>
@@ -123,7 +123,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
 
         {/* --- OPTIONS RENDERER (MCQ) --- */}
         {q.options && q.options.length > 0 && (
-           <div className="space-y-3 pl-0 md:pl-12">
+           <div className={`space-y-3 pl-0 md:pl-12 ${isPrinting ? 'print:grid print:grid-cols-2 print:gap-x-4 print:gap-y-1 print:space-y-0 print:mt-2' : ''}`}>
               {q.options.map((opt, i) => {
                  const isSelected = selectedOpts[q.id] === i;
                  const isCorrect = opt.is_correct;
@@ -151,14 +151,14 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
                     }
                  }
 
-                 return (
+                  return (
                     <button
                       key={i}
                       disabled={showAnswer || isPrinting}
                       onClick={() => handleOptionClick(q.id, i)}
-                      className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all flex justify-between items-center ${styleClass} print:p-2 print:border-2 print:text-sm print:break-inside-avoid`}
+                      className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all flex justify-between items-center ${styleClass} print:p-1.5 print:border print:rounded-md print:text-[10pt] print:break-inside-avoid`}
                     >
-                       <span className="text-sm">{opt.option_text}</span>
+                       <span className="flex-1">{opt.option_text}</span>
                        
                        {/* Icons for PDF (Black) and Web (Colored) */}
                        {showAnswer && isCorrect && <CheckCircle className="w-5 h-5 text-green-600 print:text-black flex-shrink-0 ml-2" />}
@@ -206,7 +206,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
         {q.question_type === 'passage' && q.sub_questions && q.sub_questions.length > 0 && (
            <div className="mt-6 pt-6 border-t border-dashed border-slate-300 pl-0 md:pl-8">
               <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 print:text-black">Questions based on above passage:</h4>
-              {q.sub_questions.map((sq, sIdx) => renderQuestionCard(sq, `${indexDisplay}.${sIdx + 1}`, true))}
+              {q.sub_questions?.map((sq, sIdx) => renderQuestionCard(sq, `${indexDisplay}.${sIdx + 1}`, true))}
            </div>
         )}
 
