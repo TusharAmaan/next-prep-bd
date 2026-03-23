@@ -374,7 +374,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           <input 
             type="text" 
             placeholder="Search by topic, student, or subject..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -382,7 +382,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-2" />
           <select 
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >

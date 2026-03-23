@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import FacebookComments from "@/components/FacebookComments";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import { headers } from 'next/headers';
@@ -109,7 +110,7 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                 <h3 className="text-2xl font-black text-slate-900 mb-8 border-b border-slate-50 pb-6 uppercase tracking-tight italic">Course Overview</h3>
                 <div 
                     className="prose prose-lg prose-indigo max-w-none text-slate-600 font-medium leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: course.description || "<p>No description provided yet.</p>" }}
+                    dangerouslySetInnerHTML={{ __html: course.description ? parseHashtagsToHTML(course.description) : "<p>No description provided yet.</p>" }}
                 />
             </div>
 

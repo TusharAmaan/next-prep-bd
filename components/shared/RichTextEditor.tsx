@@ -24,21 +24,24 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
         
         init={{
           height: 400, // Fixed height is better for UI consistency
-          menubar: false, // Cleaner look for tutors
+          menubar: true, // Show menubar for advanced features like table, insert, etc.
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+            'insertdatetime', 'media', 'table', 'help', 'wordcount', 'codesample', 'math'
           ],
-          toolbar: 'undo redo | blocks | ' +
-            'bold italic underline | alignleft aligncenter ' +
+          toolbar: 'undo redo | formatselect | ' +
+            'bold italic underline strikethrough | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
-            'link image | removeformat | code',
+            'link image media table math | removeformat | codesample code fullscreen preview | help',
           skin: darkMode ? "oxide-dark" : "oxide",
           content_css: darkMode ? "dark" : "default",
           content_style: `body { font-family:Inter,sans-serif; font-size:16px; color: ${darkMode ? '#f1f5f9' : '#334155'}; background: ${darkMode ? '#0f172a' : '#ffffff'}; }`,
           branding: false,
           statusbar: true,
+          convert_urls: false, // Ensures absolute URLs remain absolute
+          relative_urls: false,
+          remove_script_host: false,
         }}
       />
     </div>

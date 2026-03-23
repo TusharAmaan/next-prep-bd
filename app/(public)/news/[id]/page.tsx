@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { headers } from 'next/headers';
-import FacebookComments from "@/components/FacebookComments";
+import Discussion from "@/components/shared/Discussion";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import { Metadata } from 'next';
+import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 
 export const dynamic = "force-dynamic";
 
@@ -94,8 +95,8 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
       {/* CONTENT BODY */}
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div 
-          className="prose prose-lg prose-blue max-w-none text-gray-800"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          className="prose prose-lg prose-blue max-w-none text-slate-800 dark:text-slate-200"
+          dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(post.content) }}
         />
         
         {/* TAGS SECTION */}
@@ -111,10 +112,10 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      {/* FACEBOOK COMMENTS SECTION */}
+      {/* DISCUSSION COMMENTS SECTION */}
       <div className="max-w-3xl mx-auto px-6">
-        <hr className="border-gray-100 mb-12" />
-        <FacebookComments url={absoluteUrl} />
+        <hr className="border-gray-100 dark:border-slate-800 mb-6" />
+        <Discussion itemType="news" itemId={post.id} />
       </div>
     </div>
   );

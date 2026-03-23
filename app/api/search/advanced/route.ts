@@ -198,9 +198,20 @@ export async function GET(request: NextRequest) {
     // Slice for pagination
     const paginatedResults = results.slice(offset, offset + limit);
 
+    let suggestion = null;
+    if (results.length === 0 && filters.q.length > 3) {
+      try {
+        const { data, error } = await supabase.rpc('get_search_suggestion', { search_term: filters.q });
+        if (!error && data) suggestion = data;
+      } catch (e) {
+        console.error('Fuzzy search RPC failed:', e);
+      }
+    }
+
     return NextResponse.json({
       results: paginatedResults,
       total: results.length,
+      suggestion,
       facets: {
         types: Array.from(new Set(results.map((r) => r.type))),
         segments: Array.from(new Set(results.map((r) => r.segment).filter(Boolean))),

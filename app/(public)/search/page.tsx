@@ -48,6 +48,7 @@ function AdvancedSearchContent() {
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [facets, setFacets] = useState<SearchFacets>({ types: [], segments: [], difficulties: [] });
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({
@@ -79,6 +80,7 @@ function AdvancedSearchContent() {
 
       setResults(data.results || []);
       setFacets(data.facets || { types: [], segments: [], difficulties: [] });
+      setSuggestion(data.suggestion || null);
 
       // Track search analytics
       await fetch("/api/search/analytics", {
@@ -383,7 +385,12 @@ function AdvancedSearchContent() {
               We couldn't find anything matching{" "}
               <span className="font-bold text-slate-700">"{query}"</span>.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {suggestion && (
+              <p className="mt-4 text-slate-600 font-medium bg-blue-50/50 inline-block px-4 py-2 rounded-xl border border-blue-100">
+                Did you mean: <Link href={`/search?q=${suggestion}`} className="font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2">{suggestion}</Link>?
+              </p>
+            )}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest py-1">
                 Try:
               </span>

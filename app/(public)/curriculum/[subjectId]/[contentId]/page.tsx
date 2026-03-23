@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from "@/lib/supabaseClient";
+import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -356,7 +357,7 @@ export default function ContentDetailPage() {
                       ) : (
                          <div 
                           className={`prose max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:font-medium lg:prose-lg ${proseDark} ${isBengali ? 'font-bangla prose-headings:font-bangla' : 'font-sans'} ${isPaywalled ? 'select-none pointer-events-none' : ''}`}
-                          dangerouslySetInnerHTML={{ __html: htmlBody }}
+                          dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(htmlBody) }}
                         />
                       )}
 

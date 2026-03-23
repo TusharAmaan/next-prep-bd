@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from 'next'; // Import Metadata type
@@ -110,7 +111,7 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
                 <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
                     <h3 className="font-bold text-gray-900 text-lg mb-3">Description & Links</h3>
                     {/* Render HTML Description safely */}
-                    <div dangerouslySetInnerHTML={{ __html: book.description }} />
+                    <div dangerouslySetInnerHTML={{ __html: book.description ? parseHashtagsToHTML(book.description) : "" }} />
                 </div>
             </div>
 

@@ -532,19 +532,19 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                    <div className="space-y-1">
                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Segment</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-indigo-500" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
                            <option value="">Select...</option>{dropdowns.segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                        </select>
                    </div>
                    <div className="space-y-1">
                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Group</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-indigo-500" value={mainForm.group} onChange={e => { setMainForm(p => ({...p, group: e.target.value})); loadSubjects(e.target.value, false); }} disabled={!mainForm.segment}>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.group} onChange={e => { setMainForm(p => ({...p, group: e.target.value})); loadSubjects(e.target.value, false); }} disabled={!mainForm.segment}>
                            <option value="">Select...</option>{createDropdowns.groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
                        </select>
                    </div>
                    <div className="space-y-1">
                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Subject</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-indigo-500" value={mainForm.subject} onChange={e => setMainForm(p => ({...p, subject: e.target.value}))} disabled={!mainForm.group}>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.subject} onChange={e => setMainForm(p => ({...p, subject: e.target.value}))} disabled={!mainForm.group}>
                            <option value="">Select...</option>{createDropdowns.subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                        </select>
                    </div>
@@ -569,7 +569,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                            {mainForm.type !== 'passage' && (
                                <div className="flex items-center gap-2">
                                     <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Marks</label>
-                                    <input type="number" value={mainForm.marks} onChange={e => setMainForm(p => ({...p, marks: Number(e.target.value)}))} className="w-16 border rounded-lg p-1.5 text-center font-bold text-sm outline-none focus:border-indigo-500"/>
+                                    <input type="number" value={mainForm.marks} onChange={e => setMainForm(p => ({...p, marks: Number(e.target.value)}))} className="w-16 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg p-1.5 text-center font-bold text-sm outline-none focus:border-indigo-500"/>
                                </div>
                            )}
                        </div>
@@ -659,7 +659,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                        <div className="mt-4 flex gap-4">
                                             <div className="flex-1">
                                                 <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Marks</label>
-                                                <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border rounded-lg p-2 text-sm font-bold mt-1"/>
+                                                <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg p-2 text-sm font-bold mt-1 outline-none focus:ring-2 focus:ring-indigo-500"/>
                                             </div>
                                        </div>
 
@@ -711,35 +711,35 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                           <div className="space-y-3">
                               {/* Segment */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Segment</label>
-                                <select className="w-full border p-2 rounded-lg text-xs" value={filters.segment} onChange={e => { setFilters(p=>({...p, segment:e.target.value})); loadGroups(e.target.value, true); }}><option value="">All Segments</option>{dropdowns.segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Segment</label>
+                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.segment} onChange={e => { setFilters(p=>({...p, segment:e.target.value})); loadGroups(e.target.value, true); }}><option value="">All Segments</option>{dropdowns.segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                               </div>
                               {/* Group */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Group</label>
-                                <select className="w-full border p-2 rounded-lg text-xs" value={filters.group} onChange={e => { setFilters(p=>({...p, group:e.target.value})); loadSubjects(e.target.value, true); }} disabled={!filters.segment}><option value="">All Groups</option>{filterGroupsList.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Group</label>
+                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.group} onChange={e => { setFilters(p=>({...p, group:e.target.value})); loadSubjects(e.target.value, true); }} disabled={!filters.segment}><option value="">All Groups</option>{filterGroupsList.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
                               </div>
                               {/* Subject */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Subject</label>
-                                <select className="w-full border p-2 rounded-lg text-xs" value={filters.subject} onChange={e => setFilters(p=>({...p, subject:e.target.value}))} disabled={!filters.group}><option value="">All Subjects</option>{filterSubjectsList.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Subject</label>
+                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.subject} onChange={e => setFilters(p=>({...p, subject:e.target.value}))} disabled={!filters.group}><option value="">All Subjects</option>{filterSubjectsList.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                               </div>
                               {/* Type */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Type</label>
-                                <select className="w-full border p-2 rounded-lg text-xs" value={filters.type} onChange={e => setFilters(p=>({...p, type:e.target.value}))}><option value="all">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Descriptive</option></select>
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Type</label>
+                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.type} onChange={e => setFilters(p=>({...p, type:e.target.value}))}><option value="all">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Descriptive</option></select>
                               </div>
                           </div>
                        </div>
-                       <button onClick={() => { setFilters({segment:'',group:'',subject:'',type:'all',topic:''}); setSearchQuery(''); }} className="w-full py-2 text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Reset Filters</button>
+                       <button onClick={() => { setFilters({segment:'',group:'',subject:'',type:'all',topic:''}); setSearchQuery(''); }} className="w-full py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Reset Filters</button>
                    </div>
                )}
                
                {/* MAIN TABLE */}
                <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden flex flex-col h-full">
-                   <div className="p-3 border-b flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50/50">
+                   <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50">
                        <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-2"/>
-                       <input className="flex-1 bg-transparent text-sm outline-none" placeholder="Search questions or tags..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/>
+                       <input className="flex-1 bg-transparent text-slate-900 dark:text-slate-100 text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="Search questions or tags..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/>
                    </div>
                    <div className="flex-1 overflow-auto">
                        <table className="w-full text-left text-sm">
