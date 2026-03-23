@@ -161,7 +161,8 @@ function SignupContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             email: email, 
-            name: fullName 
+            name: fullName,
+            role: selectedRole
         }),
       }).catch(err => console.error("Failed to send welcome email:", err));
 

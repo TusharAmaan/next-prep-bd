@@ -6,13 +6,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
-    const { email, name } = await request.json();
+    const { email, name, role } = await request.json();
 
     const data = await resend.emails.send({
-      from: 'NextPrepBD <onboarding@resend.dev>', // If you have a custom domain, use hello@nextprepbd.com
+      from: 'NextPrepBD <hello@nextprepbd.com>', // If you have a custom domain, use hello@nextprepbd.com
       to: [email],
       subject: 'Welcome to NextPrepBD! 🚀',
-      react: WelcomeTemplate({ userFirstname: name }),
+      react: WelcomeTemplate({ userFirstname: name, role }),
     });
 
     return NextResponse.json(data);
