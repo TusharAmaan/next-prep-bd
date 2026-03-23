@@ -107,7 +107,7 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                         </div>
                         <button 
                             onClick={handleCreateNew}
-                            className="group bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:-translate-y-1 active:scale-95"
+                            className="group bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 transition-all shadow-xl shadow-indigo-200 dark:shadow-indigo-500/10 hover:-translate-y-1 active:scale-95"
                         >
                             <Plus className="w-5 h-5" /> Create New Course
                         </button>

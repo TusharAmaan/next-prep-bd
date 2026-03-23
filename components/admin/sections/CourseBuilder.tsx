@@ -277,7 +277,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                             <button
                                 key={step.id}
                                 onClick={() => (courseData.id || step.id === 1) && setActiveStep(step.id)}
-                                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${activeStep === step.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600'}`}
+                                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 ${activeStep === step.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-500/10' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600'}`}
                             >
                                 <step.icon size={14} /> <span className="hidden sm:inline">{step.name}</span>
                             </button>

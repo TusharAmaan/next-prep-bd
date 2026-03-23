@@ -174,7 +174,7 @@ export default function CategoryManager({
                     <button 
                         key={t}
                         onClick={() => setActiveFilter(t)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600'}`}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600'}`}
                     >
                         {t === 'resource' ? 'Materials' : (t === 'blog' ? 'Blogs' : (t === 'pdf' ? 'PDFs' : (t === 'video' ? 'Videos' : (t === 'question' ? 'Questions' : t))))}
                     </button>
@@ -184,10 +184,10 @@ export default function CategoryManager({
 
          {/* Actions */}
          <div className="flex gap-2 w-full md:w-auto">
-             <button onClick={() => { fetchCategories(); fetchCounts(); }} className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 hover:text-indigo-600 transition-colors" title="Refresh Data">
+             <button onClick={() => { fetchCategories(); fetchCounts(); }} className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-indigo-600 transition-colors" title="Refresh Data">
                 <RefreshCw className={`w-4 h-4 ${loadingCounts ? 'animate-spin' : ''}`} />
              </button>
-             <button onClick={() => setIsCreateModalOpen(true)} className="flex-1 md:flex-none bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+             <button onClick={() => setIsCreateModalOpen(true)} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 transition-all active:scale-95">
                 <Plus className="w-4 h-4" /> New Category
              </button>
          </div>
@@ -355,7 +355,7 @@ export default function CategoryManager({
                     <button 
                         disabled={postPage === 0}
                         onClick={() => handlePageChange(postPage - 1)}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:bg-slate-800/50"
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                         <ChevronLeft className="w-4 h-4"/> Prev
                     </button>
@@ -365,7 +365,7 @@ export default function CategoryManager({
                     <button 
                         disabled={(postPage + 1) * POSTS_PER_PAGE >= totalLinked}
                         onClick={() => handlePageChange(postPage + 1)}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:bg-slate-800/50"
+                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold text-sm disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                         Next <ChevronRight className="w-4 h-4"/>
                     </button>

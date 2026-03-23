@@ -273,6 +273,107 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
       });
   };
 
+  const handleExportCSV = async () => {
+      if (!questions.length) return showModal('error', 'No questions to export.');
+      setLoading(true);
+      try {
+          // Fetch full data for passage questions (sub-questions and options)
+          const fullQuestions = await Promise.all(questions.map(async (q) => {
+              let opts: any[] = [];
+              let subQs: any[] = [];
+              
+              if (q.question_type === 'mcq') {
+                  const { data } = await supabase.from('question_options').select('*').eq('question_id', q.id).order('order_index');
+                  opts = data || [];
+              } else if (q.question_type === 'passage') {
+                  const { data } = await supabase.from('question_bank').select(`*, options:question_options(*)`).eq('parent_id', q.id).order('created_at', { ascending: true });
+                  subQs = (data || []).map((s: any) => ({ ...s, options: s.options || [] }));
+              }
+              return { ...q, options: opts, subQuestions: subQs };
+          }));
+
+          const headers = ["Type", "SegmentID", "GroupID", "SubjectID", "TopicTag", "QuestionText", "Marks", "Explanation", "OptionA", "OptionB", "OptionC", "OptionD", "Correct", "SubQuestions"];
+          
+          const csvRows = fullQuestions.map(q => {
+              const row = [
+                  q.question_type,
+                  q.segment_id || "",
+                  q.group_id || "",
+                  q.subject_id || "",
+                  `"${(q.topic_tag || "").replace(/"/g, '""')}"`,
+                  `"${(q.question_text || "").replace(/"/g, '""')}"`,
+                  q.marks || 0,
+                  `"${(q.explanation || "").replace(/"/g, '""')}"`,
+              ];
+
+              if (q.question_type === 'mcq') {
+                  const opts = q.options || [];
+                  row.push(`"${(opts[0]?.option_text || "").replace(/"/g, '""')}"`);
+                  row.push(`"${(opts[1]?.option_text || "").replace(/"/g, '""')}"`);
+                  row.push(`"${(opts[2]?.option_text || "").replace(/"/g, '""')}"`);
+                  row.push(`"${(opts[3]?.option_text || "").replace(/"/g, '""')}"`);
+                  const correctIdx = opts.findIndex(o => o.is_correct);
+                  row.push(correctIdx === 0 ? "A" : correctIdx === 1 ? "B" : correctIdx === 2 ? "C" : correctIdx === 3 ? "D" : "");
+                  row.push(""); // No sub-questions for MCQ
+              } else if (q.question_type === 'passage') {
+                  row.push("", "", "", "", "", ""); // No direct options for passage
+                  const subContent = (q.subQuestions || []).map((sq: any) => {
+                      const sOpts = sq.options || [];
+                      const sCorrect = sOpts.findIndex((so: any) => so.is_correct);
+                      const sCorrectLetter = sCorrect === 0 ? "A" : sCorrect === 1 ? "B" : sCorrect === 2 ? "C" : sCorrect === 3 ? "D" : "";
+                      return [
+                          sq.question_type,
+                          sq.question_text,
+                          sq.marks,
+                          sq.explanation || "",
+                          sOpts[0]?.option_text || "",
+                          sOpts[1]?.option_text || "",
+                          sOpts[2]?.option_text || "",
+                          sOpts[3]?.option_text || "",
+                          sCorrectLetter
+                      ].join('||');
+                  }).join(';;;');
+                  row.push(`"${subContent.replace(/"/g, '""')}"`);
+              } else {
+                  row.push("", "", "", "", "", ""); // Descriptive
+              }
+
+              return row.join(',');
+          });
+
+          const csvContent = "\uFEFF" + [headers.join(','), ...csvRows].join('\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute("download", `questions_export_${new Date().toISOString().split('T')[0]}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      } catch (err) {
+          console.error("Export error:", err);
+          showModal('error', 'Failed to export questions.');
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  const handleDownloadSample = () => {
+      const headers = ["Type", "SegmentID", "GroupID", "SubjectID", "TopicTag", "QuestionText", "Marks", "Explanation", "OptionA", "OptionB", "OptionC", "OptionD", "Correct", "SubQuestions"];
+      const samples = [
+          ['mcq', '1', '1', '1', 'Algebra', '"What is 2+2?"', '1', '"Basic math"', '4', '5', '6', '7', 'A', ''],
+          ['descriptive', '1', '1', '1', 'History', '"Explain the French Revolution"', '5', '"World History"', '', '', '', '', '', ''],
+          ['passage', '1', '1', '1', 'Literature', '"Read the following poem..."', '0', '"Analysis of poetry"', '', '', '', '', '', 'mcq||Question 1: Who wrote this?||1||Author name||Writer A||Writer B||Writer C||Writer D||A;;;descriptive||Question 2: What is the main theme?||2||Theme analysis||||||||']
+      ];
+      const csvContent = "\uFEFF" + [headers.join(','), ...samples.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", "question_bank_sample.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -281,31 +382,52 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
       const reader = new FileReader();
       reader.onload = async (f) => {
           const content = f.target?.result as string;
-          const lines = content.split('\n').filter(l => l.trim());
-          
+          // Split by newline but handle cases where newline might be inside quotes
+          const lines: string[] = [];
+          let currentLine = "";
+          let inQuotes = false;
+          for (let i = 0; i < content.length; i++) {
+              const char = content[i];
+              if (char === '"') inQuotes = !inQuotes;
+              if (char === '\n' && !inQuotes) {
+                  lines.push(currentLine);
+                  currentLine = "";
+              } else if (char !== '\r') {
+                  currentLine += char;
+              }
+          }
+          if (currentLine) lines.push(currentLine);
+
           const csvSplit = (text: string) => {
               const result = [];
               let current = '';
               let inQuotes = false;
               for (let i = 0; i < text.length; i++) {
                   const char = text[i];
-                  if (char === '"') inQuotes = !inQuotes;
-                  else if (char === ',' && !inQuotes) {
-                      result.push(current.trim().replace(/^"|"$/g, ''));
+                  if (char === '"') {
+                      if (inQuotes && text[i+1] === '"') {
+                          current += '"'; // Escaped quote
+                          i++;
+                      } else {
+                          inQuotes = !inQuotes;
+                      }
+                  } else if (char === ',' && !inQuotes) {
+                      result.push(current.trim());
                       current = '';
                   } else current += char;
               }
-              result.push(current.trim().replace(/^"|"$/g, ''));
+              result.push(current.trim());
               return result;
           };
 
           let successCount = 0;
           let errorCount = 0;
 
+          // Skip header
           for (let i = 1; i < lines.length; i++) {
               try {
                   const row = csvSplit(lines[i]);
-                  if (row.length < 6) continue;
+                  if (row.length < 13) continue;
 
                   const [
                       type, segment_id, group_id, subject_id, topic_tag, 
@@ -313,8 +435,10 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                       optA, optB, optC, optD, correct, sub_qs_raw
                   ] = row;
 
+                  if (!question_text) continue;
+
                   const payload = {
-                      question_type: type as QuestionType,
+                      question_type: (type || 'mcq').toLowerCase() as QuestionType,
                       segment_id: segment_id ? Number(segment_id) : null,
                       group_id: group_id ? Number(group_id) : null,
                       subject_id: subject_id ? Number(subject_id) : null,
@@ -327,7 +451,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                   const { data: q, error } = await supabase.from('question_bank').insert(payload).select().single();
                   if (error) throw error;
 
-                  if (type === 'mcq' && q) {
+                  if (payload.question_type === 'mcq' && q) {
                       const opts = [
                           { text: optA, correct: correct === 'A' },
                           { text: optB, correct: correct === 'B' },
@@ -342,19 +466,25 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                       if (opts.length) await supabase.from('question_options').insert(opts);
                   }
 
-                  if (type === 'passage' && q && sub_qs_raw) {
+                  if (payload.question_type === 'passage' && q && sub_qs_raw) {
                       const subQs = sub_qs_raw.split(';;;');
                       for (const subStr of subQs) {
-                          const [sType, sText, sMarks, sExp, sA, sB, sC, sD, sCorrect] = subStr.split('||');
+                          const subFields = subStr.split('||');
+                          if (subFields.length < 2) continue;
+                          
+                          const [sType, sText, sMarks, sExp, sA, sB, sC, sD, sCorrect] = subFields;
                           const { data: sq } = await supabase.from('question_bank').insert({
                               parent_id: q.id,
-                              question_type: sType as QuestionType,
+                              question_type: (sType || 'mcq').toLowerCase() as QuestionType,
                               question_text: sText,
                               marks: Number(sMarks) || 0,
-                              explanation: sExp
+                              explanation: sExp,
+                              segment_id: payload.segment_id, // Inherit Meta
+                              group_id: payload.group_id,
+                              subject_id: payload.subject_id
                           }).select().single();
 
-                          if (sq && sType === 'mcq') {
+                          if (sq && sq.question_type === 'mcq') {
                               const sOpts = [
                                   { text: sA, correct: sCorrect === 'A' },
                                   { text: sB, correct: sCorrect === 'B' },
@@ -372,7 +502,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                   }
                   successCount++;
               } catch (err) {
-                  console.error("Row error:", err);
+                  console.error("Row error at line", i, ":", err);
                   errorCount++;
               }
           }
@@ -496,7 +626,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
   };
 
   return (
-    <div className="flex flex-col h-full font-sans text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/50/50">
+    <div className="flex flex-col h-full font-sans text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950">
        <CustomModal isOpen={modal.isOpen} type={modal.type} message={modal.message} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
        {/* HEADER */}
@@ -508,6 +638,12 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
           <div className="flex gap-3">
               {view === 'list' && (
                   <div className="flex gap-2">
+                      <button onClick={handleDownloadSample} className="flex items-center gap-2 px-3 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-[10px] font-bold transition-all">
+                          <HelpCircle size={14} /> Sample CSV
+                      </button>
+                      <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all">
+                          <UploadCloud size={18} /> Export CSV
+                      </button>
                       <label className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
                           <FileUp size={18} /> 
                           <span className="hidden sm:inline">Import CSV</span>
@@ -692,7 +828,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                </div>
 
                <div className="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-end sticky bottom-0 z-10">
-                   <button onClick={handleSave} disabled={loading} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg disabled:opacity-50 flex items-center gap-2">
+                   <button onClick={handleSave} disabled={loading} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95">
                        {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Save size={18}/>} Save Question
                    </button>
                </div>
@@ -754,7 +890,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                            </thead>
                            <tbody className="divide-y divide-slate-100">
                                {questions.map((q, i) => (
-                                   <tr key={q.id} className="hover:bg-slate-50 dark:bg-slate-800/50 group">
+                                   <tr key={q.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 group border-b border-slate-100 dark:border-slate-800 transition-colors">
                                        <td className="p-3 text-xs text-slate-400 dark:text-slate-500 font-mono">{i + 1 + pagination.page * pagination.itemsPerPage}</td>
                                        <td className="p-3">
                                            <div className="line-clamp-2 text-slate-800 dark:text-slate-100 font-medium" dangerouslySetInnerHTML={{__html: q.question_text}}/>

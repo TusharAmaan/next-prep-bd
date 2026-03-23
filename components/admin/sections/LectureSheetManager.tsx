@@ -383,7 +383,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           {activeView === 'sheets' && (
             <button 
               onClick={handleOpenAddModal}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md shadow-indigo-100"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md shadow-indigo-100 dark:shadow-indigo-500/10"
             >
               <Plus className="w-4 h-4" />
               New Sheet
@@ -457,7 +457,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                         <>
                           <button 
                             onClick={() => updateRequestStatus(req.id, 'taking_time', 'I am working on this. Will be ready soon.', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())}
-                            className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-3 rounded-xl text-xs font-bold transition-all"
+                            className="w-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 py-3 rounded-xl text-xs font-bold transition-all"
                           >
                             Accept & Taking Time
                           </button>
@@ -577,7 +577,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                               </button>
                               <button 
                                 onClick={() => handleOpenAccessModal(sheet)}
-                                className="p-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-600 transition-all"
+                                className="p-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-lg text-indigo-600 dark:text-indigo-400 transition-all"
                                 title="Manage Access"
                               >
                                  <Users className="w-4 h-4" />

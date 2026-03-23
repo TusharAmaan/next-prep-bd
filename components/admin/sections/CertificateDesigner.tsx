@@ -461,19 +461,19 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
 
           {/* TOOLBAR (LEFT) */}
           <div className="w-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-6 gap-6 shrink-0 z-10">
-             <button onClick={() => setShowTemplates(!showTemplates)} className={`p-3 rounded-2xl transition-all ${showTemplates ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-indigo-50'}`} title="Templates"><Layout size={24}/></button>
+             <button onClick={() => setShowTemplates(!showTemplates)} className={`p-3 rounded-2xl transition-all ${showTemplates ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`} title="Templates"><Layout size={24}/></button>
              <div className="w-8 h-px bg-slate-100 dark:bg-slate-800" />
-             <button onClick={addText} className="p-3 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all" title="Add Text"><Type size={24}/></button>
-             <button onClick={addRect} className="p-3 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all" title="Add Shape"><Square size={24}/></button>
-             <button onClick={addCircle} className="p-3 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all" title="Add Circle"><CircleIcon size={24}/></button>
-             <label className="p-3 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all cursor-pointer" title="Upload Image">
+              <button onClick={addText} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Text"><Type size={24}/></button>
+             <button onClick={addRect} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Shape"><Square size={24}/></button>
+             <button onClick={addCircle} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Circle"><CircleIcon size={24}/></button>
+             <label className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all cursor-pointer" title="Upload Image">
                 <ImageIcon size={24}/>
                 <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
              </label>
              <div className="w-8 h-px bg-slate-100 dark:bg-slate-800" />
              <div className="flex flex-col gap-2">
                 {placeholders.map(p => (
-                    <button key={p.tag} onClick={() => addPlaceholder(p.tag)} className="p-2 text-[8px] font-black uppercase text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 text-center leading-tight w-12" title={p.label}> {p.label.split(' ')[0]} </button>
+                    <button key={p.tag} onClick={() => addPlaceholder(p.tag)} className="p-2 text-[8px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-center leading-tight w-12" title={p.label}> {p.label.split(' ')[0]} </button>
                 ))}
              </div>
              <div className="mt-auto">

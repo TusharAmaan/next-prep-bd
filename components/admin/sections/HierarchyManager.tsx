@@ -70,7 +70,7 @@ export default function HierarchyManager({
                     className={`p-3 rounded-xl cursor-pointer flex justify-between items-center text-sm font-medium transition-colors ${
                         selectedId === String(item.id) 
                         ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800/50'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                     }`}
                 >
                     <span>{item.title}</span>

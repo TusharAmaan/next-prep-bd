@@ -88,9 +88,9 @@ export default function PendingManager({ darkMode = false }: { darkMode?: boolea
   // --- RENDER TABLE (Simplified for brevity, logic is the same) ---
   return (
     <div className="space-y-6 animate-in fade-in">
-      <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm w-fit">
-           <button onClick={() => setActiveTab('resources')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'resources' ? 'bg-slate-800 text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50'}`}><FileText size={16}/> Resources</button>
-           <button onClick={() => setActiveTab('courses')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'courses' ? 'bg-slate-800 text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50'}`}><Layers size={16}/> Courses</button>
+      <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm w-fit transition-all">
+           <button onClick={() => setActiveTab('resources')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'resources' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}><FileText size={16}/> Resources</button>
+           <button onClick={() => setActiveTab('courses')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'courses' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}><Layers size={16}/> Courses</button>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -111,7 +111,7 @@ export default function PendingManager({ darkMode = false }: { darkMode?: boolea
                  <tr><td colSpan={5} className="p-12 text-center text-slate-400 dark:text-slate-500">All caught up! No pending items.</td></tr>
                ) : (
                  items.map((item) => (
-                   <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
+                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800">
                       <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
                       <td className="px-6 py-4 text-slate-600 dark:text-slate-400 dark:text-slate-500">
                         <div className="font-bold">{activeTab === 'courses' ? item.tutor?.full_name : item.author?.full_name}</div>
@@ -120,7 +120,7 @@ export default function PendingManager({ darkMode = false }: { darkMode?: boolea
                       <td className="px-6 py-4 capitalize"><span className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded text-xs font-bold">{item.type || 'Course'}</span></td>
                       <td className="px-6 py-4 text-slate-500 dark:text-slate-400 dark:text-slate-500">{new Date(item.created_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-right">
-                         <button onClick={() => setSelectedItem(item)} className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700">Review</button>
+                         <button onClick={() => setSelectedItem(item)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors">Review</button>
                       </td>
                    </tr>
                  ))
@@ -150,7 +150,7 @@ export default function PendingManager({ darkMode = false }: { darkMode?: boolea
                                 onChange={e => setFeedback(e.target.value)}
                             />
                         )}
-                        <button onClick={handleReview} className="w-full bg-slate-900 text-white py-2 rounded-lg font-bold">Confirm {actionType === 'approve' ? 'Approval' : 'Rejection'}</button>
+                        <button onClick={handleReview} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none transition-all">Confirm {actionType === 'approve' ? 'Approval' : 'Rejection'}</button>
                     </div>
                 )}
                 <button onClick={() => {setSelectedItem(null); setActionType(null)}} className="mt-4 text-slate-400 dark:text-slate-500 text-sm w-full">Cancel</button>
