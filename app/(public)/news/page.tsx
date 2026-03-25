@@ -4,7 +4,6 @@ import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import { Search, Calendar, Clock, ChevronRight, Tag, ArrowRight, BookOpen, Share2, Eye, TrendingUp } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import NewsSidebar from "@/components/news/NewsSidebar";
-import Pagination from "@/components/shared/Pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +19,6 @@ export default async function NewsPage({ searchParams }: Props) {
   const currentPage = parseInt(page) || 1;
 
   // 1. DATA FETCHING
-  // Get Categories
   const { data: distinctCategories } = await supabase
     .from("news")
     .select("category")
@@ -29,14 +27,13 @@ export default async function NewsPage({ searchParams }: Props) {
   const uniqueCategories = Array.from(new Set((distinctCategories || []).map((item) => item.category).filter(Boolean))).sort();
   const categoriesList = ["All", ...uniqueCategories as string[]];
 
-  // Get Recent Posts for Sidebar
-  const { data: recentPosts } = await supabase
+  const { data: recentPostsRaw } = await supabase
     .from("news")
     .select("id, title, image_url, created_at")
     .order("created_at", { ascending: false })
     .limit(5);
+  const recentPosts = (recentPostsRaw || []).map(p => ({ ...p, id: p.id.toString() }));
 
-  // Main Query
   let newsQuery = supabase
     .from("news")
     .select("id, title, category, created_at, image_url, content, seo_description", { count: "exact" })
@@ -51,7 +48,6 @@ export default async function NewsPage({ searchParams }: Props) {
   
   const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
 
-  // Featured Post (First post of the first page unless searching)
   const featuredPost = currentPage === 1 && !q && category === "All" && news?.length ? news[0] : null;
   const displayPosts = featuredPost ? news!.slice(1) : (news || []);
 
@@ -61,12 +57,16 @@ export default async function NewsPage({ searchParams }: Props) {
     return `${Math.ceil(words / wpm)} min read`;
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
       
-      {/* --- 1. PREMIUM HERO SECTION --- */}
       <section className="relative pt-32 pb-24 bg-slate-900 border-b border-white/5 overflow-hidden">
-        {/* Background Gradients */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none -mr-40 -mt-20"></div>
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-600/10 rounded-full blur-[80px] pointer-events-none -ml-20 -mb-10"></div>
         
@@ -83,14 +83,11 @@ export default async function NewsPage({ searchParams }: Props) {
         </div>
       </section>
 
-      {/* --- 2. MAIN LAYOUT (2/3 CONTENT, 1/3 SIDEBAR) --- */}
       <main className="max-w-7xl mx-auto px-6 -mt-10 relative z-20">
         <div className="flex flex-col lg:flex-row gap-12">
           
-          {/* LEFT: CONTENT AREA */}
           <div className="flex-1 min-w-0">
             
-            {/* Featured Post (Full Width in Content Area) */}
             {featuredPost && (
               <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Link href={`/news/${featuredPost.id}`} className="group block bg-white rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-100/50 border border-slate-100 hover:shadow-indigo-200/50 transition-all duration-500">
@@ -105,19 +102,18 @@ export default async function NewsPage({ searchParams }: Props) {
                          <span className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest mb-4 inline-block">{featuredPost.category}</span>
                          <h2 className="text-2xl md:text-4xl font-black text-white hover:text-indigo-300 transition-colors leading-tight mb-4">{featuredPost.title}</h2>
                          <div className="flex items-center gap-6 text-white/70 text-xs font-bold uppercase tracking-wider">
-                            <span className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-indigo-400"/> {new Date(featuredPost.created_at).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-indigo-400"/> {formatDate(featuredPost.created_at)}</span>
                             <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-indigo-400"/> {getReadTime(featuredPost.content)}</span>
                          </div>
                       </div>
                       <div className="absolute top-8 right-8">
-                         <BookmarkButton itemType="news" itemId={featuredPost.id} metadata={{ title: featuredPost.title }} />
+                         <BookmarkButton itemType="news" itemId={featuredPost.id.toString()} metadata={{ title: featuredPost.title }} />
                       </div>
                    </div>
                 </Link>
               </div>
             )}
 
-            {/* Posts Grid/List */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {displayPosts.map((post) => (
                 <article key={post.id} className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
@@ -133,7 +129,7 @@ export default async function NewsPage({ searchParams }: Props) {
                    </Link>
                    <div className="p-8 flex-1 flex flex-col">
                       <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                         <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                         <span>{formatDate(post.created_at)}</span>
                          <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
                          <span>{getReadTime(post.content)}</span>
                       </div>
@@ -147,7 +143,7 @@ export default async function NewsPage({ searchParams }: Props) {
                             Read More <ArrowRight className="w-3.5 h-3.5" />
                          </Link>
                          <div className="flex items-center gap-3">
-                            <BookmarkButton itemType="news" itemId={post.id} metadata={{ title: post.title }} />
+                            <BookmarkButton itemType="news" itemId={post.id.toString()} metadata={{ title: post.title }} />
                             <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Share2 className="w-4 h-4"/></button>
                          </div>
                       </div>
@@ -156,8 +152,6 @@ export default async function NewsPage({ searchParams }: Props) {
               ))}
             </div>
 
-
-            {/* Link-based Pagination fallback for SSR */}
             <div className="flex justify-center gap-3 mt-12">
                {totalPages > 1 && Array.from({length: totalPages}, (_, i) => i + 1).map(p => (
                  <Link 
@@ -173,25 +167,21 @@ export default async function NewsPage({ searchParams }: Props) {
                  </Link>
                ))}
             </div>
-
           </div>
 
-          {/* RIGHT: SIDEBAR */}
           <div className="w-full lg:w-80 shrink-0">
              <NewsSidebar 
                categories={categoriesList} 
-               recentPosts={(recentPosts || []).map(p => ({ ...p, id: p.id.toString() }))}
+               recentPosts={recentPosts}
                activeCategory={category}
              />
           </div>
-
         </div>
 
         <div className="mt-20">
            <ProfessionalAppBanner />
         </div>
       </main>
-
     </div>
   );
-}
+}

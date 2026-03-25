@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Facebook, Instagram, Youtube, Phone, Mail, MessageSquare } from "lucide-react";
-import MobileAppButtons from "./MobileAppButtons"; 
+import MobileAppButtons from "./MobileAppButtons";
 
 export default function Footer() {
   const pathname = usePathname(); // <--- 2. Get current path
@@ -10,13 +10,13 @@ export default function Footer() {
 
   // --- 3. CONDITIONAL RENDER: Hide on Admin Pages ---
   if (pathname?.startsWith('/admin')) {
-      return null;
+    return null;
   }
 
   return (
     <footer className="bg-black text-white py-16 border-t border-gray-800 font-sans">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-        
+
         {/* COLUMN 1: BRANDING & APPS */}
         <div>
           {/* Logo */}
@@ -24,9 +24,9 @@ export default function Footer() {
             <h2 className="text-3xl font-extrabold tracking-tight">NextPrep<span className="text-blue-500">BD</span></h2>
             <p className="text-xs text-gray-500 mt-1">Your Ultimate Exam Companion</p>
           </div>
-          
+
           <p className="text-sm text-gray-400 mb-4">Download our mobile app</p>
-          
+
           {/* Mobile App Popup */}
           <MobileAppButtons />
 
@@ -66,43 +66,43 @@ export default function Footer() {
           <h3 className="text-lg font-bold mb-6 text-white">Contact Us</h3>
           <ul className="space-y-4 text-sm text-gray-400">
             <li className="flex items-center gap-3">
-                <span className="text-blue-500 bg-blue-500/10 p-2 rounded-lg"><Phone className="w-4 h-4" /></span>
-                <span className="font-medium hover:text-white transition">Call: 01619663933 (24x7)</span>
+              <span className="text-blue-500 bg-blue-500/10 p-2 rounded-lg"><Phone className="w-4 h-4" /></span>
+              <span className="font-medium hover:text-white transition">Call: +8801619663933 (24x7)</span>
             </li>
-            
+
             <li>
-                <a href="https://wa.me/8801745775697" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
-                    <span className="text-green-500 bg-green-500/10 p-2 rounded-lg group-hover:bg-green-500 group-hover:text-white transition-all">
-                        <MessageSquare className="w-4 h-4" />
-                    </span>
-                    <span className="font-medium group-hover:text-green-400 transition">WhatsApp: +8801745775697</span>
-                </a>
+              <a href="https://wa.me/8801745775697" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
+                <span className="text-green-500 bg-green-500/10 p-2 rounded-lg group-hover:bg-green-500 group-hover:text-white transition-all">
+                  <MessageSquare className="w-4 h-4" />
+                </span>
+                <span className="font-medium group-hover:text-green-400 transition">WhatsApp: +8801745775697</span>
+              </a>
             </li>
 
             <li className="flex items-center gap-3">
               <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-3 group">
                 <span className="text-gray-500 bg-gray-800 p-2 rounded-lg"><Mail className="w-4.5 h-4.5" /></span>
                 <span className="font-medium hover:text-white transition">nextprepbd@gmail.com</span>
-                </a>
+              </a>
             </li>
           </ul>
 
           {/* Social Icons */}
           <div className="flex gap-4 mt-8">
             <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition-all">
-                <Facebook className="w-5 h-5" />
+              <Facebook className="w-5 h-5" />
             </a>
             <a href="https://instagram.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:border-pink-600 hover:text-white transition-all">
-                <Instagram className="w-5 h-5" />
+              <Instagram className="w-5 h-5" />
             </a>
             <a href="https://youtube.com" target="_blank" className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:border-[#FF0000] hover:text-white transition-all">
-                <Youtube className="w-5 h-5" />
+              <Youtube className="w-5 h-5" />
             </a>
           </div>
         </div>
 
       </div>
-      
+
       {/* COPYRIGHT */}
       <div className="text-center text-gray-600 text-xs mt-16 pt-8 border-t border-gray-900 font-bold tracking-wide">
         &copy; {currentYear} NextPrepBD. All rights reserved.

@@ -9,6 +9,7 @@ import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import TypographyScaler from "@/components/shared/TypographyScaler";
 import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon, ChevronLeft, Tag, Eye } from "lucide-react";
 import NewsSidebar from "@/components/news/NewsSidebar";
+import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: news.seo_title || news.title,
     description: news.seo_description || `Read the latest news: ${news.title}`,
-    keywords: news.tags,
+    keywords: Array.isArray(news.tags) ? news.tags : [],
     openGraph: {
       title: news.seo_title || news.title,
       description: news.seo_description || `Read the latest news: ${news.title}`,
@@ -53,7 +54,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   // 1. DATA FETCHING
   const { data: newsItems } = await supabase
     .from("news")
-    .select("*")
+    .select("id, title, slug, content, image_url, category, created_at, seo_title, seo_description, tags")
     .eq(column, id)
     .limit(1);
 
@@ -82,151 +83,150 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
     return `${Math.ceil(words / wpm)} min read`;
   };
 
-  const headersList = await headers(); 
-  const host = headersList.get("host") || "";
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const hrList = await headers();
+  const host = hrList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
 
   const shareActions = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(absoluteUrl)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(absoluteUrl)}&text=${encodeURIComponent(post.title)}`,
+    twitter: `https://x.com/intent/tweet?url=${encodeURIComponent(absoluteUrl)}&text=${encodeURIComponent(post.title)}`,
     linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(post.title)}`,
   };
 
-  const copyLink = () => {
-    // This will be handled by a client wrapper or a simple window script
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-28"> 
+    <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-28">
       <TypographyScaler />
-      
+
       <div className="max-w-7xl mx-auto px-6">
-        
+
         {/* BREADCRUMBS */}
         <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">
-            <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
-            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-            <Link href="/news" className="hover:text-indigo-600 transition-colors">Newsroom</Link>
-            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-            <span className="text-slate-600 truncate max-w-[200px]">{post.title}</span>
+          <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
+          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+          <Link href="/news" className="hover:text-indigo-600 transition-colors">Newsroom</Link>
+          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+          <span className="text-slate-600 truncate max-w-[200px]">{post.title}</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-12">
-            
-            {/* LEFT: MAIN ARTICLE CONTENT */}
-            <main className="flex-1 min-w-0">
-                
-                {/* ARTICLE HEADER */}
-                <div className="bg-white rounded-[2.5rem] p-8 md:p-12 mb-10 shadow-sm border border-slate-100 relative overflow-hidden">
-                    {/* Category Tag */}
-                    <div className="flex items-center justify-between mb-8">
-                        <span className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest">
-                            {post.category || "General"}
-                        </span>
-                        <div className="flex items-center gap-4">
-                            <BookmarkButton 
-                                itemType="news" 
-                                itemId={post.id} 
-                                metadata={{ title: post.title, thumbnail_url: post.image_url }} 
-                            />
-                            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Share2 className="w-5 h-5"/></button>
-                        </div>
-                    </div>
 
-                    <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tight">
-                        {post.title}
-                    </h1>
+          {/* LEFT: MAIN ARTICLE CONTENT */}
+          <main className="flex-1 min-w-0">
 
-                    <div className="flex flex-wrap items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest pb-8 border-b border-slate-50">
-                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500"/> {new Date(post.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                        <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500"/> {getReadTime(post.content)}</span>
-                        <span className="flex items-center gap-2"><Eye className="w-4 h-4 text-indigo-500"/> 1.2k Views</span>
-                    </div>
+            {/* ARTICLE HEADER */}
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 mb-10 shadow-sm border border-slate-100 relative overflow-hidden">
+              <div className="flex items-center justify-between mb-8">
+                <span className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest">
+                  {post.category || "General"}
+                </span>
+                <div className="flex items-center gap-4">
+                  <BookmarkButton
+                    itemType="news"
+                    itemId={post.id.toString()}
+                    metadata={{ title: post.title, thumbnail_url: post.image_url }}
+                  />
+                  <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Share2 className="w-5 h-5" /></button>
+                </div>
+              </div>
 
-                    {/* HERO IMAGE */}
-                    {post.image_url && (
-                        <div className="mt-10 rounded-3xl overflow-hidden shadow-2xl relative aspect-video group">
-                            <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/20 to-transparent"></div>
-                        </div>
-                    )}
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tight">
+                {post.title}
+              </h1>
 
-                    {/* ARTICLE BODY */}
-                    <div className="mt-12">
-                        <div 
-                            className="prose prose-xl prose-indigo max-w-none text-slate-700 font-medium leading-[1.8]
+              <div className="flex flex-wrap items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest pb-8 border-b border-slate-50">
+                <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500" /> {formatDate(post.created_at)}</span>
+                <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500" /> {getReadTime(post.content)}</span>
+                <span className="flex items-center gap-2"><Eye className="w-4 h-4 text-indigo-500" /> 1.2k Views</span>
+              </div>
+
+              {post.image_url && (
+                <div className="mt-10 rounded-3xl overflow-hidden shadow-2xl relative aspect-video group">
+                  <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+              )}
+
+              <div className="mt-12">
+                <div
+                  className="prose prose-xl prose-indigo max-w-none text-slate-700 font-medium leading-[1.8]
                                 prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900
                                 prose-strong:font-black prose-strong:text-slate-900
                                 prose-img:rounded-3xl prose-img:shadow-xl"
-                            dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(post.content) }}
-                        />
-                    </div>
-
-                    {/* SHARE SECTION */}
-                    <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <span className="text-xs font-black uppercase tracking-widest text-slate-400">Share This:</span>
-                            {[
-                                { icon: Facebook, color: "bg-blue-600", platform: 'facebook' },
-                                { icon: Twitter, color: "bg-sky-500", platform: 'twitter' },
-                                { icon: Linkedin, color: "bg-indigo-700", platform: 'linkedin' },
-                                { icon: LinkIcon, color: "bg-slate-800", platform: 'copy' }
-                            ].map((social, i) => (
-                                <a 
-                                  key={i} 
-                                  href={social.platform === 'copy' ? '#' : (shareActions as any)[social.platform]} 
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`w-10 h-10 rounded-xl ${social.color} text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg`}
-                                  onClick={social.platform === 'copy' ? (e) => { e.preventDefault(); navigator.clipboard.writeText(absoluteUrl); alert('Link copied!'); } : undefined}
-                                >
-                                    <social.icon className="w-4 h-4" />
-                                </a>
-                            ))}
-                        </div>
-                        {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 justify-center md:justify-end">
-                                {post.tags.map((tag: string, index: number) => (
-                                    <span key={index} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">#{tag}</span>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* DISCUSSION */}
-                <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100">
-                    <h4 className="text-xl font-black text-slate-900 mb-8 pb-4 border-b border-slate-50 flex items-center gap-3">
-                        <Share2 className="w-6 h-6 text-indigo-600" />
-                        Community Join In
-                    </h4>
-                    <Discussion itemType="news" itemId={post.id.toString()} />
-                </div>
-
-            </main>
-
-            {/* RIGHT GALLERY SIDEBAR */}
-            <div className="w-full lg:w-80 shrink-0">
-                <NewsSidebar 
-                    categories={categoriesList}
-                    recentPosts={recentPosts || []}
-                    activeCategory={post.category}
+                  dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(post.content) }}
                 />
-                
-                {/* Stick Promo Card */}
-                <div className="sticky top-24 mt-10">
-                    <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                        <h4 className="text-2xl font-black mb-4 leading-tight">Prepare better for your exams.</h4>
-                        <p className="text-indigo-100 text-sm mb-6 font-medium leading-relaxed">Access thousands of lecture sheets, sugerstions and question banks.</p>
-                        <Link href="/resources/ssc" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-indigo-50 transition-all">
-                            Get Started <ChevronLeft className="w-4 h-4 rotate-180" />
-                        </Link>
-                    </div>
+              </div>
+
+              <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-400">Share This:</span>
+                  {[
+                    { icon: Facebook, color: "bg-blue-600", platform: 'facebook' },
+                    { icon: Twitter, color: "bg-sky-500", platform: 'twitter' },
+                    { icon: Linkedin, color: "bg-indigo-700", platform: 'linkedin' },
+                    { icon: LinkIcon, color: "bg-slate-800", platform: 'copy' }
+                  ].map((social, i) => (
+                    <a
+                      key={i}
+                      href={social.platform === 'copy' ? '#' : (shareActions as any)[social.platform]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-10 h-10 rounded-xl ${social.color} text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg`}
+                      onClick={social.platform === 'copy' ? (e) => { e.preventDefault(); navigator.clipboard.writeText(absoluteUrl); alert('Link copied!'); } : undefined}
+                    >
+                      <social.icon className="w-4 h-4" />
+                    </a>
+                  ))}
                 </div>
+                {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+                    {post.tags.map((tag: string, index: number) => (
+                      <span key={index} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">#{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100">
+              <h4 className="text-xl font-black text-slate-900 mb-8 pb-4 border-b border-slate-50 flex items-center gap-3">
+                <Share2 className="w-6 h-6 text-indigo-600" />
+                Community Join In
+              </h4>
+              <Discussion itemType="news" itemId={post.id.toString()} />
+            </div>
+
+          </main>
+
+          <div className="w-full lg:w-80 shrink-0">
+            <NewsSidebar
+              categories={categoriesList}
+              recentPosts={recentPosts}
+              activeCategory={post.category}
+            />
+
+            <div className="sticky top-24 mt-10">
+              <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                <h4 className="text-2xl font-black mb-4 leading-tight">Prepare better for your exams.</h4>
+                <p className="text-indigo-100 text-sm mb-6 font-medium leading-relaxed">Access thousands of lecture sheets, sugerstions and question banks.</p>
+                <Link href="/resources/ssc" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-indigo-50 transition-all">
+                  Get Started <ChevronLeft className="w-4 h-4 rotate-180" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="mt-20">
+           <ProfessionalAppBanner />
         </div>
       </div>
 
