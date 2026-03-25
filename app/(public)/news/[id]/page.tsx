@@ -7,9 +7,10 @@ import BookmarkButton from "@/components/shared/BookmarkButton";
 import { Metadata } from 'next';
 import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import TypographyScaler from "@/components/shared/TypographyScaler";
-import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon, ChevronLeft, Tag, Eye } from "lucide-react";
+import { Calendar, Clock, Share2, ChevronLeft, Eye } from "lucide-react";
 import NewsSidebar from "@/components/news/NewsSidebar";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
+import ShareButtons from "@/components/news/ShareButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,8 @@ function getQueryColumn(param: string) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   const column = getQueryColumn(id);
   
   const supabase = await createClient();
@@ -47,7 +49,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function SingleNewsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   const column = getQueryColumn(id);
 
   const supabase = await createClient();
@@ -77,28 +80,25 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
     .limit(100);
   const categoriesList = ["All", ...Array.from(new Set((distinctCategories || []).map((item) => item?.category).filter(Boolean))).sort()];
 
-  const getReadTime = (text: string) => {
+  const getReadTime = (text: string | null) => {
+    if (!text) return "1 min read";
     const wpm = 200;
-    const words = text ? text.split(/\s+/).length : 0;
+    const words = text.split(/\s+/).length;
     return `${Math.ceil(words / wpm)} min read`;
   };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    if (isNaN(date.getTime())) return "";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   };
 
   const hrList = await headers();
   const host = hrList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
-
-  const shareActions = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(absoluteUrl)}`,
-    twitter: `https://x.com/intent/tweet?url=${encodeURIComponent(absoluteUrl)}&text=${encodeURIComponent(post.title)}`,
-    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(post.title)}`,
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-28">
@@ -132,7 +132,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
                     itemId={post.id.toString()}
                     metadata={{ title: post.title, thumbnail_url: post.image_url }}
                   />
-                  <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Share2 className="w-5 h-5" /></button>
+                  <div className="p-2 text-slate-400"><Share2 className="w-5 h-5" /></div>
                 </div>
               </div>
 
@@ -164,26 +164,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
               </div>
 
               <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-slate-400">Share This:</span>
-                  {[
-                    { icon: Facebook, color: "bg-blue-600", platform: 'facebook' },
-                    { icon: Twitter, color: "bg-sky-500", platform: 'twitter' },
-                    { icon: Linkedin, color: "bg-indigo-700", platform: 'linkedin' },
-                    { icon: LinkIcon, color: "bg-slate-800", platform: 'copy' }
-                  ].map((social, i) => (
-                    <a
-                      key={i}
-                      href={social.platform === 'copy' ? '#' : (shareActions as any)[social.platform]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-10 h-10 rounded-xl ${social.color} text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg`}
-                      onClick={social.platform === 'copy' ? (e) => { e.preventDefault(); navigator.clipboard.writeText(absoluteUrl); alert('Link copied!'); } : undefined}
-                    >
-                      <social.icon className="w-4 h-4" />
-                    </a>
-                  ))}
-                </div>
+                <ShareButtons title={post.title} url={absoluteUrl} />
                 {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                     {post.tags.map((tag: string, index: number) => (

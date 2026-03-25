@@ -15,7 +15,8 @@ type Props = {
 
 export default async function NewsPage({ searchParams }: Props) {
   const supabase = await createClient();
-  const { page = "1", category = "All", q = "" } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const { page = "1", category = "All", q = "" } = resolvedSearchParams;
   const currentPage = parseInt(page) || 1;
 
   // 1. DATA FETCHING
@@ -51,16 +52,19 @@ export default async function NewsPage({ searchParams }: Props) {
   const featuredPost = currentPage === 1 && !q && category === "All" && news?.length ? news[0] : null;
   const displayPosts = featuredPost ? news!.slice(1) : (news || []);
 
-  const getReadTime = (text: string) => {
+  const getReadTime = (text: string | null) => {
+    if (!text) return "1 min read";
     const wpm = 200;
-    const words = text ? text.split(/\s+/).length : 0;
+    const words = text.split(/\s+/).length;
     return `${Math.ceil(words / wpm)} min read`;
   };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    if (isNaN(date.getTime())) return "";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   };
 
   return (
@@ -144,7 +148,7 @@ export default async function NewsPage({ searchParams }: Props) {
                          </Link>
                          <div className="flex items-center gap-3">
                             <BookmarkButton itemType="news" itemId={post.id.toString()} metadata={{ title: post.title }} />
-                            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Share2 className="w-4 h-4"/></button>
+                            <div className="p-2 text-slate-400"><Share2 className="w-4 h-4"/></div>
                          </div>
                       </div>
                    </div>
