@@ -1,139 +1,209 @@
-import { createClient } from "@/lib/supabaseServer";
+"use client";
+
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Search, Loader2, BookOpen, Newspaper, GraduationCap, Book, AlertCircle, HelpCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Search, BookOpen, Newspaper, HelpCircle, FileText, ChevronRight, Filter } from "lucide-react";
-import URLPagination from "@/components/shared/URLPagination";
+import SearchSidebar from "@/components/search/SearchSidebar";
+import SearchResultCard, { SearchResult } from "@/components/search/SearchResultCard";
 
-interface Props {
-  searchParams: Promise<{ q?: string; type?: string; page?: string }>;
-}
-
-export default async function SearchPage({ searchParams }: Props) {
-  const { q = "", type = "all", page = "1" } = await searchParams;
-  const currentPage = parseInt(page) || 1;
-  const pageSize = 12;
-  const supabase = await createClient();
-
-  // 1. FETCH DATA FROM MULTIPLE TABLES
-  // In a real multi-table search, we'd ideally use a unified search view or separate queries
+function SearchContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
-  const searchResults: any[] = [];
-  let totalCount = 0;
+  const initialQuery = searchParams.get("q") || "";
+  const initialType = searchParams.get("type") || "all";
+  const initialPage = parseInt(searchParams.get("page") || "1");
 
-  if (q) {
-    const qLower = `%${q.toLowerCase()}%`;
+  const [q, setQ] = useState(initialQuery);
+  const [type, setType] = useState(initialType);
+  const [page, setPage] = useState(initialPage);
+  
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-    const [courses, news, questions, resources] = await Promise.all([
-      supabase.from("courses").select("id, title, teaser, image_url, created_at").ilike("title", qLower).limit(5),
-      supabase.from("news").select("id, title, excerpt, image_url, created_at").ilike("title", qLower).limit(5),
-      supabase.from("question_bank").select("id, question_text, created_at").ilike("question_text", qLower).limit(5),
-      supabase.from("resources").select("id, title, type, created_at").ilike("title", qLower).limit(10),
-    ]);
+  const fetchResults = useCallback(async (query: string, filterType: string, pageNum: number) => {
+    if (!query) {
+      setResults([]);
+      setTotal(0);
+      return;
+    }
 
-    // Format results
-    if (courses.data) courses.data.forEach(c => searchResults.push({ ...c, searchType: 'Course', icon: BookOpen, link: `/courses/${c.id}` }));
-    if (news.data) news.data.forEach(n => searchResults.push({ ...n, searchType: 'News', icon: Newspaper, link: `/news/${n.id}` }));
-    if (questions.data) questions.data.forEach(q => searchResults.push({ ...q, title: q.question_text, searchType: 'Question', icon: HelpCircle, link: `/question-bank` }));
-    if (resources.data) resources.data.forEach(r => searchResults.push({ ...r, searchType: r.type, icon: FileText, link: `/study-material` }));
-  }
+    setLoading(true);
+    setError(false);
+    try {
+      const resp = await fetch(`/api/search/unified?q=${encodeURIComponent(query)}&type=${filterType}&page=${pageNum}`);
+      if (!resp.ok) throw new Error("Search failed");
+      const data = await resp.json();
+      setResults(data.results || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      console.error(err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Update URL and Fetch Data
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (type !== "all") params.set("type", type);
+    if (page > 1) params.set("page", page.toString());
+    
+    // Use window.history to update URL without triggering a full page reload or scroll reset
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState(null, '', newUrl);
+
+    fetchResults(q, type, page);
+  }, [q, type, page, fetchResults]);
+
+  const handleTypeChange = (newType: string) => {
+    setType(newType);
+    setPage(1); // Reset page on type change
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const query = formData.get("q") as string;
+    setQ(query);
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-32">
        <div className="max-w-7xl mx-auto px-6">
           
-          {/* Search Header */}
-          <div className="mb-12">
-             <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">
-                Search Results for <span className="text-indigo-600">"{q}"</span>
-             </h1>
-             <p className="text-slate-500 font-medium">Found {searchResults.length} matching items across the platform.</p>
+          {/* Search Header & Search Bar */}
+          <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+             <div className="max-w-xl">
+                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">
+                    Discovery <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Engine</span>
+                 </h1>
+                 <p className="text-slate-500 font-medium text-lg">
+                    {q ? (
+                      <>Searching across <span className="text-indigo-600 font-bold">{total}</span> matching records for <span className="text-slate-900 font-black italic">"{q}"</span></>
+                    ) : (
+                      "Start by searching for courses, news, blogs or question banks."
+                    )}
+                 </p>
+             </div>
+
+             <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96 group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <input 
+                  name="q"
+                  defaultValue={q}
+                  className="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900 text-sm" 
+                  placeholder="What are you looking for?"
+                />
+             </form>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
              
              {/* Sidebar Filters */}
-             <div className="lg:col-span-1 space-y-8">
-                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-                   <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-                      <Filter className="w-5 h-5 text-indigo-600" /> Filter by Type
-                   </h3>
-                   <div className="space-y-2">
-                      {['All', 'Courses', 'News', 'Questions', 'Materials'].map((t) => (
-                         <Link 
-                           key={t}
-                           href={`/search?q=${q}&type=${t.toLowerCase()}`}
-                           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                             type === t.toLowerCase() || (type === 'all' && t === 'All')
-                             ? 'bg-indigo-600 text-white shadow-lg'
-                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                           }`}
-                         >
-                            {t}
-                            <ChevronRight className="w-4 h-4 opacity-50" />
-                         </Link>
-                      ))}
-                   </div>
-                </div>
+             <div className="lg:col-span-3">
+                <SearchSidebar 
+                  activeType={type} 
+                  onTypeChange={handleTypeChange}
+                  totalResults={total}
+                />
              </div>
 
              {/* Results Grid */}
-             <div className="lg:col-span-3">
-                {searchResults.length > 0 ? (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {searchResults.map((item, i) => (
-                         <Link 
-                           key={i} 
-                           href={item.link}
-                           className="group bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col h-full"
-                         >
-                            <div className="flex items-start justify-between mb-4">
-                               <div className={`p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors`}>
-                                  <item.icon className="w-6 h-6" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-slate-100 text-slate-500 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                   {item.searchType}
-                                </span>
-                            </div>
-                            <h4 className="text-lg font-black text-slate-900 mb-2 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-                               {item.title}
-                            </h4>
-                            <p className="text-sm text-slate-500 font-medium line-clamp-2 flex-grow mb-6">
-                               {item.teaser || item.excerpt || `Experience premium learning content in our ${item.searchType} section.`}
-                            </p>
-                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                               <span className="text-[10px] font-bold text-slate-400 capitalize">
-                                  {new Date(item.created_at).toLocaleDateString()}
-                               </span>
-                               <span className="text-indigo-600 text-xs font-black uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all">
-                                  View Details <ChevronRight className="w-3.5 h-3.5" />
-                               </span>
-                            </div>
-                         </Link>
-                      ))}
-                   </div>
+             <div className="lg:col-span-9">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                     <div className="relative">
+                        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                        <div className="absolute inset-0 blur-xl bg-indigo-500/20 animate-pulse"></div>
+                     </div>
+                     <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] animate-pulse">Scanning Platform Database...</p>
+                  </div>
+                ) : results.length > 0 ? (
+                  <div className="space-y-10">
+                     
+                     {/* GROUPED RESULTS (If All is selected) */}
+                     {type === 'all' ? (
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                          {results.map((item) => (
+                             <SearchResultCard key={`${item.type}-${item.id}`} item={item} />
+                          ))}
+                       </div>
+                     ) : (
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                          {results.map((item) => (
+                             <SearchResultCard key={`${item.type}-${item.id}`} item={item} />
+                          ))}
+                       </div>
+                     )}
+
+                     {/* Pagination */}
+                     {total > 10 && (
+                        <div className="flex justify-center gap-2 pt-10">
+                           {Array.from({ length: Math.ceil(total / 10) }, (_, i) => i + 1).map((p) => (
+                              <button
+                                key={p}
+                                onClick={() => setPage(p)}
+                                className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm transition-all ${
+                                  p === page
+                                    ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100 scale-110"
+                                    : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50 hover:text-indigo-600"
+                                }`}
+                              >
+                                {p}
+                              </button>
+                           ))}
+                        </div>
+                     )}
+                  </div>
                 ) : (
-                   <div className="bg-white rounded-[3rem] p-20 text-center border border-slate-100 shadow-sm">
-                      <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-6">
-                         <Search className="w-10 h-10" />
-                      </div>
-                      <h3 className="text-2xl font-black text-slate-900 mb-2">No results found</h3>
-                      <p className="text-slate-500 font-medium mb-8">We couldn't find anything matching "{q}". Try different keywords or browse categories.</p>
-                      <Link href="/" className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all">
-                         Back to Home
-                      </Link>
-                   </div>
+                  <div className="bg-white rounded-[3rem] p-20 text-center border border-slate-100 shadow-sm animate-in zoom-in-95 duration-500">
+                     <div className="w-24 h-24 bg-slate-50 text-slate-300 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transform -rotate-12">
+                        <Search className="w-10 h-10" />
+                     </div>
+                     <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">No results matched.</h3>
+                     <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">We couldn't find anything matching your query. Maybe try a generic keyword like "SSC" or "Admission".</p>
+                     
+                     <div className="flex flex-wrap justify-center gap-4">
+                        <button 
+                           onClick={() => { setQ(""); setType("all"); }}
+                           className="px-8 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                        >
+                           Clear Search
+                        </button>
+                        <Link href="/" className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all text-xs flex items-center gap-2">
+                           <ArrowLeft className="w-4 h-4"/> Back to Academy
+                        </Link>
+                     </div>
+                  </div>
                 )}
 
-                {searchResults.length > 0 && totalCount > pageSize && (
-                  <URLPagination 
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(totalCount / pageSize)}
-                    baseUrl="/search"
-                    additionalParams={{ q }}
-                  />
+                {error && (
+                  <div className="p-8 bg-rose-50 text-rose-600 rounded-3xl border border-rose-100 text-center font-bold">
+                    An error occurred while connecting to the engine. Please try again.
+                  </div>
                 )}
              </div>
           </div>
        </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }
