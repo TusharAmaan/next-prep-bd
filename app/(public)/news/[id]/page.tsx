@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseServer";
 import { headers } from 'next/headers';
 import Discussion from "@/components/shared/Discussion";
 import BookmarkButton from "@/components/shared/BookmarkButton";
@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const column = getQueryColumn(id);
   
+  const supabase = await createClient();
   const { data: news } = await supabase
     .from('news')
     .select('title, seo_title, seo_description, tags, image_url')
@@ -46,6 +47,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const column = getQueryColumn(id);
 
+  const supabase = await createClient();
   // 1. DATA FETCHING
   const { data: post } = await supabase
     .from("news")
@@ -78,6 +80,16 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/news/${id}`;
+
+  const shareActions = {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(absoluteUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(absoluteUrl)}&text=${encodeURIComponent(post.title)}`,
+    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(post.title)}`,
+  };
+
+  const copyLink = () => {
+    // This will be handled by a client wrapper or a simple window script
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-28"> 
@@ -150,14 +162,21 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
                         <div className="flex items-center gap-4">
                             <span className="text-xs font-black uppercase tracking-widest text-slate-400">Share This:</span>
                             {[
-                                { icon: Facebook, color: "bg-blue-600" },
-                                { icon: Twitter, color: "bg-sky-500" },
-                                { icon: Linkedin, color: "bg-indigo-700" },
-                                { icon: LinkIcon, color: "bg-slate-800" }
+                                { icon: Facebook, color: "bg-blue-600", platform: 'facebook' },
+                                { icon: Twitter, color: "bg-sky-500", platform: 'twitter' },
+                                { icon: Linkedin, color: "bg-indigo-700", platform: 'linkedin' },
+                                { icon: LinkIcon, color: "bg-slate-800", platform: 'copy' }
                             ].map((social, i) => (
-                                <button key={i} className={`w-10 h-10 rounded-xl ${social.color} text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg`}>
+                                <a 
+                                  key={i} 
+                                  href={social.platform === 'copy' ? '#' : (shareActions as any)[social.platform]} 
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`w-10 h-10 rounded-xl ${social.color} text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg`}
+                                  onClick={social.platform === 'copy' ? (e) => { e.preventDefault(); navigator.clipboard.writeText(absoluteUrl); alert('Link copied!'); } : undefined}
+                                >
                                     <social.icon className="w-4 h-4" />
-                                </button>
+                                </a>
                             ))}
                         </div>
                         {post.tags && post.tags.length > 0 && (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseServer";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import { Search, Calendar, Clock, ChevronRight, Tag, ArrowRight, BookOpen, Share2, Eye, TrendingUp } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
@@ -15,6 +15,7 @@ type Props = {
 };
 
 export default async function NewsPage({ searchParams }: Props) {
+  const supabase = await createClient();
   const { page = "1", category = "All", q = "" } = await searchParams;
   const currentPage = parseInt(page) || 1;
 

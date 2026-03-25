@@ -9,29 +9,29 @@ const PAYMENT_METHODS = [
   {
     id: "bkash",
     name: "bkash",
-    number: "017XXXXXXXX",
+    number: "01828677148",
     color: "bg-[#D12053]",
     textColor: "text-white",
-    logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_x-vP_Z6_X9_6_X9_6_X9_6_X9_6_X9_6_X9_6_X", // Placeholder
-    instructions: "Dial *247# or use the bkash App. Send money to the number above."
+    logo: "https://www.logo.wine/a/logo/BKash/BKash-Logo.wine.svg",
+    instructions: "Send Money to the Personal number above. Use 'Donation' as reference."
   },
   {
     id: "nagad",
     name: "Nagad",
-    number: "018XXXXXXXX",
-    color: "bg-[#F35E21]",
+    number: "01745775697",
+    color: "bg-[#F15A22]",
     textColor: "text-white",
-    logo: "/nagad-logo.png",
-    instructions: "Dial *167# or use the Nagad App. Send money to the number above."
+    logo: "https://www.logo.wine/a/logo/Nagad/Nagad-Logo.wine.svg",
+    instructions: "Send Money to the Personal number above. Use 'NextPrep' as reference."
   },
   {
     id: "upay",
     name: "Upay",
-    number: "019XXXXXXXX",
-    color: "bg-[#00A1E6]",
-    textColor: "text-white",
-    logo: "/upay-logo.png",
-    instructions: "Use the Upay App or dial *268#. Send money to the number above."
+    number: "01828677148",
+    color: "bg-[#FFBA00]",
+    textColor: "text-slate-900",
+    logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A7mY5p_R_X9_6_X9_6_X9_6_X9_6_X9_6_X9_6_X", // Placeholder for Upay
+    instructions: "Send Money to the Personal number above via Upay App or USSD *268#."
   }
 ];
 
@@ -191,12 +191,14 @@ export default function DonatePage() {
                                       : "border-slate-100 bg-white hover:border-rose-200 hover:shadow-lg disabled:opacity-50"
                                    }`}
                                  >
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${formData.payment_method === method.id ? "bg-white/20" : "bg-slate-50 text-slate-300"}`}>
-                                       {method.id === "bkash" && "b"}
-                                       {method.id === "nagad" && "n"}
-                                       {method.id === "upay" && "u"}
+                                    <div className={`w-16 h-10 rounded-xl flex items-center justify-center font-black overflow-hidden bg-white/20 backdrop-blur-sm p-1`}>
+                                       {method.logo ? (
+                                         <img src={method.logo} alt={method.name} className="w-full h-full object-contain" />
+                                       ) : (
+                                         <span className="text-white text-xs">{method.name.charAt(0)}</span>
+                                       )}
                                     </div>
-                                    <span className={`text-sm font-black uppercase tracking-widest ${formData.payment_method === method.id ? "text-white" : "text-slate-600"}`}>
+                                    <span className={`text-xs font-black uppercase tracking-widest ${formData.payment_method === method.id ? (method.id === 'upay' ? 'text-slate-900' : 'text-white') : 'text-slate-600'}`}>
                                       {method.name}
                                     </span>
                                  </button>

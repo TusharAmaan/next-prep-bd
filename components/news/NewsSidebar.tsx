@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { Search, Tag, Clock, ArrowRight, Facebook, Twitter, Instagram, Youtube, Mail } from "lucide-react";
 
@@ -9,6 +10,31 @@ interface NewsSidebarProps {
 }
 
 export default function NewsSidebar({ categories, recentPosts, activeCategory }: NewsSidebarProps) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setStatus("loading");
+    try {
+        const res = await fetch("/api/newsletter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        if (res.ok) {
+            setStatus("success");
+            setEmail("");
+        } else {
+            setStatus("error");
+        }
+    } catch (err) {
+        setStatus("error");
+    }
+  };
+
   return (
     <aside className="space-y-10">
       
@@ -106,15 +132,25 @@ export default function NewsSidebar({ categories, recentPosts, activeCategory }:
             </div>
             <h4 className="text-xl font-black text-white mb-3">Subscribe Now!</h4>
             <p className="text-indigo-100 text-xs font-medium mb-6 leading-relaxed">Get the latest news and updates directly in your inbox.</p>
-            <form className="space-y-3">
+            <form onSubmit={handleSubscribe} className="space-y-3">
                 <input 
                     type="email" 
                     placeholder="Your Email Address" 
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-200 text-xs outline-none focus:bg-white/20 transition-all font-bold"
                 />
-                <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-50 transition-all">
-                    Sign Up Now
+                <button 
+                  type="submit"
+                  disabled={status === "loading" || status === "success"}
+                  className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all ${
+                    status === "success" ? "bg-green-500 text-white" : "bg-white text-indigo-600 hover:bg-slate-50"
+                  }`}
+                >
+                    {status === "loading" ? "Joining..." : status === "success" ? "Joined!" : "Sign Up Now"}
                 </button>
+                {status === "error" && <p className="text-[10px] font-bold text-rose-300 mt-2">Something went wrong. Try again.</p>}
             </form>
         </div>
       </div>

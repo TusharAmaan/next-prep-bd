@@ -109,7 +109,7 @@ export default function PlatformInsights() {
   };
 
   return (
-    <div className={`rounded-2xl border overflow-hidden h-full flex flex-col transition-colors ${isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
+    <div className={`rounded-2xl border overflow-hidden min-h-[450px] lg:h-full flex flex-col transition-colors mb-4 lg:mb-0 ${isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
       
       {/* Header */}
       <div className={`px-6 py-4 border-b flex items-center justify-between ${isDark ? "border-slate-800 bg-slate-900" : "border-slate-100 bg-slate-50/50"}`}>

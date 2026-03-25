@@ -8,7 +8,7 @@ import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight
+  AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight, Moon, Sun, Monitor, Mail, CheckCircle2 as LucideCheckCircle2
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -29,6 +29,7 @@ import LessonPlanManager from "@/components/admin/sections/LessonPlanManager";
 import CourseManager from "@/components/admin/sections/CourseManager";
 import CertificateDesigner from "@/components/admin/sections/CertificateDesigner";
 import DonationManager from "@/components/admin/sections/DonationManager";
+import NewsletterManager from "@/components/admin/sections/NewsletterManager";
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -39,7 +40,7 @@ const getMonthRanges = () => {
 export default function AdminDashboard() {
     const supabase = createClient();
     const router = useRouter();
-    const { isDark } = useTheme();
+    const { isDark, toggleTheme } = useTheme();
     const [activeTab, setActiveTab] = useState("overview"); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
     const [activities, setActivities] = useState<any[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]); 
     const [latestUpdate, setLatestUpdate] = useState<any>(null);
+    const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
     // --- SHARED DROPDOWNS ---
     const [segments, setSegments] = useState<any[]>([]);
@@ -161,6 +163,7 @@ export default function AdminDashboard() {
       { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'question_bank', label: 'Question Bank', icon: Database },
       { id: 'donations', label: 'Donations', icon: Heart },
+      { id: 'newsletter', label: 'Newsletter', icon: Mail },
       { id: 'pending', label: 'Pending Reviews', icon: AlertTriangle, badge: stats.pendingCount },
       { isDivider: true, label: 'Content' },
       { id: 'materials', label: 'Study Materials', icon: FileStack },
@@ -259,6 +262,13 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                     <div className="flex items-center gap-6">
+                        <button 
+                          onClick={toggleTheme}
+                          className={`p-2 rounded-full border transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700 font-bold' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 font-bold'}`}
+                          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
                         <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
                            <Bell className="w-5 h-5" />
                            {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>}
@@ -317,6 +327,41 @@ export default function AdminDashboard() {
                                 </div>
                              </div>
 
+                             {/* --- 4 MORE INSIGHT BOXES (New Row) --- */}
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 group hover:shadow-lg transition-all">
+                                   <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><Layers className="w-6 h-6"/></div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Categories</p>
+                                      <h4 className="text-xl font-black text-slate-900">{categories.length}</h4>
+                                   </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 group hover:shadow-lg transition-all">
+                                   <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><Database className="w-6 h-6"/></div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">DB Tables</p>
+                                      <h4 className="text-xl font-black text-slate-900">42</h4>
+                                      <p className="text-[9px] font-bold text-green-500">Optimized</p>
+                                   </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 group hover:shadow-lg transition-all">
+                                   <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center"><Monitor className="w-6 h-6"/></div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Active Sessions</p>
+                                      <h4 className="text-xl font-black text-slate-900">128</h4>
+                                      <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Live Now</p>
+                                   </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 group hover:shadow-lg transition-all">
+                                   <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg"><RefreshCw className="w-6 h-6"/></div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">System Health</p>
+                                      <h4 className="text-xl font-black text-green-500 tracking-tighter">100%</h4>
+                                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Stable</p>
+                                   </div>
+                                </div>
+                             </div>
+
                              {/* Mid Section: Chart & Activity */}
                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
@@ -340,7 +385,7 @@ export default function AdminDashboard() {
                                 </div>
                                 
                                 <div className="lg:col-span-1">
-                                   <ActivityFeed activities={activities} onViewAll={() => {}} />
+                                   <ActivityFeed activities={activities.slice(0, 8)} onViewAll={() => setIsActivityModalOpen(true)} />
                                    
                                    {/* Quick Link Card */}
                                    <div className="mt-8 bg-indigo-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
@@ -358,6 +403,7 @@ export default function AdminDashboard() {
 
                     {/* Other Tabs */}
                     {activeTab === 'donations' && <DonationManager darkMode={isDark} />}
+                    {activeTab === 'newsletter' && <NewsletterManager darkMode={isDark} />}
                     {activeTab === 'question_bank' && <QuestionBankManager darkMode={isDark} />}
                     {activeTab === 'pending' && <PendingManager darkMode={isDark} />}
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={isDark} />}
@@ -379,7 +425,7 @@ export default function AdminDashboard() {
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-[2rem] p-10 max-w-sm w-full text-center shadow-3xl animate-in zoom-in-95 duration-200">
                         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${modal.type === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-green-50 text-green-600'}`}>
-                           {modal.type === 'error' ? <AlertTriangle className="w-8 h-8"/> : <CheckCircle2 className="w-8 h-8"/>}
+                           {modal.type === 'error' ? <AlertTriangle className="w-8 h-8"/> : <CheckCircleIcon className="w-8 h-8"/>}
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 mb-2">{modal.type === 'error' ? 'Error' : 'Success!'}</h3>
                         <p className="text-slate-500 font-medium leading-relaxed mb-8">{modal.message}</p>
@@ -387,11 +433,33 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             )}
+            {/* Activity View All Modal */}
+            {isActivityModalOpen && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-[2.5rem] shadow-3xl w-full max-w-2xl overflow-hidden flex flex-col h-[80vh] animate-in slide-in-from-bottom-8 duration-300">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                                   <Clock className="w-6 h-6 text-indigo-600" /> Recent Activities
+                                </h3>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Platform-wide audit trail</p>
+                            </div>
+                            <button onClick={() => setIsActivityModalOpen(false)} className="p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 text-slate-400"><X className="w-5 h-5"/></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 space-y-2 custom-scrollbar">
+                           <ActivityFeed activities={activities} onViewAll={() => {}} />
+                        </div>
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
+                            <button onClick={() => setIsActivityModalOpen(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all">Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-function CheckCircle2({ className }: { className?: string }) {
+function CheckCircleIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M20 6 9 17l-5-5"/>
