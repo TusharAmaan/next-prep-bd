@@ -166,7 +166,7 @@ export default function Header() {
     { name: "About Us", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Phone },
     { name: "Careers", href: "/careers", icon: Briefcase },
-    { name: "Join as Teacher", href: "/join-as-teacher", icon: BadgeCheck, highlight: true },
+    { name: "Donate", href: "/donate", icon: Sparkles, highlight: true },
   ];
 
   // --- HELPER: NavLink with animated underline ---

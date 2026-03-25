@@ -1,170 +1,111 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import { Scale, AlertCircle, Mail, ShieldCheck, FileText, UserCheck, Scale as ScaleIcon } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Terms of Service | NextPrepBD",
-  description: "Read the Terms of Service for NextPrepBD. Understand your rights and responsibilities when using our education platform.",
-};
+"use client";
+import { Scale, FileText, ShieldCheck, UserCheck, AlertOctagon, Mail, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function TermsPage() {
   const lastUpdated = "March 25, 2026";
 
+  const sections = [
+    {
+      icon: FileText,
+      title: "Acceptance of Terms",
+      desc: "By accessing NextPrepBD, you agree to comply with our core guidelines and ethics of our education system."
+    },
+    {
+      icon: UserCheck,
+      title: "User Obligations",
+      desc: "Users must provide accurate information and maintain the security of their learning credentials."
+    },
+    {
+      icon: ShieldCheck,
+      title: "IP Protection",
+      desc: "All resources, notes and suggestions are protected under intellectual property laws."
+    },
+    {
+      icon: AlertOctagon,
+      title: "Service Disclaimers",
+      desc: "We provide educational assistance 'as-is' and do not guarantee specific academic outcomes."
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FAFBFD] font-sans relative overflow-hidden selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 w-[800px] h-[600px] opacity-20 pointer-events-none blur-[120px] bg-gradient-to-bl from-indigo-300 via-blue-200 to-transparent"></div>
+    <div className="min-h-screen bg-[#f8fafc] font-sans pt-32 pb-24 selection:bg-indigo-100 selection:text-indigo-900">
       
-      <div className="max-w-4xl mx-auto px-6 pt-32 pb-24 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        
-        {/* HEADER SECTION */}
-        <div className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-[2rem] shadow-xl shadow-indigo-200 mb-6 transform rotate-3 hover:rotate-0 transition-all duration-300">
-            <Scale className="w-8 h-8" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-tight">
-            Terms of Service
-          </h1>
-          <p className="text-lg text-slate-500 font-medium">
-            Effective from: <span className="text-indigo-600 font-bold">{lastUpdated}</span>
-          </p>
-        </div>
+      {/* Hero Section */}
+      <div className="max-w-4xl mx-auto px-6 text-center mb-20">
+         <motion.div 
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-slate-100 text-indigo-600 text-[10px] font-black uppercase tracking-widest mb-6"
+         >
+           <Scale className="w-3 h-3" /> Community Standards
+         </motion.div>
+         <motion.h1 
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="text-5xl md:text-7xl font-black text-slate-900 mb-6 tracking-tight leading-tight"
+         >
+           Terms of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-800">Service</span>
+         </motion.h1>
+         <motion.p 
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.1 }}
+           className="text-slate-500 text-lg font-medium"
+         >
+           Updated on <span className="text-slate-900 font-bold">{lastUpdated}</span>
+         </motion.p>
+      </div>
 
-        {/* CONTENT CONTAINER */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/50 overflow-hidden">
-          <div className="p-8 md:p-14 space-y-12 text-slate-700 leading-relaxed">
-
-            {/* 1. Introduction */}
-            <section className="group">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                  <FileText className="w-6 h-6" />
-                </div>
-                Acceptance of Terms
-              </h2>
-              <div className="pl-16 space-y-4 text-lg">
-                  <p>
-                    Welcome to <strong className="text-slate-900">NextPrepBD</strong> ("we," "our," or "us"). By accessing or using our website, 
-                    located at <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold">nextprepbd.com</span>, 
-                    you agree to be bound by these Terms of Service. 
-                  </p>
-                  <p>
-                    These terms apply to all visitors, users, and others who access or use the Service. If you do not agree with any part of these terms, you are prohibited from using this site.
-                  </p>
-              </div>
-            </section>
-
-            {/* 2. Educational Disclaimer */}
-            <section className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-3xl border border-amber-100 shadow-inner">
-              <h2 className="text-xl font-black text-amber-900 mb-4 flex items-center gap-3">
-                <AlertCircle className="w-6 h-6 text-amber-600"/> Educational Disclaimer
-              </h2>
-              <p className="text-amber-800 leading-relaxed">
-                The materials on NextPrepBD (notes, suggestions, question banks) are provided for educational purposes only. 
-                While we strive for accuracy, we do not guarantee that the information is free from errors or omissions. 
-                <strong className="text-amber-900 block mt-2 p-3 bg-amber-100/50 rounded-xl border border-amber-200">
-                   We are not responsible for any exam results or academic outcomes resulting from the use of our materials.
-                </strong> 
-                <span className="block mt-2">Students should always cross-reference materials with official textbooks authorized by the National Curriculum and Textbook Board (NCTB).</span>
-              </p>
-            </section>
-
-            {/* 3. User Accounts */}
-            <section className="group">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                  <UserCheck className="w-6 h-6" />
-                </div>
-                User Accounts & Security
-              </h2>
-              <div className="pl-16">
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                        <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">1</div>
-                        <span className="text-lg">You are responsible for maintaining the confidentiality of your account and password.</span>
-                    </li>
-                    <li className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                        <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">2</div>
-                        <span className="text-lg">You agree to accept responsibility for all activities that occur under your account.</span>
-                    </li>
-                    <li className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                        <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">3</div>
-                        <span className="text-lg">We reserve the right to terminate accounts, edit or remove content, and cancel orders at our sole discretion.</span>
-                    </li>
-                  </ul>
-              </div>
-            </section>
-
-            {/* 4. Intellectual Property */}
-            <section className="group">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                Intellectual Property
-              </h2>
-              <div className="pl-16 space-y-4 text-lg">
-                  <p>
-                    The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of NextPrepBD and its licensors.
-                  </p>
-                  <p className="font-bold text-slate-900 mt-6">License Restrictions:</p>
-                  <p>Permission is granted to temporarily download one copy of the materials for personal, non-commercial transitory viewing only. Under this license, you may not:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-rose-800 text-sm font-medium">
-                        ❌ Modify or copy the materials for commercial use.
+      <div className="max-w-5xl mx-auto px-6">
+         <div className="bg-white rounded-[3.5rem] p-8 md:p-20 shadow-2xl shadow-slate-200/40 border border-slate-100 mb-16">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+               {sections.map((section, idx) => (
+                 <div key={idx} className="group">
+                    <div className="w-14 h-14 bg-slate-50 rounded-[1.25rem] flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 mb-6">
+                       <section.icon className="w-6 h-6" />
                     </div>
-                    <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-rose-800 text-sm font-medium">
-                        ❌ Attempt to decompile or reverse engineer any software.
-                    </div>
-                    <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-rose-800 text-sm font-medium">
-                        ❌ Remove copyright or proprietary notations.
-                    </div>
-                    <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-rose-800 text-sm font-medium">
-                        ❌ Mirror the materials on any other server.
-                    </div>
-                  </div>
-              </div>
-            </section>
-
-            {/* 5. Limitations & Governing Law */}
-            <section className="group">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                  <ScaleIcon className="w-6 h-6" />
-                </div>
-                Governing Law & Liability
-              </h2>
-              <div className="pl-16 space-y-6 text-lg">
-                  <p>
-                    In no event shall NextPrepBD, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.
-                  </p>
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                     These Terms shall be governed and construed in accordance with the laws of <strong className="text-slate-900">Bangladesh</strong>, without regard to its conflict of law provisions.
-                  </div>
-              </div>
-            </section>
-
-            <div className="border-t-2 border-slate-100 pt-10 mt-16 px-16">
-              <div className="bg-slate-900 rounded-[2rem] p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 text-white shadow-2xl">
-                  <div>
-                      <h3 className="text-2xl font-black mb-2">Still have questions?</h3>
-                      <p className="text-slate-400 font-medium max-w-sm">
-                        If you have any questions about these Terms, feel free to reach out to our legal and support team.
-                      </p>
-                  </div>
-                  <Link 
-                    href="mailto:support@nextprepbd.com" 
-                    className="flex-shrink-0 inline-flex items-center justify-center gap-3 px-8 py-4 bg-indigo-500 hover:bg-indigo-400 text-white rounded-2xl font-black text-lg shadow-[0_0_40px_rgba(99,102,241,0.4)] transition-all hover:scale-105 active:scale-95"
-                  >
-                    <Mail className="w-5 h-5" /> Contact Support
-                  </Link>
-              </div>
+                    <h3 className="text-xl font-black text-slate-900 mb-4 tracking-tight">{section.title}</h3>
+                    <p className="text-slate-500 font-medium leading-relaxed">{section.desc}</p>
+                 </div>
+               ))}
             </div>
 
-          </div>
-        </div>
+            <div className="space-y-12">
+               <section className="p-8 rounded-[2.5rem] bg-indigo-50/50 border border-indigo-100/50">
+                  <h4 className="text-lg font-black text-indigo-900 mb-4">Educational Disclaimer</h4>
+                  <p className="text-indigo-800/80 font-medium leading-relaxed">
+                    NextPrepBD provides suggestions and materials based on NCTB curriculum analysis. We do not guarantee 100% common questions in real exams. Students are advised to use our materials as supplementary resources alongside their official textbooks.
+                  </p>
+               </section>
 
+               <div className="prose prose-slate max-w-none prose-headings:font-black prose-headings:tracking-tight prose-p:font-medium prose-p:text-slate-600 prose-p:leading-relaxed">
+                  <h3 className="text-2xl">Use of Materials</h3>
+                  <p>
+                    All materials on NextPrepBD are protected by copyright. You may download materials for your personal, non-commercial use only. You may not distribute, reproduce, or modify our content without explicit written permission.
+                  </p>
+                  
+                  <h3 className="text-2xl">User Content</h3>
+                  <p>
+                    When you participate in discussions, groups, or upload content, you grant NextPrepBD a non-exclusive right to use and display that content on the platform to benefit other learners.
+                  </p>
+               </div>
+            </div>
+         </div>
+
+         {/* Call to Action */}
+         <div className="bg-gradient-to-br from-indigo-700 to-violet-800 rounded-[3rem] p-12 text-center text-white shadow-3xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <h3 className="text-3xl font-black mb-6">Need Legal Clarification?</h3>
+            <p className="text-indigo-100 font-medium mb-10 max-w-sm mx-auto leading-relaxed">If you have technical or legal questions about our service usage, please contact us.</p>
+            <div className="flex flex-wrap justify-center gap-4">
+               <a href="mailto:support@nextprepbd.com" className="px-8 py-4 bg-white text-indigo-700 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 transition-all">Email Legal Team</a>
+               <a href="/faq" className="px-8 py-4 bg-transparent border-2 border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all">Read FAQ</a>
+            </div>
+         </div>
       </div>
+
     </div>
   );
 }

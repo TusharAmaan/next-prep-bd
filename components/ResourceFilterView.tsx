@@ -1,11 +1,12 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Search, Filter, FileText, PlayCircle, HelpCircle, 
   ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X 
 } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
+import Pagination from "@/components/shared/Pagination";
 
 export default function ResourceFilterView({ 
   items, 
@@ -23,6 +24,10 @@ export default function ResourceFilterView({
   const [activeCategory, setActiveCategory] = useState(initialCategory || "All");
   const [activeSubject, setActiveSubject] = useState("All");
   const [search, setSearch] = useState("");
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const isUpdatePage = initialType === 'update';
 
@@ -50,21 +55,35 @@ export default function ResourceFilterView({
     };
   }, [items]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, activeSubject, search]);
+
   // 2. FILTERING LOGIC
-  const filteredItems = items.filter(item => {
-    const matchCategory = activeCategory === "All" || item.category === activeCategory;
-    
-    let itemSubject = "";
-    if (Array.isArray(item.subjects) && item.subjects.length > 0) itemSubject = item.subjects[0].title;
-    else if (item.subjects?.title) itemSubject = item.subjects.title;
-    
-    const matchSubject = activeSubject === "All" || itemSubject === activeSubject;
-    const matchSearch = !search || item.title.toLowerCase().includes(search.toLowerCase());
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchCategory = activeCategory === "All" || item.category === activeCategory;
+      
+      let itemSubject = "";
+      if (Array.isArray(item.subjects) && item.subjects.length > 0) itemSubject = item.subjects[0].title;
+      else if (item.subjects?.title) itemSubject = item.subjects.title;
+      
+      const matchSubject = activeSubject === "All" || itemSubject === activeSubject;
+      const matchSearch = !search || item.title.toLowerCase().includes(search.toLowerCase());
 
-    return matchCategory && matchSubject && matchSearch;
-  });
+      return matchCategory && matchSubject && matchSearch;
+    });
+  }, [items, activeCategory, activeSubject, search]);
 
-  // 3. UI CONFIGURATION
+  // 3. PAGINATION LOGIC
+  const totalPages = Math.ceil(filteredItems.length / pageSize);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // 4. UI CONFIGURATION
   const getItemConfig = (type: string, item: any) => {
     switch(type) {
       case 'pdf': 
@@ -166,8 +185,8 @@ export default function ResourceFilterView({
 
       {/* RESULTS GRID */}
       <div className="grid gap-4">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item) => {
+        {paginatedItems.length > 0 ? (
+          paginatedItems.map((item) => {
             const { icon, label, href, bgColor, borderColor } = getItemConfig(initialType, item);
             
             return (
@@ -245,6 +264,16 @@ export default function ResourceFilterView({
           </div>
         )}
       </div>
+
+      {/* Robust Pagination */}
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        totalItems={filteredItems.length}
+      />
     </div>
   );
 }
