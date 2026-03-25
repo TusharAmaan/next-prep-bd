@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Tag, Clock, ArrowRight, Facebook, Twitter, Instagram, Youtube, Mail } from "lucide-react";
+import { Search, Tag, Clock, ArrowRight, Facebook, Twitter, Instagram, Youtube, Mail, ChevronRight } from "lucide-react";
 
 interface NewsSidebarProps {
   categories: string[];
@@ -159,21 +159,4 @@ export default function NewsSidebar({ categories, recentPosts, activeCategory }:
   );
 }
 
-function ChevronRight({ className }: { className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="m9 18 6-6-6-6"/>
-    </svg>
-  );
-}
+
