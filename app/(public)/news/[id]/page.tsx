@@ -22,11 +22,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const column = getQueryColumn(id);
   
   const supabase = await createClient();
-  const { data: news } = await supabase
+  const { data: newsItems } = await supabase
     .from('news')
     .select('title, seo_title, seo_description, tags, image_url')
     .eq(column, id)
-    .single();
+    .limit(1);
+
+  const news = newsItems && newsItems.length > 0 ? newsItems[0] : null;
 
   if (!news) return { title: 'News Not Found' };
 
@@ -49,26 +51,30 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
 
   const supabase = await createClient();
   // 1. DATA FETCHING
-  const { data: post } = await supabase
+  const { data: newsItems } = await supabase
     .from("news")
     .select("*")
     .eq(column, id)
-    .single();
+    .limit(1);
+
+  const post = newsItems && newsItems.length > 0 ? { ...newsItems[0], id: newsItems[0].id.toString() } : null;
 
   if (!post) return notFound();
 
   // Sidebar Data
-  const { data: recentPosts } = await supabase
+  const { data: recentPostsRaw } = await supabase
     .from("news")
     .select("id, title, image_url, created_at")
     .order("created_at", { ascending: false })
     .limit(5);
+  const recentPosts = (recentPostsRaw || []).map(p => ({ ...p, id: p.id.toString() }));
 
   const { data: distinctCategories } = await supabase
     .from("news")
     .select("category")
-    .not("category", "is", null);
-  const categoriesList = ["All", ...Array.from(new Set((distinctCategories || []).map((item) => item.category).filter(Boolean))).sort()];
+    .not("category", "is", null)
+    .limit(100);
+  const categoriesList = ["All", ...Array.from(new Set((distinctCategories || []).map((item) => item?.category).filter(Boolean))).sort()];
 
   const getReadTime = (text: string) => {
     const wpm = 200;
@@ -179,7 +185,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
                                 </a>
                             ))}
                         </div>
-                        {post.tags && post.tags.length > 0 && (
+                        {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                                 {post.tags.map((tag: string, index: number) => (
                                     <span key={index} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">#{tag}</span>

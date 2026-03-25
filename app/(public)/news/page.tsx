@@ -37,16 +37,18 @@ export default async function NewsPage({ searchParams }: Props) {
     .limit(5);
 
   // Main Query
-  let query = supabase
+  let newsQuery = supabase
     .from("news")
     .select("id, title, category, created_at, image_url, content, seo_description", { count: "exact" })
     .order("created_at", { ascending: false });
 
-  if (q) query = query.ilike("title", `%${q}%`);
-  if (category !== "All") query = query.eq("category", category);
+  if (q) newsQuery = newsQuery.ilike("title", `%${q}%`);
+  if (category !== "All") newsQuery = newsQuery.eq("category", category);
 
   const from = (currentPage - 1) * ITEMS_PER_PAGE;
-  const { data: news, count } = await query.range(from, from + ITEMS_PER_PAGE - 1);
+  const { data: newsItems, count } = await newsQuery.range(from, from + ITEMS_PER_PAGE - 1);
+  const news = (newsItems || []).map(item => ({ ...item, id: item.id.toString() }));
+  
   const totalPages = count ? Math.ceil(count / ITEMS_PER_PAGE) : 0;
 
   // Featured Post (First post of the first page unless searching)
@@ -154,15 +156,6 @@ export default async function NewsPage({ searchParams }: Props) {
               ))}
             </div>
 
-            {/* Pagination */}
-            <Pagination 
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(p) => {}} // Placeholder for server-side link-based pagination
-              pageSize={ITEMS_PER_PAGE}
-              onPageSizeChange={() => {}} // Placeholder
-              totalItems={count || 0}
-            />
 
             {/* Link-based Pagination fallback for SSR */}
             <div className="flex justify-center gap-3 mt-12">
@@ -187,7 +180,7 @@ export default async function NewsPage({ searchParams }: Props) {
           <div className="w-full lg:w-80 shrink-0">
              <NewsSidebar 
                categories={categoriesList} 
-               recentPosts={recentPosts || []}
+               recentPosts={(recentPosts || []).map(p => ({ ...p, id: p.id.toString() }))}
                activeCategory={category}
              />
           </div>
