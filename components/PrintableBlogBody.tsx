@@ -66,7 +66,7 @@ export default function PrintableBlogBody({
             relative 
             
             /* Responsive Padding: Smaller on mobile to maximize screen width */
-            p-4 sm:p-6 md:p-12 lg:p-14
+            p-2 sm:p-6 md:p-10 lg:p-12
             
             /* Print Overrides: Remove styles to save ink/space */
             print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-none
@@ -120,11 +120,10 @@ export default function PrintableBlogBody({
             .responsive-typography {
               font-size: 11pt !important;
               line-height: 1.4 !important;
-              color: black !important;
             }
-            .responsive-h1 { font-size: 20pt !important; color: black !important; border-bottom: none !important; margin-bottom: 10pt !important; }
-            .responsive-h2 { font-size: 16pt !important; color: black !important; margin-top: 12pt !important; margin-bottom: 8pt !important; }
-            .responsive-h3 { font-size: 13pt !important; color: black !important; margin-top: 10pt !important; margin-bottom: 6pt !important; }
+            .responsive-h1 { font-size: 20pt !important; border-bottom: none !important; margin-bottom: 10pt !important; }
+            .responsive-h2 { font-size: 16pt !important; margin-top: 12pt !important; margin-bottom: 8pt !important; }
+            .responsive-h3 { font-size: 13pt !important; margin-top: 10pt !important; margin-bottom: 6pt !important; }
             
             .blog-content-area p { margin-bottom: 8pt !important; }
             
@@ -151,13 +150,13 @@ export default function PrintableBlogBody({
         {/* === POST HEADER (Title & Meta) === */}
         <div className="mb-6 sm:mb-8 md:mb-10 border-b border-slate-100 pb-6 sm:pb-7 md:pb-8 print:border-slate-300">
           {/* Title: Responsive Sizing with Mobile Optimization */}
-          <h1 className="responsive-h1 responsive-typography font-black text-slate-900 mb-4 sm:mb-5 md:mb-6 leading-tight print:text-black print:font-bold">
+          <h1 className="responsive-h1 responsive-typography font-black text-slate-900 mb-4 sm:mb-5 md:mb-6 leading-tight print:font-bold">
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 responsive-meta responsive-typography text-slate-500 print:text-xs print:text-gray-600">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 responsive-meta responsive-typography text-slate-500 print:text-gray-600">
             <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 print:text-black flex-shrink-0" />
+              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
               <span className="break-words">{formattedDate}</span>
             </div>
             {readTime && readTime > 0 && (
@@ -206,7 +205,7 @@ export default function PrintableBlogBody({
         </div>
 
         {/* === CONTENT BODY (Mobile-Optimized Responsive Typography) === */}
-        <div className="responsive-typography blog-content-area print:text-sm print:leading-normal print:text-black">
+        <div className="responsive-typography blog-content-area print:text-sm print:leading-normal">
           <div className="[&_p]:responsive-p [&_h2]:responsive-h2 [&_h3]:responsive-h3 [&_h4]:responsive-h3 [&_h5]:responsive-h3 [&_li]:responsive-li [&_code]:responsive-code [&_table]:responsive-table [&_pre]:overflow-x-auto [&_blockquote]:pl-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:text-slate-600 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg">
             <BlogContent content={post.content_body || ""} />
           </div>

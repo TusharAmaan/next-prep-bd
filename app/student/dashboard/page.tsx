@@ -260,80 +260,83 @@ export default function ModernStudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20 pb-12 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen bg-[#FAFBFD] pt-28 pb-20 font-sans selection:bg-indigo-100 selection:text-indigo-900 relative">
+      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay pointer-events-none z-0"></div>
+      <div className="absolute top-0 right-0 w-[1000px] h-[700px] bg-gradient-to-bl from-indigo-200/40 via-purple-200/20 to-transparent blur-[120px] pointer-events-none z-0" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         
         {/* --- Header Section (Bento Grid Hero) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {/* Welcome Card */}
-          <div className="md:col-span-2 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-              <GraduationCap className="w-48 h-48" />
+          <div className="md:col-span-2 bg-gradient-to-br from-[#0B1120] via-[#1E1B4B] to-[#312E81] rounded-[2.5rem] p-10 md:p-14 text-white shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
+              <GraduationCap className="w-64 h-64" />
             </div>
+            
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/30 border border-indigo-400/30 text-indigo-100 text-sm font-medium mb-6">
-                  <Zap className="w-4 h-4 text-yellow-300" />
-                  {profile?.subscription_plan === "premium" ? "Premium Learner" : "Free Tier"}
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-black uppercase tracking-widest mb-8 backdrop-blur-md">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  {profile?.subscription_plan === "premium" ? "Premium Scholar" : "Active Learner"}
                 </span>
-                <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-                  Welcome back, {profile?.full_name?.split(" ")[0] || "Student"}! 🚀
+                <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
+                  Welcome back,<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">{profile?.full_name?.split(" ")[0] || "Student"}</span>! 🚀
                 </h1>
-                <p className="text-indigo-100 text-lg max-w-xl leading-relaxed">
+                <p className="text-indigo-200/80 text-lg max-w-xl leading-relaxed font-medium">
                   {profile?.current_goal 
                     ? `Your current goal: ${profile.current_goal}. Let's crush it today.`
-                    : "Ready to continue your learning journey? Pick up right where you left off."}
+                    : "Ready to conquer new challenges? Pick up right where you left off."}
                 </p>
               </div>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <button className="w-full sm:w-auto px-6 py-4 bg-white text-indigo-900 font-bold rounded-2xl hover:bg-slate-100 transition shadow-lg flex items-center justify-center gap-2 active:scale-95">
-                  <PlayCircle className="w-5 h-5" /> Resume Learning
+              <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <button className="w-full sm:w-auto px-8 py-4 bg-white text-indigo-950 font-black rounded-2xl hover:bg-slate-50 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] flex items-center justify-center gap-3 active:scale-95 transform">
+                  <PlayCircle className="w-6 h-6 text-indigo-600" /> Resume Learning
                 </button>
-                <button className="w-full sm:w-auto px-6 py-4 bg-indigo-700/50 text-white font-bold rounded-2xl hover:bg-indigo-600 transition flex items-center justify-center gap-2 border border-indigo-500/30 backdrop-blur-sm active:scale-95">
-                  <Target className="w-5 h-5" /> View Targets
+                <button className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md active:scale-95">
+                  <Target className="w-6 h-6 text-purple-300" /> View Targets
                 </button>
               </div>
             </div>
           </div>
 
           {/* Quick Real-time Stats Card */}
-          <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-500 font-semibold uppercase tracking-wider text-sm flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-500" /> Activity Pulse
+          <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+              <h3 className="text-slate-900 font-black text-lg flex items-center gap-3 tracking-tight">
+                <Activity className="w-6 h-6 text-emerald-500" /> Activity Pulse
               </h3>
             </div>
-            <div className="space-y-6 flex-1">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5" />
+            <div className="space-y-6 flex-1 flex flex-col justify-center">
+              <div className="flex items-center justify-between group cursor-default">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800">{stats.coursesCount}</p>
-                    <p className="text-xs text-slate-500 font-medium">Active Courses</p>
+                    <p className="font-black text-slate-900 text-3xl leading-none">{stats.coursesCount}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Active Courses</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
+              <div className="flex items-center justify-between group cursor-default">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
+                    <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800">{stats.examsCount}</p>
-                    <p className="text-xs text-slate-500 font-medium">Exams Taken</p>
+                    <p className="font-black text-slate-900 text-3xl leading-none">{stats.examsCount}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Exams Taken</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <Trophy className="w-5 h-5" />
+              <div className="flex items-center justify-between group cursor-default">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
+                    <Trophy className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800">{badges.length}</p>
-                    <p className="text-xs text-slate-500 font-medium">Badges Earned</p>
+                    <p className="font-black text-slate-900 text-3xl leading-none">{badges.length}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Badges Earned</p>
                   </div>
                 </div>
               </div>
@@ -342,7 +345,7 @@ export default function ModernStudentDashboard() {
         </div>
 
         {/* --- Navigation Tabs (Pill style) --- */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 py-4 sticky top-16 md:top-20 z-40 bg-slate-50/90 backdrop-blur-xl border-b border-slate-200/50 -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-6 sticky top-16 md:top-20 z-40 bg-[#FAFBFD]/90 backdrop-blur-md -mx-4 px-4 md:mx-0 md:px-0">
           {[
             { id: "overview", label: "Overview", icon: BarChart3 },
             { id: "courses", label: "Courses", icon: BookOpen },
@@ -357,13 +360,13 @@ export default function ModernStudentDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-xs md:text-sm whitespace-nowrap transition-all duration-300 ${
+                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm whitespace-nowrap transition-all duration-300 ${
                   isActive 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
-                    : "bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-slate-200"
+                    ? "bg-slate-900 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] -translate-y-1" 
+                    : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-100 hover:border-slate-200 shadow-sm"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`} />
+                <Icon className={`w-5 h-5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
                 {tab.label}
               </button>
             );
@@ -380,54 +383,55 @@ export default function ModernStudentDashboard() {
               <div className="lg:col-span-2 space-y-8">
                 {/* Active Courses */}
                 <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-slate-900">Continue Learning</h2>
-                    <button onClick={() => setActiveTab('courses')} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center">
-                      View all <ChevronRight className="w-4 h-4 ml-1" />
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Active Courses</h2>
+                    <button onClick={() => setActiveTab('courses')} className="text-sm font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 flex items-center group">
+                      View all <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
-                  <div className="flex overflow-x-auto hide-scrollbar pb-4 md:grid md:grid-cols-2 gap-5 -mx-4 px-4 md:mx-0 md:px-0">
+                  <div className="flex overflow-x-auto hide-scrollbar pb-8 md:grid md:grid-cols-2 gap-8 -mx-4 px-4 md:mx-0 md:px-0">
                     {courses.slice(0, 4).map((course) => (
-                      <div key={course.id} className="min-w-[280px] md:min-w-0 bg-white rounded-3xl border border-slate-100 p-4 md:p-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer group shadow-sm">
-                        <div className="w-full h-40 md:h-44 bg-slate-50 rounded-2xl mb-4 overflow-hidden relative">
-                          {course.thumbnail_url ? (
-                            <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-200 bg-indigo-50"><BookOpen className="w-10 h-10" /></div>
-                          )}
-                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-indigo-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border border-white shadow-sm">
-                            {course.category || "Course"}
-                          </div>
-                          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <BookmarkButton itemType="course" itemId={course.id} metadata={{ title: course.title, thumbnail_url: course.thumbnail_url }} />
-                          </div>
+                      <div key={course.id} className="min-w-[300px] md:min-w-0 bg-white/80 backdrop-blur-xl rounded-[2rem] border border-slate-100 p-6 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-2 transition-all duration-500 cursor-pointer group shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div className="w-full h-48 bg-slate-100 rounded-[1.5rem] mb-6 overflow-hidden relative shadow-inner">
+                              {course.thumbnail_url ? (
+                                <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300 bg-indigo-50/50"><BookOpen className="w-12 h-12" /></div>
+                              )}
+                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur border border-white/50 text-indigo-700 text-xs font-black uppercase px-3 py-1.5 rounded-xl shadow-sm">
+                                {course.category || "Course"}
+                              </div>
+                            </div>
+                            <h3 className="font-black text-slate-900 text-xl line-clamp-2 mb-2 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
+                            <p className="text-slate-500 text-sm font-bold mb-6 flex items-center gap-2"><Users className="w-4 h-4 text-indigo-400" /> {course.instructor || "Platform Tutor"}</p>
                         </div>
-                        <h3 className="font-black text-slate-900 text-lg line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{course.title}</h3>
-                        <p className="text-slate-400 text-xs font-bold mb-5 flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> {course.instructor || "Platform Tutor"}</p>
                         
-                        <div className="space-y-3">
+                        <div className="space-y-3 mt-auto">
                           <div className="flex justify-between items-end px-1">
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Mastery</span>
-                            <span className="text-xs font-black text-indigo-600">{course.progress}%</span>
+                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Mastery</span>
+                            <span className="text-sm font-black text-indigo-600">{course.progress}%</span>
                           </div>
-                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden p-0.5">
-                            <div className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-1000 shadow-sm shadow-indigo-200" style={{ width: `${course.progress}%` }} />
+                          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 relative" style={{ width: `${course.progress}%` }}>
+                                <div className="absolute inset-0 bg-white/20 w-full h-full"></div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))}
                     {courses.length === 0 && (
-                      <div className="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
-                        <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                        <h3 className="text-slate-900 font-bold">No active courses</h3>
-                        <p className="text-slate-500 text-sm mt-1">Enroll in a course to see it here.</p>
+                      <div className="col-span-full bg-white/80 rounded-[2.5rem] border-2 border-dashed border-slate-200 p-12 text-center backdrop-blur-sm">
+                        <BookOpen className="w-14 h-14 text-indigo-300 mx-auto mb-4" />
+                        <h3 className="text-2xl text-slate-900 font-black tracking-tight">No active courses</h3>
+                        <p className="text-slate-500 text-lg font-medium mt-2">Enroll in a course to see it here and start learning.</p>
                       </div>
                     )}
                   </div>
                 </section>
 
                 {/* Performance Chart (Mock Implementation) */}
-                <section className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <section className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h2 className="text-xl font-bold text-slate-900">Performance Over Time</h2>
@@ -459,32 +463,31 @@ export default function ModernStudentDashboard() {
               {/* Sidebar (Right) */}
               <div className="space-y-8">
                 {/* Up Next - Exams */}
-                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-                    <History className="w-5 h-5 text-indigo-500" /> Recent Exams
+                <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                    <History className="w-6 h-6 text-indigo-500" /> Recent Exams
                   </h3>
                   <div className="space-y-4">
                     {exams.slice(0, 3).map(exam => (
-                      <div key={exam.id} className="group cursor-pointer">
-                        <div className="flex justify-between items-start mb-1.5">
-                          <p className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{exam.title}</p>
-                          <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">{exam.total_marks} Pts</span>
+                      <div key={exam.id} className="group cursor-pointer p-4 rounded-2xl hover:bg-slate-50 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2 pr-4">{exam.title}</p>
+                          <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded inline-block whitespace-nowrap">{exam.total_marks} Pts</span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs font-medium text-slate-500">
-                          <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(exam.created_at).toLocaleDateString()}</span>
-                          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {exam.duration}</span>
+                        <div className="flex items-center gap-4 text-xs font-bold text-slate-400 tracking-wide uppercase">
+                          <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {new Date(exam.created_at).toLocaleDateString()}</span>
+                          <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {exam.duration}</span>
                         </div>
-                        <div className="h-px w-full bg-slate-100 mt-4 group-last:hidden"></div>
                       </div>
                     ))}
-                    {exams.length === 0 && <p className="text-sm text-slate-500 text-center py-4">No recent exams.</p>}
+                    {exams.length === 0 && <p className="text-slate-500 text-sm font-medium text-center py-6">No recent exams.</p>}
                   </div>
                 </div>
 
                 {/* Recent Activity Timeline */}
-                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-blue-500" /> Activity Log
+                <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                    <Activity className="w-6 h-6 text-blue-500" /> Activity Log
                   </h3>
                   <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                     {activities.map((act, i) => (

@@ -14,11 +14,7 @@ import TutorLectureSheets from "@/components/lecture-sheets/TutorLectureSheets";
 interface Profile {
   id: string;
   full_name: string;
-  subscription_plan: 'free' | 'trial' | 'pro';
-  subscription_expiry: string | null;
   monthly_question_count: number;
-  max_questions: number;
-  is_trial_used: boolean;
 }
 
 interface SavedExam {
@@ -83,42 +79,39 @@ export default function TutorDashboard() {
 
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600"/></div>;
 
-  const isPro = profile?.subscription_plan === 'pro';
-  const isTrial = profile?.subscription_plan === 'trial';
-  
   // Format Date Helper
   const formatDate = (date: string) => new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      
-      {/* 1. HERO HEADER (Minimal & Clean) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div>
-              <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-black text-slate-900">Dashboard</h1>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
-                      isPro ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                      isTrial ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                      'bg-slate-100 text-slate-600 border-slate-200'
-                  }`}>
-                      {isPro ? 'Premium Plan' : isTrial ? 'Trial Plan' : 'Free Plan'}
-                  </span>
-              </div>
-              <p className="text-slate-500 text-sm">Welcome back, {profile?.full_name?.split(' ')[0]}. Here is your daily overview.</p>
-          </div>
-          <div className="flex gap-3 w-full md:w-auto">
-              <Link href="/tutor/dashboard/question-builder" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
-                  <Plus className="w-4 h-4"/> Create New
-              </Link>
-          </div>
-      </div>
+    <div className="bg-[#FAFBFD] min-h-screen pt-20 pb-20 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        {/* 1. HERO HEADER (Premium Glassmorphism) */}
+        <div className="relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-indigo-900 to-indigo-800 p-8 rounded-[2rem] shadow-xl border border-indigo-700/50">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Sparkles className="w-32 h-32 text-indigo-200" />
+            </div>
+            <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-3xl font-black text-white tracking-tight">Tutor Workspace</h1>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Instructor
+                    </span>
+                </div>
+                <p className="text-indigo-200 text-sm font-medium">Welcome back, {profile?.full_name?.split(' ')[0]}. Here is your daily overview.</p>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto relative z-10">
+                <Link href="/tutor/dashboard/question-builder" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-indigo-900 px-6 py-3 rounded-xl font-black text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-lg hover:shadow-xl">
+                    <Plus className="w-5 h-5"/> Create New
+                </Link>
+            </div>
+        </div>
 
-      {/* 2. MAIN LAYOUT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* === LEFT SIDEBAR (Navigation & Billing) - 3 COLS === */}
-          <div className="lg:col-span-4 space-y-6">
+        {/* 2. MAIN LAYOUT GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* === LEFT SIDEBAR (Navigation) - 3 COLS === */}
+            <div className="lg:col-span-4 space-y-6">
               
               {/* Profile/Badge Card */}
               {profile && <BadgeDisplay userId={profile.id} />}
@@ -166,43 +159,6 @@ export default function TutorDashboard() {
                       </button>
                   </div>
               </div>
-
-              {/* Subscription Management Widget */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 relative overflow-hidden group">
-                  {isPro && <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 blur-2xl opacity-20 rounded-full -mr-4 -mt-4"></div>}
-                  
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                      <div>
-                          <h3 className="font-bold text-slate-800 text-sm">Subscription</h3>
-                          <p className="text-xs text-slate-500 mt-1">
-                              {isPro ? "Active Premium Plan" : "Free Plan (Limited)"}
-                          </p>
-                      </div>
-                      <div className={`p-2 rounded-lg ${isPro ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
-                          {isPro ? <Crown className="w-5 h-5"/> : <Zap className="w-5 h-5"/>}
-                      </div>
-                  </div>
-
-                  {/* Usage Bar */}
-                  <div className="space-y-2 mb-4 relative z-10">
-                      <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400">
-                          <span>Usage This Month</span>
-                          <span className={profile?.monthly_question_count! >= profile?.max_questions! ? "text-red-500" : "text-emerald-500"}>
-                              {profile?.monthly_question_count} / {profile?.max_questions}
-                          </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div 
-                              className={`h-full rounded-full transition-all duration-1000 ${profile?.monthly_question_count! >= profile?.max_questions! ? 'bg-red-500' : 'bg-emerald-500'}`} 
-                              style={{ width: `${Math.min(100, (profile?.monthly_question_count! / (profile?.max_questions || 1)) * 100)}%` }}
-                          ></div>
-                      </div>
-                  </div>
-
-                  <Link href="/tutor/subscription" className={`block w-full py-2.5 rounded-xl text-center text-xs font-bold border transition-all ${isPro ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-slate-900 text-white hover:bg-black'}`}>
-                      {isPro ? "Manage Billing" : "Upgrade to Pro"}
-                  </Link>
-              </div>
           </div>
 
           {/* === RIGHT CONTENT (Stats & Lists) - 8 COLS === */}
@@ -247,12 +203,14 @@ export default function TutorDashboard() {
                   </div>
 
                   {/* 2. Recent Saved Exams (The "My Exams" Preview) */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                      <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                              <Layers className="w-4 h-4 text-indigo-500"/> Recent Exam Papers
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur-sm">
+                          <h3 className="font-black text-slate-900 flex items-center gap-2">
+                              <Layers className="w-5 h-5 text-indigo-500"/> Recent Exam Papers
                           </h3>
-                          <Link href="/tutor/dashboard/my-exams" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
+                          <Link href="/tutor/dashboard/my-exams" className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest flex items-center gap-1 group">
+                             View All <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                          </Link>
                       </div>
                       
                       {recentExams.length === 0 ? (
@@ -328,6 +286,7 @@ export default function TutorDashboard() {
               {activeTab === 'lecture_sheets' && <TutorLectureSheets user={profile} />}
 
           </div>
+        </div>
       </div>
     </div>
   );
