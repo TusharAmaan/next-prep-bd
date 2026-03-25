@@ -65,9 +65,19 @@ export default function AdminHeader({
         <button onClick={toggleSidebar} className={`lg:hidden p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-900' : 'text-slate-500 hover:bg-slate-100'}`}>
             <Menu className="w-5 h-5"/>
         </button>
-        <div>
+        <div className="hidden md:block">
             <h2 className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{title || "Dashboard"}</h2>
-            <p className={`text-[10px] font-bold uppercase tracking-widest hidden sm:block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control Center</p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>NextPrep Control Center</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative group hidden xl:block ml-4">
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isDark ? 'text-slate-600 group-focus-within:text-indigo-400' : 'text-slate-400 group-focus-within:text-indigo-600'}`} />
+            <input 
+              type="text" 
+              placeholder="Search anything..." 
+              className={`pl-10 pr-4 py-2 rounded-xl text-sm outline-none w-64 transition-all ${isDark ? 'bg-slate-900 border-slate-800 text-slate-300 focus:bg-slate-800 focus:ring-2 focus:ring-indigo-900/40' : 'bg-slate-50 border-slate-100 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-50'}`} 
+            />
         </div>
       </div>
 

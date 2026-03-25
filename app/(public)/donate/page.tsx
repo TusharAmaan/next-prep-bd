@@ -30,7 +30,7 @@ const PAYMENT_METHODS = [
     number: "01828677148",
     color: "bg-[#FFBA00]",
     textColor: "text-slate-900",
-    logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A7mY5p_R_X9_6_X9_6_X9_6_X9_6_X9_6_X9_6_X", // Placeholder for Upay
+    logo: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-images/master/upay.png",
     instructions: "Send Money to the Personal number above via Upay App or USSD *268#."
   }
 ];

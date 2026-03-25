@@ -26,8 +26,8 @@ export default async function NewsPage({ searchParams }: Props) {
     .select("category")
     .not("category", "is", null);
 
-  const uniqueCategories = Array.from(new Set(distinctCategories?.map((item) => item.category))).sort();
-  const categoriesList = ["All", ...uniqueCategories];
+  const uniqueCategories = Array.from(new Set((distinctCategories || []).map((item) => item.category).filter(Boolean))).sort();
+  const categoriesList = ["All", ...uniqueCategories as string[]];
 
   // Get Recent Posts for Sidebar
   const { data: recentPosts } = await supabase

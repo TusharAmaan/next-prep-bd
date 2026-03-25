@@ -68,7 +68,7 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
     .from("news")
     .select("category")
     .not("category", "is", null);
-  const categoriesList = ["All", ...Array.from(new Set(distinctCategories?.map((item) => item.category))).sort()];
+  const categoriesList = ["All", ...Array.from(new Set((distinctCategories || []).map((item) => item.category).filter(Boolean))).sort()];
 
   const getReadTime = (text: string) => {
     const wpm = 200;
