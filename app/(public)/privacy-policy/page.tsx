@@ -98,6 +98,48 @@ export default function PrivacyPolicy() {
                </div>
             </section>
 
+            {/* 4. Data Retention & Deletion */}
+            <section className="space-y-6">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black">04</div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Data Retention & Deletion</h2>
+               </div>
+               <div className="pl-0 md:pl-16 space-y-4">
+                  <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                    We retain your data as long as your account is active. You have the right to request the <span className="text-slate-900 font-black underline decoration-indigo-200">deletion of your account</span> and all associated data at any time.
+                  </p>
+                  <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-2xl border border-slate-100 italic">
+                    "Account deletion requests can be sent to support@nextprepbd.com or initiated via the mobile app settings. We process all deletion requests within 30 days."
+                  </p>
+               </div>
+            </section>
+
+            {/* 5. Children's Privacy */}
+            <section className="space-y-6">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black">05</div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Children's Privacy</h2>
+               </div>
+               <div className="pl-0 md:pl-16 space-y-4">
+                  <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                    Our services are designed for students. We do not knowingly collect personal information from children under the age of 13 without parental consent.
+                  </p>
+               </div>
+            </section>
+
+            {/* 6. Service Providers */}
+            <section className="space-y-6">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black">06</div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Service Providers</h2>
+               </div>
+               <div className="pl-0 md:pl-16 space-y-4">
+                  <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                    We use secure third-party service providers (like cloud hosting and database services) to store data safely. These providers only access your data for technical operations under our strict supervision.
+                  </p>
+               </div>
+            </section>
+
             {/* 4. Contact Block */}
             <div className="pt-10 border-t border-slate-100">
                <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl">
