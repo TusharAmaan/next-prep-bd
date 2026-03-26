@@ -8,7 +8,8 @@ import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
-  AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight, Moon, Sun, Monitor, Mail, CheckCircle2 as LucideCheckCircle2
+  AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight, Moon, Sun, Monitor, Mail, CheckCircle2 as LucideCheckCircle2,
+  Calendar, Award
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -21,7 +22,10 @@ import UserManagement from "@/components/UserManagement";
 import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
-import FeedbackManager from "@/components/admin/sections/FeedbackManager";
+import SupportManager from "@/components/admin/sections/SupportManager";
+import QotDManager from "@/components/admin/sections/QotDManager";
+import AnalyticsSuite from "@/components/admin/sections/AnalyticsSuite";
+import BadgeManager from "@/components/admin/sections/BadgeManager";
 import PendingManager from "@/components/admin/sections/PendingManager";
 import QuestionBankManager from "@/components/admin/sections/QuestionBankManager"; 
 import LectureSheetManager from "@/components/admin/sections/LectureSheetManager";
@@ -161,7 +165,10 @@ export default function AdminDashboard() {
 
     const navItems = [
       { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'analytics', label: 'System Insights', icon: TrendingUp },
       { id: 'question_bank', label: 'Question Bank', icon: Database },
+      { id: 'qotd', label: 'QotD Scheduler', icon: Calendar },
+      { id: 'support', label: 'Support Hub', icon: MessageSquare },
       { id: 'donations', label: 'Donations', icon: Heart },
       { id: 'newsletter', label: 'Newsletter', icon: Mail },
       { id: 'pending', label: 'Pending Reviews', icon: AlertTriangle, badge: stats.pendingCount },
@@ -176,7 +183,7 @@ export default function AdminDashboard() {
       { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
       { id: 'categories', label: 'Categories', icon: Settings },
       { id: 'users', label: 'Users', icon: Users },
-      { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare }
+      { id: 'badges', label: 'Gamification', icon: Award }
     ];
 
     return (
@@ -379,11 +386,14 @@ export default function AdminDashboard() {
                     {activeTab === 'donations' && <DonationManager darkMode={isDark} />}
                     {activeTab === 'newsletter' && <NewsletterManager darkMode={isDark} />}
                     {activeTab === 'question_bank' && <QuestionBankManager darkMode={isDark} />}
+                    {activeTab === 'qotd' && <QotDManager darkMode={isDark} />}
+                    {activeTab === 'support' && <SupportManager darkMode={isDark} />}
+                    {activeTab === 'analytics' && <AnalyticsSuite darkMode={isDark} />}
+                    {activeTab === 'badges' && <BadgeManager darkMode={isDark} />}
                     {activeTab === 'pending' && <PendingManager darkMode={isDark} />}
                     {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={isDark} />}
                     {activeTab === 'hierarchy' && <HierarchyManager segments={segments} groups={groups} subjects={subjects} selectedSegment={selectedSegment} setSelectedSegment={setSelectedSegment} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} fetchDropdowns={fetchDropdowns} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} darkMode={isDark} />}
                     {activeTab === 'categories' && <CategoryManager categories={categories} categoryCounts={{}} fetchCategories={fetchDropdowns} darkMode={isDark} />}
-                    {activeTab === 'feedbacks' && <FeedbackManager darkMode={isDark} />}
                     {activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} />}
                     {activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} darkMode={isDark} />}
                     {activeTab === 'courses' && <CourseManager darkMode={isDark} />}
