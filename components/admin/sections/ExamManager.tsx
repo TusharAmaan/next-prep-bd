@@ -20,6 +20,7 @@ import {
   Eye,
   FileText
 } from "lucide-react";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 export default function ExamManager({ 
     segments, groups, subjects, darkMode = false 
@@ -51,6 +52,49 @@ export default function ExamManager({
     questions: []
   });
 
+  // Alert/Confirm Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDangerous?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title: string, message: string, onConfirm = () => {}) => {
+    setAlertConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setAlertConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      isDangerous: false,
+      confirmText: "Close"
+    });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void, isDangerous = false) => {
+    setAlertConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setAlertConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      isDangerous,
+      confirmText: isDangerous ? "Delete" : "Confirm"
+    });
+  };
+
   const fetchExams = async () => {
     setLoading(true);
     let query = supabase.from('exams').select('*').order('created_at', { ascending: false });
@@ -69,7 +113,7 @@ export default function ExamManager({
   }, [activeStatus]);
 
   const handleSave = async () => {
-    if (!formData.title || !formData.segment_id) return alert("Title and Segment are required");
+    if (!formData.title || !formData.segment_id) return showAlert("Missing Information", "Title and Segment are required");
 
     const payload = {
       ...formData,
@@ -89,7 +133,7 @@ export default function ExamManager({
       error = err;
     }
 
-    if (error) alert(error.message);
+    if (error) showAlert("Error Saving Exam", error.message);
     else {
       setIsModalOpen(false);
       setEditingExam(null);
@@ -97,10 +141,16 @@ export default function ExamManager({
     }
   };
 
-  const deleteExam = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this exam?")) return;
-    await supabase.from('exams').delete().eq('id', id);
-    fetchExams();
+  const deleteExam = (id: number) => {
+    showConfirm(
+        "Delete Exam?", 
+        "Are you sure you want to permanently delete this exam? This action cannot be undone.",
+        async () => {
+            await supabase.from('exams').delete().eq('id', id);
+            fetchExams();
+        },
+        true
+    );
   };
 
   const openEdit = (exam: any) => {
@@ -335,14 +385,33 @@ export default function ExamManager({
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Group</label>
+                                    <select 
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        value={formData.group_id}
+                                        onChange={e => setFormData({...formData, group_id: e.target.value, subject_id: ""})}
+                                        disabled={!formData.segment_id}
+                                    >
+                                        <option value="">No Group</option>
+                                        {groups.filter(g => g.segment_id === Number(formData.segment_id)).map(g => (
+                                            <option key={g.id} value={g.id}>{g.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Subject</label>
                                     <select 
                                         className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
                                         value={formData.subject_id}
                                         onChange={e => setFormData({...formData, subject_id: e.target.value})}
+                                        disabled={!formData.segment_id}
                                     >
                                         <option value="">General (No Subject)</option>
-                                        {subjects.filter(s => s.segment_id === Number(formData.segment_id)).map(s => (
+                                        {subjects.filter(s => {
+                                            const matchesSegment = s.segment_id === Number(formData.segment_id);
+                                            const matchesGroup = formData.group_id ? s.group_id === Number(formData.group_id) : true;
+                                            return matchesSegment && matchesGroup;
+                                        }).map(s => (
                                             <option key={s.id} value={s.id}>{s.title}</option>
                                         ))}
                                     </select>
@@ -393,6 +462,17 @@ export default function ExamManager({
             </div>
         </div>
       )}
+
+      {/* Custom Alert/Confirm Modal */}
+      <ConfirmModal 
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onConfirm={alertConfig.onConfirm}
+        onCancel={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        confirmText={alertConfig.confirmText}
+        isDangerous={alertConfig.isDangerous}
+      />
     </div>
   );
 }

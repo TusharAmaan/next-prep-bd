@@ -141,7 +141,11 @@ export default function AdminDashboard() {
     const fetchDropdowns = useCallback(async () => {
         const { data: s } = await supabase.from("segments").select("*").order('id'); setSegments(s || []);
         const { data: c } = await supabase.from("categories").select("*").order('name'); setCategories(c || []);
-    }, []);
+        
+        // Fetch all groups and subjects for sections that need them (like ExamManager)
+        const { data: g } = await supabase.from("groups").select("*").order('id'); setGroups(g || []);
+        const { data: sub } = await supabase.from("subjects").select("*").order('id'); setSubjects(sub || []);
+    }, [supabase]);
 
     const fetchGroups = async (segId: string) => { const { data } = await supabase.from("groups").select("*").eq("segment_id", segId).order('id'); setGroups(data || []); };
     const fetchSubjects = async (grpId: string) => { const { data } = await supabase.from("subjects").select("*").eq("group_id", grpId).order('id'); setSubjects(data || []); };
