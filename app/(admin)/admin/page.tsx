@@ -34,6 +34,8 @@ import CourseManager from "@/components/admin/sections/CourseManager";
 import CertificateDesigner from "@/components/admin/sections/CertificateDesigner";
 import DonationManager from "@/components/admin/sections/DonationManager";
 import NewsletterManager from "@/components/admin/sections/NewsletterManager";
+import ExamManager from "@/components/admin/sections/ExamManager";
+
 
 const getMonthRanges = () => {
     const now = new Date();
@@ -170,7 +172,9 @@ export default function AdminDashboard() {
       { id: 'qotd', label: 'QotD Scheduler', icon: Calendar },
       { id: 'support', label: 'Support Hub', icon: MessageSquare },
       { id: 'donations', label: 'Donations', icon: Heart },
+      { id: 'exams', label: 'Exam Center', icon: Calendar },
       { id: 'newsletter', label: 'Newsletter', icon: Mail },
+
       { id: 'pending', label: 'Pending Reviews', icon: AlertTriangle, badge: stats.pendingCount },
       { isDivider: true, label: 'Content' },
       { id: 'materials', label: 'Study Materials', icon: FileStack },
@@ -397,7 +401,9 @@ export default function AdminDashboard() {
                     {activeTab === 'lecture_sheets' && <LectureSheetManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} />}
                     {activeTab === 'lesson_plans' && <LessonPlanManager subjects={subjects} darkMode={isDark} />}
                     {activeTab === 'courses' && <CourseManager darkMode={isDark} />}
+                    { activeTab === 'exams' && <ExamManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} /> }
                     {activeTab === 'news' && <ContentManager activeTab="news" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
+
                     {activeTab === 'materials' && <ContentManager activeTab="materials" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                     {activeTab === 'ebooks' && <ContentManager activeTab="ebooks" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
 
