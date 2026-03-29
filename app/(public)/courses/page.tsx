@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles } from "lucide-react";
+import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles, Star } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
+import Footer from "@/components/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -24,145 +25,150 @@ export default async function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
       
-      {/* --- 1. DARK CONTRASTY HEADER --- */}
-      <div className="bg-slate-900 text-white pt-32 pb-24 relative overflow-hidden">
+      {/* --- 1. PREMIUM HEADER --- */}
+      <div className="bg-slate-900 text-white pt-40 pb-32 relative overflow-hidden border-b border-white/5">
         
-        {/* Decorative Background Blurs */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-             <div className="absolute right-0 top-10 w-96 h-96 bg-blue-600 rounded-full blur-[120px] translate-x-1/2"></div>
-             <div className="absolute left-10 bottom-10 w-64 h-64 bg-indigo-600 rounded-full blur-[80px]"></div>
-        </div>
-
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none -mr-40 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[80px] pointer-events-none -ml-20 -mb-20"></div>
+        
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
            {/* Top Badge */}
-           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-blue-300 text-sm font-bold mb-6">
-              <Sparkles className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
               <span>Upgrade your skills today</span>
            </div>
 
-           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-             Explore Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Premium Courses</span>
+           <h1 className="text-5xl md:text-8xl font-black mb-8 uppercase tracking-tighter leading-[0.9]">
+             Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Courses</span>
            </h1>
            
-           <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-             Join thousands of students mastering new subjects with our expert-led, self-paced, and interactive curriculums.
+           <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-medium">
+             Join thousands of students mastering new subjects with our expert-led, self-paced, and interactive curriculums designed for excellence.
            </p>
 
-           {/* Fake Search Bar for Visual Completeness */}
+           {/* Search Bar */}
            <div className="max-w-xl mx-auto relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-slate-500" />
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
               </div>
               <input 
                  type="text" 
-                 placeholder="What do you want to learn?" 
-                 className="block w-full pl-11 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-900/50 transition-all shadow-xl"
+                 placeholder="Search courses (e.g., Web Design, Math...)" 
+                 className="block w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-2xl backdrop-blur-sm font-bold text-sm"
               />
            </div>
         </div>
       </div>
 
-      {/* --- 2. MAIN CONTENT (Overlaps Header) --- */}
-      <div className="max-w-7xl mx-auto px-6 -mt-12 relative z-20 pb-20">
+      {/* --- 2. MAIN CONTENT AREA --- */}
+      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 pb-32">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {courses && courses.length > 0 ? (
               courses.map((course) => (
-                  <div key={course.id} className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-slate-200 flex flex-col group h-full">
+                  <div key={course.id} className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 hover:-translate-y-3 transition-all duration-500 border border-slate-100 dark:border-slate-800 flex flex-col group h-full">
                       
-                      {/* IMAGE AREA - Fixed Aspect Ratio (16:9) */}
-                      <Link href={`/courses/${course.id}`} className="block relative aspect-video bg-slate-100 overflow-hidden">
+                      {/* IMAGE AREA */}
+                      <Link href={`/courses/${course.id}`} className="block relative aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
                           {course.image_url ? (
                               <img 
                                   src={course.image_url} 
                                   alt={course.title} 
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                               />
                           ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400">
-                                  <GraduationCap className="w-12 h-12 mb-2 opacity-20" />
+                              <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600">
+                                  <GraduationCap className="w-14 h-14 mb-3 opacity-30" />
                               </div>
                           )}
                           
-                          {/* OVERLAYS */}
-                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
-                          
                           {/* Top Right Badge */}
-                          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-blue-600" />
+                          <div className="absolute top-5 right-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-slate-900 dark:text-white text-[8px] font-black px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 border border-slate-100/10 uppercase tracking-widest transition-colors">
+                              <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                               {course.duration || "Self-Paced"}
                           </div>
 
                           {/* Top Left Bookmark */}
-                          <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute top-5 left-5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                              <BookmarkButton 
                                 itemType="course" 
                                 itemId={course.id} 
                                 metadata={{ title: course.title, thumbnail_url: course.thumbnail_url }} 
                              />
                           </div>
+
+                          {/* Hover Overlay Icon */}
+                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
+                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-indigo-600 scale-50 group-hover:scale-100 transition-transform duration-500 shadow-2xl">
+                                <ArrowRight className="w-6 h-6" />
+                             </div>
+                          </div>
                       </Link>
 
                       {/* CONTENT AREA */}
-                      <div className="p-6 flex-1 flex flex-col relative">
+                      <div className="p-8 md:p-10 flex-1 flex flex-col">
                           {/* Category Tag */}
-                          <div className="mb-3">
-                             <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
-                                Course
+                          <div className="flex items-center justify-between mb-5">
+                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-lg transition-colors">
+                                COURSE
                              </span>
+                             <div className="flex items-center gap-1 text-yellow-500">
+                                <Star className="w-3 h-3 fill-current" />
+                                <span className="text-[10px] font-black">4.9</span>
+                             </div>
                           </div>
 
                           <Link href={`/courses/${course.id}`}>
-                              <h3 className="text-xl font-bold text-slate-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+                              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 uppercase tracking-tight">
                                   {course.title}
                               </h3>
                           </Link>
 
                           {/* Instructor */}
-                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-4">
-                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
-                                  <User className="w-3 h-3" />
+                          <div className="flex items-center gap-2.5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 transition-colors">
+                              <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                                  <User className="w-3.5 h-3.5" />
                               </div>
-                              <span>{course.instructor || "NextPrep Team"}</span>
+                              <span className="truncate">{course.instructor || "Academic Board"}</span>
                           </div>
                           
                           {/* Description */}
-                          <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed">
-                               {course.description 
-                                  ? course.description.replace(/<[^>]+>/g, '') 
-                                  : "Master this subject with our comprehensive curriculum."}
+                          <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 mb-8 leading-relaxed font-medium transition-colors">
+                                {course.description 
+                                   ? course.description.replace(/<[^>]+>/g, '') 
+                                   : "Master this subject with our comprehensive curriculum and expert guidance."}
                           </p>
 
                           {/* FOOTER: Price & Button */}
-                          <div className="mt-auto pt-5 border-t border-slate-100 flex items-center justify-between">
+                          <div className="mt-auto pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
                               
-                              {/* Price Logic */}
                               <div className="flex flex-col">
                                   {course.discount_price ? (
                                       <>
-                                          <div className="flex items-center gap-2">
-                                             <span className="text-lg font-extrabold text-slate-900">৳{course.discount_price}</span>
-                                             <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                          <div className="flex items-center gap-2.5 mb-0.5">
+                                             <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter transition-colors">৳{course.discount_price}</span>
+                                             <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-lg shadow-rose-500/20 uppercase tracking-wider">
                                                -{getDiscountPercent(course.price, course.discount_price)}%
                                              </span>
                                           </div>
-                                          <span className="text-xs text-slate-400 line-through font-medium">Original: ৳{course.price}</span>
+                                          <span className="text-[10px] text-slate-400 dark:text-slate-600 line-through font-black uppercase tracking-widest">৳{course.price}</span>
                                       </>
                                   ) : (
-                                      <span className="text-lg font-extrabold text-slate-900">
-                                          {course.price ? `৳${course.price}` : "Free"}
+                                      <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter transition-colors">
+                                          {course.price ? `৳${course.price}` : "Free access"}
                                       </span>
                                   )}
                               </div>
                               
                               <Link 
                                   href={`/courses/${course.id}`} 
-                                  className="group/btn bg-slate-900 text-white pl-5 pr-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:bg-blue-600 hover:shadow-blue-500/30 flex items-center gap-2"
+                                  className="group/btn bg-slate-900 dark:bg-indigo-600 text-white pl-6 pr-5 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-900/10 dark:shadow-indigo-600/20 hover:scale-105 active:scale-95 flex items-center gap-2.5"
                               >
-                                  Enroll
-                                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                  Enroll Now
+                                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
                               </Link>
                           </div>
                       </div>
@@ -170,18 +176,23 @@ export default async function CoursesPage() {
               ))
           ) : (
               // EMPTY STATE
-              <div className="col-span-full py-24 text-center bg-white rounded-3xl border border-dashed border-slate-300 shadow-sm">
-                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                     <BookOpen className="w-8 h-8 text-slate-400" />
+              <div className="col-span-full py-32 text-center bg-white dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-inner">
+                  <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-slate-200 dark:text-slate-700 border border-slate-50 dark:border-slate-800 animate-pulse">
+                     <GraduationCap className="w-10 h-10" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">No active courses found</h3>
-                  <p className="text-slate-500 mt-2 max-w-md mx-auto">
-                      We are currently updating our course catalog with new and exciting content. Please check back soon!
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">No active courses</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto font-medium">
+                      Our experts are currently updating the course catalog. Check back soon for new premium content!
                   </p>
+                  <button className="mt-10 px-10 py-5 bg-slate-900 dark:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20">
+                      Notify Me
+                  </button>
               </div>
           )}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

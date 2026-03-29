@@ -83,7 +83,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
 
   const questions = linkedQuestions?.map(lq => lq.question).filter(q => q !== null) || [];
 
-  // --- CALCULATION FIX ---
   const wordCount = post.content_body ? post.content_body.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
@@ -93,35 +92,64 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/blog/${id}`;
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "image": post.content_url ? [post.content_url] : [],
+    "datePublished": post.created_at,
+    "dateModified": post.updated_at || post.created_at,
+    "author": {
+      "@type": "Organization",
+      "name": "NextPrepBD",
+      "url": "https://nextprepbd.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "NextPrepBD",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://nextprepbd.com/icon.png"
+      }
+    },
+    "description": post.seo_description || post.content_body?.substring(0, 160).replace(/<[^>]+>/g, '')
+  };
+
   return (
-    <div className={`min-h-screen bg-[#F8FAFC] font-sans pt-24 pb-20 ${bengaliFont.className}`}>
-      <TypographyScaler />
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
-        <aside className="hidden xl:block xl:col-span-2 relative">
-            <BlogTOC content={post.content_body || ""} />
-        </aside>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <div className={`min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans pt-24 pb-20 ${bengaliFont.className} transition-colors duration-300`}>
+        <TypographyScaler />
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 relative">
+          <aside className="hidden xl:block xl:col-span-2 relative">
+              <BlogTOC content={post.content_body || ""} />
+          </aside>
 
-        <main className="xl:col-span-7 lg:col-span-8 col-span-1">
-            <BlogContentWrapper 
-               post={post}
-               questions={questions}
-               formattedDate={formattedDate}
-               readTime={readTime} // <--- PASSED HERE
-               bengaliFontClass={bengaliFont.className}
-               isLoggedIn={isLoggedIn}
-            />
-            <div className="mt-12 comments-section print:hidden">
-                <Discussion itemType="blog" itemId={post.id.toString()} />
-            </div>
-            <div className="xl:hidden">
-                <BlogTOC content={post.content_body || ""} />
-            </div>
-        </main>
+          <main className="xl:col-span-7 lg:col-span-8 col-span-1">
+              <BlogContentWrapper 
+                 post={post}
+                 questions={questions}
+                 formattedDate={formattedDate}
+                 readTime={readTime}
+                 bengaliFontClass={bengaliFont.className}
+                 isLoggedIn={isLoggedIn}
+              />
+              <div className="mt-12 comments-section print:hidden">
+                  <Discussion itemType="blog" itemId={post.id.toString()} />
+              </div>
+              <div className="xl:hidden">
+                  <BlogTOC content={post.content_body || ""} />
+              </div>
+          </main>
 
-        <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
-            <Sidebar />
-        </aside>
+          <aside className="xl:col-span-3 lg:col-span-4 col-span-1 space-y-8 print:hidden">
+              <Sidebar />
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

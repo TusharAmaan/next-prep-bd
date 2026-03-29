@@ -1,6 +1,16 @@
 import { supabase } from "@/lib/supabaseClient";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import BlogList from "@/components/BlogList";
+import { Sparkles } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Academic Journals & Blog",
+  description: "Explore high-quality educational insights, exam strategies, and structured learning material curated for excellence on NextPrepBD.",
+  alternates: {
+    canonical: "/blog",
+  },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -8,81 +18,100 @@ const ITEMS_PER_PAGE = 15;
 
 export default async function BlogListPage() {
   
-  // 1. Fetch All Segments for the Filter Bar
   const { data: segmentsData } = await supabase.from("segments").select("title").order("id");
   const segmentsList = ["All", ...(segmentsData?.map(s => s.title) || [])];
 
-  // 2. Fetch Initial Blogs (Page 1)
   const { data: blogs, count } = await supabase
     .from("resources")
     .select(`
-        id, title, content_body, created_at, content_url, type, seo_description,
+        id, title, content_body, created_at, content_url, type, seo_description, slug,
         segment_id,
-        status, -- Useful for debugging, though we filter by it
+        status,
         subjects (
           groups (
             segments ( title, slug ) 
           )
         )
     `, { count: "exact" })
-    .eq("type", "blog")      // 1. Only Blogs
-    .eq("status", "approved") // 2. <--- CRITICAL FIX: Only show Approved/Admin content
+    .eq("type", "blog")      
+    .eq("status", "approved") 
     .order("created_at", { ascending: false })
     .range(0, ITEMS_PER_PAGE - 1);
 
-  // 3. Format Data safely for the client
   const safeBlogs = blogs?.map((blog: any) => {
-    
-    // --- LINK GENERATION LOGIC ---
-    let link = `/blog/${blog.id}`; // Safe fallback
+    const identifier = blog.slug || blog.id;
+    let link = `/blog/${identifier}`; 
 
-    if (blog.content_url) {
-        if (blog.type === 'blog') {
-            link = `/blog/${blog.content_url}`;
-        } else if (blog.type === 'news') {
-            link = `/news/${blog.content_url}`;
-        } else if (blog.type === 'updates') {
-            const segmentSlug = blog.subjects?.groups?.segments?.slug || 
-                                blog.subjects?.groups?.segments?.title?.toLowerCase() || 
-                                'general';
-            link = `/resources/${segmentSlug}/updates/${blog.content_url}`;
-        }
+    if (blog.type === 'news') {
+        link = `/news/${identifier}`;
+    } else if (blog.type === 'updates') {
+        const seg = blog.subjects?.groups?.segments;
+        const segmentSlug = seg?.slug || seg?.title?.toLowerCase() || 'general';
+        link = `/resources/${segmentSlug}/updates/${identifier}`;
     }
 
     return {
         ...blog,
-        segmentTitle: blog.subjects?.groups?.segments?.title || "General",
+        segmentTitle: blog.subjects?.groups?.segments?.title || "Academy",
         link: link,
     };
   }) || [];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "NextPrepBD Academic Journals",
+    "description": "Educational insights, exam strategies, and learning material.",
+    "url": "https://nextprepbd.com/blog",
+    "publisher": {
+      "@type": "Organization",
+      "name": "NextPrepBD",
+      "logo": "https://nextprepbd.com/icon.png"
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pt-32 pb-20">
-      <div className="max-w-7xl mx-auto px-6">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
         
-        {/* HEADER */}
-        <div className="mb-8 text-center">
-            <span className="text-blue-600 font-extrabold text-xs tracking-widest uppercase mb-3 block">
-                Educational Resources
-            </span>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-                Class <span className="text-blue-600">Blogs</span>
-            </h1>
+        {/* HERO SECTION */}
+        <div className="bg-slate-900 text-white pt-40 pb-32 px-6 relative overflow-hidden border-b border-white/5">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[150px] pointer-events-none -mr-40 -mt-20"></div>
+          <div className="max-w-7xl mx-auto relative z-10">
+              <div className="max-w-3xl">
+                  <div className="flex items-center gap-3 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-8 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full w-fit">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Knowledge Repository
+                  </div>
+                  <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
+                      Academic <br/>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Journals</span>
+                  </h1>
+                  <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed">
+                      Explore high-quality educational insights, exam strategies, and structured learning material curated for excellence.
+                  </p>
+              </div>
+          </div>
         </div>
 
-        {/* CLIENT-SIDE LIST ENGINE */}
-        <BlogList 
-            initialBlogs={safeBlogs} 
-            initialCount={count || 0} 
-            segments={segmentsList} 
-        />
+        <div className="max-w-7xl mx-auto">
+          {/* CLIENT-SIDE LIST ENGINE */}
+          <BlogList 
+              initialBlogs={safeBlogs} 
+              initialCount={count || 0} 
+              segments={segmentsList} 
+          />
 
-        {/* APP BANNER */}
-        <div className="mt-16">
-            <ProfessionalAppBanner />
+          {/* APP BANNER */}
+          <div className="px-6 pb-20">
+              <ProfessionalAppBanner />
+          </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }

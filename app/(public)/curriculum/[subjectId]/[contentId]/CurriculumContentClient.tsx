@@ -1,0 +1,521 @@
+'use client';
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { supabase } from "@/lib/supabaseClient";
+import { parseHashtagsToHTML } from '@/utils/hashtagParser';
+import { 
+  ChevronRight, 
+  ChevronDown,
+  Lock, 
+  User, 
+  BookOpen,
+  FileText,
+  Clock,
+  Eye,
+  Share2,
+  Bookmark,
+  Sun,
+  Moon,
+  X,
+  Link as LinkIcon,
+  Facebook,
+  MessageCircle,
+  HelpCircle,
+  CheckCircle2,
+  GraduationCap,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  Layers
+} from "lucide-react";
+import Link from 'next/link';
+import { toast } from 'sonner';
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
+import Discussion from '@/components/shared/Discussion';
+import TypographyScaler from '@/components/shared/TypographyScaler';
+
+interface ClientProps {
+  subjectId: string;
+  initialContent: any;
+  initialSubject: any;
+  initialHierarchy: any[];
+  user: any;
+}
+
+export default function CurriculumContentClient({
+  subjectId,
+  initialContent,
+  initialSubject,
+  initialHierarchy,
+  user
+}: ClientProps) {
+  const [subject] = useState<any>(initialSubject);
+  const [hierarchy] = useState<any[]>(initialHierarchy);
+  
+  const [loadedContents, setLoadedContents] = useState<any[]>([initialContent]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [reachedBoundary, setReachedBoundary] = useState(false);
+  
+  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark for premium feel
+  const [isTocOpenMobile, setIsTocOpenMobile] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState<{id: string, show: boolean} | null>(null);
+
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
+
+  // KaTeX Auto-render
+  useEffect(() => {
+    if (articleRef.current) {
+      try {
+        renderMathInElement(articleRef.current, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch (err) {
+        console.error("Curriculum Detail KaTeX error:", err);
+      }
+    }
+  }, [loadedContents, isDarkMode]);
+
+  const flatContentIndex = useMemo(() => {
+     let flat: any[] = [];
+     hierarchy.forEach(u => {
+        u.lesson_plan_lessons?.sort((a:any,b:any) => a.order_index - b.order_index).forEach((l:any) => {
+           l.lesson_plan_contents?.sort((a:any,b:any) => a.order_index - b.order_index).forEach((c:any) => {
+              flat.push({ ...c, unit: u, lesson: l });
+           });
+        });
+     });
+     return flat;
+  }, [hierarchy]);
+
+  // Auto-expand based on loaded contents
+  useEffect(() => {
+    if (loadedContents.length === 0 || hierarchy.length === 0) return;
+    const unitIds = new Set<string>();
+    const lessonIds = new Set<string>();
+    hierarchy.forEach(u => {
+      u.lesson_plan_lessons?.forEach((l: any) => {
+        l.lesson_plan_contents?.forEach((c: any) => {
+          if (loadedContents.some(lc => lc.id === c.id)) {
+            unitIds.add(String(u.id));
+            lessonIds.add(String(l.id));
+          }
+        });
+      });
+    });
+    setExpandedUnits(prev => new Set([...prev, ...unitIds]));
+    setExpandedLessons(prev => new Set([...prev, ...lessonIds]));
+  }, [loadedContents, hierarchy]);
+
+  const loadNextContent = async () => {
+     if (loadedContents.length === 0 || flatContentIndex.length === 0) return;
+     const lastLoaded = loadedContents[loadedContents.length - 1];
+     const currentIndex = flatContentIndex.findIndex(c => c.id.toString() === lastLoaded.id.toString());
+     
+     if (currentIndex === -1 || currentIndex >= flatContentIndex.length - 1) {
+        setHasMore(false);
+        return;
+     }
+
+     const nextContentMeta = flatContentIndex[currentIndex + 1];
+
+     if (nextContentMeta.lesson_id !== lastLoaded.lesson_id) {
+        if (!reachedBoundary) {
+            setReachedBoundary(true);
+            return;
+        }
+     }
+
+     setIsLoadingMore(true);
+     setReachedBoundary(false);
+
+     try {
+        const { data: nextContent } = await supabase
+          .from('lesson_plan_contents')
+          .select(`*, lesson_plan_lessons (*, lesson_plan_units (*))`)
+          .eq('id', nextContentMeta.id)
+          .single();
+        
+        if (nextContent) {
+           setLoadedContents(prev => [...prev, nextContent]);
+           await supabase.from('lesson_plan_contents').update({ view_count: (nextContent.view_count || 0) + 1 }).eq('id', nextContent.id);
+        }
+     } catch (err) {
+        console.error("Error loading next content:", err);
+     } finally {
+        setIsLoadingMore(false);
+     }
+  };
+
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const target = entries[0];
+    if (target.isIntersecting && !isLoadingMore && hasMore && loadedContents.length > 0 && flatContentIndex.length > 0 && !reachedBoundary && user) {
+       loadNextContent();
+    }
+  }, [isLoadingMore, hasMore, loadedContents, flatContentIndex, reachedBoundary, user]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleObserver, { root: null, rootMargin: '20px', threshold: 0.1 });
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  const toggleUnit = (unitId: string) => {
+    setExpandedUnits(prev => {
+      const next = new Set(prev);
+      if (next.has(unitId)) next.delete(unitId); else next.add(unitId);
+      return next;
+    });
+  };
+
+  const toggleLesson = (lessonId: string) => {
+    setExpandedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId); else next.add(lessonId);
+      return next;
+    });
+  };
+
+  const handleShare = (method: 'fb' | 'wa' | 'copy', contentUrl: string) => {
+     const url = `${window.location.origin}${contentUrl}`;
+     if (method === 'copy') {
+        navigator.clipboard.writeText(url);
+        toast.success("Intelligence Link Copied");
+     } else if (method === 'fb') {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+     } else if (method === 'wa') {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent("Academic Intelligence: " + url)}`, '_blank');
+     }
+     setShowShareMenu(null);
+  };
+
+  const handleSave = () => {
+     toast.success("Intelligence Cached in Library");
+  };
+
+  const bgMain = isDarkMode ? "bg-slate-950" : "bg-white";
+  const textMain = isDarkMode ? "text-slate-100" : "text-slate-900";
+  const borderCol = isDarkMode ? "border-slate-800" : "border-slate-100";
+  const proseClass = isDarkMode ? "prose-invert prose-slate" : "prose-slate";
+  const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
+
+  return (
+    <div className={`min-h-screen transition-colors duration-500 ${bgMain}`}>
+      <TypographyScaler />
+      
+      {/* PRE NAVIGATION */}
+      <div className={`fixed top-0 left-0 right-0 z-[60] pt-4 px-6 pointer-events-none`}>
+          <div className="max-w-7xl mx-auto flex justify-between items-center pointer-events-auto">
+             <div className="flex items-center gap-4">
+                 <Link href={`/curriculum/${subjectId}`} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-indigo-600`}>
+                    <ArrowRight className="w-5 h-5 rotate-180" />
+                 </Link>
+             </div>
+             
+             <div className="flex items-center gap-3">
+                 <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 ${isDarkMode ? 'text-amber-400' : 'text-indigo-600'}`}
+                 >
+                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                 </button>
+                 <button 
+                    onClick={() => setIsTocOpenMobile(true)}
+                    className="lg:hidden w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-indigo-600 text-white border border-indigo-500"
+                 >
+                    <BookOpen className="w-5 h-5" />
+                 </button>
+             </div>
+          </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24 relative">
+        <div className="flex flex-col lg:flex-row gap-20">
+          
+          {/* MAIN COLUMN */}
+          <article ref={articleRef} className="flex-1 max-w-4xl space-y-32">
+             {loadedContents.map((c, index) => {
+                const isBengali = c.version === 'bn';
+                let htmlBody = c.content_body || "";
+                let isPaywalled = false;
+                
+                if (!user && index === 0) { 
+                    const previewLength = Math.floor(htmlBody.length * 0.3);
+                    if (htmlBody.length > 500) {
+                       htmlBody = htmlBody.substring(0, previewLength);
+                       isPaywalled = true;
+                    }
+                } else if (!user && index > 0) {
+                    htmlBody = "";
+                    isPaywalled = true;
+                }
+
+                return (
+                 <div key={c.id} id={`content-${c.id}`} className="scroll-mt-32">
+                    <header className="mb-12">
+                       <div className="flex items-center gap-4 mb-8 flex-wrap">
+                          <div className="px-4 py-1.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                             {c.lesson_plan_lessons?.lesson_plan_units?.title}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                             <Clock className="w-3.5 h-3.5" /> 5-8 MIN
+                          </div>
+                          <div className="ml-auto flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                             <Eye className="w-3.5 h-3.5" /> {c.view_count || 0}
+                          </div>
+                       </div>
+                       
+                       <h1 className={`text-4xl md:text-6xl font-black mb-8 leading-[0.9] tracking-tighter uppercase ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
+                          {c.title}
+                       </h1>
+
+                       <div className={`p-6 bg-slate-50 dark:bg-slate-900 border ${borderCol} rounded-[2rem] flex items-center gap-4 transition-colors`}>
+                           <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border ${borderCol} flex items-center justify-center shadow-inner"><User className="w-6 h-6 text-slate-400" /></div>
+                           <div className="flex-1">
+                               <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Master Educator</p>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Verified Strategy • {new Date(c.created_at).toLocaleDateString()}</p>
+                           </div>
+                           
+                           <div className="flex gap-2 relative">
+                              <button 
+                                onClick={() => setShowShareMenu(showShareMenu?.id === c.id ? null : {id: c.id, show: true})}
+                                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
+                              >
+                                 <Share2 className="w-4 h-4" />
+                              </button>
+                              {showShareMenu?.id === c.id && (
+                                 <div className={`absolute bottom-full right-0 mb-3 w-56 rounded-2xl shadow-3xl border overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 bg-white dark:bg-slate-900 ${borderCol}`}>
+                                    <button onClick={() => handleShare('copy', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><LinkIcon size={16}/> Copy Link</button>
+                                    <button onClick={() => handleShare('fb', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><Facebook size={16} className="text-indigo-600"/> Facebook</button>
+                                    <button onClick={() => handleShare('wa', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><MessageCircle size={16} className="text-emerald-500"/> WhatsApp</button>
+                                 </div>
+                              )}
+                              <button 
+                                onClick={handleSave}
+                                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
+                              >
+                                 <Bookmark className="w-4 h-4" />
+                              </button>
+                           </div>
+                       </div>
+                    </header>
+
+                    <div className="relative">
+                       {isPaywalled && index > 0 ? (
+                          <div className={`p-12 rounded-[3rem] text-center border-2 border-dashed ${borderCol} bg-slate-50 dark:bg-slate-900/50`}>
+                             <Lock className="w-12 h-12 mx-auto mb-6 text-indigo-500" />
+                             <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4">Intelligence Restricted</h4>
+                             <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-10 max-w-sm mx-auto leading-relaxed">This unit requires authentication. Link your student credentials to proceed with the curriculum.</p>
+                             <Link href="/login" className="inline-flex items-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20">Sync Identity <Zap size={14} /></Link>
+                          </div>
+                       ) : (
+                          <div 
+                           className={`prose prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-p:font-medium prose-p:leading-relaxed lg:prose-xl ${proseClass} ${isBengali ? 'font-bangla' : 'font-sans'}`}
+                           dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(htmlBody) }}
+                         />
+                       )}
+
+                       {isPaywalled && index === 0 && (
+                          <div className="mt-12">
+                             <div className={`h-64 bg-gradient-to-t ${isDarkMode ? 'from-slate-950 via-slate-950/90' : 'from-white via-white/90'} to-transparent -translate-y-64 pointer-events-none`} />
+                             <div className="relative -mt-48 p-12 bg-slate-900 dark:bg-indigo-600 rounded-[3rem] text-white shadow-3xl text-center group overflow-hidden border border-white/10">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
+                                <div className="relative z-10 space-y-8">
+                                   <div className="w-20 h-20 bg-white/10 backdrop-blur border border-white/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl"><Lock className="w-10 h-10" /></div>
+                                   <div>
+                                      <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Proceed with Evolution?</h3>
+                                      <p className="text-indigo-100 dark:text-slate-300 text-[11px] font-black uppercase tracking-widest max-w-sm mx-auto opacity-80 leading-relaxed">You have accessed 30% of this module. Authenticate to sync full lesson mapping, exercises, and assessments.</p>
+                                   </div>
+                                   <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                      <Link href="/login" className="px-12 py-5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl">Identify Self</Link>
+                                      <Link href="/signup" className="px-12 py-5 bg-transparent border-2 border-white/20 hover:bg-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all">Enroll Hub</Link>
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+                       )}
+                    </div>
+                    
+                    {!isPaywalled && (
+                      <div className="mt-20">
+                        <Discussion itemType="curriculum" itemId={c.id.toString()} />
+                      </div>
+                    )}
+                 </div>
+                );
+             })}
+
+             {hasMore && user && !reachedBoundary && (
+               <div ref={loaderRef} className="py-24 flex justify-center">
+                 <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Fetching Next Module
+                 </div>
+               </div>
+             )}
+
+             {reachedBoundary && (
+                <div className={`p-16 rounded-[4rem] border-2 border-dashed ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-indigo-50/50 border-indigo-100'} text-center animate-in zoom-in-95 duration-700`}>
+                   <div className="w-20 h-20 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-600/30 border-4 border-white dark:border-slate-800">
+                      <Sparkles className="w-10 h-10" />
+                   </div>
+                   <h3 className={`text-4xl font-black tracking-tighter uppercase mb-4 ${textMain}`}>Strategic Sync Complete</h3>
+                   <p className={`text-[10px] font-black uppercase tracking-widest mb-10 max-w-xs mx-auto ${textMuted} leading-relaxed opacity-80`}>Topic boundary detected. Ready to bridge to the next segment of the curriculum?</p>
+                   
+                   <button 
+                    onClick={loadNextContent}
+                    className="group px-12 py-6 bg-slate-900 dark:bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-4 mx-auto hover:bg-indigo-500 hover:-translate-y-2 transition-all shadow-3xl shadow-indigo-600/20 active:scale-95"
+                   >
+                     Jump to Next Part <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                   </button>
+                </div>
+             )}
+
+             {!hasMore && (
+               <div className="py-32 text-center">
+                  <GraduationCap className="w-16 h-16 mx-auto mb-8 text-slate-200 dark:text-slate-800" />
+                  <h4 className="text-xl font-black uppercase tracking-tighter text-slate-400 dark:text-slate-600">Syllabus Terminal Reached</h4>
+                  <p className="text-[10px] uppercase font-black tracking-widest text-slate-300 dark:text-slate-700 mt-2">Achievement synchronization complete</p>
+               </div>
+             )}
+          </article>
+
+          {/* SIDEBAR NAVIGATION */}
+          <aside className="hidden lg:block w-96 shrink-0 sticky top-40 h-fit max-h-[80vh] flex flex-col">
+             <div className={`flex-1 overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3rem] p-10 flex flex-col shadow-2xl dark:shadow-none transition-colors`}>
+                <div className="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-slate-800 pb-8">
+                   <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-600/20"><Layers className="w-6 h-6" /></div>
+                   <div>
+                      <h3 className={`text-[10px] font-black uppercase tracking-widest ${textMain}`}>Mission Control</h3>
+                      <p className={`text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mt-1`}>Course Progression</p>
+                   </div>
+                </div>
+
+                <div className="overflow-y-auto flex-1 pr-4 space-y-3 custom-scrollbar">
+                   {hierarchy.map(unit => {
+                      const unitKey = String(unit.id);
+                      const isUnitOpen = expandedUnits.has(unitKey);
+                      const unitHasViewed = unit.lesson_plan_lessons?.some((l: any) => l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id)));
+                      
+                      return (
+                        <div key={unit.id} className="space-y-2">
+                         <button
+                           onClick={() => toggleUnit(unitKey)}
+                           className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left group ${unitHasViewed ? 'bg-indigo-600/5 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                         >
+                             <div className={`w-1.5 h-6 rounded-full shrink-0 transition-all ${unitHasViewed ? 'bg-indigo-600 scale-y-110' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                             <h4 className={`text-[11px] font-black uppercase tracking-tight flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600 dark:text-indigo-400' : textMain}`}>{unit.title}</h4>
+                             <ChevronDown size={14} className={`transition-transform duration-500 text-slate-300 ${isUnitOpen ? 'rotate-180' : ''}`} />
+                         </button>
+                         
+                         {isUnitOpen && (
+                           <div className="space-y-4 pl-6 border-l-2 border-slate-50 dark:border-slate-800 ml-5 animate-in slide-in-from-top-2 duration-300">
+                            {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => {
+                               const lessonKey = String(l.id);
+                               const isLessonOpen = expandedLessons.has(lessonKey);
+                               const lessonHasViewed = l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id));
+
+                               return (
+                                 <div key={l.id} className="space-y-2">
+                                  <button
+                                    onClick={() => toggleLesson(lessonKey)}
+                                    className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-400'}`}
+                                  >
+                                     <ChevronDown size={12} className={`transition-transform duration-500 ${isLessonOpen ? 'rotate-180' : ''}`} />
+                                     <span className="text-[10px] font-black uppercase tracking-tight truncate flex-1 font-bangla">{l.title}</span>
+                                  </button>
+
+                                  {isLessonOpen && (
+                                    <div className="space-y-1.5 pl-4">
+                                     {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
+                                      const isViewed = loadedContents.some(loaded => loaded.id === c.id);
+                                      return (
+                                        <button 
+                                          key={c.id} 
+                                          onClick={() => {
+                                             const element = document.getElementById(`content-${c.id}`);
+                                             if (element) element.scrollIntoView({ behavior: 'smooth' });
+                                             else window.location.href = `/curriculum/${subjectId}/${c.id}`;
+                                          }}
+                                          className={`relative w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all font-bangla overflow-hidden group/item ${isViewed ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                        >
+                                           <span className="truncate flex-1">{c.title}</span>
+                                           {isViewed && <CheckCircle2 size={12} className="shrink-0" />}
+                                        </button>
+                                      );
+                                     })}
+                                    </div>
+                                  )}
+                                 </div>
+                               );
+                            })}
+                           </div>
+                         )}
+                        </div>
+                      );
+                   })}
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-slate-50 dark:border-slate-800">
+                    <Link href={`/curriculum/${subjectId}`} className="w-full flex items-center justify-center gap-3 py-5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-transparent transition-all shadow-sm">
+                        <ArrowRight size={14} className="rotate-180" /> Exit Terminal
+                    </Link>
+                </div>
+             </div>
+          </aside>
+        </div>
+      </div>
+
+      {/* MOBILE TOC OVERLAY */}
+      {isTocOpenMobile && (
+         <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex justify-end animate-in fade-in duration-300">
+            <div className={`w-full max-w-[320px] h-full flex flex-col animate-in slide-in-from-right duration-500 bg-white dark:bg-slate-900`}>
+               <div className="p-8 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Mission</h3>
+                  <button onClick={() => setIsTocOpenMobile(false)} className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-2xl transition-colors"><X className="w-6 h-6" /></button>
+               </div>
+               <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+                   {hierarchy.map(unit => {
+                      const unitKey = String(unit.id);
+                      const isUnitOpen = expandedUnits.has(unitKey);
+                      return (
+                        <div key={unit.id} className="space-y-2">
+                           <button onClick={() => toggleUnit(unitKey)} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-left">
+                              <span className="text-[11px] font-black uppercase tracking-tight flex-1 font-bangla dark:text-white">{unit.title}</span>
+                              <ChevronDown size={14} className={`transition-transform duration-500 ${isUnitOpen ? 'rotate-180' : ''}`} />
+                           </button>
+                           {isUnitOpen && (
+                             <div className="pl-4 space-y-2">
+                                {unit.lesson_plan_lessons?.map((l:any) => (
+                                   <div key={l.id} className="space-y-1">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-bangla pl-2">{l.title}</p>
+                                      {l.lesson_plan_contents?.map((c:any) => (
+                                         <button onClick={() => { setIsTocOpenMobile(false); const el = document.getElementById(`content-${c.id}`); if (el) el.scrollIntoView({behavior:'smooth'}); }} className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-left dark:text-slate-300">
+                                            {c.title}
+                                         </button>
+                                      ))}
+                                   </div>
+                                ))}
+                             </div>
+                           )}
+                        </div>
+                      );
+                   })}
+               </div>
+            </div>
+         </div>
+      )}
+
+    </div>
+  );
+}
