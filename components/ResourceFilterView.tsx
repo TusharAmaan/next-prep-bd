@@ -121,25 +121,25 @@ export default function ResourceFilterView({
       {/* FILTER CARD */}
       <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-white/10 p-6 mb-10 animate-in fade-in slide-in-from-bottom-4 transition-colors">
         
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6">
           <div className="relative flex-grow">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
             <input 
               type="text" 
               placeholder={`Search in ${segmentTitle}...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl font-bold text-sm text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 transition-all placeholder:font-medium placeholder:text-slate-400"
+              className="w-full pl-12 md:pl-14 pr-6 py-3.5 md:py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl md:rounded-2xl font-bold text-sm text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 transition-all placeholder:font-medium placeholder:text-slate-400"
             />
           </div>
 
           {!isUpdatePage && subjects.length > 1 && (
-            <div className="min-w-[240px] relative">
-               <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <div className="min-w-full md:min-w-[240px] relative">
+               <BookOpen className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                <select 
                  value={activeSubject}
                  onChange={(e) => setActiveSubject(e.target.value)}
-                 className="w-full pl-14 pr-10 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl font-bold text-sm text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all"
+                 className="w-full pl-12 md:pl-14 pr-10 py-3.5 md:py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl md:rounded-2xl font-bold text-sm text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all"
                >
                  {subjects.map((sub) => (
                    <option key={sub} value={sub}>{sub === 'All' ? 'All Subjects' : sub}</option>
@@ -150,24 +150,26 @@ export default function ResourceFilterView({
           )}
         </div>
 
-        {/* Categories */}
+        {/* Categories: Horizontal Scroll for Mobile */}
         {categories.length > 1 && (
-          <div className="flex flex-wrap gap-3">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${
-                  activeCategory === cat 
-                  ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 shadow-xl shadow-indigo-600/20' 
-                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 overflow-x-auto hide-scrollbar flex items-center gap-2 pb-1 -ml-1 pl-1">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-5 py-2 rounded-xl text-[9px] md:text-[10px] whitespace-nowrap font-bold uppercase tracking-widest transition-all border shrink-0 ${
+                    activeCategory === cat 
+                    ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 shadow-lg shadow-indigo-600/20' 
+                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
             {(activeCategory !== 'All' || search || activeSubject !== 'All') && (
-               <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} className="p-3 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors" title="Reset">
+               <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} className="p-2.5 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 transition-colors shrink-0" title="Reset">
                   <X className="w-5 h-5 font-bold"/>
                </button>
             )}
@@ -185,10 +187,10 @@ export default function ResourceFilterView({
               <Link 
                 key={item.id} 
                 href={href}
-                className={`group bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden`}
+                className={`group bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2rem] p-5 md:p-6 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 flex flex-col md:flex-row md:items-center gap-5 md:gap-6 relative overflow-hidden`}
               >
                 {/* Icon Box */}
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 dark:border-slate-800 group-hover:scale-110 transition-transform duration-500 ${bgColor}`}>
+                <div className={`w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 dark:border-slate-800 group-hover:scale-110 transition-transform duration-500 ${bgColor}`}>
                   {icon}
                 </div>
 
@@ -218,16 +220,16 @@ export default function ResourceFilterView({
                             metadata={{ title: item.title }} 
                         />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight tracking-tight line-clamp-2">
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight tracking-tight line-clamp-2">
                         {item.title}
                     </h3>
                   </div>
                 </div>
 
                 {/* Action */}
-                <div className="shrink-0 self-start md:self-center">
-                   <div className="flex items-center gap-3 px-6 py-3 bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                      {label} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+                <div className="shrink-0 self-end md:self-center">
+                   <div className="flex items-center gap-2.5 px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-bold uppercase tracking-widest rounded-lg md:rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                      {label} <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"/>
                    </div>
                 </div>
               </Link>

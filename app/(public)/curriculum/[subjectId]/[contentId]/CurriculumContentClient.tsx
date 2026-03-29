@@ -215,24 +215,24 @@ export default function CurriculumContentClient({
       <TypographyScaler />
       
       {/* PRE NAVIGATION */}
-      <div className={`fixed top-0 left-0 right-0 z-[60] pt-4 px-6 pointer-events-none`}>
+      <div className={`fixed top-4 md:top-6 left-0 right-0 z-[60] px-4 md:px-6 pointer-events-none`}>
           <div className="max-w-7xl mx-auto flex justify-between items-center pointer-events-auto">
-             <div className="flex items-center gap-4">
-                 <Link href={`/curriculum/${subjectId}`} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-indigo-600`}>
+             <div className="flex items-center gap-3">
+                 <Link href={`/curriculum/${subjectId}`} className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-lg md:shadow-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-indigo-600`}>
                     <ArrowRight className="w-5 h-5 rotate-180" />
                  </Link>
              </div>
              
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-2 md:gap-3">
                  <button 
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 ${isDarkMode ? 'text-amber-400' : 'text-indigo-600'}`}
+                  className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-lg md:shadow-xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 ${isDarkMode ? 'text-amber-400' : 'text-indigo-600'}`}
                  >
                   {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                  </button>
                  <button 
                     onClick={() => setIsTocOpenMobile(true)}
-                    className="lg:hidden w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-indigo-600 text-white border border-indigo-500"
+                    className="lg:hidden w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-lg bg-indigo-600 text-white border border-indigo-500 active:scale-95"
                  >
                     <BookOpen className="w-5 h-5" />
                  </button>
@@ -240,8 +240,8 @@ export default function CurriculumContentClient({
           </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24 relative">
-        <div className="flex flex-col lg:flex-row gap-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
+        <div className="flex flex-col lg:flex-row gap-12 md:gap-20">
           
           {/* MAIN COLUMN */}
           <article ref={articleRef} className="flex-1 max-w-4xl space-y-32">
@@ -276,7 +276,7 @@ export default function CurriculumContentClient({
                           </div>
                        </div>
                        
-                       <h1 className={`text-4xl md:text-6xl font-bold mb-8 leading-[0.9] tracking-tight ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
+                       <h1 className={`text-3xl sm:text-4xl md:text-6xl font-bold mb-6 md:mb-8 leading-[1.1] md:leading-[0.9] tracking-tight ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
                           {c.title}
                        </h1>
 

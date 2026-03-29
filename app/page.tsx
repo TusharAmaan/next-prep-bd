@@ -93,37 +93,37 @@ export default async function HomePage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-500">
       
       {/* 1. HERO SECTION */}
-      <section className="relative bg-slate-900 text-white pt-48 pb-40 px-6 overflow-hidden border-b border-white/5">
+      <section className="relative bg-slate-900 text-white pt-28 md:pt-48 pb-20 md:pb-40 px-5 md:px-6 overflow-hidden border-b border-white/5">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-            <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[150px] animate-pulse"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[150px] animate-pulse"></div>
+            <div className="absolute top-[-10%] right-[-5%] w-[400px] md:w-[800px] h-[400px] md:h-[800px] bg-indigo-600/20 rounded-full blur-[100px] md:blur-[150px] animate-pulse"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] md:w-[800px] h-[400px] md:h-[800px] bg-blue-600/10 rounded-full blur-[100px] md:blur-[150px] animate-pulse"></div>
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-3xl border border-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-10 shadow-2xl animate-fade-in-down">
-                <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
+                <span className="relative flex h-1.5 md:h-2 w-1.5 md:w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 md:h-2 w-1.5 md:w-2 bg-indigo-500"></span>
                 </span>
                 Bangladesh's Premier Academic Platform
             </div>
 
-            <h1 className="text-5xl md:text-9xl font-bold tracking-tight mb-10 leading-[0.85] animate-fade-in-up">
+            <h1 className="text-4xl sm:text-5xl md:text-9xl font-black tracking-tighter mb-6 md:mb-10 leading-[1] md:leading-[0.85] animate-fade-in-up uppercase italic">
                 Master your <br/> 
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow text-glow">Learning</span>
             </h1>
             
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 font-medium leading-relaxed mb-12 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <p className="max-w-xl mx-auto text-base md:text-xl text-slate-400 font-medium leading-relaxed mb-10 md:mb-12 animate-fade-in-up opacity-90" style={{ animationDelay: '100ms' }}>
                 Access verified resources, strategic archives, and expert guidance. The revolutionary platform built for excellence.
             </p>
 
-            <form action="/search" method="GET" className="bg-white/5 backdrop-blur-3xl p-3 rounded-[2.5rem] border border-white/10 max-w-3xl mx-auto flex flex-col sm:flex-row gap-4 shadow-3xl transform transition-all hover:scale-[1.02] animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
+            <form action="/search" method="GET" className="bg-white/5 backdrop-blur-3xl p-2 md:p-3 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 max-w-3xl mx-auto flex flex-col sm:flex-row gap-2.5 md:gap-4 shadow-3xl transform transition-all hover:scale-[1.02] animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
                 <div className="relative flex-1">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 w-6 h-6 transition-colors" />
-                    <input name="q" type="text" placeholder="Search resources, archives (e.g. Physics)" className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-16 pr-6 py-4 sm:py-5 text-lg font-bold tracking-tight" required />
+                    <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 w-5 h-5 md:w-6 md:h-6 transition-colors" />
+                    <input name="q" type="text" placeholder="Search resources..." className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-14 md:pl-16 pr-5 py-3 md:py-5 text-sm md:text-lg font-black tracking-wide uppercase" required />
                 </div>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 sm:py-5 rounded-[2rem] font-bold text-[10px] uppercase tracking-widest transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-3 hover:scale-105 active:scale-95 duration-500">
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-[2rem] font-black text-[10px] uppercase tracking-widest transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-2.5 hover:scale-105 active:scale-95 duration-500">
                     Search <ArrowRight className="w-4 h-4" />
                 </button>
             </form>
@@ -132,29 +132,29 @@ export default async function HomePage() {
 
       {/* 2. STATS BAR */}
       <ScrollReveal>
-        <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-20 md:-mt-24">
-          <div className="bg-white dark:bg-slate-900 rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-10 md:p-12 border border-slate-100 dark:border-slate-800">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800/50">
+        <section className="max-w-6xl mx-auto px-5 md:px-6 relative z-20 -mt-10 md:-mt-24">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-6 md:p-12 border border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 md:divide-x divide-slate-100 dark:divide-slate-800/50">
                   <div className="flex flex-col items-center text-center group">
-                      <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-inner">
-                          <FileText className="w-8 h-8" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
+                          <FileText className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">12,000+</h3>
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verified Assets</p>
+                      <h3 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-1 md:mb-2 uppercase italic">12,000+</h3>
+                      <p className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Verified Assets</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
-                      <div className="w-16 h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500 shadow-inner">
-                          <Users className="w-8 h-8" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
+                          <Users className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">5,400+</h3>
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active Candidates</p>
+                      <h3 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-1 md:mb-2 uppercase italic">5,400+</h3>
+                      <p className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Active Candidates</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
-                      <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 shadow-inner">
-                          <Zap className="w-8 h-8 fill-current" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
+                          <Zap className="w-6 h-6 md:w-8 md:h-8 fill-current" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">Daily</h3>
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Resource Updates</p>
+                      <h3 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-1 md:mb-2 uppercase italic">Daily</h3>
+                      <p className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Resource Updates</p>
                   </div>
               </div>
           </div>
@@ -163,37 +163,37 @@ export default async function HomePage() {
 
       {/* 3. CHOOSE YOUR GOAL */}
       <ScrollReveal>
-        <section className="pt-32 pb-16 max-w-7xl mx-auto px-6">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-20 gap-8">
+        <section className="pt-16 md:pt-32 pb-12 md:pb-16 max-w-7xl mx-auto px-5 md:px-6">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 md:mb-20 gap-6 md:gap-8">
               <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
-                      <Sparkles className="w-3.5 h-3.5" />
+                  <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em]">
+                      <Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5" />
                       Learning Paths
                   </div>
-                  <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight leading-[0.9]">
-                      Select Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Goal</span>
+                  <h2 className="text-3xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-[1] md:leading-[0.9] uppercase italic">
+                      Select Your <br className="hidden md:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Goal</span>
                   </h2>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md text-lg leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md text-base md:text-lg leading-relaxed opacity-80">
                   Carefully designed pathways and curated archives to help you reach the next academic level.
               </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6">
               {goalCards.map((card, idx) => {
                   const Icon = card.icon;
                   return (
                       <ScrollReveal key={idx} delay={idx * 50}>
                         <Link href={card.link} className="group relative block h-full">
-                            <div className="h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 hover:-translate-y-3 flex flex-col group">
-                                <div className={`w-16 h-16 rounded-[1.5rem] ${card.bg} flex items-center justify-center mb-8 shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                                    <Icon className="w-8 h-8 text-white" />
+                            <div className="h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col group">
+                                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] ${card.bg} flex items-center justify-center mb-5 md:mb-8 shadow-2xl transform group-hover:scale-110 transition-all duration-500`}>
+                                    <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none tracking-tight">{card.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mb-8 font-semibold uppercase tracking-wide">{card.desc}</p>
-                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-[9px] uppercase tracking-widest gap-3">
-                                    <span>Get Started</span>
-                                    <div className="flex-1 h-[2px] bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-400 transition-all duration-500"></div>
+                                <h3 className="text-base md:text-xl font-black text-slate-900 dark:text-white mb-2 md:mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none tracking-tight uppercase italic">{card.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-[9px] md:text-[11px] leading-relaxed mb-6 md:mb-8 font-black uppercase tracking-wider opacity-70 line-clamp-2">{card.desc}</p>
+                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase tracking-[0.2em] gap-2 md:gap-3">
+                                    <span>Browse</span>
+                                    <div className="flex-1 h-[2.5px] bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-400 transition-all duration-500"></div>
                                 </div>
                             </div>
                         </Link>
@@ -206,34 +206,34 @@ export default async function HomePage() {
 
       {/* 4. PREVIOUS YEAR QUESTIONS */}
       <ScrollReveal>
-        <section className="py-32 bg-slate-100/50 dark:bg-slate-900/30 relative overflow-hidden border-y border-slate-100 dark:border-slate-800/50">
+        <section className="py-16 md:py-32 bg-slate-100/50 dark:bg-slate-900/30 relative overflow-hidden border-y border-slate-100 dark:border-slate-800/50">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 dark:bg-indigo-400/5 -skew-x-12 translate-x-1/2 -z-0"></div>
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-              <div className="text-center mb-24">
-                  <div className="inline-block px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
-                  <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight mb-6 leading-none">Exam Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
-                  <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg font-medium leading-relaxed">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
+          <div className="max-w-7xl mx-auto px-5 md:px-6 relative z-10">
+              <div className="text-center mb-12 md:mb-24">
+                  <div className="inline-block px-3 md:px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-lg mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
+                  <h2 className="text-3xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 md:mb-6 leading-[1.1] md:leading-none uppercase italic">Exam Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed opacity-80">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-10">
                   {segments.map((seg: any, i: number) => (
                       <ScrollReveal key={seg.id} delay={i * 50}>
                         <Link 
                             href={`/resources/${seg.slug}?type=question`} 
-                            className="group flex items-center bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all duration-500 hover:-translate-y-2"
+                            className="group flex items-center bg-white dark:bg-slate-900 p-5 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all duration-500 hover:-translate-y-1.5"
                         >
-                            <div className="w-20 h-20 shrink-0 rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 transition-all duration-500 shadow-inner">
-                                <FileClock className="w-8 h-8 text-slate-400 dark:text-slate-600 group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 md:w-20 md:h-20 shrink-0 rounded-xl md:rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 transition-all duration-500 shadow-inner">
+                                <FileClock className="w-6 h-6 md:w-8 md:h-8 text-slate-400 dark:text-slate-600 group-hover:text-white transition-colors" />
                             </div>
-                            <div className="ml-8">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h4 className="font-bold text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none">{seg.title}</h4>
-                                    <span className="text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-3 py-1 rounded-lg uppercase tracking-widest border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
+                            <div className="ml-4 md:ml-8">
+                                <div className="flex items-center gap-3 mb-1.5 md:mb-2">
+                                    <h4 className="font-black text-base md:text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none uppercase italic">{seg.title}</h4>
+                                    <span className="text-[7px] md:text-[9px] font-black text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-2 md:px-3 py-1 rounded-lg uppercase tracking-[0.2em] border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
                                 </div>
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 line-clamp-1">{getQuestionText(seg.slug)}</p>
-                                <div className="flex items-center gap-6">
-                                    <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+ Solved</span>
-                                    <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-500">View More <ChevronRight className="w-3.5 h-3.5 inline" /></span>
+                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-4 line-clamp-1 opacity-70">{getQuestionText(seg.slug)}</p>
+                                <div className="flex items-center gap-4 md:gap-6">
+                                    <span className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+</span>
+                                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] group-hover:translate-x-1.5 transition-transform duration-500">View <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5 inline" /></span>
                                 </div>
                             </div>
                         </Link>

@@ -51,21 +51,21 @@ export default function SearchResultCard({ item }: { item: SearchResult }) {
   return (
     <Link 
       href={item.url}
-      className="group block bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-indigo-900/5 hover:shadow-2xl dark:hover:shadow-indigo-600/10 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"
+      className="group block bg-white dark:bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-indigo-900/5 hover:shadow-2xl dark:hover:shadow-indigo-600/10 hover:-translate-y-1 md:hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-40 h-40 bg-slate-50 dark:bg-slate-800/50 rounded-full -mr-20 -mt-20 group-hover:bg-indigo-500/10 transition-colors duration-700 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-32 md:w-40 h-32 md:h-40 bg-slate-50 dark:bg-slate-800/50 rounded-full -mr-16 md:-mr-20 -mt-16 md:-mt-20 group-hover:bg-indigo-500/10 transition-colors duration-700 pointer-events-none"></div>
       
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-8">
-           <div className={`p-5 rounded-2xl ${config.bg} dark:bg-slate-800 ${config.color} dark:${config.darkColor} group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 transition-all duration-500 shadow-inner`}>
-              <Icon className="w-7 h-7" />
+        <div className="flex items-start justify-between mb-4 md:mb-8">
+           <div className={`p-3 md:p-5 rounded-xl md:rounded-2xl ${config.bg} dark:bg-slate-800 ${config.color} dark:${config.darkColor} group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 transition-all duration-500 shadow-inner`}>
+              <Icon className="w-5 h-5 md:w-7 md:h-7" />
            </div>
-           <span className={`text-[9px] font-black uppercase tracking-widest px-5 py-2 ${config.bg} dark:bg-indigo-500/10 ${config.color} dark:text-indigo-400 rounded-xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500 group-hover:text-indigo-600 dark:group-hover:text-white transition-all duration-500 border border-transparent dark:border-indigo-500/20`}>
+           <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest px-3 md:px-5 py-1.5 md:py-2 ${config.bg} dark:bg-indigo-500/10 ${config.color} dark:text-indigo-400 rounded-lg md:rounded-xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500 group-hover:text-indigo-600 dark:group-hover:text-white transition-all duration-500 border border-transparent dark:border-indigo-500/20`}>
               {item.displayType}
            </span>
         </div>
 
-        <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 line-clamp-2 uppercase tracking-tighter leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
+        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-3 md:mb-4 line-clamp-2 uppercase tracking-tighter leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
           {item.title}
         </h3>
 
@@ -73,15 +73,15 @@ export default function SearchResultCard({ item }: { item: SearchResult }) {
           {item.description || "Discover premium academic insights and structured learning resources designed specifically for your success."}
         </p>
 
-        <div className="pt-8 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
-           <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-              <Calendar className="w-4 h-4 text-indigo-400" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+        <div className="pt-4 md:pt-8 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
+           <div className="flex items-center gap-2 md:gap-3 text-slate-400 dark:text-slate-500">
+              <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em]">
                 {formatDate(item.created_at)}
               </span>
            </div>
-           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-500">
-              Access Now <ChevronRight className="w-4 h-4" />
+           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest md:group-hover:translate-x-2 transition-transform duration-500">
+              Access Now <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
            </div>
         </div>
       </div>

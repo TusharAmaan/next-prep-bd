@@ -128,9 +128,9 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
-      <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pt-32 pb-20 relative transition-colors duration-300 ${bengaliFont.className}`}>
+      <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pt-24 md:pt-32 pb-16 md:pb-20 relative transition-colors duration-300 ${bengaliFont.className}`}>
         <TypographyScaler />
-        <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-12 relative">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 xl:grid-cols-12 gap-8 md:gap-12 relative">
           
           {/* LEFT TOC */}
           <aside className="hidden xl:block xl:col-span-2 relative">
@@ -154,12 +154,12 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
                   isLoggedIn={isLoggedIn}
               />
 
-              <div className="mt-16 comments-section print:hidden bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 md:p-12 shadow-sm transition-colors">
-                  <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-8 flex items-center gap-4 uppercase tracking-tighter">
-                      <span className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl shadow-sm">💬</span>
+              <div className="mt-12 md:mt-16 comments-section print:hidden bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-6 md:p-12 shadow-sm transition-colors">
+                  <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white mb-6 md:mb-8 flex items-center gap-3 md:gap-4 uppercase tracking-tighter">
+                      <span className="p-2.5 md:p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-2xl shadow-sm">💬</span>
                       Community Solutions
                   </h3>
-                  <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 min-h-[100px] flex justify-center border border-slate-100 dark:border-slate-800 shadow-inner">
+                  <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl md:rounded-3xl p-4 md:p-6 min-h-[100px] flex justify-center border border-slate-100 dark:border-slate-800 shadow-inner">
                       <Discussion itemType="question" itemId={post.id.toString()} />
                   </div>
               </div>

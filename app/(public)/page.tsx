@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
+import { Apple, PlayCircle } from "lucide-react";
 
 // Revalidate data every 60 seconds (keeps homepage fresh)
 export const revalidate = 30;
@@ -26,40 +27,40 @@ export default async function HomePage() {
       {/* =========================================
           1. HERO SECTION
          ========================================= */}
-      <section className="relative bg-slate-900 text-white pt-36 pb-32 px-6 overflow-hidden">
+      <section className="relative bg-slate-900 text-white pt-28 md:pt-36 pb-20 md:pb-32 px-5 md:px-6 overflow-hidden">
         
         {/* Background Gradients */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/30 rounded-full blur-[120px] animate-pulse"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
+            <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-600/30 rounded-full blur-[80px] md:blur-[120px] animate-pulse"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-indigo-600/20 rounded-full blur-[80px] md:blur-[120px]"></div>
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-sm font-semibold text-blue-100 mb-8 shadow-lg">
-                <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 px-3 md:px-4 py-1.5 rounded-full text-[11px] md:text-sm font-semibold text-blue-100 mb-6 md:mb-8 shadow-lg">
+                <span className="relative flex h-1.5 md:h-2 w-1.5 md:w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 md:h-2 w-1.5 md:w-2 bg-green-500"></span>
                 </span>
                 Bangladesh's #1 Education Portal
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
+            <h1 className="text-4xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1] uppercase">
                 Master Your Exams with <br/> 
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">NextPrepBD</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-xl text-slate-300 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed font-medium opacity-90">
                 Access thousands of free notes, question banks, video classes, and job preparation materials in one place.
             </p>
 
             {/* Search Bar */}
-            <div className="bg-white p-2 rounded-2xl max-w-2xl mx-auto flex shadow-2xl transform transition-transform hover:scale-[1.01]">
+            <div className="bg-white p-1 md:p-2 rounded-xl md:rounded-2xl max-w-2xl mx-auto flex shadow-2xl transform transition-transform hover:scale-[1.01]">
                 <input 
                     type="text" 
-                    placeholder="What do you want to learn today?" 
-                    className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 px-6 py-4 text-lg"
+                    placeholder="Search resources..." 
+                    className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 px-4 md:px-6 py-3 md:py-4 text-sm md:text-lg font-bold"
                 />
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-md">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg md:rounded-xl font-black text-sm md:text-lg transition-all shadow-md uppercase tracking-widest">
                     Search
                 </button>
             </div>
@@ -69,19 +70,19 @@ export default async function HomePage() {
       {/* =========================================
           2. LIVE STATS COUNTER (Updated with SVGs)
          ========================================= */}
-      <section className="max-w-6xl mx-auto px-6 relative z-20 -mt-20">
-        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-8 md:p-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+      <section className="max-w-6xl mx-auto px-5 md:px-6 relative z-20 -mt-12 md:-mt-20">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-6 md:p-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:divide-x divide-slate-100">
                 
                 {/* Stat 1: Materials */}
-                <div className="flex items-center gap-5 px-4">
-                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm transition-transform hover:scale-110">
+                <div className="flex items-center gap-4 md:gap-5 px-2 md:px-4">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-50 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 shadow-sm transition-transform hover:scale-110">
                         {/* Document Icon */}
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
-                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-1">Study Notes</p>
+                        <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">5,000+</h3>
+                        <p className="text-[10px] md:text-sm font-black text-slate-500 uppercase tracking-[0.15em] mt-1">Study Notes</p>
                     </div>
                 </div>
 
@@ -116,20 +117,20 @@ export default async function HomePage() {
       {/* =========================================
           3. BROWSE CATEGORIES
          ========================================= */}
-      <section className="py-24 max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-            <h2 className="text-3xl font-extrabold text-slate-900">Explore by Category</h2>
-            <div className="w-20 h-1 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+      <section className="py-16 md:py-24 max-w-7xl mx-auto px-5 md:px-6">
+        <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter">Explore by Category</h2>
+            <div className="w-16 md:w-20 h-1 bg-blue-600 mx-auto mt-3 md:mt-4 rounded-full"></div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {segments.map((seg: any, i: number) => (
-                <Link href={`/category/${seg.id}`} key={seg.id} className="group bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 transition-all text-center">
-                    <div className="w-16 h-16 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                <Link href={`/category/${seg.id}`} key={seg.id} className="group bg-white p-6 md:p-8 rounded-xl md:rounded-2xl border border-slate-200 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 transition-all text-center">
+                    <div className="w-12 h-12 md:w-16 md:h-16 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-2xl md:text-3xl mb-4 md:mb-6 group-hover:scale-110 transition-transform shadow-inner">
                         {/* Dynamic Emoji Mapping */}
                         {i === 0 ? '📘' : i === 1 ? '🎓' : i === 2 ? '🏛️' : '💼'}
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">{seg.title}</h3>
-                    <div className="flex items-center justify-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-blue-600">
+                    <h3 className="font-black text-base md:text-lg text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{seg.title}</h3>
+                    <div className="flex items-center justify-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-blue-600">
                         <span>Browse</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
@@ -141,42 +142,42 @@ export default async function HomePage() {
       {/* =========================================
           3.5 COMPREHENSIVE LESSON PLAN TEASER
          ========================================= */}
-      <section className="py-24 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center gap-12">
+        <div className="max-w-7xl mx-auto px-5 md:px-6 relative z-10 flex flex-col lg:flex-row items-center gap-10 md:gap-12">
             <div className="flex-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/30 px-4 py-1.5 rounded-full text-xs font-black text-indigo-300 mb-6 uppercase tracking-widest">
+                <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/30 px-3 md:px-4 py-1 rounded-full text-[9px] font-black text-indigo-300 mb-6 uppercase tracking-widest">
                    New Release ✨
                 </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-6 leading-none italic">
+                <h2 className="text-3xl md:text-6xl font-black tracking-tighter uppercase mb-6 leading-tight">
                    Comprehensive <br/> <span className="text-indigo-500">Lesson Plans</span>
                 </h2>
-                <p className="text-slate-400 text-lg mb-10 max-w-xl font-medium leading-relaxed">
+                <p className="text-slate-400 text-base md:text-lg mb-8 md:mb-10 max-w-xl font-medium leading-relaxed opacity-90">
                    Experience the most structured curriculum ever built. Every unit, every lesson, and every small topic perfectly organized for your success.
                 </p>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                   <Link href="/curriculum" className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-white hover:text-indigo-600 transition-all shadow-2xl shadow-indigo-600/20 active:scale-95">Explore Syllabus</Link>
+                   <Link href="/curriculum" className="px-8 md:px-10 py-4 md:py-5 bg-indigo-600 text-white rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white hover:text-indigo-600 transition-all shadow-2xl shadow-indigo-600/20 active:scale-95">Explore Syllabus</Link>
                 </div>
             </div>
-            <div className="flex-1 grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem] transform translate-y-8">
-                      <div className="w-12 h-12 bg-indigo-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-indigo-500/40 font-black">1</div>
-                      <h4 className="font-bold uppercase tracking-tight text-white">Unit-wise Organization</h4>
+            <div className="flex-1 grid grid-cols-2 gap-3 md:gap-4 max-w-lg lg:max-w-none">
+                <div className="space-y-3 md:space-y-4">
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] md:transform md:translate-y-8">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 flex items-center justify-center shadow-lg shadow-indigo-500/40 font-black text-sm md:text-base">1</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white text-xs md:text-sm">Unit-wise Organization</h4>
                    </div>
-                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem]">
-                      <div className="w-12 h-12 bg-pink-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-pink-500/40 font-black">2</div>
-                      <h4 className="font-bold uppercase tracking-tight text-white">Lesson-detail Breakdown</h4>
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem]">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-pink-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 flex items-center justify-center shadow-lg shadow-pink-500/40 font-black text-sm md:text-base">2</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white text-xs md:text-sm">Lesson Breakdown</h4>
                    </div>
                 </div>
-                <div className="space-y-4 pt-12">
-                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem]">
-                      <div className="w-12 h-12 bg-emerald-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-black">3</div>
-                      <h4 className="font-bold uppercase tracking-tight text-white">Interactive Exercises</h4>
+                <div className="space-y-3 md:space-y-4 pt-8 md:pt-12">
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem]">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-black text-sm md:text-base">3</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white text-xs md:text-sm">Practical Exercises</h4>
                    </div>
-                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-[2.5rem] transform lg:-translate-y-8">
-                      <div className="w-12 h-12 bg-amber-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-amber-500/40 font-black">4</div>
-                      <h4 className="font-bold uppercase tracking-tight text-white">Exam Integration</h4>
+                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] md:transform md:lg:-translate-y-8">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 flex items-center justify-center shadow-lg shadow-amber-500/40 font-black text-sm md:text-base">4</div>
+                      <h4 className="font-bold uppercase tracking-tight text-white text-xs md:text-sm">Exam Integration</h4>
                    </div>
                 </div>
             </div>
@@ -304,39 +305,35 @@ export default async function HomePage() {
       {/* =========================================
           6. APP DOWNLOAD CTA
          ========================================= */}
-      <section className="bg-white border-t border-slate-200 py-24 px-6">
-        <div className="max-w-5xl mx-auto bg-black rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
+      <section className="bg-white border-t border-slate-200 py-16 md:py-24 px-5 md:px-6">
+        <div className="max-w-5xl mx-auto bg-black rounded-[1.5rem] md:rounded-[3rem] p-8 md:p-24 text-center relative overflow-hidden shadow-2xl">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-40"></div>
             <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600 rounded-full blur-[100px] opacity-40"></div>
 
             <div className="relative z-10">
-                <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">Study Anytime, Anywhere.</h2>
-                <p className="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+                <h2 className="text-3xl md:text-6xl font-black text-white mb-6 tracking-tight uppercase">Study Anywhere.</h2>
+                <p className="text-slate-400 text-base md:text-xl mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium opacity-90">
                     Download the NextPrepBD app to save notes offline, take quizzes on the go, and get instant notifications about exams.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row justify-center gap-5">
+                <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5">
                     {/* APP STORE BUTTON */}
-                    <button className="flex items-center gap-4 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition group shadow-xl hover:scale-105 transform duration-200">
-                       <svg className="w-8 h-8 fill-current" viewBox="0 0 384 512">
-                           <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 79.9c5.2 14.7 19.7 42.9 44.9 77.1 19.3 26.2 38.3 49 63.6 49 19.7 0 32.2-12.7 63-12.7 29.5 0 40.7 12.7 62.7 12.7 26.5 0 42.6-20.4 63.3-48.8 17.5-23.7 28.1-46.5 37-67.6-33.8-13.7-54.3-43.2-54.2-74.5zm-59.3-132.2c16.3-18.8 30.2-46.5 25.1-75.1-23.9 1.5-51.7 15.6-67.3 34.2-13.7 16.2-25.2 41.7-22 72.9 26.9 2.1 53.6-13.1 64.2-32z"/>
-                       </svg>
+                    <button className="flex items-center gap-3 md:gap-4 bg-white text-black px-6 md:px-8 py-3.5 md:py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-slate-200 transition group shadow-xl hover:scale-105 transform duration-200">
+                       <Apple className="w-6 h-6 md:w-8 md:h-8" fill="currentColor" />
                        <div className="text-left leading-none">
-                           <div className="text-[10px] uppercase font-bold text-gray-500 mb-1">Download on the</div>
-                           <div className="text-xl font-black">App Store</div>
+                           <div className="text-[7px] md:text-[8px] font-bold text-slate-500 mb-1">Download on the</div>
+                           <div className="text-base md:text-xl">App Store</div>
                        </div>
                     </button>
 
                     {/* GOOGLE PLAY BUTTON */}
-                    <button className="flex items-center gap-4 bg-white/10 backdrop-blur border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition group shadow-xl hover:scale-105 transform duration-200">
-                       <svg className="w-8 h-8 fill-current" viewBox="0 0 512 512">
-                           <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
-                       </svg>
+                    <button className="flex items-center gap-3 md:gap-4 bg-white/10 backdrop-blur border border-white/20 text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-white/20 transition group shadow-xl hover:scale-105 transform duration-200">
+                       <PlayCircle className="w-6 h-6 md:w-8 md:h-8" fill="currentColor" />
                        <div className="text-left leading-none">
-                           <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">GET IT ON</div>
-                           <div className="text-xl font-black">Google Play</div>
+                           <div className="text-[7px] md:text-[8px] font-bold text-slate-400 mb-1">GET IT ON</div>
+                           <div className="text-base md:text-xl">Google Play</div>
                        </div>
                     </button>
                 </div>

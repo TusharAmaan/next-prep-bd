@@ -193,29 +193,29 @@ export default function Sidebar() {
   return (
     <div className="space-y-6 font-sans text-slate-800">
       {/* 1. SEARCH WIDGET */}
-      <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 focus-within:border-indigo-300 focus-within:ring-4 focus-within:ring-indigo-50 transition-all">
+      <div className="bg-white dark:bg-slate-900 p-1 md:p-1.5 rounded-xl md:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 focus-within:border-indigo-300 focus-within:ring-4 focus-within:ring-indigo-50 dark:focus-within:ring-indigo-900/20 transition-all">
         <form onSubmit={handleSearch} className="relative group">
           <input
             type="text"
-            placeholder="Search resources, blog, questions..."
-            className="w-full bg-slate-50 text-slate-900 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold placeholder:text-slate-400 outline-none transition-colors font-sans"
+            placeholder="Search resources..."
+            className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg md:rounded-xl pl-10 md:pl-12 pr-4 py-3 md:py-3.5 text-sm font-bold placeholder:text-slate-400 outline-none transition-colors font-sans"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-            <Search className="w-5 h-5" />
+          <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+            <Search className="w-4 h-4 md:w-5 md:h-5" />
           </div>
         </form>
       </div>
 
       {/* 2. EXPLORE SECTIONS */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-3.5">
-          <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
-            <LayoutGrid className="h-4 w-4 text-indigo-500" />
+      <div className="overflow-hidden rounded-xl md:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 dark:from-indigo-950/30 dark:to-emerald-950/30 px-4 py-3 md:py-3.5">
+          <h3 className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300 font-sans">
+            <LayoutGrid className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-500" />
             Explore Segments
           </h3>
-          <p className="mt-1 text-[11px] text-slate-500 font-sans">
+          <p className="mt-1 text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 font-sans opacity-80">
             Jump directly into the resources you care about.
           </p>
         </div>
@@ -259,20 +259,20 @@ export default function Sidebar() {
       </div>
 
       {/* 3. LATEST MATERIALS */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50/70 px-4 pt-3.5 pb-3">
+      <div className="overflow-hidden rounded-xl md:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 px-4 py-3 md:py-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
-                <FileText className="h-4 w-4 text-blue-500" />
+              <h3 className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300 font-sans">
+                <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500" />
                 Latest Materials
               </h3>
-              <p className="mt-1 text-[11px] text-slate-500 font-sans">
+              <p className="mt-1 text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 font-sans opacity-80">
                 Fresh PDFs, videos & blogs for your study.
               </p>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-blue-500 shadow-sm">
-              <FileText className="h-4 w-4" />
+            <div className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-slate-800 text-blue-500 shadow-sm border border-slate-100 dark:border-slate-700">
+              <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </div>
           </div>
 

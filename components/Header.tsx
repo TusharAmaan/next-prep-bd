@@ -436,7 +436,7 @@ export default function Header() {
                     {profile?.full_name?.[0] || "U"}
                 </Link>
             )}
-            <button onClick={() => setIsMobileOpen(true)} className={`p-2 rounded-xl transition-all active:scale-90 ${isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'}`}>
+            <button onClick={() => setIsMobileOpen(true)} className={`p-2.5 rounded-2xl transition-all active:scale-90 ${isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'}`}>
                 <Menu className="w-6 h-6" />
             </button>
         </div>
@@ -451,15 +451,15 @@ export default function Header() {
     />
     
     {/* --- MOBILE SIDEBAR --- */}
-    <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] z-[130] transform transition-all duration-400 ease-out lg:hidden flex flex-col shadow-2xl border-l ${isDark ? 'bg-slate-900 border-slate-800 shadow-slate-950/80' : 'bg-white border-slate-100 shadow-slate-200/50'} ${isMobileOpen ? "translate-x-0" : "translate-x-full"}`}>
+    <div className={`fixed top-0 right-0 h-full w-[88%] sm:w-[320px] z-[130] transform transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] lg:hidden flex flex-col shadow-2xl border-l ${isDark ? 'bg-slate-900 border-slate-800 shadow-slate-950/80' : 'bg-white border-slate-100 shadow-slate-200/50'} ${isMobileOpen ? "translate-x-0" : "translate-x-full"}`}>
         
         {/* Sidebar Header */}
         <div className={`p-5 flex justify-between items-center border-b ${isDark ? 'border-slate-800' : 'border-slate-50'}`}>
-            <span className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <span className={`font-black text-xl flex items-center gap-2 tracking-tighter italic ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 <Image src="/icon.png" alt="Logo" width={28} height={28} className="object-contain" /> 
                 NextPrep<span className="text-indigo-600 dark:text-indigo-400">BD</span>
             </span>
-            <button onClick={() => setIsMobileOpen(false)} className={`p-2 rounded-xl transition-colors ${isDark ? 'bg-slate-800 text-slate-400 hover:text-red-400' : 'bg-slate-50 text-slate-500 hover:text-red-500 hover:bg-red-50'}`}>
+            <button onClick={() => setIsMobileOpen(false)} className={`p-2.5 rounded-2xl transition-all active:scale-90 ${isDark ? 'bg-slate-800 text-slate-400 hover:text-red-400' : 'bg-slate-50 text-slate-500 hover:text-red-500 hover:bg-red-50'}`}>
                 <X className="w-5 h-5" />
             </button>
         </div>

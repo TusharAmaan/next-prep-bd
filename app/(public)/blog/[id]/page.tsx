@@ -137,8 +137,14 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
                  bengaliFontClass={bengaliFont.className}
                  isLoggedIn={isLoggedIn}
               />
-              <div className="mt-12 comments-section print:hidden">
-                  <Discussion itemType="blog" itemId={post.id.toString()} />
+              <div className="mt-12 md:mt-16 comments-section print:hidden bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-6 md:p-12 shadow-sm transition-colors">
+                  <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white mb-6 md:mb-8 flex items-center gap-3 md:gap-4 uppercase tracking-tighter">
+                      <span className="p-2.5 md:p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-2xl shadow-sm">💬</span>
+                      Community Discussion
+                  </h3>
+                  <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl md:rounded-3xl p-4 md:p-6 min-h-[100px] flex justify-center border border-slate-100 dark:border-slate-800 shadow-inner">
+                      <Discussion itemType="blog" itemId={post.id.toString()} />
+                  </div>
               </div>
               <div className="xl:hidden">
                   <BlogTOC content={post.content_body || ""} />

@@ -22,7 +22,7 @@ interface LectureSheetShowcaseProps {
 
 const LectureSheetShowcase = ({ isLoggedIn }: LectureSheetShowcaseProps) => {
   return (
-    <section className="py-32 bg-slate-900 text-white relative overflow-hidden transition-colors duration-500 border-y border-white/5">
+    <section className="py-16 md:py-32 bg-slate-900 text-white relative overflow-hidden transition-colors duration-500 border-y border-white/5">
       {/* Background Patterns */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-500 to-transparent skew-x-12 translate-x-1/4"></div>
@@ -30,52 +30,52 @@ const LectureSheetShowcase = ({ isLoggedIn }: LectureSheetShowcaseProps) => {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
+      <div className="max-w-7xl mx-auto px-5 md:px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 items-center">
           
           {/* Left: Content */}
-          <div className="lg:col-span-6 space-y-12">
+          <div className="lg:col-span-6 space-y-8 md:space-y-12">
             <div className="animate-in fade-in slide-in-from-left-4 duration-1000">
-              <span className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] mb-10">
-                <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span className="inline-flex items-center gap-2.5 md:gap-3 px-4 md:px-6 py-1.5 md:py-2 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 text-indigo-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-8 md:mb-10 shadow-sm">
+                <Zap className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-400 fill-amber-400" />
                 Lecture Sheet Ecosystem
               </span>
-              <h2 className="text-5xl md:text-8xl font-black leading-[0.9] mb-10 uppercase tracking-tighter">
+              <h2 className="text-3xl md:text-8xl font-black leading-[1] md:leading-[0.9] mb-6 md:mb-10 uppercase tracking-tighter italic">
                 Missing a Sheet?<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Ask. We Deliver.</span>
               </h2>
-              <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
+              <p className="text-base md:text-xl text-slate-400 font-medium leading-relaxed max-w-xl opacity-90">
                 Our on-demand system ensures you never fall behind. Request any specific topic, and our expert academic network will engineer it for you within 24 hours.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-              <div className="flex gap-6 group">
-                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-indigo-400 shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700 border border-white/5 shadow-2xl">
-                  <Search className="w-8 h-8" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-10">
+              <div className="flex gap-4 md:gap-6 group">
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-white/5 rounded-xl md:rounded-2xl flex items-center justify-center text-indigo-400 shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700 border border-white/5 shadow-2xl">
+                  <Search className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
                 <div>
-                  <h3 className="font-black text-white text-lg mb-3 uppercase tracking-tighter leading-none">Discovery Search</h3>
-                  <p className="text-xs text-slate-500 font-black uppercase tracking-widest leading-loose">Browse thousands of pre-verified academic journals.</p>
+                  <h3 className="font-black text-white text-base md:text-lg mb-2 md:mb-3 uppercase tracking-tighter leading-none italic">Discovery Search</h3>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-relaxed">Browse thousands of pre-verified academic journals.</p>
                 </div>
               </div>
 
-              <div className="flex gap-6 group">
-                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-purple-400 shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-all duration-700 border border-white/5 shadow-2xl">
-                  <Send className="w-8 h-8" />
+              <div className="flex gap-4 md:gap-6 group">
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-white/5 rounded-xl md:rounded-2xl flex items-center justify-center text-purple-400 shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-all duration-700 border border-white/5 shadow-2xl">
+                  <Send className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
                 <div>
-                  <h3 className="font-black text-white text-lg mb-3 uppercase tracking-tighter leading-none">Rapid Request</h3>
-                  <p className="text-xs text-slate-500 font-black uppercase tracking-widest leading-loose">On-demand creation if a topic is missing from archive.</p>
+                  <h3 className="font-black text-white text-base md:text-lg mb-2 md:mb-3 uppercase tracking-tighter leading-none italic">Rapid Request</h3>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-relaxed">On-demand creation if a topic is missing from archive.</p>
                 </div>
               </div>
             </div>
 
-            <div className="pt-10 flex flex-col sm:flex-row gap-8">
-              <Link href={isLoggedIn ? "/feedback" : "/login"} className="px-12 py-6 bg-white text-slate-950 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-2xl shadow-white/5 active:scale-95 flex items-center justify-center gap-4 group/btn duration-500">
-                Request Strategy <ArrowUpRight className="w-5 h-5 group-hover/btn:translate-x-2 group-hover/btn:-translate-y-2 transition-transform" />
+            <div className="pt-8 md:pt-10 flex flex-col sm:flex-row gap-4 md:gap-8">
+              <Link href={isLoggedIn ? "/feedback" : "/login"} className="px-10 md:px-12 py-4 md:py-6 bg-white text-slate-950 rounded-xl md:rounded-3xl font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-2xl shadow-white/5 active:scale-95 flex items-center justify-center gap-3 md:gap-4 group/btn duration-500">
+                Request Strategy <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-2 group-hover/btn:-translate-y-2 transition-transform" />
               </Link>
-              <Link href="/resources/hsc" className="px-12 py-6 bg-white/5 border border-white/10 hover:border-white/20 text-white rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center duration-500">
+              <Link href="/resources/hsc" className="px-10 md:px-12 py-4 md:py-6 bg-white/5 border border-white/10 hover:border-white/20 text-white rounded-xl md:rounded-3xl font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center duration-500">
                 Research Archive
               </Link>
             </div>
