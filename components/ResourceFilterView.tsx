@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Search, Filter, FileText, PlayCircle, HelpCircle, 
-  ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X 
+  ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X, ArrowRight 
 } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import Pagination from "@/components/shared/Pagination";
