@@ -1,56 +1,57 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles, Smartphone, Apple, PlayCircle, X, ChevronRight } from "lucide-react";
 
 export default function ProfessionalAppBanner() {
   const [showPopup, setShowPopup] = useState(false);
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#0F172A] rounded-2xl shadow-2xl border border-slate-800 isolate">
+      <section className="relative overflow-hidden bg-slate-900 rounded-[3rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border border-white/5 isolate group">
         {/* Background Gradients for 'Premium' feel */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl"></div>
+        <div className="absolute top-0 right-0 -mr-40 -mt-20 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px] group-hover:bg-indigo-600/20 transition-all duration-1000"></div>
+        <div className="absolute bottom-0 left-0 -ml-40 -mb-20 w-[600px] h-[600px] rounded-full bg-purple-600/10 blur-[120px] group-hover:bg-purple-600/20 transition-all duration-1000"></div>
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 p-10 items-center">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 p-12 md:p-16 items-center">
           
           {/* Text Content */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-800 text-blue-400 text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-              Coming Soon
+          <div className="lg:col-span-7 space-y-8">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              Unified Learning Experience
             </div>
             
-            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
-              Take your prep <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">to the next level.</span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.9] uppercase">
+              Master your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Preparation.</span>
             </h2>
             
-            <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
-              Download the official NextPrepBD app to access offline syllabus, get instant routine updates, and track your exam progress.
+            <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-xl font-medium">
+              Join thousands of students using the official NextPrepBD app for offline access, instant notifications, and personalized exam tracking.
             </p>
 
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="flex flex-wrap gap-6 pt-4">
               {/* Apple Button */}
               <button 
                 onClick={() => setShowPopup(true)}
-                className="group flex items-center gap-3 bg-white text-slate-900 px-5 py-3 rounded-lg font-semibold hover:bg-slate-200 transition-all active:scale-95"
+                className="group/btn flex items-center gap-4 bg-white text-slate-950 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95"
               >
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.45C5.62,7.91 7.2,6.97 8.92,7C10.5,7.06 11.5,7.97 12.47,7.97C13.4,7.97 14.66,6.89 16.57,7C17.3,7.06 19.3,7.3 20.5,9C20.35,9.1 18.25,10.29 18.29,13C18.3,15.37 20.21,16.84 20.73,17.47L20.69,17.56C20.69,17.56 19.95,19.34 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.37 12.36,4.26 13,3.5Z" /></svg>
+                <Apple className="w-6 h-6" fill="currentColor" />
                 <div className="text-left leading-none">
-                  <div className="text-[10px] uppercase font-bold text-slate-500 mb-1">Download on</div>
-                  <div className="text-sm">App Store</div>
+                  <div className="text-[8px] opacity-40 mb-1">Available on</div>
+                  <div className="text-xs">App Store</div>
                 </div>
               </button>
 
               {/* Android Button */}
               <button 
                 onClick={() => setShowPopup(true)}
-                className="group flex items-center gap-3 bg-slate-800 text-white px-5 py-3 rounded-lg font-semibold border border-slate-700 hover:bg-slate-700 hover:border-slate-600 transition-all active:scale-95"
+                className="group/btn flex items-center gap-4 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 active:scale-95"
               >
-                <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="currentColor"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" /></svg>
+                <PlayCircle className="w-6 h-6" fill="currentColor" />
                 <div className="text-left leading-none">
-                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Get it on</div>
-                  <div className="text-sm">Google Play</div>
+                  <div className="text-[8px] opacity-60 mb-1">Get it on</div>
+                  <div className="text-xs">Google Play</div>
                 </div>
               </button>
             </div>
@@ -58,15 +59,23 @@ export default function ProfessionalAppBanner() {
 
           {/* Visual/Phone Mockup */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-48 h-[300px] bg-slate-900 border-[8px] border-slate-800 rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden">
+            <div className="relative w-64 h-[420px] bg-slate-950 border-[12px] border-slate-800 rounded-[3.5rem] shadow-2xl flex items-center justify-center overflow-hidden transform lg:rotate-6 group-hover:rotate-0 transition-transform duration-700">
                 {/* Mockup Screen */}
-                <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center space-y-3 p-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold">N</div>
-                    <div className="space-y-2 w-full">
-                        <div className="h-2 bg-slate-800 rounded w-3/4 mx-auto"></div>
-                        <div className="h-2 bg-slate-800 rounded w-1/2 mx-auto"></div>
+                <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center space-y-6 p-8">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-indigo-600/50">N</div>
+                    <div className="space-y-3 w-full">
+                        <div className="h-2.5 bg-slate-800 rounded-full w-4/5 mx-auto"></div>
+                        <div className="h-2.5 bg-slate-900 rounded-full w-3/5 mx-auto opacity-50"></div>
+                    </div>
+                    <div className="pt-8 w-full flex flex-col gap-2">
+                        <div className="h-10 bg-indigo-600/20 rounded-xl border border-indigo-500/20 flex items-center justify-center">
+                            <div className="w-3 h-3 rounded-full bg-indigo-500/50"></div>
+                        </div>
+                        <div className="h-10 bg-white/5 rounded-xl border border-white/5"></div>
                     </div>
                 </div>
+                {/* Gloss effect */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none"></div>
             </div>
           </div>
         </div>
@@ -74,29 +83,29 @@ export default function ProfessionalAppBanner() {
 
       {/* POPUP MODAL */}
       {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center relative animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl p-12 max-w-md w-full text-center relative animate-in zoom-in-95 duration-300 border border-slate-100 dark:border-slate-800">
             <button 
               onClick={() => setShowPopup(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 bg-slate-50 rounded-full"
+              className="absolute top-8 right-8 text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 dark:bg-slate-800 p-2 rounded-xl"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <X className="w-5 h-5" />
             </button>
             
-            <div className="w-14 h-14 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl border border-slate-200">
+            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-4xl border border-indigo-100 dark:border-indigo-800 shadow-inner">
               🚀
             </div>
             
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Coming Soon!</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              We are putting the final touches on the app. It will be available on Play Store and App Store very soon.
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter">Preparing Launch</h3>
+            <p className="text-lg text-slate-500 dark:text-slate-400 mb-10 font-medium leading-relaxed">
+              We are currently in the final engineering phase. The NextPrepBD ecosystem will be live on all app stores very soon.
             </p>
             
             <button 
               onClick={() => setShowPopup(false)}
-              className="w-full py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200"
+              className="w-full py-5 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-600/30 active:scale-95"
             >
-              Okay, I'll wait
+              Confirm Engagement
             </button>
           </div>
         </div>

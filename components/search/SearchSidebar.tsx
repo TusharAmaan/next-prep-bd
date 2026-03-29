@@ -37,13 +37,13 @@ interface SearchSidebarProps {
 
 export default function SearchSidebar({ activeType, onTypeChange, totalResults }: SearchSidebarProps) {
   return (
-    <div className="space-y-8 sticky top-24">
-      <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
-        <h3 className="text-xl font-black text-slate-900 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 rounded-xl">
-            <Filter className="w-5 h-5 text-indigo-600" />
+    <div className="space-y-8 sticky top-32">
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-indigo-900/10 animate-in fade-in slide-in-from-left-4 duration-700">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 flex items-center gap-4 uppercase tracking-tighter">
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
+            <Filter className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
-          Filter by Type
+          Refine Results
         </h3>
 
         <div className="space-y-3">
@@ -55,30 +55,30 @@ export default function SearchSidebar({ activeType, onTypeChange, totalResults }
               <button
                 key={f.id}
                 onClick={() => onTypeChange(f.id)}
-                className={`w-full group flex items-center justify-between px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 transform active:scale-95 ${
+                className={`w-full group flex items-center justify-between px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 transform active:scale-95 ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100 translate-x-1"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100"
+                    ? "bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30 translate-x-1"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border border-transparent hover:border-slate-100 dark:hover:border-slate-700 hover:translate-x-1"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-600"}`} />
+                <div className="flex items-center gap-4">
+                  <Icon className={`w-4 h-4 transition-transform duration-500 group-hover:scale-125 ${isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"}`} />
                   {f.label}
                 </div>
-                <ChevronRight className={`w-3.5 h-3.5 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`} />
+                <ChevronRight className={`w-3.5 h-3.5 transition-all duration-500 ${isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"}`} />
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
-         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-         <h4 className="text-lg font-black mb-3 leading-tight relative z-10">Can't find what you're looking for?</h4>
-         <p className="text-slate-400 text-xs mb-6 font-medium leading-relaxed relative z-10">Try searching for broader keywords like "SSC" or "HSC" to see all related materials.</p>
-         <div className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-            {totalResults} Live Results
+      <div className="bg-slate-900 dark:bg-indigo-950 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl group border border-white/5">
+         <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-400/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:scale-150 transition-transform duration-1000"></div>
+         <h4 className="text-xl font-black mb-4 uppercase tracking-tighter leading-none relative z-10">Searching <br/>Problems?</h4>
+         <p className="text-slate-400 text-[10px] mb-8 font-black uppercase tracking-widest leading-loose relative z-10">Try generic keywords like "SSC" or "Admission" for better results.</p>
+         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 bg-indigo-400/10 px-4 py-2 rounded-xl flex items-center gap-3 w-fit border border-indigo-400/20 relative z-10">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_15px_rgba(129,140,248,0.5)]"></span>
+            {totalResults} Live Records
          </div>
       </div>
     </div>

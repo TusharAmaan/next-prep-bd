@@ -13,7 +13,7 @@ export default function ResourceFilterView({
   initialType, 
   initialCategory, 
   segmentTitle,
-  segmentSlug // Required for the specific update link format
+  segmentSlug 
 }: { 
   items: any[], 
   initialType: string, 
@@ -25,13 +25,11 @@ export default function ResourceFilterView({
   const [activeSubject, setActiveSubject] = useState("All");
   const [search, setSearch] = useState("");
   
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   const isUpdatePage = initialType === 'update';
 
-  // 1. SMART DYNAMIC EXTRACTION
   const { categories, subjects } = useMemo(() => {
     const cats = new Set<string>();
     const subs = new Set<string>();
@@ -55,12 +53,10 @@ export default function ResourceFilterView({
     };
   }, [items]);
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeCategory, activeSubject, search]);
 
-  // 2. FILTERING LOGIC
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchCategory = activeCategory === "All" || item.category === activeCategory;
@@ -76,46 +72,43 @@ export default function ResourceFilterView({
     });
   }, [items, activeCategory, activeSubject, search]);
 
-  // 3. PAGINATION LOGIC
   const totalPages = Math.ceil(filteredItems.length / pageSize);
   const paginatedItems = filteredItems.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // 4. UI CONFIGURATION
   const getItemConfig = (type: string, item: any) => {
     switch(type) {
       case 'pdf': 
         return { 
           icon: <FileText className="w-6 h-6 text-red-500" />, 
-          bgColor: 'bg-red-50',
-          borderColor: 'group-hover:border-red-200',
+          bgColor: 'bg-red-50 dark:bg-red-900/20',
+          borderColor: 'group-hover:border-red-200 dark:group-hover:border-red-800',
           label: 'Study Material', 
           href: `/material/${item.slug || item.id}` 
         };
       case 'video': 
         return { 
           icon: <PlayCircle className="w-6 h-6 text-blue-500" />, 
-          bgColor: 'bg-blue-50',
-          borderColor: 'group-hover:border-blue-200',
+          bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+          borderColor: 'group-hover:border-blue-200 dark:group-hover:border-blue-800',
           label: 'Video Class', 
           href: `/material/${item.slug || item.id}` 
         };
       case 'update': 
         return { 
           icon: <Bell className="w-6 h-6 text-amber-500" />, 
-          bgColor: 'bg-amber-50',
-          borderColor: 'group-hover:border-amber-200',
+          bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+          borderColor: 'group-hover:border-amber-200 dark:group-hover:border-amber-800',
           label: 'Read Notice', 
-          // EXACT REQUESTED FORMAT:
           href: `/resources/${segmentSlug}/updates/${item.id}` 
         };
       default: 
         return { 
-          icon: <HelpCircle className="w-6 h-6 text-indigo-600" />, 
-          bgColor: 'bg-indigo-50',
-          borderColor: 'group-hover:border-indigo-300',
+          icon: <HelpCircle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />, 
+          bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+          borderColor: 'group-hover:border-indigo-300 dark:group-hover:border-indigo-800',
           label: 'View Solution', 
           href: `/question/${item.slug || item.id}` 
         };
@@ -125,66 +118,65 @@ export default function ResourceFilterView({
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 -mt-16 relative z-20">
       
-      {/* FILTER CARD (Floating Glassmorphism) */}
-      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-10 animate-in fade-in slide-in-from-bottom-4">
+      {/* FILTER CARD */}
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-white/10 p-6 mb-10 animate-in fade-in slide-in-from-bottom-4 transition-colors">
         
-        {/* Top Row: Search & Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-grow">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input 
               type="text" 
               placeholder={`Search in ${segmentTitle}...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all shadow-inner"
+              className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl font-black text-sm text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 transition-all placeholder:font-medium placeholder:text-slate-400"
             />
           </div>
 
           {!isUpdatePage && subjects.length > 1 && (
             <div className="min-w-[240px] relative">
-               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+               <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                <select 
                  value={activeSubject}
                  onChange={(e) => setActiveSubject(e.target.value)}
-                 className="w-full pl-10 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white appearance-none cursor-pointer transition-all shadow-sm hover:bg-slate-50"
+                 className="w-full pl-14 pr-10 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-white outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all"
                >
                  {subjects.map((sub) => (
                    <option key={sub} value={sub}>{sub === 'All' ? 'All Subjects' : sub}</option>
                  ))}
                </select>
-               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">▼</div>
+               <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none rotate-90" />
             </div>
           )}
         </div>
 
-        {/* Categories (Gradient Pills) */}
+        {/* Categories */}
         {categories.length > 1 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all border ${
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                   activeCategory === cat 
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg transform -translate-y-0.5' 
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-500 hover:text-indigo-600'
+                  ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 shadow-xl shadow-indigo-600/20' 
+                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
                 }`}
               >
                 {cat}
               </button>
             ))}
             {(activeCategory !== 'All' || search || activeSubject !== 'All') && (
-               <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} className="p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors" title="Reset">
-                  <X className="w-4 h-4"/>
+               <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} className="p-3 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors" title="Reset">
+                  <X className="w-5 h-5 font-black"/>
                </button>
             )}
           </div>
         )}
       </div>
 
-      {/* RESULTS GRID */}
-      <div className="grid gap-4">
+      {/* RESULTS LIST */}
+      <div className="grid gap-6">
         {paginatedItems.length > 0 ? (
           paginatedItems.map((item) => {
             const { icon, label, href, bgColor, borderColor } = getItemConfig(initialType, item);
@@ -193,79 +185,71 @@ export default function ResourceFilterView({
               <Link 
                 key={item.id} 
                 href={href}
-                className={`group bg-white rounded-2xl p-5 border border-slate-100 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row md:items-center gap-5 relative overflow-hidden`}
+                className={`group bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden`}
               >
-                {/* Hover Accent Line */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
                 {/* Icon Box */}
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 border border-slate-50 group-hover:scale-105 transition-transform ${bgColor}`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 dark:border-slate-800 group-hover:scale-110 transition-transform duration-500 ${bgColor}`}>
                   {icon}
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  
-                  {/* Meta Row */}
-                  <div className="flex flex-wrap items-center gap-2">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-3">
                      {!isUpdatePage && (item.subjects) && (
-                       <span className="text-[10px] font-black text-white bg-indigo-600 px-2.5 py-0.5 rounded shadow-sm">
+                       <span className="text-[9px] font-black text-white bg-indigo-600 px-3 py-1 rounded-lg shadow-lg shadow-indigo-600/20 uppercase tracking-widest">
                           {Array.isArray(item.subjects) ? item.subjects[0]?.title : item.subjects?.title}
                        </span>
                      )}
-
-                     {/* Category (Hidden on Update page to reduce clutter) */}
                      {item.category && !isUpdatePage && (
-                       <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 uppercase">
+                       <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 uppercase tracking-widest">
                           {item.category}
                        </span>
                      )}
-
-                     <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {new Date(item.created_at).toLocaleDateString()}
+                     <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                        <Clock className="w-3.5 h-3.5 text-indigo-500" /> {new Date(item.created_at).toLocaleDateString()}
                      </span>
                   </div>
                   
-                  {/* Title */}
-                  <div className="flex items-center gap-3">
-                    <BookmarkButton 
-                        itemType={initialType === 'pdf' ? 'ebook' : (initialType === 'question' ? 'question' : (initialType === 'video' ? 'course' : 'post'))} 
-                        itemId={item.id} 
-                        metadata={{ title: item.title }} 
-                    />
-                    <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors leading-snug pr-4">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1">
+                        <BookmarkButton 
+                            itemType={initialType === 'pdf' ? 'ebook' : (initialType === 'question' ? 'question' : (initialType === 'video' ? 'course' : 'post'))} 
+                            itemId={item.id} 
+                            metadata={{ title: item.title }} 
+                        />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight uppercase tracking-tight line-clamp-2">
                         {item.title}
                     </h3>
                   </div>
                 </div>
 
-                {/* Action Button */}
+                {/* Action */}
                 <div className="shrink-0 self-start md:self-center">
-                   <div className="flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shadow-sm">
-                      {label} <ChevronRight className="w-3 h-3"/>
+                   <div className="flex items-center gap-3 px-6 py-3 bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                      {label} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
                    </div>
                 </div>
               </Link>
             );
           })
         ) : (
-          <div className="bg-white rounded-2xl p-16 text-center border border-dashed border-slate-200 shadow-sm">
-             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                <Filter className="w-8 h-8" />
+          <div className="bg-white dark:bg-slate-900/50 rounded-[3rem] p-20 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-inner">
+             <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-slate-700">
+                <Filter className="w-10 h-10" />
              </div>
-             <h3 className="text-lg font-bold text-slate-700">No results found</h3>
-             <p className="text-slate-400 mt-1 text-sm font-medium">Try adjusting your filters.</p>
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">No results matched</h3>
+             <p className="text-slate-500 dark:text-slate-400 mt-4 max-w-md mx-auto font-medium">Try adjusting your filters or search keywords to find what you're looking for.</p>
              <button 
                 onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} 
-                className="mt-5 px-6 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-indigo-100 transition-colors"
+                className="mt-10 px-10 py-5 bg-slate-900 dark:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20"
              >
-                Reset Filters
+                Reset All Filters
              </button>
           </div>
         )}
       </div>
 
-      {/* Robust Pagination */}
       <Pagination 
         currentPage={currentPage}
         totalPages={totalPages}

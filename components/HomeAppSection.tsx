@@ -1,104 +1,107 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles, Smartphone, Apple, PlayCircle, X, ArrowRight, Bell, Zap } from "lucide-react";
 
 export default function HomeAppSection() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* =========================================
-          APP DOWNLOAD SECTION (Interactive)
-         ========================================= */}
-      <section className="bg-white border-t border-slate-200 py-24 px-6">
-        <div className="max-w-5xl mx-auto bg-black rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
+      <section className="bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50 py-32 px-6 transition-colors duration-500">
+        <div className="max-w-6xl mx-auto bg-slate-900 dark:bg-slate-900/40 rounded-[4rem] p-16 md:p-28 text-center relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/5">
             {/* Background Effects */}
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-40"></div>
-            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600 rounded-full blur-[100px] opacity-40"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none"></div>
+            <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-indigo-600 rounded-full blur-[150px] opacity-20 animate-pulse"></div>
+            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-purple-600 rounded-full blur-[150px] opacity-20 animate-pulse"></div>
 
-            <div className="relative z-10">
-                <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">Study Anytime, Anywhere.</h2>
-                <p className="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                    Download the NextPrepBD app to save notes offline, take quizzes on the go, and get instant notifications about exams.
+            <div className="relative z-10 space-y-12">
+                <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+                    <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    Mobile Ecosystem
+                </div>
+                
+                <h2 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-[0.9] uppercase">
+                    Academy in <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 text-glow">Your Pocket.</span>
+                </h2>
+                
+                <p className="text-slate-400 text-lg md:text-2xl mb-16 max-w-3xl mx-auto leading-relaxed font-medium">
+                    Experience seamless learning with the NextPrepBD mobile app. Access offline journals, solve instant quizzes, and stay ahead with real-time academic alerts.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row justify-center gap-5">
+                <div className="flex flex-col sm:flex-row justify-center gap-8">
                     {/* APP STORE BUTTON */}
                     <button 
                         onClick={() => setIsOpen(true)}
-                        className="flex items-center gap-4 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition group shadow-xl hover:scale-105 transform duration-200"
+                        className="group flex items-center gap-6 bg-white text-slate-950 px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.15em] hover:bg-slate-100 transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
                     >
-                        <svg className="w-8 h-8 fill-current" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 79.9c5.2 14.7 19.7 42.9 44.9 77.1 19.3 26.2 38.3 49 63.6 49 19.7 0 32.2-12.7 63-12.7 29.5 0 40.7 12.7 62.7 12.7 26.5 0 42.6-20.4 63.3-48.8 17.5-23.7 28.1-46.5 37-67.6-33.8-13.7-54.3-43.2-54.2-74.5zm-59.3-132.2c16.3-18.8 30.2-46.5 25.1-75.1-23.9 1.5-51.7 15.6-67.3 34.2-13.7 16.2-25.2 41.7-22 72.9 26.9 2.1 53.6-13.1 64.2-32z"/></svg>
+                        <Apple className="w-8 h-8 fill-current" />
                         <div className="text-left leading-none">
-                            <div className="text-[10px] uppercase font-bold text-gray-500 mb-1">Download on the</div>
-                            <div className="text-xl font-black">App Store</div>
+                            <div className="text-[9px] opacity-40 mb-1">Coming Soon to</div>
+                            <div className="text-lg">App Store</div>
                         </div>
                     </button>
 
                     {/* PLAY STORE BUTTON */}
                     <button 
                         onClick={() => setIsOpen(true)}
-                        className="flex items-center gap-4 bg-white/10 backdrop-blur border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition group shadow-xl hover:scale-105 transform duration-200"
+                        className="group flex items-center gap-6 bg-white/5 backdrop-blur-3xl border border-white/10 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.15em] hover:bg-white/10 transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
                     >
-                        <svg className="w-8 h-8 fill-current" viewBox="0 0 512 512"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>
+                        <PlayCircle className="w-8 h-8 fill-current text-indigo-400" />
                         <div className="text-left leading-none">
-                            <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">GET IT ON</div>
-                            <div className="text-xl font-black">Google Play</div>
+                            <div className="text-[9px] opacity-40 mb-1">Android App</div>
+                            <div className="text-lg">Google Play</div>
                         </div>
                     </button>
+                </div>
+
+                <div className="pt-12 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center justify-center gap-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    Encrypted & Secure 
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                 </div>
             </div>
         </div>
       </section>
 
-      {/* =========================================
-          THE PROFESSIONAL POPUP (Hidden by default)
-         ========================================= */}
+      {/* POPUP MODAL */}
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative transform transition-all scale-100">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-2xl animate-in fade-in duration-500 p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[3.5rem] shadow-2xl max-w-lg w-full overflow-hidden relative transform transition-all border border-slate-100 dark:border-slate-800">
             
-            {/* Decor Header */}
-            <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-600 w-full"></div>
+            <div className="h-2.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-cyan-500 w-full shadow-lg"></div>
             
-            <div className="p-8 text-center">
-              {/* Icon */}
-              <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-4xl">🚀</span>
+            <div className="p-16 text-center">
+              <div className="w-24 h-24 bg-indigo-50 dark:bg-indigo-950/50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 border border-indigo-100 dark:border-indigo-900/50 shadow-inner">
+                <Sparkles className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-pulse" />
               </div>
 
-              {/* Title */}
-              <h3 className="text-2xl font-black text-slate-800 mb-3">
-                App Coming Soon!
+              <h3 className="text-4xl font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter leading-none">
+                Evolution in Progress
               </h3>
 
-              {/* Professional Text */}
-              <p className="text-slate-600 leading-relaxed mb-8">
-                We are building the ultimate exam companion for your pocket. The 
-                <span className="font-bold text-slate-900"> NextPrepBD Mobile App </span> 
-                is currently in the final stages of development.
-                <br /><br />
-                It will feature offline reading, live model tests, and instant notifications.
+              <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mb-12 font-medium">
+                The <span className="text-slate-950 dark:text-white font-black">NextPrepBD Mobile Ecosystem</span> is entering the final deployment phase. We are engineering a revolutionary offline learning experience for all candidates.
               </p>
 
-              {/* Action Button */}
               <button 
                 onClick={() => setIsOpen(false)}
-                className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-lg"
+                className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-black py-6 rounded-2xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition shadow-2xl shadow-indigo-600/20 uppercase tracking-[0.2em] text-[10px] active:scale-95 duration-300"
               >
-                Got it, I'll wait!
+                Acknowledge Protocol
+              </button>
+              
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="absolute top-10 right-10 text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 dark:bg-slate-800 p-2.5 rounded-2xl"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      `}</style>
     </>
   );
 }

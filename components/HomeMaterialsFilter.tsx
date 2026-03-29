@@ -2,29 +2,23 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Clock, CalendarDays, ChevronRight, Hash } from "lucide-react";
+import { ArrowRight, Clock, CalendarDays, ChevronRight, Hash, Sparkles, BookOpen } from "lucide-react";
 
 export default function HomeMaterialsFilter({ segments = [], resources = [] }: { segments: any[], resources: any[] }) {
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize active tab
   useEffect(() => {
     if (segments.length > 0 && !activeTab) {
       setActiveTab(segments[0].id);
     }
   }, [segments, activeTab]);
 
-  // --- 1. FILTERING LOGIC (BLOGS ONLY & APPROVED ONLY) ---
   const filteredResources = resources.filter((res) => {
-    // STRICTLY BLOGS
     if (res.type !== 'blog') return false;
-    
-    // <--- CRITICAL FIX: Ensure only APPROVED posts are shown
     if (res.status !== 'approved') return false; 
     
-    // Segment Filter
     if (!activeTab) return true;
     if (res.segment_id === activeTab) return true;
     const linkedSegment = res.subjects?.groups?.segments?.id;
@@ -32,10 +26,9 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
   });
 
   const latestPost = filteredResources[0];
-  const sidePosts = filteredResources.slice(1, 6); // Next 5 posts
+  const sidePosts = filteredResources.slice(1, 6); 
   const activeSegmentData = segments.find(s => s.id === activeTab);
 
-  // --- 2. HANDLER: Smooth Tab Switch ---
   const handleTabChange = (id: number) => {
     if (id === activeTab) return;
     setIsAnimating(true);
@@ -43,14 +36,12 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
     setTimeout(() => setIsAnimating(false), 300);
   };
 
-  // --- 3. SMART LABEL HELPER ---
   const getLabel = (res: any) => {
     if (res.subjects?.title) return res.subjects.title;
     if (res.groups?.title) return res.groups.title;
-    return activeSegmentData?.title || 'General';
+    return activeSegmentData?.title || 'Academy';
   };
 
-  // --- 4. PERMALINK GENERATOR ---
   const getPostLink = (post: any) => {
     const identifier = post.slug || post.id;
 
@@ -68,23 +59,23 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full font-sans">
       
       {/* --- TABS --- */}
-      <div className="relative mb-6 group">
+      <div className="relative mb-10 group overflow-hidden">
           <div 
             ref={scrollContainerRef}
-            className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x cursor-grab"
+            className="flex items-center gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x cursor-grab"
           >
             {segments.map((seg) => (
               <button
                 key={seg.id}
                 onClick={() => handleTabChange(seg.id)}
                 className={`
-                  whitespace-nowrap px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-300 snap-start border
+                  whitespace-nowrap px-6 py-3 rounded-2xl text-[10px] uppercase font-black tracking-widest transition-all duration-500 snap-start border
                   ${activeTab === seg.id 
-                    ? "bg-slate-900 text-white border-slate-900 shadow-md" 
-                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-600/20 scale-105" 
+                    : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }
                 `}
               >
@@ -92,132 +83,125 @@ export default function HomeMaterialsFilter({ segments = [], resources = [] }: {
               </button>
             ))}
           </div>
+          {/* Faders for mobile */}
+          <div className="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none sm:hidden"></div>
       </div>
 
       {/* --- GRID LAYOUT --- */}
       <div className={`
-          grid grid-cols-1 lg:grid-cols-12 gap-6 
-          transition-all duration-300 ease-in-out
-          ${isAnimating ? 'opacity-50 translate-y-1' : 'opacity-100 translate-y-0'}
+          grid grid-cols-1 lg:grid-cols-12 gap-10 
+          transition-all duration-500 ease-in-out
+          ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}
       `}>
           
-          {/* --- HERO COLUMN (Left) --- */}
+          {/* --- HERO COLUMN --- */}
           <div className="lg:col-span-7 flex flex-col">
               {latestPost ? (
                   <Link 
                       href={getPostLink(latestPost)} 
-                      className="group relative flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 min-h-[350px]"
+                      className="group relative flex flex-col h-full bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 min-h-[450px]"
                   >
-                      {/* Cover Image or Black Box Fallback */}
-                      <div className="relative w-full flex-1 min-h-[220px] bg-slate-900 overflow-hidden">
+                      <div className="relative w-full flex-1 min-h-[280px] bg-slate-950 overflow-hidden">
                           {latestPost.content_url ? (
                               <Image 
                                   src={latestPost.content_url} 
                                   alt={latestPost.title}
                                   fill
-                                  className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                                  className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100"
                               />
                           ) : (
-                              // THE BLACK BOX DESIGN
-                              <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-slate-900">
-                                  <div className="space-y-4 max-w-md relative z-10">
-                                      <div className="inline-block px-3 py-1 rounded border border-white/20 bg-white/5 backdrop-blur-md text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                                          {getLabel(latestPost)}
-                                      </div>
-                                      <h3 className="text-white text-xl md:text-3xl font-black leading-tight line-clamp-3">
+                              <div className="absolute inset-0 flex items-center justify-center p-12 text-center bg-slate-950">
+                                  <div className="space-y-6 max-w-md relative z-10">
+                                      <BookOpen className="w-12 h-12 text-indigo-500 mx-auto opacity-50 group-hover:scale-125 transition-transform duration-700" />
+                                      <h3 className="text-white text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight line-clamp-3">
                                           {latestPost.title}
                                       </h3>
                                   </div>
-                                  {/* Subtle grid pattern for texture */}
-                                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
                               </div>
                           )}
                           
-                          {/* Floating Badge */}
-                          <div className="absolute top-4 left-4 z-20">
-                              <span className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg">
-                                  LATEST
+                          <div className="absolute top-6 left-6 z-20">
+                              <span className="bg-indigo-600 text-white text-[9px] font-black px-4 py-1.5 rounded-xl border border-white/10 shadow-2xl tracking-[0.2em] uppercase">
+                                  CORE INSIGHT
                               </span>
                           </div>
                       </div>
 
-                      {/* Text Content */}
-                      <div className="p-5 flex flex-col bg-white">
-                          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wide">
-                              <span className="text-blue-600">{getLabel(latestPost)}</span>
+                      <div className="p-8 flex flex-col bg-white dark:bg-slate-900">
+                          <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-[0.15em]">
+                              <span className="text-indigo-600 dark:text-indigo-400">{getLabel(latestPost)}</span>
                               <span>•</span>
-                              <span>{new Date(latestPost.created_at).toLocaleDateString()}</span>
+                              <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {new Date(latestPost.created_at).toLocaleDateString()}</span>
                           </div>
                           
-                          <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-700 transition-colors line-clamp-2">
+                          <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-4 leading-tight uppercase tracking-tighter group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                               {latestPost.title}
                           </h3>
                           
-                          <p className="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4">
-                              {latestPost.seo_description || "Read the full article to learn more about this topic..."}
+                          <p className="text-slate-500 dark:text-slate-400 line-clamp-2 text-sm leading-relaxed mb-8 font-medium">
+                              {latestPost.seo_description || "Dive into the comprehensive analysis and structured guidance specifically curated for your academic journey..."}
                           </p>
                           
-                          <span className="inline-flex items-center text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors mt-auto uppercase tracking-wide">
-                              Read Article <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform"/>
+                          <span className="inline-flex items-center text-[10px] font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-all mt-auto uppercase tracking-widest group-hover:translate-x-3 duration-500">
+                              Access Archive <ArrowRight className="w-4 h-4 ml-4"/>
                           </span>
                       </div>
                   </Link>
               ) : (
-                  <div className="h-64 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center p-6">
-                      <div className="text-3xl mb-2 opacity-30">✍️</div>
-                      <p className="text-slate-500 text-sm font-medium">No approved blogs in this segment.</p>
+                  <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 text-center p-12">
+                      <Sparkles className="w-16 h-16 text-slate-100 dark:text-slate-800 mb-6" />
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-black uppercase tracking-widest">Awaiting Fresh Content</p>
                   </div>
               )}
           </div>
 
-          {/* --- LIST COLUMN (Right) --- */}
-          <div className="lg:col-span-5 flex flex-col gap-3">
+          {/* --- LIST COLUMN --- */}
+          <div className="lg:col-span-5 flex flex-col gap-5">
               {sidePosts.length > 0 ? (
                   sidePosts.map(post => (
                       <Link 
                           key={post.id}
                           href={getPostLink(post)}
-                          className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group h-full"
+                          className="flex gap-6 p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all duration-300 group"
                       >
-                          {/* Thumbnail */}
-                          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden relative bg-slate-100 border border-slate-100">
+                          <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden relative bg-slate-950 border border-slate-100 dark:border-slate-800">
                                {post.content_url ? (
-                                   <Image src={post.content_url} alt={post.title} fill className="object-cover group-hover:scale-110 transition-transform"/>
+                                   <Image src={post.content_url} alt={post.title} fill className="object-cover group-hover:scale-125 transition-transform duration-700 opacity-80 group-hover:opacity-100"/>
                                ) : (
-                                   <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-                                        <Hash className="w-6 h-6" />
+                                   <div className="w-full h-full flex items-center justify-center bg-slate-950 text-slate-700">
+                                        <Hash className="w-6 h-6 group-hover:scale-125 transition-transform" />
                                    </div>
                                )}
                           </div>
                           
-                          {/* Info */}
                           <div className="min-w-0 flex-1 flex flex-col justify-center">
-                              <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">
+                              <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-lg uppercase tracking-widest border border-indigo-100 dark:border-indigo-900/30">
                                       {getLabel(post)}
                                   </span>
                               </div>
-                              <h4 className="text-sm font-bold text-slate-800 leading-snug line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                              <h4 className="text-base font-black text-slate-800 dark:text-slate-200 leading-tight uppercase tracking-tighter line-clamp-2 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                   {post.title}
                               </h4>
-                              <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
-                                  <CalendarDays className="w-3 h-3" /> {new Date(post.created_at).toLocaleDateString()}
+                              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                                  <CalendarDays className="w-3.5 h-3.5 text-indigo-400" /> {new Date(post.created_at).toLocaleDateString()}
                               </span>
                           </div>
                       </Link>
                   ))
               ) : (
-                  <div className="flex-1 flex items-center justify-center p-8 text-slate-400 text-xs border rounded-2xl border-slate-100 bg-slate-50/50">
-                      No more posts to show.
+                  <div className="flex-1 flex items-center justify-center p-12 text-slate-400 dark:text-slate-600 text-[10px] font-black uppercase tracking-[0.2em] border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                      Archive Synchronization Pending
                   </div>
               )}
               
               {activeTab && (
                   <Link 
                       href={`/blog?segment=${activeSegmentData?.title}`}
-                      className="mt-1 block w-full py-3 text-center bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white font-bold text-xs rounded-xl transition-colors border border-slate-200"
+                      className="mt-4 block w-full py-5 text-center bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all duration-500 border border-slate-200 dark:border-slate-700 shadow-sm"
                   >
-                      View All {activeSegmentData?.title} Blogs →
+                      Expand Academic Journal <ChevronRight className="w-4 h-4 inline-block ml-2"/>
                   </Link>
               )}
           </div>

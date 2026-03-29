@@ -16,6 +16,7 @@ import { Noto_Serif_Bengali } from "next/font/google";
 
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { getOrganizationSchema } from "@/lib/seo-utils";
 
 const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     template: "%s | NextPrepBD",
   },
   description:
-    "Download free SSC, HSC, and University Admission notes, question banks, and suggestions. The ultimate study companion for Bangladeshi students.",
+    "The ultimate study companion for Bangladeshi students. Download SSC, HSC, and University Admission notes, question banks, and suggestions for free.",
   keywords: [
     "SSC Suggestion 2026",
     "HSC Notes BD",
@@ -44,13 +45,23 @@ export const metadata: Metadata = {
     "Job Preparation BD",
     "Class 9-10 Notes",
     "Education Board Result",
+    "NextPrepBD",
+    "Education Portal Bangladesh"
   ],
+  authors: [{ name: "NextPrepBD Team" }],
+  creator: "NextPrepBD",
+  publisher: "NextPrepBD",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "NextPrepBD | Master Your Exams",
-    description: "Access thousands of free notes, video classes, and exam routines.",
+    description: "Access thousands of free notes, video classes, and exam routines. Master your milestone with NextPrepBD.",
     url: "https://nextprepbd.com",
     siteName: "NextPrepBD",
     locale: "en_US",
@@ -67,7 +78,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NextPrepBD | Bangladesh's #1 Education Portal",
-    description: "Free notes, questions, and suggestions for SSC/HSC students.",
+    description: "Free notes, questions, and suggestions for SSC/HSC students. Join 15k+ students today.",
     images: ["/og-image.png"],
   },
   other: {
@@ -85,6 +96,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Organization Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(getOrganizationSchema()) }}
+        />
         {/* Prevent FOUC: apply dark class before paint */}
         <script dangerouslySetInnerHTML={{ __html: `
           try {
@@ -148,7 +164,9 @@ export default function RootLayout({
           />
 
           <Header />
-          {children}
+          <main className="min-h-screen">
+             {children}
+          </main>
           <Toaster position="top-right" />
           <Footer />
           <Analytics/>

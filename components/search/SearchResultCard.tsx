@@ -10,7 +10,8 @@ import {
   HelpCircle, 
   ChevronRight, 
   Calendar,
-  Layers
+  Layers,
+  Sparkles
 } from "lucide-react";
 
 export type SearchResult = {
@@ -26,14 +27,14 @@ export type SearchResult = {
   instructor_name?: string;
 };
 
-const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
-  blog: { icon: BookOpen, color: "text-purple-600", bg: "bg-purple-50" },
-  news: { icon: Newspaper, color: "text-indigo-600", bg: "bg-indigo-50" },
-  course: { icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
-  ebook: { icon: Book, color: "text-emerald-600", bg: "bg-emerald-50" },
-  lesson_plan: { icon: Layers, color: "text-orange-600", bg: "bg-orange-50" },
-  update: { icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50" },
-  question: { icon: HelpCircle, color: "text-rose-600", bg: "bg-rose-50" },
+const typeConfig: Record<string, { icon: any, color: string, darkColor: string, bg: string, darkBg: string }> = {
+  blog: { icon: BookOpen, color: "text-purple-600", darkColor: "text-purple-400", bg: "bg-purple-50", darkBg: "bg-purple-900/20" },
+  news: { icon: Newspaper, color: "text-indigo-600", darkColor: "text-indigo-400", bg: "bg-indigo-50", darkBg: "bg-indigo-900/20" },
+  course: { icon: GraduationCap, color: "text-blue-600", darkColor: "text-blue-400", bg: "bg-blue-50", darkBg: "bg-blue-900/20" },
+  ebook: { icon: Book, color: "text-emerald-600", darkColor: "text-emerald-400", bg: "bg-emerald-50", darkBg: "bg-emerald-900/20" },
+  lesson_plan: { icon: Layers, color: "text-orange-600", darkColor: "text-orange-400", bg: "bg-orange-50", darkBg: "bg-orange-900/20" },
+  update: { icon: AlertCircle, color: "text-amber-600", darkColor: "text-amber-400", bg: "bg-amber-50", darkBg: "bg-amber-900/20" },
+  question: { icon: HelpCircle, color: "text-rose-600", darkColor: "text-rose-400", bg: "bg-rose-50", darkBg: "bg-rose-900/20" },
 };
 
 export default function SearchResultCard({ item }: { item: SearchResult }) {
@@ -41,48 +42,47 @@ export default function SearchResultCard({ item }: { item: SearchResult }) {
   const Icon = config.icon;
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
+    if (!dateStr) return "Recent Archive";
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return "";
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    if (isNaN(date.getTime())) return "Recent Archive";
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   return (
     <Link 
       href={item.url}
-      className="group block bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden"
+      className="group block bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-indigo-900/5 hover:shadow-2xl dark:hover:shadow-indigo-600/10 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 group-hover:bg-indigo-50/50 transition-colors pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-40 h-40 bg-slate-50 dark:bg-slate-800/50 rounded-full -mr-20 -mt-20 group-hover:bg-indigo-500/10 transition-colors duration-700 pointer-events-none"></div>
       
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-5">
-           <div className={`p-4 rounded-2xl ${config.bg} ${config.color} group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-sm`}>
-              <Icon className="w-6 h-6" />
+        <div className="flex items-start justify-between mb-8">
+           <div className={`p-5 rounded-2xl ${config.bg} dark:bg-slate-800 ${config.color} dark:${config.darkColor} group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 transition-all duration-500 shadow-inner`}>
+              <Icon className="w-7 h-7" />
            </div>
-           <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-4 py-1.5 ${config.bg} ${config.color} rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors`}>
+           <span className={`text-[9px] font-black uppercase tracking-widest px-5 py-2 ${config.bg} dark:bg-indigo-500/10 ${config.color} dark:text-indigo-400 rounded-xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500 group-hover:text-indigo-600 dark:group-hover:text-white transition-all duration-500 border border-transparent dark:border-indigo-500/20`}>
               {item.displayType}
            </span>
         </div>
 
-        <h3 className="text-xl font-black text-slate-900 mb-3 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+        <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 line-clamp-2 uppercase tracking-tighter leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
           {item.title}
         </h3>
 
-        <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3 font-medium">
-          {item.description || "Explore this content to get deeper insights and structured learning materials for your exam preparation."}
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
+          {item.description || "Discover premium academic insights and structured learning resources designed specifically for your success."}
         </p>
 
-        <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
-           <div className="flex items-center gap-2 text-slate-400">
-              <Calendar className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-black uppercase tracking-wider">
+        <div className="pt-8 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
+           <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
+              <Calendar className="w-4 h-4 text-indigo-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
                 {formatDate(item.created_at)}
               </span>
            </div>
-           <span className="text-indigo-600 text-xs font-black uppercase tracking-[0.1em] flex items-center gap-1.5 group-hover:gap-3 transition-all">
-              Details <ChevronRight className="w-4 h-4" />
-           </span>
+           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-500">
+              Access Now <ChevronRight className="w-4 h-4" />
+           </div>
         </div>
       </div>
     </Link>
