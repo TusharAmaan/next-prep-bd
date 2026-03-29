@@ -10,22 +10,22 @@ interface RefundContentProps {
 export default function RefundContent({ lastUpdated }: RefundContentProps) {
   const metaCards = [
     {
-      title: "Digital Artifacts",
-      desc: "Instant access assets are generally designated as non-refundable once synchronized.",
+      title: "Digital Content",
+      desc: "Instant access materials are generally non-refundable once they have been accessed.",
       icon: Database,
       color: "text-indigo-600",
       bg: "bg-indigo-50"
     },
     {
-      title: "Service Clusters",
-      desc: "Premium programs offer an evaluation window for satisfaction assurance.",
+      title: "Course Bundles",
+      desc: "Premium courses may offer a specific window for refund requests if not yet completed.",
       icon: ShieldCheck,
       color: "text-blue-600",
       bg: "bg-blue-50"
     },
     {
-      title: "System Anomaly",
-      desc: "Technical deployment failures are resolved via manual bypass or full reversal.",
+      title: "Technical Issues",
+      desc: "Problems with content delivery or access are resolved via priority support or refund.",
       icon: Zap,
       color: "text-emerald-600",
       bg: "bg-emerald-50"
@@ -34,16 +34,16 @@ export default function RefundContent({ lastUpdated }: RefundContentProps) {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header Intelligence */}
+      {/* Header */}
       <div className="text-center mb-32">
-        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-[10px] font-black uppercase tracking-[0.3em] mb-12 shadow-2xl">
-          <RefreshCw className="w-4 h-4 text-indigo-400" /> Authorized Refund Protocol
+        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-12 shadow-2xl">
+          <RefreshCw className="w-4 h-4 text-indigo-400" /> Refund Policy
         </div>
-        <h1 className="text-5xl md:text-9xl font-black text-slate-900 dark:text-white mb-10 tracking-tighter uppercase leading-[0.85]">
-          Refund <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500">Framework.</span>
+        <h1 className="text-5xl md:text-8xl font-bold text-slate-900 dark:text-white mb-10 tracking-tight leading-[0.9]">
+          Refund & <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500">Return Policy.</span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto">
-          Synchronizing transactional integrity with academic satisfaction. Last Protocol Update: <span className="text-slate-900 dark:text-white font-black">{lastUpdated}</span>
+        <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
+          Maintaining transparency and fairness in all our educational transactions. Last updated: <span className="text-slate-900 dark:text-white font-bold">{lastUpdated}</span>
         </p>
       </div>
 
@@ -54,50 +54,50 @@ export default function RefundContent({ lastUpdated }: RefundContentProps) {
             <div className={`w-16 h-16 rounded-2xl ${card.bg} dark:bg-slate-800 ${card.color} dark:text-indigo-400 flex items-center justify-center mb-8 shadow-inner transition-transform group-hover:scale-110 group-hover:rotate-6`}>
               <card.icon className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter group-hover:text-indigo-600 transition-colors">{card.title}</h3>
-            <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-relaxed">{card.desc}</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-indigo-600 transition-colors">{card.title}</h3>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 leading-relaxed uppercase tracking-wide">{card.desc}</p>
           </div>
         ))}
       </div>
 
-      {/* Policy Intelligence Blocks */}
+      {/* Content Blocks */}
       <div className="space-y-16">
         
-        {/* 01: General Parameters */}
+        {/* 01: General Policy */}
         <section className="bg-white dark:bg-slate-900/50 p-12 md:p-20 rounded-[4rem] border border-slate-100 dark:border-slate-800 relative group overflow-hidden">
           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity"><Database size={150} /></div>
           <div className="flex flex-col md:flex-row gap-12 relative z-10">
-            <div className="w-20 h-20 shrink-0 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center text-2xl font-black shadow-3xl">01</div>
+            <div className="w-20 h-20 shrink-0 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center text-2xl font-bold shadow-3xl">01</div>
             <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">General <br/> Parameters</h2>
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">General Policy</h2>
               <div className="space-y-6 text-slate-600 dark:text-slate-400 font-medium text-lg leading-relaxed">
-                <p>At <span className="text-slate-900 dark:text-white font-black uppercase tracking-tight">NextPrepBD</span>, we adhere to a transparent billing protocol. Most intelligence assets are digital artifacts delivered instantly via our global distribution network.</p>
+                <p>At <span className="font-bold">NextPrepBD</span>, we maintain clear guidelines for billing. Most of our academic materials are digital products delivered instantly through our platform.</p>
                 <div className="p-8 rounded-[2rem] bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 flex items-start gap-6">
                   <FileX className="w-8 h-8 text-indigo-600 shrink-0 mt-1" />
-                  <p className="text-sm font-black uppercase text-indigo-800 dark:text-indigo-400 tracking-tight leading-relaxed">Consumption Logic: Once a digital asset is synchronized (downloaded or viewed), the academic value is considered consumed. Refunding consumed artifacts is not supported.</p>
+                  <p className="text-sm font-bold text-indigo-800 dark:text-indigo-400 tracking-tight leading-relaxed">Usage Note: Once a digital product has been downloaded or accessed, it is considered "consumed." Refunds for consumed digital materials are generally not provided.</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 02: Reversal Protocol */}
+        {/* 02: Refund Process */}
         <section className="bg-slate-900 text-white p-12 md:p-20 rounded-[4rem] border border-white/5 relative group overflow-hidden shadow-3xl">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-transparent opacity-30"></div>
           <div className="flex flex-col md:flex-row gap-12 relative z-10">
-            <div className="w-20 h-20 shrink-0 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center text-2xl font-black shadow-2xl">02</div>
+            <div className="w-20 h-20 shrink-0 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center text-2xl font-bold shadow-2xl">02</div>
             <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">Reversal <br/> <span className="text-indigo-400">Protocol</span></h2>
+              <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-none">Refund <br/> <span className="text-indigo-400">Process</span></h2>
               <div className="space-y-8 text-slate-400 font-medium text-lg leading-relaxed">
-                <p>For eligible service clusters (Premium Courses), a reversal request may be initiated within a <span className="text-white font-black underline decoration-indigo-500">72-hour synchronization window</span>.</p>
+                <p>For eligible premium courses, a refund request can be initiated within a <span className="text-white font-bold underline decoration-indigo-500">72-hour window</span> after purchase.</p>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {[
-                    "Initiate signal via Legal Hub",
-                    "Transmit Transaction ID & Payload",
-                    "Await 48-hour Analyst Review",
-                    "Reversal to Original Source"
+                    "Contact our Support Team",
+                    "Provide Transaction ID & Details",
+                    "Await 48-hour Review Process",
+                    "Refund to Original Payment Source"
                   ].map((step, id) => (
-                    <li key={id} className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white shadow-inner">
+                    <li key={id} className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white shadow-inner">
                       <ChevronRight className="w-4 h-4 text-indigo-400" /> {step}
                     </li>
                   ))}
@@ -107,17 +107,17 @@ export default function RefundContent({ lastUpdated }: RefundContentProps) {
           </div>
         </section>
 
-        {/* 03: System Resolution */}
+        {/* 03: Issue Resolution */}
         <section className="bg-white dark:bg-slate-900/50 p-12 md:p-20 rounded-[4rem] border border-slate-100 dark:border-slate-800 relative group overflow-hidden">
           <div className="flex flex-col md:flex-row gap-12 relative z-10">
-            <div className="w-20 h-20 shrink-0 bg-emerald-600 text-white rounded-[2rem] flex items-center justify-center text-2xl font-black shadow-3xl">03</div>
+            <div className="w-20 h-20 shrink-0 bg-emerald-600 text-white rounded-[2rem] flex items-center justify-center text-2xl font-bold shadow-3xl">03</div>
             <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Anomaly <br/> Resolution</h2>
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Issue <br/> Resolution</h2>
               <div className="space-y-6 text-slate-600 dark:text-slate-400 font-medium text-lg leading-relaxed">
-                <p>In the event of a system-wide deployment failure or critical technical anomaly, we guarantee academic continuity:</p>
+                <p>In case of technical failures or issues preventing access to purchased content, we guarantee a resolution:</p>
                 <div className="flex gap-4 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
                   <Sparkles className="w-6 h-6 text-indigo-500 shrink-0 mt-1" />
-                  <p className="text-[11px] font-black uppercase tracking-widest leading-relaxed text-indigo-600 dark:text-indigo-400">Resolution Pledge: We will either resolve the technical barrier within 24 hours or provide a full credit reversal for the inaccessible artifact.</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest leading-relaxed text-indigo-600 dark:text-indigo-400">Our Pledge: We will resolve any technical access issues within 24 hours, or provide a full refund if the issue cannot be fixed.</p>
                 </div>
               </div>
             </div>
@@ -131,30 +131,30 @@ export default function RefundContent({ lastUpdated }: RefundContentProps) {
               <div className="absolute bottom-0 right-0 p-20 opacity-5 group-hover:opacity-10 transition-opacity"><RefreshCw size={500} /></div>
               
               <div className="relative z-10 max-w-4xl mx-auto space-y-12">
-                <h2 className="text-4xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase">Support <br /> Synchronicity.</h2>
+                <h2 className="text-4xl md:text-7xl font-bold leading-[0.9] tracking-tight">Billing <br /> Support.</h2>
                 <p className="text-xl md:text-2xl text-indigo-100/70 font-medium leading-relaxed">
-                   Encountering billing anomalies? Connect with our resolution command center.
+                   Having trouble with a transaction? Get in touch with our billing support team for quick resolution.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-8 justify-center">
                    <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-6 p-6 pr-12 bg-white text-slate-900 rounded-[2.5rem] transition-all group/btn shadow-2xl hover:bg-slate-50 active:scale-95">
                       <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Mail className="w-7 h-7"/></div>
                       <div className="text-left">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Signal Relay</p>
-                         <p className="text-xl font-black uppercase tracking-tight">Billing Hub</p>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Send Email</p>
+                         <p className="text-xl font-bold">Billing Hub</p>
                       </div>
                    </a>
                    <a href="https://wa.me/8801619663933" className="flex items-center gap-6 p-6 pr-12 bg-white/10 hover:bg-white/20 rounded-[2.5rem] border border-white/20 transition-all group/btn backdrop-blur-xl active:scale-95">
                       <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Phone className="w-7 h-7"/></div>
                       <div className="text-left">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-1">Direct Signal</p>
-                         <p className="text-xl font-black uppercase tracking-tight">WhatsApp</p>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1">Fast Response</p>
+                         <p className="text-xl font-bold">WhatsApp</p>
                       </div>
                    </a>
                 </div>
               </div>
            </div>
-           <p className="text-center mt-12 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">NextPrepBD Service Framework 2026. Global Standards Synchronized.</p>
+           <p className="text-center mt-12 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">© 2026 NextPrepBD. All Rights Reserved. Ensuring Fair and Ethical Academic Transactions.</p>
         </div>
       </div>
     </div>

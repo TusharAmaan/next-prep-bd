@@ -58,7 +58,7 @@ export default function CurriculumContentClient({
   const [hasMore, setHasMore] = useState(true);
   const [reachedBoundary, setReachedBoundary] = useState(false);
   
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark for premium feel
+  const [isDarkMode, setIsDarkMode] = useState(true); 
   const [isTocOpenMobile, setIsTocOpenMobile] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState<{id: string, show: boolean} | null>(null);
 
@@ -191,17 +191,17 @@ export default function CurriculumContentClient({
      const url = `${window.location.origin}${contentUrl}`;
      if (method === 'copy') {
         navigator.clipboard.writeText(url);
-        toast.success("Intelligence Link Copied");
+        toast.success("Link Copied");
      } else if (method === 'fb') {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
      } else if (method === 'wa') {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent("Academic Intelligence: " + url)}`, '_blank');
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent("Educational Resource: " + url)}`, '_blank');
      }
      setShowShareMenu(null);
   };
 
   const handleSave = () => {
-     toast.success("Intelligence Cached in Library");
+     toast.success("Saved to Library");
   };
 
   const bgMain = isDarkMode ? "bg-slate-950" : "bg-white";
@@ -265,26 +265,26 @@ export default function CurriculumContentClient({
                  <div key={c.id} id={`content-${c.id}`} className="scroll-mt-32">
                     <header className="mb-12">
                        <div className="flex items-center gap-4 mb-8 flex-wrap">
-                          <div className="px-4 py-1.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                          <div className="px-4 py-1.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full">
                              {c.lesson_plan_lessons?.lesson_plan_units?.title}
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                             <Clock className="w-3.5 h-3.5" /> 5-8 MIN
+                          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                             <Clock className="w-3.5 h-3.5" /> 5-8 MIN READ
                           </div>
-                          <div className="ml-auto flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                             <Eye className="w-3.5 h-3.5" /> {c.view_count || 0}
+                          <div className="ml-auto flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                             <Eye className="w-3.5 h-3.5" /> {c.view_count || 0} VIEWS
                           </div>
                        </div>
                        
-                       <h1 className={`text-4xl md:text-6xl font-black mb-8 leading-[0.9] tracking-tighter uppercase ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
+                       <h1 className={`text-4xl md:text-6xl font-bold mb-8 leading-[0.9] tracking-tight ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
                           {c.title}
                        </h1>
 
                        <div className={`p-6 bg-slate-50 dark:bg-slate-900 border ${borderCol} rounded-[2rem] flex items-center gap-4 transition-colors`}>
                            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border ${borderCol} flex items-center justify-center shadow-inner"><User className="w-6 h-6 text-slate-400" /></div>
                            <div className="flex-1">
-                               <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Master Educator</p>
-                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Verified Strategy • {new Date(c.created_at).toLocaleDateString()}</p>
+                               <p className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-widest">Master Educator</p>
+                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verified Content • {new Date(c.created_at).toLocaleDateString()}</p>
                            </div>
                            
                            <div className="flex gap-2 relative">
@@ -296,9 +296,9 @@ export default function CurriculumContentClient({
                               </button>
                               {showShareMenu?.id === c.id && (
                                  <div className={`absolute bottom-full right-0 mb-3 w-56 rounded-2xl shadow-3xl border overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 bg-white dark:bg-slate-900 ${borderCol}`}>
-                                    <button onClick={() => handleShare('copy', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><LinkIcon size={16}/> Copy Link</button>
-                                    <button onClick={() => handleShare('fb', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><Facebook size={16} className="text-indigo-600"/> Facebook</button>
-                                    <button onClick={() => handleShare('wa', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><MessageCircle size={16} className="text-emerald-500"/> WhatsApp</button>
+                                    <button onClick={() => handleShare('copy', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-bold uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><LinkIcon size={16}/> Copy Link</button>
+                                    <button onClick={() => handleShare('fb', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-bold uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><Facebook size={16} className="text-indigo-600"/> Facebook</button>
+                                    <button onClick={() => handleShare('wa', `/curriculum/${subjectId}/${c.id}`)} className="w-full text-left px-5 py-4 text-[10px] font-bold uppercase tracking-widest flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"><MessageCircle size={16} className="text-emerald-500"/> WhatsApp</button>
                                  </div>
                               )}
                               <button 
@@ -315,13 +315,13 @@ export default function CurriculumContentClient({
                        {isPaywalled && index > 0 ? (
                           <div className={`p-12 rounded-[3rem] text-center border-2 border-dashed ${borderCol} bg-slate-50 dark:bg-slate-900/50`}>
                              <Lock className="w-12 h-12 mx-auto mb-6 text-indigo-500" />
-                             <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4">Intelligence Restricted</h4>
-                             <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-10 max-w-sm mx-auto leading-relaxed">This unit requires authentication. Link your student credentials to proceed with the curriculum.</p>
-                             <Link href="/login" className="inline-flex items-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20">Sync Identity <Zap size={14} /></Link>
+                             <h4 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">Login Required</h4>
+                             <p className="text-xs font-semibold text-slate-500 mb-10 max-w-sm mx-auto leading-relaxed">This specific unit is restricted to registered students. Please log in to your account to continue this curriculum.</p>
+                             <Link href="/login" className="inline-flex items-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20">Sign In Now <Zap size={14} /></Link>
                           </div>
                        ) : (
                           <div 
-                           className={`prose prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-p:font-medium prose-p:leading-relaxed lg:prose-xl ${proseClass} ${isBengali ? 'font-bangla' : 'font-sans'}`}
+                           className={`prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:font-medium prose-p:leading-relaxed lg:prose-xl ${proseClass} ${isBengali ? 'font-bangla' : 'font-sans'}`}
                            dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(htmlBody) }}
                          />
                        )}
@@ -334,12 +334,12 @@ export default function CurriculumContentClient({
                                 <div className="relative z-10 space-y-8">
                                    <div className="w-20 h-20 bg-white/10 backdrop-blur border border-white/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl"><Lock className="w-10 h-10" /></div>
                                    <div>
-                                      <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Proceed with Evolution?</h3>
-                                      <p className="text-indigo-100 dark:text-slate-300 text-[11px] font-black uppercase tracking-widest max-w-sm mx-auto opacity-80 leading-relaxed">You have accessed 30% of this module. Authenticate to sync full lesson mapping, exercises, and assessments.</p>
+                                      <h3 className="text-3xl font-bold mb-4 tracking-tight">Continue Learning?</h3>
+                                      <p className="text-indigo-100 dark:text-slate-300 text-[11px] font-semibold max-w-sm mx-auto opacity-80 leading-relaxed">You have accessed a preview of this module. Sign in to your student account to sync your progress and view the full curriculum.</p>
                                    </div>
                                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                      <Link href="/login" className="px-12 py-5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl">Identify Self</Link>
-                                      <Link href="/signup" className="px-12 py-5 bg-transparent border-2 border-white/20 hover:bg-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all">Enroll Hub</Link>
+                                      <Link href="/login" className="px-12 py-5 bg-white text-slate-900 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl">Sign In</Link>
+                                      <Link href="/signup" className="px-12 py-5 bg-transparent border-2 border-white/20 hover:bg-white/10 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all">Sign Up Free</Link>
                                    </div>
                                 </div>
                              </div>
@@ -357,11 +357,11 @@ export default function CurriculumContentClient({
              })}
 
              {hasMore && user && !reachedBoundary && (
-               <div ref={loaderRef} className="py-24 flex justify-center">
-                 <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Fetching Next Module
-                 </div>
-               </div>
+                <div ref={loaderRef} className="py-24 flex justify-center">
+                  <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                     <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> Loading Next Part
+                  </div>
+                </div>
              )}
 
              {reachedBoundary && (
@@ -369,24 +369,24 @@ export default function CurriculumContentClient({
                    <div className="w-20 h-20 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-600/30 border-4 border-white dark:border-slate-800">
                       <Sparkles className="w-10 h-10" />
                    </div>
-                   <h3 className={`text-4xl font-black tracking-tighter uppercase mb-4 ${textMain}`}>Strategic Sync Complete</h3>
-                   <p className={`text-[10px] font-black uppercase tracking-widest mb-10 max-w-xs mx-auto ${textMuted} leading-relaxed opacity-80`}>Topic boundary detected. Ready to bridge to the next segment of the curriculum?</p>
+                   <h3 className={`text-4xl font-bold tracking-tight mb-4 ${textMain}`}>Part Complete</h3>
+                   <p className={`text-[10px] font-semibold uppercase tracking-widest mb-10 max-w-xs mx-auto ${textMuted} leading-relaxed opacity-80`}>You've finished this section. Ready to continue with the next part of the curriculum?</p>
                    
                    <button 
                     onClick={loadNextContent}
-                    className="group px-12 py-6 bg-slate-900 dark:bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-4 mx-auto hover:bg-indigo-500 hover:-translate-y-2 transition-all shadow-3xl shadow-indigo-600/20 active:scale-95"
+                    className="group px-12 py-6 bg-slate-900 dark:bg-indigo-600 text-white rounded-[2rem] font-bold uppercase tracking-widest text-[10px] flex items-center gap-4 mx-auto hover:bg-indigo-500 hover:-translate-y-2 transition-all shadow-3xl shadow-indigo-600/20 active:scale-95"
                    >
-                     Jump to Next Part <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                     Next Part <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                    </button>
                 </div>
              )}
 
              {!hasMore && (
-               <div className="py-32 text-center">
-                  <GraduationCap className="w-16 h-16 mx-auto mb-8 text-slate-200 dark:text-slate-800" />
-                  <h4 className="text-xl font-black uppercase tracking-tighter text-slate-400 dark:text-slate-600">Syllabus Terminal Reached</h4>
-                  <p className="text-[10px] uppercase font-black tracking-widest text-slate-300 dark:text-slate-700 mt-2">Achievement synchronization complete</p>
-               </div>
+                <div className="py-32 text-center">
+                   <GraduationCap className="w-16 h-16 mx-auto mb-8 text-slate-200 dark:text-slate-800" />
+                   <h4 className="text-xl font-bold text-slate-400 dark:text-slate-600 tracking-tight">End of Syllabus</h4>
+                   <p className="text-[10px] uppercase font-bold tracking-widest text-slate-300 dark:text-slate-700 mt-2">Achievement unlocked: Curriculum complete</p>
+                </div>
              )}
           </article>
 
@@ -396,8 +396,8 @@ export default function CurriculumContentClient({
                 <div className="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-slate-800 pb-8">
                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-600/20"><Layers className="w-6 h-6" /></div>
                    <div>
-                      <h3 className={`text-[10px] font-black uppercase tracking-widest ${textMain}`}>Mission Control</h3>
-                      <p className={`text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mt-1`}>Course Progression</p>
+                      <h3 className={`text-[10px] font-bold uppercase tracking-widest ${textMain}`}>Navigation</h3>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mt-1`}>Course Progress</p>
                    </div>
                 </div>
 
@@ -414,7 +414,7 @@ export default function CurriculumContentClient({
                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left group ${unitHasViewed ? 'bg-indigo-600/5 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                          >
                              <div className={`w-1.5 h-6 rounded-full shrink-0 transition-all ${unitHasViewed ? 'bg-indigo-600 scale-y-110' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                             <h4 className={`text-[11px] font-black uppercase tracking-tight flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600 dark:text-indigo-400' : textMain}`}>{unit.title}</h4>
+                             <h4 className={`text-[11px] font-bold flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600 dark:text-indigo-400' : textMain}`}>{unit.title}</h4>
                              <ChevronDown size={14} className={`transition-transform duration-500 text-slate-300 ${isUnitOpen ? 'rotate-180' : ''}`} />
                          </button>
                          
@@ -432,7 +432,7 @@ export default function CurriculumContentClient({
                                     className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-400'}`}
                                   >
                                      <ChevronDown size={12} className={`transition-transform duration-500 ${isLessonOpen ? 'rotate-180' : ''}`} />
-                                     <span className="text-[10px] font-black uppercase tracking-tight truncate flex-1 font-bangla">{l.title}</span>
+                                     <span className="text-[10px] font-bold truncate flex-1 font-bangla">{l.title}</span>
                                   </button>
 
                                   {isLessonOpen && (
@@ -447,7 +447,7 @@ export default function CurriculumContentClient({
                                              if (element) element.scrollIntoView({ behavior: 'smooth' });
                                              else window.location.href = `/curriculum/${subjectId}/${c.id}`;
                                           }}
-                                          className={`relative w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all font-bangla overflow-hidden group/item ${isViewed ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                          className={`relative w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-bold transition-all font-bangla overflow-hidden group/item ${isViewed ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                                         >
                                            <span className="truncate flex-1">{c.title}</span>
                                            {isViewed && <CheckCircle2 size={12} className="shrink-0" />}
@@ -467,8 +467,8 @@ export default function CurriculumContentClient({
                 </div>
 
                 <div className="mt-10 pt-8 border-t border-slate-50 dark:border-slate-800">
-                    <Link href={`/curriculum/${subjectId}`} className="w-full flex items-center justify-center gap-3 py-5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-transparent transition-all shadow-sm">
-                        <ArrowRight size={14} className="rotate-180" /> Exit Terminal
+                    <Link href={`/curriculum/${subjectId}`} className="w-full flex items-center justify-center gap-3 py-5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-200 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-transparent transition-all shadow-sm">
+                        <ArrowRight size={14} className="rotate-180" /> Back to Course
                     </Link>
                 </div>
              </div>
@@ -481,7 +481,7 @@ export default function CurriculumContentClient({
          <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex justify-end animate-in fade-in duration-300">
             <div className={`w-full max-w-[320px] h-full flex flex-col animate-in slide-in-from-right duration-500 bg-white dark:bg-slate-900`}>
                <div className="p-8 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Mission</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Navigation</h3>
                   <button onClick={() => setIsTocOpenMobile(false)} className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-2xl transition-colors"><X className="w-6 h-6" /></button>
                </div>
                <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
@@ -491,16 +491,16 @@ export default function CurriculumContentClient({
                       return (
                         <div key={unit.id} className="space-y-2">
                            <button onClick={() => toggleUnit(unitKey)} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-left">
-                              <span className="text-[11px] font-black uppercase tracking-tight flex-1 font-bangla dark:text-white">{unit.title}</span>
+                              <span className="text-[11px] font-bold flex-1 font-bangla dark:text-white">{unit.title}</span>
                               <ChevronDown size={14} className={`transition-transform duration-500 ${isUnitOpen ? 'rotate-180' : ''}`} />
                            </button>
                            {isUnitOpen && (
                              <div className="pl-4 space-y-2">
                                 {unit.lesson_plan_lessons?.map((l:any) => (
                                    <div key={l.id} className="space-y-1">
-                                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-bangla pl-2">{l.title}</p>
+                                      <p className="text-[9px] font-bold text-slate-400 font-bangla pl-2">{l.title}</p>
                                       {l.lesson_plan_contents?.map((c:any) => (
-                                         <button onClick={() => { setIsTocOpenMobile(false); const el = document.getElementById(`content-${c.id}`); if (el) el.scrollIntoView({behavior:'smooth'}); }} className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-left dark:text-slate-300">
+                                         <button onClick={() => { setIsTocOpenMobile(false); const el = document.getElementById(`content-${c.id}`); if (el) el.scrollIntoView({behavior:'smooth'}); }} className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold text-left dark:text-slate-300">
                                             {c.title}
                                          </button>
                                       ))}

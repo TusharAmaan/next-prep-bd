@@ -81,12 +81,12 @@ export default async function HomePage() {
   };
 
   const goalCards = [
-    { title: "SSC", desc: "Scientific discovery for secondary candidates.", link: "/resources/ssc", bg: "bg-blue-600", icon: School },
-    { title: "HSC", desc: "Advanced academic journals & test papers.", link: "/resources/hsc", bg: "bg-indigo-600", icon: GraduationCap },
+    { title: "SSC", desc: "Resources for secondary candidates.", link: "/resources/ssc", bg: "bg-blue-600", icon: School },
+    { title: "HSC", desc: "Advanced academic materials & test papers.", link: "/resources/hsc", bg: "bg-indigo-600", icon: GraduationCap },
     { title: "University", desc: "Varsity & Engineering entry strategies.", link: "/resources/university-admission", bg: "bg-fuchsia-600", icon: BookOpen },
-    { title: "Medical", desc: "MBBS & Dental clinical entrance guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-rose-500", icon: Stethoscope },
+    { title: "Medical", desc: "MBBS & Dental entrance guide.", link: "/resources/university-admission/science/medical-admission", bg: "bg-rose-500", icon: Stethoscope },
     { title: "IBA - MBA", desc: "Professional BBA/MBA admission assets.", link: "/resources/master's-admission/mba/iba", bg: "bg-slate-800", icon: TrendingUp },
-    { title: "Career Prep", desc: "BCS, Bank & Professional evolution.", link: "/resources/job-prep", bg: "bg-emerald-600", icon: Briefcase }
+    { title: "Career Prep", desc: "BCS, Bank & Job preparation.", link: "/resources/job-prep", bg: "bg-emerald-600", icon: Briefcase }
   ];
 
   return (
@@ -101,30 +101,30 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-3xl border border-white/10 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-10 shadow-2xl animate-fade-in-down">
+            <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-3xl border border-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-10 shadow-2xl animate-fade-in-down">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                 </span>
-                Bangladesh's Premier Academic Ecosystem
+                Bangladesh's Premier Academic Platform
             </div>
 
-            <h1 className="text-5xl md:text-9xl font-black tracking-tighter mb-10 leading-[0.85] uppercase animate-fade-in-up">
+            <h1 className="text-5xl md:text-9xl font-bold tracking-tight mb-10 leading-[0.85] animate-fade-in-up">
                 Master your <br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow text-glow">Evolutions</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow text-glow">Learning</span>
             </h1>
             
             <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 font-medium leading-relaxed mb-12 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-                Join the revolutionary platform designed for high-performance candidates. Access verified journals, strategic archives, and expert guidance.
+                Access verified resources, strategic archives, and expert guidance. The revolutionary platform built for excellence.
             </p>
 
             <form action="/search" method="GET" className="bg-white/5 backdrop-blur-3xl p-3 rounded-[2.5rem] border border-white/10 max-w-3xl mx-auto flex flex-col sm:flex-row gap-4 shadow-3xl transform transition-all hover:scale-[1.02] animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
                 <div className="relative flex-1">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 w-6 h-6 transition-colors" />
-                    <input name="q" type="text" placeholder="Search journals, archives (e.g. Physics)" className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-16 pr-6 py-4 sm:py-5 text-lg font-black tracking-tight" required />
+                    <input name="q" type="text" placeholder="Search resources, archives (e.g. Physics)" className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-16 pr-6 py-4 sm:py-5 text-lg font-bold tracking-tight" required />
                 </div>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 sm:py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-3 hover:scale-105 active:scale-95 duration-500">
-                    Research <ArrowRight className="w-4 h-4" />
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 sm:py-5 rounded-[2rem] font-bold text-[10px] uppercase tracking-widest transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-3 hover:scale-105 active:scale-95 duration-500">
+                    Search <ArrowRight className="w-4 h-4" />
                 </button>
             </form>
         </div>
@@ -139,22 +139,22 @@ export default async function HomePage() {
                       <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-inner">
                           <FileText className="w-8 h-8" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">12,000+</h3>
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Verified Assets</p>
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">12,000+</h3>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verified Assets</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-16 h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500 shadow-inner">
                           <Users className="w-8 h-8" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">5,400+</h3>
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Active Candidates</p>
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">5,400+</h3>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active Candidates</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 shadow-inner">
                           <Zap className="w-8 h-8 fill-current" />
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Hourly</h3>
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Journal Sync</p>
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">Daily</h3>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Resource Updates</p>
                   </div>
               </div>
           </div>
@@ -166,16 +166,16 @@ export default async function HomePage() {
         <section className="pt-32 pb-16 max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-20 gap-8">
               <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
                       <Sparkles className="w-3.5 h-3.5" />
-                      Strategic Pathways
+                      Learning Paths
                   </div>
-                  <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-[0.9]">
-                      Select Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Milestone</span>
+                  <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight leading-[0.9]">
+                      Select Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Goal</span>
                   </h2>
               </div>
               <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md text-lg leading-relaxed">
-                  Engineered pathways and curated archives designed to accelerate your clear to the next academic tier.
+                  Carefully designed pathways and curated archives to help you reach the next academic level.
               </p>
           </div>
 
@@ -189,10 +189,10 @@ export default async function HomePage() {
                                 <div className={`w-16 h-16 rounded-[1.5rem] ${card.bg} flex items-center justify-center mb-8 shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
                                     <Icon className="w-8 h-8 text-white" />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 uppercase tracking-tighter group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none">{card.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mb-8 font-black uppercase tracking-widest">{card.desc}</p>
-                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase tracking-[0.2em] gap-3">
-                                    <span>Initiate</span>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none tracking-tight">{card.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mb-8 font-semibold uppercase tracking-wide">{card.desc}</p>
+                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-[9px] uppercase tracking-widest gap-3">
+                                    <span>Get Started</span>
                                     <div className="flex-1 h-[2px] bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-400 transition-all duration-500"></div>
                                 </div>
                             </div>
@@ -210,8 +210,8 @@ export default async function HomePage() {
           <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 dark:bg-indigo-400/5 -skew-x-12 translate-x-1/2 -z-0"></div>
           <div className="max-w-7xl mx-auto px-6 relative z-10">
               <div className="text-center mb-24">
-                  <div className="inline-block px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-xl mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
-                  <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-6 leading-none">Global Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
+                  <div className="inline-block px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
+                  <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight mb-6 leading-none">Exam Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
                   <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg font-medium leading-relaxed">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
               </div>
 
@@ -227,13 +227,13 @@ export default async function HomePage() {
                             </div>
                             <div className="ml-8">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <h4 className="font-black text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tighter leading-none">{seg.title}</h4>
-                                    <span className="text-[9px] font-black text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-3 py-1 rounded-lg uppercase tracking-widest border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
+                                    <h4 className="font-bold text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none">{seg.title}</h4>
+                                    <span className="text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-3 py-1 rounded-lg uppercase tracking-widest border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
                                 </div>
-                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 line-clamp-1">{getQuestionText(seg.slug)}</p>
+                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 line-clamp-1">{getQuestionText(seg.slug)}</p>
                                 <div className="flex items-center gap-6">
-                                    <span className="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+ Solved</span>
-                                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-500">Initiate <ChevronRight className="w-3.5 h-3.5 inline" /></span>
+                                    <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+ Solved</span>
+                                    <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-500">View More <ChevronRight className="w-3.5 h-3.5 inline" /></span>
                                 </div>
                             </div>
                         </Link>
@@ -265,14 +265,14 @@ export default async function HomePage() {
                             <Zap className="w-8 h-8 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-2">Academic Journals</h2>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-[0.2em]">Latest additions & strategic updates</p>
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">Academic Resources</h2>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Latest additions & strategic updates</p>
                         </div>
                     </div>
                     <div>
-                        <span className="inline-flex items-center gap-2.5 px-5 py-2 bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest rounded-xl animate-pulse border border-green-100 dark:border-green-800/30">
+                        <span className="inline-flex items-center gap-2.5 px-5 py-2 bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 text-[9px] font-bold uppercase tracking-widest rounded-xl animate-pulse border border-green-100 dark:border-green-800/30">
                             <span className="w-2 h-2 bg-green-600 rounded-full shadow-glow-green"></span>
-                            Real-time Sync
+                            Live Updates
                         </span>
                     </div>
                 </div>
@@ -298,16 +298,16 @@ export default async function HomePage() {
                                           <Image src={`https://i.pravatar.cc/100?img=${i+15}`} alt="mentor" width={48} height={48} className="object-cover w-full h-full" />
                                       </div>
                                   ))}
-                                  <div className="w-12 h-12 rounded-[1.2rem] border-4 border-slate-900 bg-indigo-600 flex items-center justify-center -ml-5 text-[10px] font-black text-white shadow-2xl shadow-indigo-600/50">+80</div>
+                                  <div className="w-12 h-12 rounded-[1.2rem] border-4 border-slate-900 bg-indigo-600 flex items-center justify-center -ml-5 text-[10px] font-bold text-white shadow-2xl shadow-indigo-600/50">+80</div>
                               </div>
-                              <h3 className="text-4xl font-black text-white leading-[0.9] mb-6 uppercase tracking-tighter">Accelerate with <span className="text-indigo-400">Industry Experts.</span></h3>
-                              <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed">Engage in personalized 1-on-1 strategic sessions for Physics, High-Math & Admissions.</p>
+                              <h3 className="text-4xl font-bold text-white leading-[0.9] mb-6 tracking-tight">Learn with <br/><span className="text-indigo-400">Expert Mentors.</span></h3>
+                              <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed">Engage in personalized 1-on-1 sessions for Physics, Math & Admission coaching.</p>
                               <Link href="/find-tutor" className="mt-auto">
-                                  <button className="w-full bg-white text-slate-950 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-4 shadow-2xl hover:bg-indigo-500 hover:text-white active:scale-95 duration-500 group-hover:shadow-indigo-500/20">
-                                      Recruit Mentor <ArrowRight className="w-5 h-5" />
+                                  <button className="w-full bg-white text-slate-950 py-5 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-4 shadow-2xl hover:bg-indigo-500 hover:text-white active:scale-95 duration-500 group-hover:shadow-indigo-500/20">
+                                      Find a Mentor <ArrowRight className="w-5 h-5" />
                                   </button>
                               </Link>
-                              <p className="text-center text-[9px] text-slate-600 mt-6 font-black uppercase tracking-[0.3em]">Verified Top-Tier Educators</p>
+                              <p className="text-center text-[9px] text-slate-600 mt-6 font-bold uppercase tracking-widest">Verified Top-Tier Educators</p>
                           </div>
                       </div>
                   </div>
@@ -316,17 +316,17 @@ export default async function HomePage() {
                 {/* COMMUNITY WIDGET */}
                 <ScrollReveal direction="right" delay={100}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 shadow-xl dark:shadow-indigo-900/5 group">
-                      <h3 className="font-black text-slate-900 dark:text-white mb-8 flex items-center gap-4 text-[10px] uppercase tracking-[0.2em]">
-                          <Zap className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" /> Unified Community
+                      <h3 className="font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-4 text-[10px] uppercase tracking-widest">
+                          <Zap className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" /> Join the Community
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                           <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Facebook className="w-8 h-8 mb-3 text-blue-600 group-hover:text-white transition-transform group-hover:scale-125" />
-                              <span className="text-[9px] font-black uppercase tracking-widest">Protocol</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest">Facebook</span>
                           </a>
                           <a href="https://youtube.com/@nextprepbd" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 hover:bg-red-600 dark:hover:bg-red-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Youtube className="w-8 h-8 mb-3 text-red-600 group-hover:text-white transition-transform group-hover:scale-125" />
-                              <span className="text-[9px] font-black uppercase tracking-widest">Archives</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest">YouTube</span>
                           </a>
                       </div>
                   </div>
@@ -336,21 +336,21 @@ export default async function HomePage() {
                 <ScrollReveal direction="right" delay={200}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl dark:shadow-indigo-900/5">
                       <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                          <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-4 text-[10px] uppercase tracking-[0.2em]"><Bell className="w-4 h-4 text-indigo-600" /> Intelligence Feed</h3>
+                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-[10px] uppercase tracking-widest"><Bell className="w-4 h-4 text-indigo-600" /> Latest Updates</h3>
                           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-glow-red"></div>
                       </div>
                       <div className="p-4 max-h-[400px] overflow-y-auto hide-scrollbar custom-scrollbar">
                           {news.map((n: any) => (
                               <Link href={`/news/${n.id}`} key={n.id} className="block p-5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-500 group border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
                                   <div className="flex items-center gap-3 mb-3">
-                                      <span className="text-[8px] font-black bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-lg uppercase tracking-widest border border-indigo-100 dark:border-indigo-800/50">{n.category || 'Update'}</span>
-                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">{new Date(n.created_at).toLocaleDateString()}</span>
+                                      <span className="text-[8px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-lg uppercase tracking-widest border border-indigo-100 dark:border-indigo-800/50">{n.category || 'Update'}</span>
+                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">{new Date(n.created_at).toLocaleDateString()}</span>
                                   </div>
-                                  <h4 className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 leading-snug uppercase tracking-tight line-clamp-2">{n.title}</h4>
+                                  <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 leading-snug tracking-tight line-clamp-2">{n.title}</h4>
                               </Link>
                           ))}
                       </div>
-                      <Link href="/news" className="block text-center py-6 bg-slate-50 dark:bg-slate-800/50 text-[9px] font-black text-slate-500 dark:text-slate-400 hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-[0.3em] border-t border-slate-50 dark:border-slate-800">Scan Full Feed</Link>
+                      <Link href="/news" className="block text-center py-6 bg-slate-50 dark:bg-slate-800/50 text-[9px] font-bold text-slate-500 dark:text-slate-400 hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-widest border-t border-slate-50 dark:border-slate-800">View Full Feed</Link>
                   </div>
                 </ScrollReveal>
 
@@ -358,7 +358,7 @@ export default async function HomePage() {
                 <ScrollReveal direction="right" delay={300}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl dark:shadow-indigo-900/5">
                       <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                          <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-4 text-[10px] uppercase tracking-[0.2em]"><BookOpen className="w-4 h-4 text-purple-600" /> Global Assets</h3>
+                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-[10px] uppercase tracking-widest"><BookOpen className="w-4 h-4 text-purple-600" /> Digital Resources</h3>
                       </div>
                       <div className="p-4">
                           {ebooks.map((book: any) => (
@@ -368,15 +368,15 @@ export default async function HomePage() {
                                           <FileText className="w-6 h-6" />
                                       </div>
                                       <div className="min-w-0">
-                                          <h4 className="text-[11px] font-black text-slate-700 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{book.title}</h4>
-                                          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-1">{book.category}</p>
+                                          <h4 className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">{book.title}</h4>
+                                          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">{book.category}</p>
                                       </div>
                                   </div>
                                   <span className="p-2.5 text-slate-300 dark:text-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"><Download className="w-5 h-5" /></span>
                               </Link>
                           ))}
                       </div>
-                      <Link href="/ebooks" className="block text-center py-6 bg-purple-50 dark:bg-purple-900/20 text-[9px] font-black text-purple-600 dark:text-purple-400 hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-[0.3em] duration-500">Access Asset Library</Link>
+                      <Link href="/ebooks" className="block text-center py-6 bg-purple-50 dark:bg-purple-900/20 text-[9px] font-bold text-purple-600 dark:text-purple-400 hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-widest duration-500">Access Library</Link>
                   </div>
                 </ScrollReveal>
 

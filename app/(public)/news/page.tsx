@@ -4,7 +4,6 @@ import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import { Search, Calendar, Clock, ChevronRight, Tag, ArrowRight, BookOpen, Share2, Eye, TrendingUp } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import NewsSidebar from "@/components/news/NewsSidebar";
-import Footer from "@/components/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -76,10 +75,10 @@ export default async function NewsPage({ searchParams }: Props) {
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-600/10 rounded-full blur-[80px] pointer-events-none -ml-20 -mb-10"></div>
         
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-6">
                 <TrendingUp className="w-3.5 h-3.5" /> Stay Informed
             </span>
-            <h1 className="text-4xl md:text-7xl font-black text-white mb-6 uppercase tracking-tight leading-[1.1]">
+            <h1 className="text-4xl md:text-7xl font-bold text-white mb-6 tracking-tight leading-[1.1]">
                 Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Insights</span> & Updates
             </h1>
             <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-medium">
@@ -104,9 +103,9 @@ export default async function NewsPage({ searchParams }: Props) {
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent"></div>
                       <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
-                         <span className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest mb-4 inline-block">{featuredPost.category}</span>
-                         <h2 className="text-2xl md:text-4xl font-black text-white hover:text-indigo-300 transition-colors uppercase tracking-tight leading-tight mb-4">{featuredPost.title}</h2>
-                         <div className="flex items-center gap-6 text-white/70 text-[10px] font-black uppercase tracking-widest">
+                         <span className="bg-indigo-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest mb-4 inline-block">{featuredPost.category}</span>
+                         <h2 className="text-2xl md:text-4xl font-bold text-white hover:text-indigo-300 transition-colors tracking-tight leading-tight mb-4">{featuredPost.title}</h2>
+                         <div className="flex items-center gap-6 text-white/70 text-[10px] font-bold uppercase tracking-widest">
                             <span className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-indigo-400"/> {formatDate(featuredPost.created_at)}</span>
                             <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-indigo-400"/> {getReadTime(featuredPost.content)}</span>
                          </div>
@@ -129,22 +128,22 @@ export default async function NewsPage({ searchParams }: Props) {
                         <div className="w-full h-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600"><Tag className="w-12 h-12"/></div>
                       )}
                       <div className="absolute top-5 left-5">
-                        <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-slate-900 dark:text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-slate-100/10">{post.category}</span>
+                        <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-slate-900 dark:text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-slate-100/10">{post.category}</span>
                       </div>
                    </Link>
                    <div className="p-8 md:p-10 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
+                      <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
                          <span>{formatDate(post.created_at)}</span>
                          <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
                          <span>{getReadTime(post.content)}</span>
                       </div>
                       <Link href={`/news/${post.id}`}>
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{post.title}</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">{post.title}</h3>
                       </Link>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">{post.seo_description || "Explore deeper insights and comprehensive updates on this topic in our latest article segment."}</p>
                       
                       <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                         <Link href={`/news/${post.id}`} className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+                         <Link href={`/news/${post.id}`} className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-widest hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
                             Read More <ArrowRight className="w-3.5 h-3.5" />
                          </Link>
                          <div className="flex items-center gap-3">
@@ -162,7 +161,7 @@ export default async function NewsPage({ searchParams }: Props) {
                  <Link 
                    key={p} 
                    href={`/news?category=${category}&page=${p}&q=${q}`}
-                   className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs transition-all ${
+                   className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xs transition-all ${
                      p === currentPage 
                      ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 scale-110" 
                      : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-500 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600"
@@ -187,8 +186,6 @@ export default async function NewsPage({ searchParams }: Props) {
            <ProfessionalAppBanner />
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -101,7 +101,7 @@ export default function DonatePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 font-sans transition-colors duration-300 selection:bg-rose-100 dark:selection:bg-rose-900/30 selection:text-rose-900 dark:selection:text-rose-200">
-      <Header />
+
       
       <main className="pt-32 pb-20 px-6">
         {/* HERO HEADER */}
@@ -116,7 +116,7 @@ export default function DonatePage() {
            <motion.h1 
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
-             className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tight leading-none"
+             className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight leading-none"
            >
              Empower <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-indigo-600 dark:from-rose-400 dark:to-indigo-400">Education</span>
            </motion.h1>
@@ -374,7 +374,7 @@ export default function DonatePage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 }
