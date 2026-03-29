@@ -387,29 +387,6 @@ export default async function HomePage() {
       {/* APP DOWNLOAD */}
       <HomeAppSection />
 
-      <style jsx global>{`
-        @keyframes gradient-flow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-gradient-flow {
-          background-size: 300% 300%;
-          animation: gradient-flow 10s ease infinite;
-        }
-        .text-glow {
-          text-shadow: 0 0 30px rgba(129, 140, 248, 0.4);
-        }
-        .shadow-glow-indigo {
-          text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
-        }
-        .shadow-glow-green {
-          box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-        }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .bg-300% { background-size: 300% 300%; }
-      `}</style>
     </div>
   );
 }
