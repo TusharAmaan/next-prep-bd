@@ -51,7 +51,7 @@ const RoleCard = ({ icon: Icon, title, description, onClick, active }: any) => (
 
 const InputField = ({ label, icon: Icon, ...props }: any) => (
   <div className="space-y-1.5 w-full">
-    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">{label}</label>
+    <label className="text-xs font-bold text-slate-500 tracking-wide ml-1">{label}</label>
     <div className="relative group">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors pointer-events-none">
         <Icon className="w-4 h-4" />
@@ -239,8 +239,8 @@ function SignupContent() {
             )}
 
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2 capitalize">
-                    {step === 1 ? "Choose Your Path" : `${selectedRole} Registration`}
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+                    {step === 1 ? "Choose Your Path" : `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Registration`}
                 </h1>
                 <p className="text-slate-500 font-medium">
                     {step === 1 ? "Select how you will use NextPrepBD." : "Fill in your details to get started."}
@@ -286,7 +286,7 @@ function SignupContent() {
                         
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">WhatsApp Number</label>
+                                <label className="text-xs font-bold text-slate-500 tracking-wide ml-1">WhatsApp Number</label>
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isWhatsappSame ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                                         {isWhatsappSame && <Check className="w-3 h-3 text-white" />}
@@ -318,7 +318,7 @@ function SignupContent() {
 
                             {/* --- MANDATORY GOAL SELECTION --- */}
                             <div className="space-y-1.5 w-full bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
-                                <label className="text-xs font-bold text-indigo-800 uppercase tracking-wide ml-1 flex items-center gap-1">
+                                <label className="text-xs font-bold text-indigo-800 tracking-wide ml-1 flex items-center gap-1">
                                     Primary Goal <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative group">
@@ -349,7 +349,7 @@ function SignupContent() {
 
                     {selectedRole !== 'student' && (
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Bio / About</label>
+                            <label className="text-xs font-bold text-slate-500 tracking-wide ml-1">Bio / About</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-3 text-slate-400 pointer-events-none"><FileText className="w-4 h-4" /></div>
                                 <textarea 
@@ -377,7 +377,7 @@ function SignupContent() {
           </div>
       </div>
       
-      <p className="text-[10px] text-slate-400 text-center mt-8 pb-8">
+      <p className="text-[11px] text-slate-400 text-center mt-8 pb-8">
           Protected by reCAPTCHA and Google <a href="#" className="hover:text-indigo-600">Privacy Policy</a> & <a href="#" className="hover:text-indigo-600">Terms</a>.
       </p>
     </div>

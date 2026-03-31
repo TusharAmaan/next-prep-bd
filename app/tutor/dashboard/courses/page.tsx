@@ -54,7 +54,7 @@ export default function CourseManagerPage() {
       {/* HEADER BAR */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-            <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                 <Layout className="w-6 h-6 text-indigo-600"/> Course Manager
             </h1>
             <p className="text-slate-500 text-sm mt-1">
@@ -103,8 +103,8 @@ export default function CourseManagerPage() {
                           ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-300"><Layout className="w-12 h-12 opacity-20"/></div>
                           )}
-                          <div className="absolute top-3 right-3">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border backdrop-blur-md ${
+                           <div className="absolute top-3 right-3">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm border backdrop-blur-md ${
                                   course.status === 'approved' ? 'bg-white/90 text-green-700 border-green-200' :
                                   course.status === 'rejected' ? 'bg-white/90 text-red-700 border-red-200' :
                                   'bg-white/90 text-amber-700 border-amber-200'
@@ -112,7 +112,7 @@ export default function CourseManagerPage() {
                                   {course.status === 'approved' && <CheckCircle className="w-3 h-3"/>}
                                   {course.status === 'rejected' && <AlertCircle className="w-3 h-3"/>}
                                   {course.status === 'pending' && <Clock className="w-3 h-3"/>}
-                                  {course.status}
+                                  <span className="capitalize">{course.status}</span>
                               </span>
                           </div>
                       </div>

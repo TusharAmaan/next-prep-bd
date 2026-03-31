@@ -203,13 +203,13 @@ export default function SubscriptionPage() {
           
           <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8 items-start lg:items-center">
               <div className="space-y-4 max-w-2xl">
-                  <div className="flex flex-wrap items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                   <div className="flex flex-wrap items-center gap-3">
+                      <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-widest border ${
                           profile?.subscription_plan === 'pro' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
                           profile?.subscription_plan === 'trial' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 
                           'bg-slate-700/50 text-slate-400 border-slate-600'
                       }`}>
-                          {profile?.subscription_plan === 'pro' ? 'PRO PLAN' : profile?.subscription_plan === 'trial' ? 'TRIAL ACTIVE' : 'FREE PLAN'}
+                          {profile?.subscription_plan === 'pro' ? 'Pro Plan' : profile?.subscription_plan === 'trial' ? 'Trial Active' : 'Free Plan'}
                       </span>
                       {profile?.subscription_expiry && (
                           <span className="text-xs text-slate-400 flex items-center gap-1 font-medium bg-black/20 px-2 py-1 rounded-md border border-white/5">
@@ -217,8 +217,8 @@ export default function SubscriptionPage() {
                           </span>
                       )}
                   </div>
-                  <div>
-                    <h1 className="text-3xl lg:text-4xl font-black tracking-tight mb-2">Subscription & Usage</h1>
+                   <div>
+                    <h1 className="text-3xl lg:text-4xl font-bold tracking-tight mb-2">Subscription & Usage</h1>
                     <p className="text-slate-400 text-sm lg:text-base leading-relaxed">
                         Manage your billing, check your question limits, and unlock advanced features like custom branding and unlimited storage.
                     </p>
@@ -226,8 +226,8 @@ export default function SubscriptionPage() {
               </div>
 
               {/* Usage Meter */}
-              <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 w-full lg:w-80 shadow-inner">
-                  <div className="flex justify-between text-xs font-bold mb-3 uppercase tracking-wide text-slate-400">
+               <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 w-full lg:w-80 shadow-inner">
+                  <div className="flex justify-between text-xs font-bold mb-3 tracking-wide text-slate-400">
                       <span>Monthly Quota</span>
                       <span className={currentCount >= maxCount ? "text-red-400" : "text-emerald-400"}>
                           {currentCount} / {maxCount > 1000 ? '∞' : maxCount}
@@ -241,7 +241,7 @@ export default function SubscriptionPage() {
                           style={{ width: `${usagePercentage}%` }}
                       ></div>
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-3 text-center italic">
+                  <p className="text-[11px] text-slate-500 mt-3 text-center">
                       Resets automatically on the 1st of every month.
                   </p>
               </div>
@@ -253,9 +253,9 @@ export default function SubscriptionPage() {
           
           {/* FREE PLAN */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 flex flex-col shadow-sm hover:border-slate-300 transition-all">
-              <div className="mb-6">
+               <div className="mb-6">
                   <h3 className="text-lg font-bold text-slate-600 mb-2">Starter</h3>
-                  <p className="text-4xl font-black text-slate-900">৳0<span className="text-sm font-bold text-slate-400">/mo</span></p>
+                  <p className="text-4xl font-bold text-slate-900">৳0<span className="text-sm font-bold text-slate-400">/mo</span></p>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex gap-3 text-sm text-slate-600 font-medium"><CheckCircle className="w-5 h-5 text-slate-300 shrink-0"/> 50 Questions / Month</li>
@@ -268,15 +268,15 @@ export default function SubscriptionPage() {
           </div>
 
           {/* TRIAL PROMO */}
-          {!profile?.is_trial_used && profile?.subscription_plan === 'free' && (
+           {!profile?.is_trial_used && profile?.subscription_plan === 'free' && (
               <div className="relative bg-gradient-to-b from-blue-600 to-indigo-700 rounded-3xl p-1 shadow-xl shadow-blue-200 transform lg:-translate-y-4 order-first lg:order-none md:col-span-2 lg:col-span-1">
-                  <div className="absolute top-0 right-0 left-0 bg-white/20 text-white text-[10px] font-black uppercase tracking-widest py-1.5 text-center">
+                  <div className="absolute top-0 right-0 left-0 bg-white/20 text-white text-[11px] font-bold tracking-widest py-1.5 text-center">
                       Recommended Start
                   </div>
-                  <div className="bg-white rounded-[20px] p-6 lg:p-8 h-full flex flex-col mt-6">
+                   <div className="bg-white rounded-[20px] p-6 lg:p-8 h-full flex flex-col mt-6">
                       <div className="mb-6">
                           <h3 className="text-lg font-bold text-indigo-600 flex items-center gap-2"><Zap className="w-5 h-5 fill-indigo-600"/> 7-Day Trial</h3>
-                          <p className="text-4xl font-black text-slate-900 mt-2">Free<span className="text-sm font-bold text-slate-400">/7 days</span></p>
+                          <p className="text-4xl font-bold text-slate-900 mt-2">Free<span className="text-sm font-bold text-slate-400">/7 days</span></p>
                       </div>
                       <ul className="space-y-4 mb-8 flex-1">
                           <li className="flex gap-3 text-sm text-slate-700 font-bold"><CheckCircle className="w-5 h-5 text-indigo-500 shrink-0"/> Unlimited Questions</li>
@@ -291,16 +291,16 @@ export default function SubscriptionPage() {
           )}
 
           {/* PRO PLAN */}
-          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 lg:p-8 flex flex-col shadow-sm relative overflow-hidden group">
+           <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 lg:p-8 flex flex-col shadow-sm relative overflow-hidden group">
               {hasDiscount && (
-                  <div className="absolute -right-12 top-6 bg-red-500 text-white text-[10px] font-black px-12 py-1 rotate-45 shadow-sm z-10">
-                      50% OFF
+                  <div className="absolute -right-12 top-6 bg-red-500 text-white text-[11px] font-bold px-12 py-1 rotate-45 shadow-sm z-10">
+                      50% off
                   </div>
               )}
-              <div className="mb-6 relative z-10">
+               <div className="mb-6 relative z-10">
                   <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-500 fill-amber-500"/> Professional</h3>
                   <div className="mt-2 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                      <p className="text-4xl font-black text-slate-900">৳{getDisplayPrice('monthly')}</p>
+                      <p className="text-4xl font-bold text-slate-900">৳{getDisplayPrice('monthly')}</p>
                       {hasDiscount && <span className="text-lg text-slate-400 line-through font-bold">৳500</span>}
                       <span className="text-sm font-bold text-slate-400">/mo</span>
                   </div>
@@ -334,10 +334,10 @@ export default function SubscriptionPage() {
           <div className="p-6 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
               <History className="w-5 h-5 text-slate-400"/>
               <h3 className="font-bold text-slate-800">Billing History</h3>
-          </div>
+           </div>
           <div className="overflow-x-auto">
               <table className="w-full text-sm text-left whitespace-nowrap">
-                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-xs tracking-wider">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs tracking-wider">
                       <tr>
                           <th className="px-6 py-4">Date</th>
                           <th className="px-6 py-4">Plan</th>
@@ -346,9 +346,9 @@ export default function SubscriptionPage() {
                           <th className="px-6 py-4 text-right">Status</th>
                       </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                   <tbody className="divide-y divide-slate-100">
                       {transactions.length === 0 ? (
-                          <tr><td colSpan={5} className="p-8 text-center text-slate-400 italic font-medium">No transactions found.</td></tr>
+                          <tr><td colSpan={5} className="p-8 text-center text-slate-400 font-medium">No transactions found.</td></tr>
                       ) : (
                           transactions.map(t => (
                               <tr key={t.id} className="hover:bg-slate-50 transition-colors">
@@ -362,15 +362,15 @@ export default function SubscriptionPage() {
                                       {t.payment_method === 'dodo' && <Globe className="w-3 h-3 text-yellow-500"/>}
                                       {t.payment_method}
                                   </td>
-                                  <td className="px-6 py-4 text-right">
-                                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
-                                          t.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                          t.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                          'bg-amber-100 text-amber-700'
-                                      }`}>
-                                          {t.status}
-                                      </span>
-                                  </td>
+                                   <td className="px-6 py-4 text-right">
+                                       <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${
+                                           t.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                           t.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                           'bg-amber-100 text-amber-700'
+                                       }`}>
+                                           {t.status}
+                                       </span>
+                                   </td>
                               </tr>
                           ))
                       )}
@@ -421,7 +421,7 @@ export default function SubscriptionPage() {
                               </div>
                               <div className="flex justify-center gap-2 items-baseline text-slate-600">
                                   <span className="text-sm font-bold">Total:</span>
-                                  <span className="text-3xl font-black text-slate-900">৳{getDisplayPrice(selectedPlan)}</span>
+                                  <span className="text-3xl font-bold text-slate-900">৳{getDisplayPrice(selectedPlan)}</span>
                               </div>
                               <button 
                                   onClick={handleDodoPayment} 
@@ -435,29 +435,29 @@ export default function SubscriptionPage() {
                           <div className="space-y-6 animate-in fade-in">
                               {/* Payment Instructions */}
                               <div className={`p-5 rounded-2xl border-2 text-center space-y-3 ${
-                                  paymentMethod === 'bkash' ? 'bg-pink-50/50 border-pink-100' : 
-                                  paymentMethod === 'upay' ? 'bg-blue-50/50 border-blue-100' : 
-                                  'bg-emerald-50/50 border-emerald-100'
-                              }`}>
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Send Money (Personal)</p>
+                                   paymentMethod === 'bkash' ? 'bg-pink-50/50 border-pink-100' : 
+                                   paymentMethod === 'upay' ? 'bg-blue-50/50 border-blue-100' : 
+                                   'bg-emerald-50/50 border-emerald-100'
+                               }`}>
+                                   <p className="text-[11px] font-bold text-slate-400 tracking-widest">Send Money (Personal)</p>
+                                   
+                                   <div className="flex justify-center items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm mx-auto max-w-fit">
+                                       <span className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight font-mono">
+                                           {paymentMethod === 'cellfin' ? '01828677148' : '+8801828677148'}
+                                       </span>
+                                       <button onClick={() => copyNumber(paymentMethod === 'cellfin' ? '01828677148' : '+8801828677148')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Copy className="w-4 h-4"/></button>
+                                   </div>
                                   
-                                  <div className="flex justify-center items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm mx-auto max-w-fit">
-                                      <span className="text-xl md:text-2xl font-black text-slate-800 tracking-tight font-mono">
-                                          {paymentMethod === 'cellfin' ? '01828677148' : '+8801828677148'}
-                                      </span>
-                                      <button onClick={() => copyNumber(paymentMethod === 'cellfin' ? '01828677148' : '+8801828677148')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Copy className="w-4 h-4"/></button>
-                                  </div>
-                                  
-                                  <div className="flex justify-center gap-2 items-baseline text-slate-600">
-                                      <span className="text-xs font-bold uppercase">Amount:</span>
-                                      <span className="text-slate-900 text-xl font-black">৳{getDisplayPrice(selectedPlan)}</span>
-                                  </div>
+                                   <div className="flex justify-center gap-2 items-baseline text-slate-600">
+                                       <span className="text-xs font-bold">Amount:</span>
+                                       <span className="text-slate-900 text-xl font-bold">৳{getDisplayPrice(selectedPlan)}</span>
+                                   </div>
                               </div>
 
-                              {/* Form */}
+                               {/* Form */}
                               <form onSubmit={handleSubmitPayment} className="space-y-4">
                                   <div>
-                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Your Wallet Number</label>
+                                      <label className="block text-xs font-bold text-slate-500 mb-2">Your Wallet Number</label>
                                       <input 
                                           required
                                           type="text" 
@@ -466,14 +466,14 @@ export default function SubscriptionPage() {
                                           value={senderNumber}
                                           onChange={e => setSenderNumber(e.target.value)}
                                       />
-                                  </div>
+                                   </div>
                                   <div>
-                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Transaction ID (TrxID)</label>
+                                      <label className="block text-xs font-bold text-slate-500 mb-2">Transaction ID (TrxID)</label>
                                       <input 
                                           required
-                                          type="text" 
+                                           type="text" 
                                           placeholder="e.g. 8H3K9L..." 
-                                          className="w-full border border-slate-300 rounded-xl p-3.5 font-bold text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all uppercase placeholder:font-normal placeholder:normal-case placeholder:text-slate-300"
+                                          className="w-full border border-slate-300 rounded-xl p-3.5 font-bold text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
                                           value={trxId}
                                           onChange={e => setTrxId(e.target.value)}
                                       />

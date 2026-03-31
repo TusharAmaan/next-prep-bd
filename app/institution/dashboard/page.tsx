@@ -153,7 +153,7 @@ export default function InstitutionDashboard() {
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h1 className="text-4xl font-black text-slate-900">
+            <h1 className="text-4xl font-bold text-slate-900">
               {profile?.institution || "Institution"} Dashboard
             </h1>
             <p className="text-slate-600 mt-2">Manage students and track institution progress</p>
@@ -283,8 +283,8 @@ function StatCard({
       <div className={`inline-flex p-2 rounded-lg ${colorMap[color]} mb-3`}>
         <Icon className="w-5 h-5" />
       </div>
-      <p className="text-slate-600 text-xs font-medium uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-black text-slate-900 mt-1">{value}</p>
+      <p className="text-slate-600 text-xs font-medium tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
     </div>
   );
 }
@@ -705,7 +705,7 @@ function ResourcesSection({ members }: { members: InstitutionMember[] }) {
             <p className="text-4xl mb-3">{resource.icon}</p>
             <h3 className="font-bold text-slate-900 mb-1">{resource.title}</h3>
             <p className="text-sm text-slate-600 mb-4">{resource.desc}</p>
-            <p className="text-2xl font-black text-indigo-600">{resource.count}</p>
+            <p className="text-2xl font-bold text-indigo-600">{resource.count}</p>
           </div>
         ))}
       </div>

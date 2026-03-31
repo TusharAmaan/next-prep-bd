@@ -227,7 +227,7 @@ export default function ProfilePage() {
       {modal.isOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full text-center animate-pop-in">
-            <h3 className={`text-xl font-black mb-2 capitalize ${modal.type === 'error' ? 'text-red-600' : 'text-slate-900'}`}>{modal.type === 'error' ? 'Error!' : 'Success!'}</h3>
+            <h3 className={`text-xl font-bold mb-2 ${modal.type === 'error' ? 'text-red-600' : 'text-slate-900'}`}>{modal.type === 'error' ? 'Error!' : 'Success!'}</h3>
             <p className="text-slate-500 text-sm mb-6">{modal.message}</p>
             <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full py-3 bg-slate-900 hover:bg-black text-white rounded-xl font-bold shadow-lg transition-all">Okay</button>
           </div>
@@ -240,12 +240,12 @@ export default function ProfilePage() {
         <div className="bg-slate-900 p-6 md:p-10 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/30 to-purple-600/30 opacity-40"></div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full flex items-center justify-center text-3xl md:text-4xl font-black text-slate-900 border-4 border-slate-200 shadow-lg mb-3">
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full flex items-center justify-center text-3xl md:text-4xl font-bold text-slate-900 border-4 border-slate-200 shadow-lg mb-3">
                 {fullName ? fullName[0].toUpperCase() : "U"}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-white">{fullName || "User Profile"}</h1>
             <div className="flex items-center gap-2 mt-2">
-                 <span className="bg-white/10 text-white/90 text-[10px] md:text-xs uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-white/10">
+                 <span className="bg-white/10 text-white/90 text-[11px] md:text-xs tracking-widest font-bold px-3 py-1 rounded-full border border-white/10">
                     {user?.role || "Member"}
                  </span>
                  {city && <span className="flex items-center gap-1 text-white/70 text-xs font-bold"><MapPin className="w-3 h-3"/> {city}</span>}
@@ -258,22 +258,22 @@ export default function ProfilePage() {
           
           {/* 1. COMMON FIELDS */}
           <section className="space-y-4">
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">Personal Info</h3>
+              <h3 className="text-sm font-bold text-slate-400 tracking-widest border-b border-slate-100 pb-2 mb-4">Personal Info</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">Full Name</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">Full Name</label>
                     <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={fullName} onChange={e => setFullName(e.target.value)} />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">Email</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">Email</label>
                     <input className="w-full bg-slate-100 border border-slate-200 p-3 rounded-xl font-bold text-slate-400 outline-none cursor-not-allowed" value={email} disabled />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">Phone</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">Phone</label>
                     <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+880..." />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">{user.role === 'institute' ? 'Institute Name' : 'Institution'}</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">{user.role === 'institute' ? 'Institute Name' : 'Institution'}</label>
                     <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={institution} onChange={e => setInstitution(e.target.value)} placeholder={user.role === 'tutor' ? 'Current University/College' : 'e.g. Dhaka College'} />
                 </div>
               </div>
@@ -287,14 +287,14 @@ export default function ProfilePage() {
                   <h4 className="flex items-center gap-2 font-bold text-blue-900"><GraduationCap className="w-5 h-5"/> Student Profile</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                          <label className="text-xs font-bold text-blue-800/70 uppercase block mb-1.5 ml-1">Target Goal</label>
+                          <label className="text-xs font-bold text-blue-800/70 block mb-1.5 ml-1">Target Goal</label>
                           <select value={currentGoal} onChange={(e) => setCurrentGoal(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200">
                               <option value="">Select Goal</option>
                               {goalOptions.map((opt) => <option key={opt.name} value={opt.value}>{opt.name}</option>)}
                           </select>
                       </div>
                       <div>
-                          <label className="text-xs font-bold text-blue-800/70 uppercase block mb-1.5 ml-1">Date of Birth</label>
+                          <label className="text-xs font-bold text-blue-800/70 block mb-1.5 ml-1">Date of Birth</label>
                           <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200" />
                       </div>
                   </div>
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                            {/* 1. Segment */}
                            <div className="w-full">
-                               <label className="text-[10px] font-bold text-purple-700 uppercase block mb-1 ml-1">1. Segment</label>
+                               <label className="text-[11px] font-bold text-purple-700 block mb-1 ml-1">1. Segment</label>
                                <select 
                                  value={selectedSegment} 
                                  onChange={(e) => { setSelectedSegment(e.target.value); setSelectedGroup(""); setSelectedSubject(""); }} 
@@ -328,7 +328,7 @@ export default function ProfilePage() {
 
                            {/* 2. Group */}
                            <div className="w-full">
-                               <label className="text-[10px] font-bold text-purple-700 uppercase block mb-1 ml-1">2. Group</label>
+                               <label className="text-[11px] font-bold text-purple-700 block mb-1 ml-1">2. Group</label>
                                <select 
                                  value={selectedGroup} 
                                  onChange={(e) => { setSelectedGroup(e.target.value); setSelectedSubject(""); }} 
@@ -342,7 +342,7 @@ export default function ProfilePage() {
 
                            {/* 3. Subject */}
                            <div className="w-full">
-                               <label className="text-[10px] font-bold text-purple-700 uppercase block mb-1 ml-1">3. Subject</label>
+                               <label className="text-[11px] font-bold text-purple-700 block mb-1 ml-1">3. Subject</label>
                                <select 
                                  value={selectedSubject} 
                                  onChange={(e) => setSelectedSubject(e.target.value)} 
@@ -413,29 +413,29 @@ export default function ProfilePage() {
 
           {/* Bio */}
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">Bio / About Me</label>
+            <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">Bio / About Me</label>
             <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-indigo-500 h-28 resize-none transition-all" value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell us about yourself..." />
           </div>
 
-          {/* 3. SECURITY SECTION */}
+           {/* 3. SECURITY SECTION */}
           <section className="pt-6 border-t border-slate-100">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Change Password</h3>
+            <h3 className="text-sm font-bold text-slate-900 tracking-widest mb-4">Change Password</h3>
             <div className="bg-red-50 border border-red-100 p-5 md:p-6 rounded-2xl space-y-4">
                 
                 {/* Current Password */}
                 <div>
-                    <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">Current Password</label>
+                    <label className="text-xs font-bold text-red-400 block mb-1.5 ml-1">Current Password</label>
                     <input type={showPass ? "text" : "password"} value={currentPass} onChange={e => setCurrentPass(e.target.value)} className="w-full bg-white border border-red-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100" placeholder="Required for verification" />
                 </div>
 
                 {/* New Passwords */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">New Password</label>
+                        <label className="text-xs font-bold text-red-400 block mb-1.5 ml-1">New Password</label>
                         <input type={showPass ? "text" : "password"} value={newPass} onChange={e => setNewPass(e.target.value)} className="w-full bg-white border border-red-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100" placeholder="Min 6 chars" />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-red-400 uppercase block mb-1.5 ml-1">Confirm New</label>
+                        <label className="text-xs font-bold text-red-400 block mb-1.5 ml-1">Confirm New</label>
                         <input type={showPass ? "text" : "password"} value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className={`w-full bg-white border p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-red-100 ${confirmPass && newPass !== confirmPass ? 'border-red-500' : 'border-red-200'}`} placeholder="Retype new password" />
                     </div>
                 </div>

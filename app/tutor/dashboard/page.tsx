@@ -93,15 +93,15 @@ export default function TutorDashboard() {
             </div>
             <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-black text-white tracking-tight">Tutor Workspace</h1>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Tutor Workspace</h1>
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         Instructor
                     </span>
                 </div>
                 <p className="text-indigo-200 text-sm font-medium">Welcome back, {profile?.full_name?.split(' ')[0]}. Here is your daily overview.</p>
             </div>
             <div className="flex gap-3 w-full md:w-auto relative z-10">
-                <Link href="/tutor/dashboard/question-builder" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-indigo-900 px-6 py-3 rounded-xl font-black text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-lg hover:shadow-xl">
+                <Link href="/tutor/dashboard/question-builder" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-lg hover:shadow-xl">
                     <Plus className="w-5 h-5"/> Create New
                 </Link>
             </div>
@@ -119,7 +119,7 @@ export default function TutorDashboard() {
               {/* Navigation Menu */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Workspace</h3>
+                      <h3 className="text-[11px] font-bold text-slate-400 tracking-widest">Workspace</h3>
                   </div>
                   <div className="p-2 space-y-1">
                       <Link href="/tutor/dashboard/question-builder" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-indigo-600 transition-colors group">
@@ -172,43 +172,43 @@ export default function TutorDashboard() {
                       <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                               <div className="bg-indigo-50 p-1.5 rounded-md text-indigo-600"><FileText className="w-3.5 h-3.5"/></div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Saved Exams</span>
+                              <span className="text-[11px] font-bold text-slate-400 tracking-wide">Saved Exams</span>
                           </div>
-                          <p className="text-2xl font-black text-indigo-900">{stats.savedExams}</p>
+                          <p className="text-2xl font-bold text-indigo-900">{stats.savedExams}</p>
                       </div>
 
                       <div className="bg-white border border-emerald-100 p-4 rounded-2xl shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                               <div className="bg-emerald-50 p-1.5 rounded-md text-emerald-600"><CheckCircle className="w-3.5 h-3.5"/></div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Approved</span>
+                              <span className="text-[11px] font-bold text-slate-400 tracking-wide">Approved</span>
                           </div>
-                          <p className="text-2xl font-black text-emerald-900">{stats.approved}</p>
+                          <p className="text-2xl font-bold text-emerald-900">{stats.approved}</p>
                       </div>
 
                       <div className="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                               <div className="bg-amber-50 p-1.5 rounded-md text-amber-600"><Clock className="w-3.5 h-3.5"/></div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Pending</span>
+                              <span className="text-[11px] font-bold text-slate-400 tracking-wide">Pending</span>
                           </div>
-                          <p className="text-2xl font-black text-amber-900">{stats.pending}</p>
+                          <p className="text-2xl font-bold text-amber-900">{stats.pending}</p>
                       </div>
 
                       <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                               <div className="bg-slate-100 p-1.5 rounded-md text-slate-600"><BarChart3 className="w-3.5 h-3.5"/></div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Rejected</span>
+                              <span className="text-[11px] font-bold text-slate-400 tracking-wide">Rejected</span>
                           </div>
-                          <p className="text-2xl font-black text-slate-700">{stats.rejected}</p>
+                          <p className="text-2xl font-bold text-slate-700">{stats.rejected}</p>
                       </div>
                   </div>
 
                   {/* 2. Recent Saved Exams (The "My Exams" Preview) */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl transition-shadow duration-300">
                       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur-sm">
-                          <h3 className="font-black text-slate-900 flex items-center gap-2">
+                          <h3 className="font-bold text-slate-900 flex items-center gap-2">
                               <Layers className="w-5 h-5 text-indigo-500"/> Recent Exam Papers
                           </h3>
-                          <Link href="/tutor/dashboard/my-exams" className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest flex items-center gap-1 group">
+                          <Link href="/tutor/dashboard/my-exams" className="text-xs font-bold text-indigo-600 hover:underline tracking-widest flex items-center gap-1 group">
                              View All <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                           </Link>
                       </div>
@@ -267,8 +267,8 @@ export default function TutorDashboard() {
                                           <span className="font-medium text-slate-700 truncate max-w-[200px]">{item.title}</span>
                                       </div>
                                       <div className="flex items-center gap-4">
-                                          <span className="text-xs text-slate-400 hidden sm:block uppercase font-bold">{item.type || 'Course'}</span>
-                                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                                          <span className="text-xs text-slate-400 hidden sm:block font-bold">Content Updates</span>
+                                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
                                               item.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
                                               item.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'
                                           }`}>

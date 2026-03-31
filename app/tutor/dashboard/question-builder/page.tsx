@@ -263,18 +263,18 @@ function BuilderContent() {
 
       /* HEADER */
       .exam-header { text-align: center; margin-bottom: 15px; break-inside: avoid; }
-      .institute-title { margin: 0; font-size: 20px; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; line-height: 1.2; }
+      .institute-title { margin: 0; font-size: 20px; font-family: 'Inter', sans-serif; font-weight: 800; line-height: 1.2; }
       .exam-title { margin: 5px 0 10px 0; font-size: 14px; font-weight: normal; color: #444; }
       
       .meta-bar { 
           display: flex; justify-content: space-between; 
           font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; 
-          text-transform: uppercase; border-top: 2px solid #000; border-bottom: 2px solid #000;
+          border-top: 2px solid #000; border-bottom: 2px solid #000;
           padding: 4px 0; margin-bottom: 10px;
       }
 
       .instructions { 
-          font-size: 12px; font-style: italic; margin-bottom: 15px; 
+          font-size: 12px; margin-bottom: 15px; 
           text-align: left; background: #f9f9f9; padding: 5px; border-left: 2px solid #ccc;
       }
       .separator { border-bottom: 1px solid #ddd; margin-bottom: 15px; }
@@ -322,7 +322,7 @@ function BuilderContent() {
       .footer {
           margin-top: 20px;
           text-align: center;
-          font-size: 10px; font-weight: bold; text-transform: uppercase; color: #888;
+          font-size: 10px; font-weight: bold; color: #888;
           border-top: 1px solid #eee;
           padding-top: 5px;
           break-inside: avoid;
@@ -462,7 +462,7 @@ function BuilderContent() {
                       return (
                           <div key={q.id} className={`p-3 bg-white rounded-lg border transition-all hover:shadow-md group relative ${isAdded ? 'opacity-60 border-indigo-100 bg-indigo-50/20' : 'border-slate-200 hover:border-indigo-300'}`}>
                               <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase">{q.question_type}</span>
+                                  <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{q.question_type}</span>
                                   <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{q.default_marks || 0} pts</span>
                               </div>
                               <div className="text-xs text-slate-800 line-clamp-2 mb-2 font-medium leading-relaxed" dangerouslySetInnerHTML={{__html: q.question_text}}></div>
@@ -488,10 +488,10 @@ function BuilderContent() {
                   {/* HEADER (Fully Unlocked & Editable) */}
                   <div className="text-center border-b-2 border-slate-900 pb-4 mb-6 group hover:bg-slate-50/50 p-2 rounded transition-colors relative">
                       <input 
-                        className="w-full text-center text-3xl font-black mb-2 outline-none placeholder:text-slate-300 bg-transparent uppercase tracking-tight text-slate-900 focus:text-indigo-900"
+                        className="w-full text-center text-3xl font-bold mb-2 outline-none placeholder:text-slate-300 bg-transparent text-slate-900 focus:text-indigo-900"
                         value={instituteName} 
                         onChange={e => setInstituteName(e.target.value)} 
-                        placeholder="YOUR INSTITUTE NAME"
+                        placeholder="Your Institute Name"
                       />
                       
                       <input 
@@ -501,12 +501,12 @@ function BuilderContent() {
                         placeholder="Exam Name / Subject"
                       />
 
-                      <div className="flex justify-between items-center font-bold text-sm uppercase border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
+                      <div className="flex justify-between items-center font-bold text-sm border-t-2 border-slate-100 pt-3 text-slate-800 px-4">
                           <div className="flex gap-2 items-center bg-slate-100 px-3 py-1 rounded">
                               <Clock className="w-4 h-4 text-slate-500"/>
                               <span className="text-slate-500 text-xs">Time:</span>
                               <input 
-                                className="w-12 font-black outline-none bg-transparent text-slate-900 border-b border-transparent focus:border-indigo-500 text-center" 
+                                className="w-12 font-bold outline-none bg-transparent text-slate-900 border-b border-transparent focus:border-indigo-500 text-center" 
                                 value={duration} 
                                 onChange={e => setDuration(e.target.value)} 
                                 type="text"
@@ -517,7 +517,7 @@ function BuilderContent() {
                           <div className="flex gap-2 items-center bg-slate-100 px-3 py-1 rounded">
                               <Hash className="w-4 h-4 text-slate-500"/>
                               <span className="text-slate-500 text-xs">Marks:</span>
-                              <span className="font-black text-indigo-700 text-lg">{totalMarks}</span>
+                              <span className="font-bold text-indigo-700 text-lg">{totalMarks}</span>
                           </div>
                       </div>
                   </div>
@@ -582,10 +582,10 @@ function BuilderContent() {
                   {/* FOOTER (Editable) */}
                   <div className="mt-16 pt-4 border-t border-slate-300 text-center flex-none">
                       <input 
-                          className="w-full text-center text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 outline-none bg-transparent hover:text-slate-600 focus:text-indigo-600"
+                          className="w-full text-center text-[11px] font-bold tracking-[0.3em] text-slate-400 outline-none bg-transparent hover:text-slate-600 focus:text-indigo-600"
                           value={footerText}
                           onChange={(e) => setFooterText(e.target.value)}
-                          placeholder="WRITE FOOTER HERE..."
+                          placeholder="Write footer here..."
                       />
                   </div>
               </div>

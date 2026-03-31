@@ -51,10 +51,10 @@ export default async function CourseManagerPage({ params }: { params: { id: stri
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
+              <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                 course.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
               }`}>
-                {course.status}
+                <span className="capitalize">{course.status}</span>
               </span>
               <span className="text-sm text-gray-500">• {course.price || 'Free'}</span>
             </div>
@@ -128,7 +128,7 @@ export default async function CourseManagerPage({ params }: { params: { id: stri
         {/* Right: Settings */}
         <div className="space-y-6">
            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">Course Settings</h3>
+              <h3 className="font-bold text-gray-900 mb-4 text-sm tracking-wide">Course Settings</h3>
               
               <div className="space-y-4">
                  <div>

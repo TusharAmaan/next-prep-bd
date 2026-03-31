@@ -275,11 +275,11 @@ export default function ModernStudentDashboard() {
             
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-black uppercase tracking-widest mb-8 backdrop-blur-md">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-bold tracking-widest mb-8 backdrop-blur-md">
                   <Zap className="w-4 h-4 text-amber-400" />
                   {profile?.subscription_plan === "premium" ? "Premium Scholar" : "Active Learner"}
                 </span>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
+                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 leading-tight text-white">
                   Welcome back,<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">{profile?.full_name?.split(" ")[0] || "Student"}</span>! 🚀
                 </h1>
                 <p className="text-indigo-200/80 text-lg max-w-xl leading-relaxed font-medium">
@@ -289,10 +289,10 @@ export default function ModernStudentDashboard() {
                 </p>
               </div>
               <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                <button className="w-full sm:w-auto px-8 py-4 bg-white text-indigo-950 font-black rounded-2xl hover:bg-slate-50 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] flex items-center justify-center gap-3 active:scale-95 transform">
+                <button className="w-full sm:w-auto px-8 py-4 bg-white text-indigo-950 font-bold rounded-2xl hover:bg-slate-50 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] flex items-center justify-center gap-3 active:scale-95 transform">
                   <PlayCircle className="w-6 h-6 text-indigo-600" /> Resume Learning
                 </button>
-                <button className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md active:scale-95">
+                <button className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md active:scale-95">
                   <Target className="w-6 h-6 text-purple-300" /> View Targets
                 </button>
               </div>
@@ -302,7 +302,7 @@ export default function ModernStudentDashboard() {
           {/* Quick Real-time Stats Card */}
           <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
-              <h3 className="text-slate-900 font-black text-lg flex items-center gap-3 tracking-tight">
+              <h3 className="text-slate-900 font-bold text-lg flex items-center gap-3 tracking-tight">
                 <Activity className="w-6 h-6 text-emerald-500" /> Activity Pulse
               </h3>
             </div>
@@ -313,8 +313,8 @@ export default function ModernStudentDashboard() {
                     <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 text-3xl leading-none">{stats.coursesCount}</p>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Active Courses</p>
+                    <p className="font-bold text-slate-900 text-3xl leading-none">{stats.coursesCount}</p>
+                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Active Courses</p>
                   </div>
                 </div>
               </div>
@@ -324,8 +324,8 @@ export default function ModernStudentDashboard() {
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 text-3xl leading-none">{stats.examsCount}</p>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Exams Taken</p>
+                    <p className="font-bold text-slate-900 text-3xl leading-none">{stats.examsCount}</p>
+                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Exams Taken</p>
                   </div>
                 </div>
               </div>
@@ -335,8 +335,8 @@ export default function ModernStudentDashboard() {
                     <Trophy className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 text-3xl leading-none">{badges.length}</p>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Badges Earned</p>
+                    <p className="font-bold text-slate-900 text-3xl leading-none">{badges.length}</p>
+                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Badges Earned</p>
                   </div>
                 </div>
               </div>
@@ -360,7 +360,7 @@ export default function ModernStudentDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm whitespace-nowrap transition-all duration-300 ${
+                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
                   isActive 
                     ? "bg-slate-900 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] -translate-y-1" 
                     : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-100 hover:border-slate-200 shadow-sm"
@@ -384,8 +384,8 @@ export default function ModernStudentDashboard() {
                 {/* Active Courses */}
                 <section>
                   <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Active Courses</h2>
-                    <button onClick={() => setActiveTab('courses')} className="text-sm font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 flex items-center group">
+                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Active Courses</h2>
+                    <button onClick={() => setActiveTab('courses')} className="text-sm font-bold tracking-widest text-indigo-600 hover:text-indigo-700 flex items-center group">
                       View all <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
@@ -399,18 +399,18 @@ export default function ModernStudentDashboard() {
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-300 bg-indigo-50/50"><BookOpen className="w-12 h-12" /></div>
                               )}
-                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur border border-white/50 text-indigo-700 text-xs font-black uppercase px-3 py-1.5 rounded-xl shadow-sm">
+                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur border border-white/50 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm">
                                 {course.category || "Course"}
                               </div>
                             </div>
-                            <h3 className="font-black text-slate-900 text-xl line-clamp-2 mb-2 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
+                            <h3 className="font-bold text-slate-900 text-xl line-clamp-2 mb-2 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
                             <p className="text-slate-500 text-sm font-bold mb-6 flex items-center gap-2"><Users className="w-4 h-4 text-indigo-400" /> {course.instructor || "Platform Tutor"}</p>
                         </div>
                         
                         <div className="space-y-3 mt-auto">
                           <div className="flex justify-between items-end px-1">
-                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Mastery</span>
-                            <span className="text-sm font-black text-indigo-600">{course.progress}%</span>
+                            <span className="text-xs font-bold text-slate-400 tracking-widest">Mastery</span>
+                            <span className="text-sm font-bold text-indigo-600">{course.progress}%</span>
                           </div>
                           <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                             <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 relative" style={{ width: `${course.progress}%` }}>
@@ -423,7 +423,7 @@ export default function ModernStudentDashboard() {
                     {courses.length === 0 && (
                       <div className="col-span-full bg-white/80 rounded-[2.5rem] border-2 border-dashed border-slate-200 p-12 text-center backdrop-blur-sm">
                         <BookOpen className="w-14 h-14 text-indigo-300 mx-auto mb-4" />
-                        <h3 className="text-2xl text-slate-900 font-black tracking-tight">No active courses</h3>
+                        <h3 className="text-2xl text-slate-900 font-bold tracking-tight">No active courses</h3>
                         <p className="text-slate-500 text-lg font-medium mt-2">Enroll in a course to see it here and start learning.</p>
                       </div>
                     )}
@@ -454,7 +454,7 @@ export default function ModernStudentDashboard() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-400 mt-4 px-2 uppercase">
+                  <div className="flex justify-between text-xs font-semibold text-slate-400 mt-4 px-2">
                     <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span>
                   </div>
                 </section>
@@ -464,7 +464,7 @@ export default function ModernStudentDashboard() {
               <div className="space-y-8">
                 {/* Up Next - Exams */}
                 <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <History className="w-6 h-6 text-indigo-500" /> Recent Exams
                   </h3>
                   <div className="space-y-4">
@@ -472,9 +472,9 @@ export default function ModernStudentDashboard() {
                       <div key={exam.id} className="group cursor-pointer p-4 rounded-2xl hover:bg-slate-50 transition-colors">
                         <div className="flex justify-between items-start mb-2">
                           <p className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2 pr-4">{exam.title}</p>
-                          <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded inline-block whitespace-nowrap">{exam.total_marks} Pts</span>
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded inline-block whitespace-nowrap">{exam.total_marks} Pts</span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs font-bold text-slate-400 tracking-wide uppercase">
+                        <div className="flex items-center gap-4 text-xs font-bold text-slate-400 tracking-wide">
                           <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {new Date(exam.created_at).toLocaleDateString()}</span>
                           <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {exam.duration}</span>
                         </div>
@@ -486,7 +486,7 @@ export default function ModernStudentDashboard() {
 
                 {/* Recent Activity Timeline */}
                 <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <Activity className="w-6 h-6 text-blue-500" /> Activity Log
                   </h3>
                   <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
@@ -498,7 +498,7 @@ export default function ModernStudentDashboard() {
                             <span className="font-bold text-slate-800 text-sm capitalize">{act.action_type.replace(/_/g, " ")}</span>
                           </div>
                           <p className="text-xs text-slate-500 mb-2 truncate" title={act.details}>{act.details || "Activity recorded"}</p>
-                          <span className="text-[10px] font-semibold text-slate-400 uppercase">{new Date(act.created_at).toLocaleDateString()}</span>
+                          <span className="text-[10px] font-semibold text-slate-400">{new Date(act.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                     ))}
@@ -551,8 +551,8 @@ export default function ModernStudentDashboard() {
           {activeTab === "exams" && (
              <div className="space-y-6">
                <div className="flex justify-between items-center px-2">
-                  <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Mock Tests</h2>
-                  <button className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg active:scale-95 text-sm uppercase">Take Test</button>
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Mock Tests</h2>
+                  <button className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg active:scale-95 text-sm">Take Test</button>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -563,22 +563,22 @@ export default function ModernStudentDashboard() {
                       </div>
                       <div className="relative z-10 space-y-4">
                         <div className="flex justify-between items-start">
-                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${exam.is_finalized ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                           <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider ${exam.is_finalized ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                              {exam.is_finalized ? 'Evaluated' : 'Pending'}
                            </span>
                            <p className="text-xs font-bold text-slate-400">{new Date(exam.created_at).toLocaleDateString()}</p>
                         </div>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 uppercase tracking-tight line-clamp-2">{exam.title}</h3>
+                        <h3 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight line-clamp-2">{exam.title}</h3>
                         <div className="flex items-center gap-6 pt-2 border-t border-slate-50">
                            <div className="text-center md:text-left">
-                              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Marks</p>
-                              <p className="text-lg font-black text-indigo-600">{exam.total_marks}</p>
+                              <p className="text-[11px] font-bold text-slate-300 tracking-widest">Marks</p>
+                              <p className="text-lg font-bold text-indigo-600">{exam.total_marks}</p>
                            </div>
                            <div className="text-center md:text-left">
-                              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Time</p>
+                              <p className="text-[11px] font-bold text-slate-300 tracking-widest">Time</p>
                               <p className="text-sm font-bold text-slate-600">{exam.duration}</p>
                            </div>
-                           <button className="ml-auto bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all opacity-0 group-hover:opacity-100 hidden md:block">
+                           <button className="ml-auto bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold tracking-widest hover:bg-slate-800 transition-all opacity-0 group-hover:opacity-100 hidden md:block">
                               Review
                            </button>
                         </div>
@@ -588,7 +588,7 @@ export default function ModernStudentDashboard() {
                  {exams.length === 0 && (
                    <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                      <Trophy className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No exams yet</h3>
+                     <h3 className="text-xl font-bold text-slate-900 tracking-tight">No exams yet</h3>
                      <p className="text-slate-500 mt-2 font-medium">Start testing your knowledge today!</p>
                    </div>
                  )}
@@ -600,7 +600,7 @@ export default function ModernStudentDashboard() {
           {activeTab === "bookmarks" && (
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-2 gap-4">
-                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Your Library</h2>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Your Library</h2>
                 
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     {/* Search Input */}
@@ -631,7 +631,7 @@ export default function ModernStudentDashboard() {
                    <button
                      key={filter.id}
                      onClick={() => setLibraryFilter(filter.id)}
-                     className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border whitespace-nowrap ${
+                     className={`px-4 py-2 rounded-full text-xs font-bold tracking-wider transition-all border whitespace-nowrap ${
                        libraryFilter === filter.id 
                        ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
@@ -654,22 +654,22 @@ export default function ModernStudentDashboard() {
                     <div className="space-y-4 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest">{bkm.type.replace('_', ' ')}</span>
+                          <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">{bkm.type.replace('_', ' ')}</span>
                         </div>
                         <Link 
                             href={getLibraryLink(bkm.type, bkm.resource_id)}
                             className="block"
                         >
-                          <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight leading-tight line-clamp-2">
+                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight leading-tight line-clamp-2">
                              {bkm.title}
                           </h3>
                         </Link>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
+                        <span className="text-[11px] font-bold text-slate-400">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
                         <Link 
                            href={getLibraryLink(bkm.type, bkm.resource_id)}
-                           className="text-xs font-black text-slate-900 hover:text-indigo-600 uppercase tracking-widest transition-colors flex items-center gap-1 group/btn"
+                           className="text-xs font-bold text-slate-900 hover:text-indigo-600 tracking-widest transition-colors flex items-center gap-1 group/btn"
                         >
                            View <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
@@ -681,7 +681,7 @@ export default function ModernStudentDashboard() {
                 {filteredBookmarks.length === 0 && bookmarks.length > 0 && (
                   <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                     <SearchIcon className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No results found</h3>
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">No results found</h3>
                     <p className="text-slate-500 mt-2 font-medium max-w-xs mx-auto text-center">Try adjusting your search or filters.</p>
                   </div>
                 )}
@@ -689,7 +689,7 @@ export default function ModernStudentDashboard() {
                 {bookmarks.length === 0 && (
                   <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                     <Library className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Empty Library</h3>
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">Empty Library</h3>
                     <p className="text-slate-500 mt-2 font-medium max-w-xs mx-auto text-center">Bookmark courses, sheets, and articles to save them here for quick access.</p>
                   </div>
                 )}
@@ -701,10 +701,10 @@ export default function ModernStudentDashboard() {
           {activeTab === "achievements" && (
             <div className="space-y-12">
               <div className="text-center md:text-left max-w-2xl px-2">
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-full mb-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 text-[11px] font-bold rounded-full mb-3">
                    <Trophy className="w-3.5 h-3.5" /> Hall of Fame
                 </span>
-                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-3">Personal Achievements</h2>
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tighter leading-none mb-3">Personal Achievements</h2>
                 <p className="text-slate-500 font-medium text-sm md:text-base">Track your milestones and showcase your dedication to excellence.</p>
               </div>
 
@@ -720,8 +720,8 @@ export default function ModernStudentDashboard() {
                          className="w-full h-full object-contain relative z-10 drop-shadow-[0_10px_10px_rgba(0,0,0,0.1)] group-hover:drop-shadow-[0_15px_20px_rgba(79,70,229,0.3)] transition-all duration-500"
                        />
                     </div>
-                    <h3 className="font-black text-slate-900 text-[10px] md:text-xs uppercase tracking-tight mb-1">{b.badge.name}</h3>
-                    <div className="text-[9px] font-bold text-slate-300 uppercase mt-4">
+                    <h3 className="font-bold text-slate-900 text-[11px] md:text-xs tracking-tight mb-1">{b.badge.name}</h3>
+                    <div className="text-[10px] font-bold text-slate-300 mt-4">
                       {new Date(b.awarded_at).toLocaleDateString()}
                     </div>
                   </div>
@@ -729,7 +729,7 @@ export default function ModernStudentDashboard() {
                 {badges.length === 0 && (
                   <div className="col-span-full py-16 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                     <Award className="w-16 h-16 mx-auto text-slate-200 mb-4" />
-                    <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">No badges earned yet</h3>
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">No badges earned yet</h3>
                     <p className="text-sm font-medium text-slate-500 mt-1">Keep learning to unlock your first achievement!</p>
                   </div>
                 )}
@@ -741,12 +741,12 @@ export default function ModernStudentDashboard() {
                     <Zap className="w-64 h-64" />
                  </div>
                  <div className="relative z-10 text-center md:text-left">
-                    <p className="text-indigo-400 font-black text-xs uppercase tracking-widest mb-2">Platform Rank</p>
-                    <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2 italic">Novice Explorer</h3>
+                    <p className="text-indigo-400 font-bold text-xs tracking-widest mb-2">Platform Rank</p>
+                    <h3 className="text-3xl md:text-4xl font-bold tracking-tighter mb-2">Novice Explorer</h3>
                     <p className="text-indigo-200 font-medium text-sm">Next level: Elite Master (Collect 10 more badges)</p>
                  </div>
                  <div className="relative z-10 w-24 h-24 rounded-full border-4 border-indigo-500/30 flex items-center justify-center p-2">
-                    <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-xl font-black">78%</div>
+                    <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-xl font-bold">78%</div>
                  </div>
               </div>
             </div>

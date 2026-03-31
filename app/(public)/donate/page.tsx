@@ -109,7 +109,7 @@ export default function DonatePage() {
            <motion.div 
              initial={{ opacity: 0, scale: 0.9 }}
              animate={{ opacity: 1, scale: 1 }}
-             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest mb-6"
+             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-bold tracking-widest mb-6"
            >
              <Heart className="w-4 h-4 fill-rose-600 dark:fill-rose-400" /> Support NextPrepBD
            </motion.div>
@@ -156,13 +156,13 @@ export default function DonatePage() {
                           exit={{ opacity: 0, x: -20 }}
                           className="space-y-8"
                         >
-                           <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3 uppercase tracking-tight">
+                           <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
                              <Zap className="w-8 h-8 text-rose-500" /> Start Your Donation
                            </h3>
                            
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-3">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Your Full Name</label>
+                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Your Full Name</label>
                                  <input 
                                    type="text" 
                                    placeholder="e.g. Tushar Ahmed"
@@ -172,7 +172,7 @@ export default function DonatePage() {
                                  />
                               </div>
                               <div className="space-y-3">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Donation Amount (BDT)</label>
+                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Donation Amount (BDT)</label>
                                  <input 
                                    type="number" 
                                    placeholder="500"
@@ -184,7 +184,7 @@ export default function DonatePage() {
                            </div>
 
                            <div className="space-y-5">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Select Payment Method</label>
+                              <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Select Payment Method</label>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                  {PAYMENT_METHODS.map((method) => (
                                    <button 
@@ -197,10 +197,10 @@ export default function DonatePage() {
                                         : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-rose-200 dark:hover:border-rose-900/50 hover:shadow-lg disabled:opacity-40"
                                      }`}
                                    >
-                                      <div className={`w-16 h-12 rounded-xl flex items-center justify-center font-black overflow-hidden bg-white/20 backdrop-blur-sm p-1`}>
+                                      <div className={`w-16 h-12 rounded-xl flex items-center justify-center font-bold overflow-hidden bg-white/20 backdrop-blur-sm p-1`}>
                                          <img src={method.logo} alt={method.name} className="w-full h-full object-contain" />
                                       </div>
-                                      <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${formData.payment_method === method.id ? (method.id === 'upay' ? 'text-slate-900' : 'text-white') : 'text-slate-600 dark:text-slate-400'}`}>
+                                      <span className={`text-[11px] font-bold tracking-[0.2em] ${formData.payment_method === method.id ? (method.id === 'upay' ? 'text-slate-900' : 'text-white') : 'text-slate-600 dark:text-slate-400'}`}>
                                         {method.name}
                                       </span>
                                    </button>
@@ -219,20 +219,20 @@ export default function DonatePage() {
                           exit={{ opacity: 0, x: -20 }}
                           className="space-y-10"
                         >
-                           <button onClick={() => setStep(1)} className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2 mb-4 group">
+                           <button onClick={() => setStep(1)} className="text-[11px] font-bold text-rose-500 tracking-widest flex items-center gap-2 mb-4 group">
                               <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Change Method
                            </button>
 
                            <div className={`p-10 rounded-[3rem] ${PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.color} text-white shadow-2xl relative overflow-hidden`}>
                               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                              <h4 className="text-2xl font-black mb-8 flex items-center gap-4 uppercase tracking-tight">
+                              <h4 className="text-2xl font-bold mb-8 flex items-center gap-4 tracking-tight">
                                  <ShieldCheck className="w-8 h-8" /> Payment Setup
                               </h4>
                               <div className="space-y-8">
                                  <div className="flex justify-between items-center py-6 border-b border-white/20">
                                     <div>
-                                       <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Send To (Personal)</p>
-                                       <p className="text-3xl font-black tracking-wider">{PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.number}</p>
+                                       <p className="text-[11px] font-bold tracking-widest text-white/60 mb-2">Send To (Personal)</p>
+                                       <p className="text-3xl font-bold tracking-wider">{PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.number}</p>
                                     </div>
                                     <button 
                                       onClick={() => copyToClipboard(PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.number || "")}
@@ -251,13 +251,13 @@ export default function DonatePage() {
 
                            <form onSubmit={handleSubmit} className="space-y-8">
                               <div className="space-y-3">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Transaction ID (TrxID)</label>
+                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Transaction ID (TrxID)</label>
                                  <div className="relative">
                                     <input 
                                       required
                                       type="text" 
                                       placeholder="e.g. 5K9L2M4N7P"
-                                      className="w-full pl-7 pr-16 py-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-700 dark:text-white font-black outline-none focus:ring-4 focus:ring-rose-500/20 focus:bg-white transition-all uppercase tracking-[0.3em] shadow-sm"
+                                      className="w-full pl-7 pr-16 py-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-700 dark:text-white font-bold outline-none focus:ring-4 focus:ring-rose-500/20 focus:bg-white transition-all tracking-[0.3em] shadow-sm"
                                       value={formData.transaction_id}
                                       onChange={(e) => setFormData({...formData, transaction_id: e.target.value.toUpperCase()})}
                                     />
@@ -267,7 +267,7 @@ export default function DonatePage() {
                               
                               <button 
                                 disabled={isSubmitting || !formData.transaction_id}
-                                className="w-full py-6 bg-slate-900 border border-slate-800 text-white rounded-[2rem] text-xs font-black uppercase tracking-[0.4em] shadow-2xl hover:bg-rose-600 transition-all disabled:opacity-40 transform hover:-translate-y-1"
+                                className="w-full py-6 bg-slate-900 border border-slate-800 text-white rounded-[2rem] text-xs font-bold tracking-[0.4em] shadow-2xl hover:bg-rose-600 transition-all disabled:opacity-40 transform hover:-translate-y-1"
                               >
                                 {isSubmitting ? "Processing..." : "Submit Donation"}
                               </button>
@@ -287,19 +287,19 @@ export default function DonatePage() {
                               <CheckCircle2 className="w-14 h-14" />
                            </div>
                            <div className="space-y-5">
-                              <h3 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Thank You!</h3>
+                              <h3 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">Thank You!</h3>
                               <p className="text-slate-500 dark:text-slate-400 font-medium text-lg md:text-xl leading-relaxed max-w-sm mx-auto">
-                                 Your contribution of <span className="text-rose-600 dark:text-rose-400 font-black">৳{formData.amount}</span> helps us keep education free for everyone.
+                                 Your contribution of <span className="text-rose-600 dark:text-rose-400 font-bold">৳{formData.amount}</span> helps us keep education free for everyone.
                               </p>
                            </div>
                            <div className="bg-slate-50 dark:bg-slate-800 p-8 rounded-[2.5rem] inline-block border border-slate-100 dark:border-slate-700">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Ref ID</p>
-                               <p className="text-xl font-black text-slate-700 dark:text-white tracking-[0.4em] uppercase">{formData.transaction_id}</p>
+                               <p className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500 mb-3">Ref ID</p>
+                               <p className="text-xl font-bold text-slate-700 dark:text-white tracking-[0.4em]">{formData.transaction_id}</p>
                            </div>
                            <div className="pt-10">
                               <button 
                                 onClick={() => {setStep(1); setFormData({amount: "", donor_name: "", payment_method: "", transaction_id: ""}); setIsSuccess(false);}}
-                                className="px-10 py-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+                                className="px-10 py-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-bold tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
                               >
                                  Make Another Donation
                               </button>
@@ -318,7 +318,7 @@ export default function DonatePage() {
               {/* Impact Widget */}
               <div className="bg-slate-900 dark:bg-slate-900 border border-slate-800 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                 <h4 className="text-xl font-black mb-8 flex items-center gap-4 uppercase tracking-tight">
+                 <h4 className="text-xl font-bold mb-8 flex items-center gap-4 tracking-tight">
                    <Wallet className="w-6 h-6 text-indigo-400" /> Our Mission
                  </h4>
                  <ul className="space-y-8">
@@ -328,9 +328,9 @@ export default function DonatePage() {
                       { idx: "03", t: "Reach", d: "Developing features for remote students." }
                     ].map((item, i) => (
                       <li key={i} className="flex gap-5">
-                         <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center font-black text-xs">{item.idx}</div>
+                         <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center font-bold text-xs">{item.idx}</div>
                          <div>
-                            <p className="text-sm font-black uppercase tracking-wider mb-1">{item.t}</p>
+                            <p className="text-sm font-bold tracking-wider mb-1">{item.t}</p>
                             <p className="text-xs font-medium text-slate-400 leading-relaxed">{item.d}</p>
                          </div>
                       </li>
@@ -340,7 +340,7 @@ export default function DonatePage() {
 
               {/* Recent Donors List */}
               <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 shadow-sm border border-slate-100 dark:border-slate-800">
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900 dark:text-white mb-10 flex items-center gap-4">
+                 <h4 className="text-[11px] font-bold tracking-[0.3em] text-slate-900 dark:text-white mb-10 flex items-center gap-4">
                    <History className="w-5 h-5 text-rose-500" /> Recent Activity
                  </h4>
                  <div className="space-y-8">
@@ -350,16 +350,16 @@ export default function DonatePage() {
                             <Award className="w-6 h-6 text-rose-500 dark:text-rose-400" />
                          </div>
                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-slate-800 dark:text-white truncate uppercase tracking-tight">{donor.donor_name}</p>
-                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">{new Date(donor.created_at).toLocaleDateString()}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate tracking-tight">{donor.donor_name}</p>
+                            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500">{new Date(donor.created_at).toLocaleDateString()}</p>
                          </div>
-                         <div className="text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-4 py-2 rounded-xl">
+                         <div className="text-sm font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-4 py-2 rounded-xl">
                             ৳{donor.amount}
                          </div>
                       </div>
                     )) : (
                       <div className="text-center py-12 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2rem]">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Be the first to donate</p>
+                         <p className="text-[11px] font-bold text-slate-400 tracking-widest">Be the first to donate</p>
                       </div>
                     )}
                  </div>

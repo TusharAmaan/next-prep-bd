@@ -181,7 +181,7 @@ body {
 /* Formatting (Web) */
 .blog-content strong, .blog-content b { font-weight: 700; color: #000; }
 .dark .blog-content strong, .dark .blog-content b { color: #f1f5f9; }
-.blog-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; font-style: italic; color: #4b5563; margin: 1.5rem 0; }
+.blog-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #4b5563; margin: 1.5rem 0; }
 .dark .blog-content blockquote { border-left-color: #334155; color: #94a3b8; }
 
 /* Tables (Web) */

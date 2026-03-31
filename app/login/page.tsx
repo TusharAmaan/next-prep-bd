@@ -107,7 +107,7 @@ function LoginForm() {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-2">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
           <p className="text-slate-500 text-sm font-medium">Please enter your details to sign in.</p>
         </div>
 
@@ -143,14 +143,14 @@ function LoginForm() {
             {/* DIVIDER */}
             <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-slate-200"></div>
-                <span className="flex-shrink-0 mx-4 text-xs font-bold text-slate-400 uppercase">Or with email</span>
+                <span className="flex-shrink-0 mx-4 text-xs font-bold text-slate-400">Or with email</span>
                 <div className="flex-grow border-t border-slate-200"></div>
             </div>
 
             {/* EMAIL FORM */}
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-wide mb-2 ml-1">Email</label>
+                <label className="block text-xs font-bold text-slate-400 tracking-wide mb-2 ml-1">Email</label>
                 <input 
                   type="email" 
                   required
@@ -163,7 +163,7 @@ function LoginForm() {
 
               <div>
                 <div className="flex justify-between items-center mb-2 ml-1">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Password</label>
+                    <label className="text-xs font-bold text-slate-400 tracking-wide">Password</label>
                     <Link href="/forgot-password" className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
                         Forgot Password?
                     </Link>
@@ -203,7 +203,7 @@ function LoginForm() {
         </div>
 
         {/* ReCaptcha Legal Text */}
-        <p className="text-[10px] text-slate-300 text-center mt-6 leading-tight">
+        <p className="text-[11px] text-slate-300 text-center mt-6 leading-tight">
            This site is protected by reCAPTCHA and the Google 
            <a href="https://policies.google.com/privacy" className="text-slate-400 hover:underline"> Privacy Policy</a> and 
            <a href="https://policies.google.com/terms" className="text-slate-400 hover:underline"> Terms of Service</a> apply.
