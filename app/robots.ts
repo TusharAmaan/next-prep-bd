@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { siteConfig } from '@/lib/seo-utils';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       // Don't let Google index your Admin Panel!
       disallow: ['/admin/', '/login', '/dashboard'], 
     },
-    sitemap: 'https://nextprepbd.com/sitemap.xml', // Change to your real domain
+    sitemap: `${siteConfig.url}/sitemap.xml`,
   };
 }
