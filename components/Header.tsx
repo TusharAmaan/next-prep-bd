@@ -350,7 +350,7 @@ export default function Header() {
                             {showNotifications && (
                                 <div className={`absolute top-full right-0 mt-3 w-80 rounded-2xl shadow-2xl border py-2 overflow-hidden z-50 animate-nav-slide-down ${isDark ? 'bg-slate-800 border-slate-700 shadow-slate-950/50' : 'bg-white border-slate-100 shadow-slate-200/50'}`}>
                                     <div className={`px-4 py-2 border-b flex justify-between items-center ${isDark ? 'border-slate-700 bg-slate-900/30' : 'border-slate-50 bg-slate-50/50'}`}>
-                                        <span className={`text-xs font-bold tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Notifications</span>
+                                        <span className={`text-xs font-bold tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Notifications</span>
                                         {unreadCount > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>{unreadCount} New</span>}
                                     </div>
                                     <div className="max-h-64 overflow-y-auto custom-scrollbar">
@@ -475,7 +475,7 @@ export default function Header() {
 
             {/* Menu */}
             <div className="space-y-1">
-                <p className={`text-[10px] font-bold tracking-widest px-2 mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Navigation</p>
+                <p className={`text-xs font-bold tracking-wide px-2 mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Navigation</p>
                 
                 <Link href="/" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${pathname === "/" ? (isDark ? 'bg-indigo-900/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600') : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}>
                     <Home className="w-5 h-5"/> Home

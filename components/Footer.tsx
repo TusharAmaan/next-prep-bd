@@ -22,10 +22,10 @@ export default function Footer() {
           {/* Logo */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold tracking-tight">NextPrep<span className="text-blue-500">BD</span></h2>
-            <p className="text-[10px] text-gray-500 mt-2 tracking-[0.2em] font-bold opacity-60">Your Ultimate Exam Companion</p>
+            <p className="text-xs text-gray-500 mt-2 tracking-wide font-bold opacity-60">Your Ultimate Exam Companion</p>
           </div>
 
-          <p className="text-xs text-gray-400 mb-6 font-bold tracking-widest opacity-80">Download our official mobile app</p>
+          <p className="text-xs text-gray-400 mb-6 font-bold tracking-wide opacity-80">Download our official mobile app</p>
 
           {/* Mobile App Popup */}
           <div className="w-full flex justify-center md:justify-start">
@@ -36,7 +36,7 @@ export default function Footer() {
 
         {/* COLUMN 2: COMPANY */}
         <div className="text-center md:text-left">
-          <h3 className="text-sm font-bold mb-6 text-white tracking-[0.2em]">Company</h3>
+          <h3 className="text-sm font-bold mb-6 text-white tracking-wide">Company</h3>
           <ul className="space-y-3 text-sm text-gray-400 font-medium">
             <li><Link href="/about" className="hover:text-blue-500 transition-colors">About Us</Link></li>
             <li><Link href="/careers" className="hover:text-blue-500 transition-colors">Careers</Link></li>
@@ -49,7 +49,7 @@ export default function Footer() {
 
         {/* COLUMN 3: RESOURCES */}
         <div className="text-center md:text-left">
-          <h3 className="text-sm font-bold mb-6 text-white tracking-[0.2em]">Resources</h3>
+          <h3 className="text-sm font-bold mb-6 text-white tracking-wide">Resources</h3>
           <ul className="space-y-3 text-sm text-gray-400 font-medium">
             <li><Link href="/find-tutor" className="hover:text-blue-500 transition-colors">Find a Tutor</Link></li>
             <li><Link href="/blog" className="hover:text-blue-500 transition-colors">Class Blogs</Link></li>
@@ -65,8 +65,8 @@ export default function Footer() {
 
         {/* COLUMN 4: CONTACT */}
         <div className="text-center md:text-left">
-          <h3 className="text-sm font-bold mb-6 text-white tracking-[0.2em]">Contact Us</h3>
-          <ul className="space-y-4 text-xs font-bold tracking-widest">
+          <h3 className="text-sm font-bold mb-6 text-white tracking-wide">Contact Us</h3>
+          <ul className="space-y-4 text-xs font-bold tracking-wide">
             <li className="flex items-center justify-center md:justify-start gap-3">
               <span className="text-blue-500 bg-blue-500/10 p-2 rounded-lg shrink-0"><Phone className="w-4 h-4" /></span>
               <span className="hover:text-white transition opacity-70 hover:opacity-100">+8801619663933</span>

@@ -150,6 +150,13 @@ body {
   font-size: 1rem; 
 }
 
+/* Reset italics globally except for blog content and Math symbols */
+:not(.blog-content):not(.katex) em, 
+:not(.blog-content):not(.katex) i,
+:not(.blog-content):not(.katex) .italic {
+  font-style: normal !important;
+}
+
 @media (min-width: 768px) {
   .blog-content {
     font-size: 1.125rem;

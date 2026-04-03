@@ -78,10 +78,10 @@ export default async function EbooksPage({ searchParams }: Props) {
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[80px] pointer-events-none -ml-20 -mb-20"></div>
           
           <div className="max-w-7xl mx-auto relative z-10 text-center">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold tracking-wide mb-8">
                   <BookOpen className="w-3.5 h-3.5" /> Digital Research Portal
               </span>
-              <h1 className="text-5xl md:text-8xl font-black mb-8 uppercase tracking-tighter leading-[0.9]">
+              <h1 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9]">
                   Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Knowledge</span>
               </h1>
               <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
@@ -121,7 +121,7 @@ export default async function EbooksPage({ searchParams }: Props) {
                       </div>
                     )}
                     
-                    <span className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-[8px] font-black px-3 py-1.5 rounded-xl shadow-lg text-slate-900 dark:text-white border border-slate-100/10 uppercase tracking-widest">
+                    <span className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg text-slate-900 dark:text-white border border-slate-100/10 tracking-wide">
                       {book.category}
                     </span>
 
@@ -142,11 +142,11 @@ export default async function EbooksPage({ searchParams }: Props) {
 
                   {/* Text Content */}
                   <div className="px-3 pb-4 flex-1 flex flex-col">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight mb-3 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight mb-3 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">
                       {book.title}
                     </h3>
                     
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-6 transition-colors">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-500 text-xs font-bold tracking-wide mb-6 transition-colors">
                       <User className="w-3.5 h-3.5" />
                       <span className="truncate">{book.author}</span>
                     </div>
@@ -154,7 +154,7 @@ export default async function EbooksPage({ searchParams }: Props) {
                     {book.tags && book.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-8 mt-auto">
                         {book.tags.slice(0, 2).map((t: string) => (
-                          <span key={t} className="text-[8px] bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl font-black uppercase tracking-widest border border-slate-100 dark:border-slate-700 transition-colors">
+                          <span key={t} className="text-[11px] bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl font-bold tracking-wide border border-slate-100 dark:border-slate-700 transition-colors">
                             {t}
                           </span>
                         ))}
@@ -163,11 +163,11 @@ export default async function EbooksPage({ searchParams }: Props) {
                     )}
 
                     <div className="pt-6 mt-auto border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-600 tracking-wide">
                         <Calendar className="w-3 h-3 text-indigo-500" />
                         {new Date(book.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                       </span>
-                      <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                      <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-wide group-hover:translate-x-1 transition-transform">
                         Access <ArrowRight className="w-4 h-4" />
                       </span>
                     </div>
@@ -180,7 +180,7 @@ export default async function EbooksPage({ searchParams }: Props) {
               <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-8 animate-pulse text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-slate-700">
                 <Search className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tight">No resources found</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">No resources found</h3>
               <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-10 font-medium">
                 We couldn't find any resources matching "<strong>{q}</strong>". Try adjusting your search or category filters.
               </p>
@@ -235,7 +235,7 @@ export default async function EbooksPage({ searchParams }: Props) {
 
 function PaginationLink({ page, disabled, active, params, label }: any) {
   if (disabled) {
-    return <span className="px-8 py-4 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl cursor-not-allowed border border-slate-100 dark:border-slate-800">{label}</span>;
+    return <span className="px-8 py-4 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-700 font-bold text-xs tracking-wide rounded-2xl cursor-not-allowed border border-slate-100 dark:border-slate-800">{label}</span>;
   }
   const urlParams = new URLSearchParams();
   if (params.category !== "All") urlParams.set("category", params.category);
@@ -246,7 +246,7 @@ function PaginationLink({ page, disabled, active, params, label }: any) {
   return (
     <Link
       href={`/ebooks?${urlParams.toString()}`}
-      className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+      className={`px-8 py-4 rounded-2xl font-bold text-xs tracking-wide transition-all ${
         active
           ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xl shadow-indigo-600/20 dark:shadow-white/10 scale-110"
           : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-lg"

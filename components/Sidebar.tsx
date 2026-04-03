@@ -211,11 +211,11 @@ export default function Sidebar() {
       {/* 2. EXPLORE SECTIONS */}
       <div className="overflow-hidden rounded-xl md:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 dark:from-indigo-950/30 dark:to-emerald-950/30 px-4 py-3 md:py-3.5">
-          <h3 className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300 font-sans">
+          <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
             <LayoutGrid className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-500" />
             Explore Segments
           </h3>
-          <p className="mt-1 text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 font-sans opacity-80">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans opacity-80">
             Jump directly into the resources you care about.
           </p>
         </div>
@@ -263,11 +263,11 @@ export default function Sidebar() {
         <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 px-4 py-3 md:py-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300 font-sans">
+              <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
                 <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500" />
                 Latest Materials
               </h3>
-              <p className="mt-1 text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 font-sans opacity-80">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans opacity-80">
                 Fresh PDFs, videos & blogs for your study.
               </p>
             </div>
@@ -276,7 +276,6 @@ export default function Sidebar() {
             </div>
           </div>
 
-          {/* Pill filter */}
           <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
             {["All", ...segments.map((s) => s.title)].map((label) => {
               const isActive = materialFilter === label;
@@ -286,7 +285,7 @@ export default function Sidebar() {
                   type="button"
                   onClick={() => setMaterialFilter(label)}
                   className={[
-                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors font-sans",
+                    "whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors font-sans",
                     isActive
                       ? "border-blue-500 bg-blue-600 text-white shadow-sm"
                       : "border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:bg-blue-50/60",
@@ -350,7 +349,7 @@ export default function Sidebar() {
                         )}
                       </span>
                       {materialFilter === "All" && item.segment_id && (
-                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-blue-500 font-sans">
+                        <span className="truncate text-xs font-bold tracking-wide text-blue-500 font-sans">
                           {segments.find((s) => s.id === item.segment_id)
                             ?.title || ""}
                         </span>
@@ -367,7 +366,7 @@ export default function Sidebar() {
         <div className="border-t border-slate-100 bg-slate-50/60">
           <Link
             href="/blog"
-            className="block px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 font-sans"
+            className="block px-3 py-2.5 text-center text-xs font-bold tracking-wide text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 font-sans"
           >
             View All Materials
           </Link>
@@ -379,11 +378,11 @@ export default function Sidebar() {
         <div className="border-b border-slate-100 bg-amber-50/60 px-4 pt-3.5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
+              <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 font-sans">
                 <HelpCircle className="h-4 w-4 text-amber-500" />
                 Recent Questions
               </h3>
-              <p className="mt-1 text-[11px] text-slate-600 font-sans">
+              <p className="mt-1 text-xs text-slate-600 font-sans">
                 Practice problems & past questions by segment.
               </p>
             </div>
@@ -392,7 +391,6 @@ export default function Sidebar() {
             </div>
           </div>
 
-          {/* Pill filter */}
           <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
             {["All", ...segments.map((s) => s.title)].map((label) => {
               const isActive = questionFilter === label;
@@ -402,7 +400,7 @@ export default function Sidebar() {
                   type="button"
                   onClick={() => setQuestionFilter(label)}
                   className={[
-                    "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition-colors font-sans",
+                    "whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors font-sans",
                     isActive
                       ? "border-amber-500 bg-amber-500 text-white shadow-sm"
                       : "border-amber-100 bg-amber-50/70 text-amber-700 hover:border-amber-300 hover:bg-amber-100",
@@ -462,7 +460,7 @@ export default function Sidebar() {
                         )}
                       </span>
                       {questionFilter === "All" && item.segment_id && (
-                        <span className="truncate text-[9px] font-black uppercase tracking-wide text-amber-700 font-sans">
+                        <span className="truncate text-xs font-bold tracking-wide text-amber-700 font-sans">
                           {segments.find((s) => s.id === item.segment_id)
                             ?.title || ""}
                         </span>
@@ -480,10 +478,10 @@ export default function Sidebar() {
       {/* 5. SOCIAL MEDIA */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 bg-slate-50 px-4 py-3.5">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-700 font-sans">
+          <h3 className="text-xs font-bold tracking-wide text-slate-700 font-sans">
             Stay Connected
           </h3>
-          <p className="mt-1 text-[11px] text-slate-500 font-sans">
+          <p className="mt-1 text-xs text-slate-500 font-sans">
             Follow us for tips, updates & new content.
           </p>
         </div>
@@ -491,7 +489,7 @@ export default function Sidebar() {
         <div className="p-3 space-y-2.5">
           {/* Facebook */}
           <a
-            href="https://facebook.com/gmatclub"
+            href="https://www.facebook.com/profile.php?id=61584943876571"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-r from-[#1877F2]/5 via-white to-white px-3 py-2.5 transition-all hover:-translate-y-[1px] hover:border-[#1877F2]/40 hover:bg-[#1877F2]/5"

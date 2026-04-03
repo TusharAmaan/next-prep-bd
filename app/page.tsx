@@ -101,7 +101,7 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[9px] md:text-[10px] font-bold tracking-widest text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
+            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs font-bold tracking-wide text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
                 <span className="relative flex h-1.5 md:h-2 w-1.5 md:w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 md:h-2 w-1.5 md:w-2 bg-indigo-500"></span>
@@ -123,7 +123,7 @@ export default async function HomePage() {
                     <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 w-5 h-5 md:w-6 md:h-6 transition-colors" />
                     <input name="q" type="text" placeholder="Search resources..." className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-14 md:pl-16 pr-5 py-3 md:py-5 text-sm md:text-lg font-bold tracking-wide" required />
                 </div>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-[2rem] font-bold text-[11px] tracking-widest transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-2.5 hover:scale-105 active:scale-95 duration-500">
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-[2rem] font-bold text-xs tracking-wide transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-2.5 hover:scale-105 active:scale-95 duration-500">
                     Search <ArrowRight className="w-4 h-4" />
                 </button>
             </form>
@@ -140,21 +140,21 @@ export default async function HomePage() {
                           <FileText className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">12,000+</h3>
-                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-[0.2em]">Verified Assets</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Verified Assets</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
                           <Users className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">5,400+</h3>
-                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-[0.2em]">Active Candidates</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active Candidates</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
                           <Zap className="w-6 h-6 md:w-8 md:h-8 fill-current" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">Daily</h3>
-                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-[0.2em]">Resource Updates</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Resource Updates</p>
                   </div>
               </div>
           </div>
@@ -166,7 +166,7 @@ export default async function HomePage() {
         <section className="pt-16 md:pt-32 pb-12 md:pb-16 max-w-7xl mx-auto px-5 md:px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 md:mb-20 gap-6 md:gap-8">
               <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-bold tracking-[0.2em]">
+                  <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-wide">
                       <Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5" />
                       Learning Paths
                   </div>
@@ -190,8 +190,8 @@ export default async function HomePage() {
                                     <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                 </div>
                                 <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white mb-2 md:mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none tracking-tight">{card.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-[9px] md:text-[11px] leading-relaxed mb-6 md:mb-8 font-bold tracking-wider opacity-70 line-clamp-2">{card.desc}</p>
-                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-[9px] tracking-[0.2em] gap-2 md:gap-3">
+                                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-6 md:mb-8 font-bold tracking-wide opacity-70 line-clamp-2">{card.desc}</p>
+                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-xs tracking-wide gap-2 md:gap-3">
                                     <span>Browse</span>
                                     <div className="flex-1 h-[2.5px] bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-400 transition-all duration-500"></div>
                                 </div>
@@ -210,7 +210,7 @@ export default async function HomePage() {
           <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 dark:bg-indigo-400/5 -skew-x-12 translate-x-1/2 -z-0"></div>
           <div className="max-w-7xl mx-auto px-5 md:px-6 relative z-10">
               <div className="text-center mb-12 md:mb-24">
-                  <div className="inline-block px-3 md:px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-bold tracking-[0.2em] rounded-lg mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
+                  <div className="inline-block px-3 md:px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold tracking-wide rounded-lg mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
                   <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-4 md:mb-6 leading-[1.1] md:leading-none">Exam Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
                   <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed opacity-80">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
               </div>
@@ -228,12 +228,12 @@ export default async function HomePage() {
                             <div className="ml-4 md:ml-8">
                                 <div className="flex items-center gap-3 mb-1.5 md:mb-2">
                                     <h4 className="font-bold text-base md:text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none">{seg.title}</h4>
-                                    <span className="text-[7px] md:text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-2 md:px-3 py-1 rounded-lg tracking-[0.2em] border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
+                                    <span className="text-[11px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-2 md:px-3 py-1 rounded-lg tracking-wide border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
                                 </div>
-                                <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 md:mb-4 line-clamp-1 opacity-70">{getQuestionText(seg.slug)}</p>
+                                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide mb-3 md:mb-4 line-clamp-1 opacity-70">{getQuestionText(seg.slug)}</p>
                                 <div className="flex items-center gap-4 md:gap-6">
-                                    <span className="flex items-center gap-2 text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+</span>
-                                    <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 tracking-[0.2em] group-hover:translate-x-1.5 transition-transform duration-500">View <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5 inline" /></span>
+                                    <span className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+</span>
+                                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide group-hover:translate-x-1.5 transition-transform duration-500">View <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5 inline" /></span>
                                 </div>
                             </div>
                         </Link>
@@ -270,7 +270,7 @@ export default async function HomePage() {
                         </div>
                     </div>
                     <div>
-                        <span className="inline-flex items-center gap-2.5 px-5 py-2 bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 text-[9px] font-bold tracking-widest rounded-xl animate-pulse border border-green-100 dark:border-green-800/30">
+                        <span className="inline-flex items-center gap-2.5 px-5 py-2 bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 text-xs font-bold tracking-wide rounded-xl animate-pulse border border-green-100 dark:border-green-800/30">
                             <span className="w-2 h-2 bg-green-600 rounded-full shadow-glow-green"></span>
                             Live Updates
                         </span>
@@ -316,17 +316,17 @@ export default async function HomePage() {
                 {/* COMMUNITY WIDGET */}
                 <ScrollReveal direction="right" delay={100}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 shadow-xl dark:shadow-indigo-900/5 group">
-                      <h3 className="font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-4 text-[10px] tracking-widest">
+                      <h3 className="font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-4 text-xs tracking-wide">
                           <Zap className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" /> Join the Community
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                          <a href="https://www.facebook.com/people/Nextprep-BD/61584943876571/" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
+                          <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Facebook className="w-8 h-8 mb-3 text-blue-600 group-hover:text-white transition-transform group-hover:scale-125" />
                               <span className="text-[9px] font-bold tracking-widest">Facebook</span>
                           </a>
                           <a href="https://youtube.com/@nextprepbd" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 hover:bg-red-600 dark:hover:bg-red-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Youtube className="w-8 h-8 mb-3 text-red-600 group-hover:text-white transition-transform group-hover:scale-125" />
-                              <span className="text-[9px] font-bold tracking-widest">YouTube</span>
+                              <span className="text-xs font-bold tracking-wide">YouTube</span>
                           </a>
                       </div>
                   </div>

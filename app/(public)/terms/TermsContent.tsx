@@ -36,7 +36,7 @@ export default function TermsContent({ lastUpdated }: TermsContentProps) {
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="text-center mb-16 md:mb-32">
-        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-[11px] font-bold tracking-widest mb-8 md:mb-12 shadow-2xl">
+        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-xs font-bold tracking-wide mb-8 md:mb-12 shadow-2xl">
           <Gavel className="w-4 h-4 text-indigo-400" /> Terms of Service
         </div>
         <h1 className="text-3xl sm:text-5xl md:text-8xl font-bold text-slate-900 dark:text-white mb-6 md:mb-10 tracking-tight leading-[1] md:leading-[0.9]">
@@ -55,8 +55,8 @@ export default function TermsContent({ lastUpdated }: TermsContentProps) {
               <card.icon className="w-7 h-7 md:w-8 md:h-8" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-4 group-hover:text-indigo-600 transition-colors tracking-tight">{card.title}</h3>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide opacity-80">{card.desc}</p>
-          </div>
+            <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide opacity-80">{card.desc}</p>
+Line content was:             <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide opacity-80">{card.desc}</p>          </div>
         ))}
       </div>
 
@@ -97,7 +97,7 @@ export default function TermsContent({ lastUpdated }: TermsContentProps) {
                     "No Mirroring of Content",
                     "No Security Tampering"
                   ].map((rule, id) => (
-                    <li key={id} className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-bold tracking-widest text-white shadow-inner">
+                    <li key={id} className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold tracking-wide text-white shadow-inner">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {rule}
                     </li>
                   ))}
@@ -117,7 +117,7 @@ export default function TermsContent({ lastUpdated }: TermsContentProps) {
                 <p>Our services are provided "as is" without any warranties. While we strive for absolute accuracy in our academic resources, we cannot guarantee perfection. We are not liable for any specific academic or examination outcomes.</p>
                 <div className="flex gap-4 p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
                   <Sparkles className="w-6 h-6 text-indigo-500 shrink-0 mt-1" />
-                  <p className="text-[11px] font-bold tracking-widest leading-relaxed">Continuous Updates: We reserve the right to modify or update any part of our service without prior notice.</p>
+                   <p className="text-xs font-bold tracking-wide leading-relaxed text-slate-500 dark:text-slate-400">Continuous Updates: We reserve the right to modify or update any part of our service without prior notice.</p>
                 </div>
               </div>
             </div>
@@ -140,21 +140,21 @@ export default function TermsContent({ lastUpdated }: TermsContentProps) {
                    <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white text-slate-900 rounded-2xl md:rounded-[2.5rem] transition-all group/btn shadow-2xl hover:bg-slate-50 active:scale-95">
                       <div className="w-14 h-14 md:w-16 md:h-16 bg-slate-900 rounded-xl md:rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Mail className="w-6 h-6 md:w-7 md:h-7"/></div>
                       <div className="text-left">
-                         <p className="text-[9px] md:text-[11px] font-bold tracking-widest text-slate-400 mb-1">Send Inquiry</p>
+                         <p className="text-xs font-bold tracking-wide text-slate-400 mb-1">Send Inquiry</p>
                          <p className="text-lg md:text-xl font-bold">Legal Support</p>
                       </div>
                    </a>
                    <a href="https://wa.me/8801619663933" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white/10 hover:bg-white/20 rounded-2xl md:rounded-[2.5rem] border border-white/20 transition-all group/btn backdrop-blur-xl active:scale-95">
                       <div className="w-14 h-14 md:w-16 md:h-16 bg-emerald-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Phone className="w-6 h-6 md:w-7 md:h-7"/></div>
                       <div className="text-left">
-                         <p className="text-[9px] md:text-[11px] font-bold tracking-widest text-indigo-200 mb-1">Direct Message</p>
+                         <p className="text-xs font-bold tracking-wide text-indigo-200 mb-1">Direct Message</p>
                          <p className="text-lg md:text-xl font-bold">WhatsApp</p>
                       </div>
                    </a>
                 </div>
               </div>
            </div>
-           <p className="text-center mt-10 md:mt-12 text-[11px] md:text-[11px] font-bold tracking-[0.2em] text-slate-400">© 2026 NextPrepBD. All Rights Reserved.</p>
+           <p className="text-center mt-10 md:mt-12 text-xs font-bold tracking-wide text-slate-400">© 2026 NextPrepBD. All Rights Reserved.</p>
         </div>
       </div>
     </div>

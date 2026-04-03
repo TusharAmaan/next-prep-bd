@@ -40,8 +40,8 @@ export default function ContactContent() {
     <div className="max-w-7xl w-full mx-auto px-4 md:px-6">
       
       <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-widest mb-8 shadow-sm">
-            <Sparkles className="w-4 h-4" /> Leading Educational Support
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-bold text-xs tracking-wide mb-8 shadow-sm">
+            <Sparkles className="w-4 h-4" /> Academic Support & Guidance
           </div>
           <h1 className="text-3xl sm:text-5xl md:text-8xl font-bold text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tight leading-[1] md:leading-[0.9]">
             Contact Our <br className="hidden md:block"/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Support Team.</span>
@@ -73,7 +73,7 @@ export default function ContactContent() {
                               <Mail className="w-6 h-6 text-slate-400 group-hover/item:text-white" />
                           </div>
                           <div>
-                              <h4 className="font-bold text-[8px] md:text-[9px] text-slate-500 uppercase tracking-widest mb-1.5 md:mb-2">Email Us</h4>
+                              <h4 className="font-bold text-xs text-slate-500 tracking-wide mb-1.5 md:mb-2">Email Us</h4>
                               <a href="mailto:nextprepbd@gmail.com" className="text-lg md:text-xl font-bold text-white hover:text-indigo-400 transition-colors tracking-tight">nextprepbd@gmail.com</a>
                           </div>
                       </div>
@@ -85,7 +85,7 @@ export default function ContactContent() {
                           </div>
                           <div>
                               <a href="https://wa.me/8801619663933">
-                                  <h4 className="font-bold text-[8px] md:text-[9px] text-slate-500 uppercase tracking-widest mb-1.5 md:mb-2">WhatsApp / Phone</h4>
+                                  <h4 className="font-bold text-xs text-slate-500 tracking-wide mb-1.5 md:mb-2">WhatsApp / Phone</h4>
                                   <p className="text-lg md:text-xl font-bold text-white hover:text-emerald-400 transition-colors cursor-pointer tracking-tight">+880 16196 63933</p>
                               </a>
                           </div>
@@ -94,13 +94,13 @@ export default function ContactContent() {
                   </div>
 
                   <div className="pt-12 md:pt-16 border-t border-white/5 space-y-6 md:space-y-8">
-                      <h4 className="font-bold text-[9px] text-slate-500 uppercase tracking-widest">Follow Our Updates</h4>
+                      <h4 className="font-bold text-xs text-slate-500 tracking-wide">Follow Our Updates</h4>
                       <div className="flex flex-wrap gap-3 md:gap-4">
-                          <a href="https://www.facebook.com/profile.php?id=61584943876571" className="flex items-center gap-3 md:gap-4 px-6 md:px-8 py-4 bg-white/5 hover:bg-[#1877F2] text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all duration-500 border border-white/5 hover:border-transparent group/btn">
+                          <a href="https://www.facebook.com/profile.php?id=61584943876571" className="flex items-center gap-3 md:gap-4 px-6 md:px-8 py-4 bg-white/5 hover:bg-[#1877F2] text-white rounded-2xl text-xs font-bold tracking-wide transition-all duration-500 border border-white/5 hover:border-transparent group/btn">
                               <Facebook className="w-5 h-5 group-hover/btn:scale-125 transition-transform" />
                               Facebook
                           </a>
-                          <a href="https://www.youtube.com/@nextprepbd" className="flex items-center gap-3 md:gap-4 px-6 md:px-8 py-4 bg-white/5 hover:bg-[#FF0000] text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all duration-500 border border-white/5 hover:border-transparent group/btn">
+                          <a href="https://www.youtube.com/@nextprepbd" className="flex items-center gap-3 md:gap-4 px-6 md:px-8 py-4 bg-white/5 hover:bg-[#FF0000] text-white rounded-2xl text-xs font-bold tracking-wide transition-all duration-500 border border-white/5 hover:border-transparent group/btn">
                               <Youtube className="w-5 h-5 group-hover/btn:scale-125 transition-transform" />
                               YouTube
                           </a>
@@ -112,7 +112,7 @@ export default function ContactContent() {
                   <div className="flex items-center gap-4 p-6 bg-white/5 rounded-[2rem] border border-white/5 backdrop-blur-3xl group/card hover:bg-white/10 transition-all duration-500">
                       <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 group-hover/card:scale-110 transition-transform"><Sparkles className="w-6 h-6" /></div>
                       <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-1">Service Status</p>
+                          <p className="text-xs font-bold tracking-wide text-indigo-400 mb-1">Service Status</p>
                           <p className="text-xs font-bold tracking-tight text-white">All systems operational</p>
                       </div>
                   </div>
@@ -122,12 +122,12 @@ export default function ContactContent() {
           {/* RIGHT SIDE: Interactive Form */}
           <div className="lg:col-span-12 h-px bg-slate-100 dark:bg-slate-800 lg:hidden" />
           <div className="lg:col-span-7 p-8 md:p-16 flex flex-col justify-center">
-              <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-8 md:mb-10 tracking-tight leading-none uppercase">Send Us <br className="hidden md:block"/><span className="text-indigo-600 dark:text-indigo-400">A Message</span></h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-8 md:mb-10 tracking-tight leading-none">Send Us <br className="hidden md:block"/><span className="text-indigo-600 dark:text-indigo-400">A Message</span></h3>
               
               <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                       <div className="space-y-3">
-                          <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Your Full Name</label>
+                          <label className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide ml-1">Your Full Name</label>
                           <input 
                               type="text" 
                               name="name" 
@@ -139,7 +139,7 @@ export default function ContactContent() {
                           />
                       </div>
                       <div className="space-y-3">
-                          <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Your Email Address</label>
+                          <label className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide ml-1">Your Email Address</label>
                           <input 
                               type="email" 
                               name="email" 
@@ -153,7 +153,7 @@ export default function ContactContent() {
                   </div>
 
                   <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Subject / Topic</label>
+                      <label className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide ml-1">Subject / Topic</label>
                       <input 
                           type="text" 
                           name="subject" 
@@ -166,7 +166,7 @@ export default function ContactContent() {
                   </div>
 
                   <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Your Message</label>
+                      <label className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide ml-1">Your Message</label>
                       <textarea 
                           name="message" 
                           rows={6}
@@ -181,7 +181,7 @@ export default function ContactContent() {
                   <button 
                       type="submit" 
                       disabled={loading}
-                      className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-bold py-6 rounded-[1.5rem] shadow-3xl shadow-indigo-600/20 transition-all transform hover:-translate-y-2 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 text-[10px] uppercase tracking-widest group"
+                      className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-bold py-6 rounded-[1.5rem] shadow-3xl shadow-indigo-600/20 transition-all transform hover:-translate-y-2 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 text-xs tracking-wide group"
                   >
                       {loading ? "Sending Message..." : <><span className="group-hover:translate-x-2 transition-transform">Send Message</span> <Send className="w-5 h-5 group-hover:rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"/></>}
                   </button>
@@ -190,13 +190,13 @@ export default function ContactContent() {
                   {status === "success" && (
                       <div className="flex items-center gap-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 p-6 rounded-[1.5rem] animate-in fade-in slide-in-from-bottom-2">
                           <CheckCircle2 className="w-6 h-6 shrink-0" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest">Message Sent! Our team will get back to you shortly.</p>
+                          <p className="text-xs font-bold tracking-wide">Message Sent! Our team will get back to you shortly.</p>
                       </div>
                   )}
                   {status === "error" && (
                       <div className="flex items-center gap-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-400 p-6 rounded-[1.5rem] animate-in fade-in slide-in-from-bottom-2">
                           <ShieldAlert className="w-6 h-6 shrink-0" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest">Failed to send message. Please try again or contact us via WhatsApp.</p>
+                          <p className="text-xs font-bold tracking-wide">Failed to send message. Please try again or contact us via WhatsApp.</p>
                       </div>
                   )}
               </form>

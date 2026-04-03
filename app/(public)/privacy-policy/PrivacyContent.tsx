@@ -36,7 +36,7 @@ export default function PrivacyContent({ lastUpdated }: PrivacyContentProps) {
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="text-center mb-16 md:mb-32">
-        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-[11px] font-bold tracking-widest mb-8 md:mb-12 shadow-2xl">
+        <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-xs font-bold tracking-wide mb-8 md:mb-12 shadow-2xl">
           <ShieldCheck className="w-4 h-4 text-indigo-400" /> Privacy Policy
         </div>
         <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white mb-6 md:mb-10 tracking-tight leading-[1] md:leading-[1.1]">
@@ -55,7 +55,7 @@ export default function PrivacyContent({ lastUpdated }: PrivacyContentProps) {
               <card.icon className="w-7 h-7 md:w-8 md:h-8" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-4 group-hover:text-indigo-600 transition-colors tracking-tight">{card.title}</h3>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide opacity-80">{card.desc}</p>
+            <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 leading-relaxed tracking-wide opacity-80">{card.desc}</p>
           </div>
         ))}
       </div>
@@ -79,7 +79,7 @@ export default function PrivacyContent({ lastUpdated }: PrivacyContentProps) {
                     "Resource Interaction Logs",
                     "Technical Data (IP/Device Info)"
                   ].map((item, id) => (
-                    <li key={id} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-200">
+                    <li key={id} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold tracking-wide text-slate-500 dark:text-slate-200">
                       <Sparkles className="w-4 h-4 text-indigo-500" /> {item}
                     </li>
                   ))}
@@ -145,24 +145,24 @@ export default function PrivacyContent({ lastUpdated }: PrivacyContentProps) {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-4 md:gap-6 w-full md:w-auto">
-                   <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white/10 hover:bg-white/20 rounded-2xl md:rounded-[2.5rem] border border-white/10 transition-all group/btn backdrop-blur-xl">
-                      <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-indigo-600 group-hover/btn:scale-110 transition-transform shadow-2xl"><Mail className="w-6 h-6 md:w-7 md:h-7"/></div>
-                      <div>
-                         <p className="text-[9px] md:text-[10px] font-bold text-indigo-200 mb-1">Contact via Email</p>
-                         <p className="text-lg md:text-xl font-bold tracking-tight">Support Email</p>
-                      </div>
-                   </a>
-                   <a href="https://wa.me/8801619663933" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white/10 hover:bg-white/20 rounded-2xl md:rounded-[2.5rem] border border-white/10 transition-all group/btn backdrop-blur-xl">
-                      <div className="w-14 h-14 md:w-16 md:h-16 bg-emerald-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Phone className="w-6 h-6 md:w-7 md:h-7"/></div>
-                      <div>
-                         <p className="text-[9px] md:text-[10px] font-bold text-indigo-200 mb-1">Fast Response</p>
-                         <p className="text-lg md:text-xl font-bold tracking-tight">WhatsApp</p>
-                      </div>
-                   </a>
-                </div>
-              </div>
-           </div>
-           <p className="text-center mt-10 md:mt-12 text-[9px] md:text-[10px] font-bold text-slate-400">© 2026 NextPrepBD. All Rights Reserved.</p>
+                    <a href="mailto:nextprepbd@gmail.com" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white/10 hover:bg-white/20 rounded-2xl md:rounded-[2.5rem] border border-white/10 transition-all group/btn backdrop-blur-xl">
+                       <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-indigo-600 group-hover/btn:scale-110 transition-transform shadow-2xl"><Mail className="w-6 h-6 md:w-7 md:h-7"/></div>
+                       <div>
+                          <p className="text-xs font-bold text-indigo-200 mb-1">Contact via Email</p>
+                          <p className="text-lg md:text-xl font-bold tracking-tight">Support Email</p>
+                       </div>
+                    </a>
+                    <a href="https://wa.me/8801619663933" className="flex items-center gap-4 md:gap-6 p-4 md:p-6 md:pr-12 bg-white/10 hover:bg-white/20 rounded-2xl md:rounded-[2.5rem] border border-white/10 transition-all group/btn backdrop-blur-xl">
+                       <div className="w-14 h-14 md:w-16 md:h-16 bg-emerald-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-2xl"><Phone className="w-6 h-6 md:w-7 md:h-7"/></div>
+                       <div>
+                          <p className="text-xs font-bold text-indigo-200 mb-1">Fast Response</p>
+                          <p className="text-lg md:text-xl font-bold tracking-tight">WhatsApp</p>
+                       </div>
+                    </a>
+                 </div>
+               </div>
+            </div>
+            <p className="text-center mt-10 md:mt-12 text-xs font-bold text-slate-400">© 2026 NextPrepBD. All Rights Reserved.</p>
         </div>
       </div>
     </div>

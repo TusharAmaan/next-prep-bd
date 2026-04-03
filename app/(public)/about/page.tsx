@@ -105,7 +105,7 @@ export default function AboutPage() {
 
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="flex flex-col items-center text-center">
-                <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-[11px] font-bold tracking-widest mb-8 md:mb-12 shadow-2xl">
+                <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-slate-900 text-white dark:bg-indigo-600 text-xs font-bold tracking-wide mb-8 md:mb-12 shadow-2xl">
                   <Sparkles className="w-4 h-4 text-indigo-400" />
                   Leading Educational Hub
                 </div>
@@ -123,10 +123,10 @@ export default function AboutPage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                  <Link href="/" className="w-full sm:w-auto group px-12 py-5 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl md:rounded-[2rem] font-bold text-[11px] tracking-widest hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all shadow-3xl active:scale-95 flex items-center justify-center gap-4">
+                  <Link href="/" className="w-full sm:w-auto group px-12 py-5 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl md:rounded-[2rem] font-bold text-xs tracking-wide hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all shadow-3xl active:scale-95 flex items-center justify-center gap-4">
                     Explore Resources <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <div className="flex items-center gap-3 md:gap-4 text-slate-400 dark:text-slate-500 text-[11px] font-bold tracking-widest">
+                  <div className="flex items-center gap-3 md:gap-4 text-slate-400 dark:text-slate-500 text-xs font-bold tracking-wide">
                      <Users className="w-5 h-5 text-indigo-500" />
                      Trusted by 15,000+ Students
                   </div>
@@ -144,7 +144,7 @@ export default function AboutPage() {
                       <stat.icon className="w-6 h-6 md:w-8 md:h-8" />
                    </div>
                    <h3 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-1 md:mb-2 tracking-tight">{stat.value}</h3>
-                   <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest leading-none">{stat.label}</p>
+                   <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide leading-none">{stat.label}</p>
                 </div>
               ))}
            </div>
@@ -173,7 +173,7 @@ export default function AboutPage() {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3 md:mb-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-tight">{pillar.title}</h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-relaxed mb-6 md:mb-8 opacity-80">{pillar.desc}</p>
                 <div className="mt-auto pt-4 md:pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
-                   <span className="text-[10px] font-bold tracking-widest text-slate-300 dark:text-slate-600">Sector {idx + 1}</span>
+                   <span className="text-xs font-bold tracking-wide text-slate-300 dark:text-slate-600">Sector {idx + 1}</span>
                    <ChevronRight className="w-4 h-4 text-slate-200 dark:text-slate-700 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default function AboutPage() {
                    <div className="space-y-6 md:space-y-10">
                       <div className="bg-slate-950 rounded-2xl md:rounded-[3rem] p-10 md:p-12 text-center text-white relative overflow-hidden group/box">
                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600 to-transparent opacity-20"></div>
-                         <h4 className="text-[11px] font-bold tracking-widest mb-4 text-indigo-400">Our Vision</h4>
+                         <h4 className="text-xs font-bold tracking-wide mb-4 text-indigo-400">Our Vision</h4>
                          <p className="text-xl md:text-2xl font-bold tracking-tight leading-tight relative z-10">Revolutionizing <br/> Education in <br/> Bangladesh.</p>
                       </div>
                       <div className="grid grid-cols-2 gap-4 md:gap-6">
@@ -253,8 +253,8 @@ export default function AboutPage() {
                         <Users className="w-8 h-8 md:w-10 md:h-10" />
                      </div>
                      <h3 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 tracking-tight leading-none">{aud.name}</h3>
-                     <p className="text-[11px] font-semibold tracking-widest opacity-60 mb-8 md:mb-12 leading-relaxed">{aud.desc}</p>
-                     <div className="mt-auto flex items-center gap-3 text-[10px] font-bold tracking-widest opacity-40 group-hover:opacity-100 transition-all">
+                     <p className="text-xs font-semibold tracking-wide opacity-60 mb-8 md:mb-12 leading-relaxed">{aud.desc}</p>
+                     <div className="mt-auto flex items-center gap-3 text-xs font-bold tracking-wide opacity-40 group-hover:opacity-100 transition-all">
                         Get Started <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                      </div>
                   </div>
@@ -275,10 +275,10 @@ export default function AboutPage() {
                    Join over 15,000 students already using NextPrepBD to excel in their studies.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center">
-                   <Link href="/signup" className="px-12 py-5 md:py-6 bg-white text-slate-900 rounded-2xl md:rounded-3xl font-bold text-[11px] tracking-widest hover:bg-slate-100 transition-all active:scale-95 shadow-2xl">
+                   <Link href="/signup" className="px-12 py-5 md:py-6 bg-white text-slate-900 rounded-2xl md:rounded-3xl font-bold text-xs tracking-wide hover:bg-slate-100 transition-all active:scale-95 shadow-2xl">
                       Sign Up Now
                    </Link>
-                   <Link href="/contact" className="px-12 py-5 md:py-6 bg-transparent border-2 border-white/20 text-white rounded-2xl md:rounded-3xl font-bold text-[11px] tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-4">
+                   <Link href="/contact" className="px-12 py-5 md:py-6 bg-transparent border-2 border-white/20 text-white rounded-2xl md:rounded-3xl font-bold text-xs tracking-wide hover:bg-white/10 transition-all flex items-center justify-center gap-4">
                       Contact Us <MessageSquare className="w-5 h-5" />
                    </Link>
                 </div>

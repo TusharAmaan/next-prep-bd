@@ -109,11 +109,11 @@ export default function SubjectHierarchyClient({
       }]);
 
       if (error) throw error;
-      toast.success("Intelligence received! Our curators will review it.");
+      toast.success("Feedback received! We will review it.");
       setFeedbackMessage('');
       setFeedbackEmail('');
     } catch (error) {
-       toast.error("Failed to relay message.");
+       toast.error("Failed to send message.");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +134,7 @@ export default function SubjectHierarchyClient({
            <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3rem] p-8 shadow-3xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
              <div className="flex justify-between items-center mb-8 shrink-0 border-b border-slate-100 dark:border-slate-800 pb-6">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-4">
-                  <Book className="w-7 h-7 text-indigo-500" /> Reference Hub
+                  <Book className="w-7 h-7 text-indigo-500" /> Books & Resources
                 </h3>
                 <button onClick={() => setIsAllBooksOpen(false)} className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-2xl transition-colors"><X className="w-5 h-5" /></button>
              </div>
@@ -166,12 +166,12 @@ export default function SubjectHierarchyClient({
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 mb-16 border-b border-slate-100 dark:border-slate-800 pb-16 transition-colors">
          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-[0.2em] mb-4">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide mb-4">
                <Link href="/curriculum" className="hover:text-indigo-600 transition-colors">Syllabus</Link>
                <ChevronRight className="w-3.5 h-3.5" />
                <span className="text-slate-500 dark:text-slate-400">{subject?.groups?.segments?.title || 'Segment'}</span>
                <ChevronRight className="w-3.5 h-3.5" />
-               <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">{subject?.groups?.title || 'Portfolio'}</span>
+               <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">{subject?.groups?.title || 'Course'}</span>
             </div>
             <h1 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white leading-[0.9] tracking-tighter">
                {subject?.title}
@@ -183,27 +183,27 @@ export default function SubjectHierarchyClient({
             <div className="flex p-2 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 w-full sm:w-auto shadow-xl dark:shadow-none transition-colors">
               <button 
                  onClick={() => setVersion('bn')}
-                 className={`flex-1 sm:flex-none px-10 py-3.5 rounded-2xl text-[11px] font-bold tracking-[0.2em] transition-all ${version === 'bn' ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                 className={`flex-1 sm:flex-none px-10 py-3.5 rounded-2xl text-xs font-bold tracking-wide transition-all ${version === 'bn' ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
                  Bengali
               </button>
               <button 
                  onClick={() => setVersion('en')}
-                 className={`flex-1 sm:flex-none px-10 py-3.5 rounded-2xl text-[11px] font-bold tracking-[0.2em] transition-all ${version === 'en' ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                 className={`flex-1 sm:flex-none px-10 py-3.5 rounded-2xl text-xs font-bold tracking-wide transition-all ${version === 'en' ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
                  English
               </button>
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-8 px-10 py-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 w-full sm:w-auto shadow-xl dark:shadow-none transition-colors">
+             <div className="flex items-center gap-8 px-10 py-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 w-full sm:w-auto shadow-xl dark:shadow-none transition-colors">
                <div className="text-center group">
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 justify-center tracking-widest mb-1 group-hover:text-indigo-500 transition-colors"><Layers className="w-3.5 h-3.5"/> Modules</p>
+                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 justify-center tracking-wide mb-1 group-hover:text-indigo-500 transition-colors"><Layers className="w-3.5 h-3.5"/> Lessons</p>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{units.reduce((acc, curr) => acc + (curr.lesson_plan_lessons?.length || 0), 0)}</p>
                </div>
                <div className="w-px h-10 bg-slate-100 dark:bg-slate-800"></div>
                <div className="text-center group">
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 justify-center tracking-widest mb-1 group-hover:text-indigo-500 transition-colors"><Eye className="w-3.5 h-3.5"/> Readers</p>
+                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 justify-center tracking-wide mb-1 group-hover:text-indigo-500 transition-colors"><Eye className="w-3.5 h-3.5"/> Reads</p>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{subject?.view_count || 0}</p>
                </div>
             </div>
@@ -220,7 +220,7 @@ export default function SubjectHierarchyClient({
               <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 w-6 h-6 group-focus-within:text-indigo-600 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Locate intelligence within subject syllabus..." 
+                placeholder="Search for topics in the syllabus..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-16 px-8 py-7 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] outline-none focus:ring-4 focus:ring-indigo-600/5 dark:focus:ring-indigo-500/5 font-bold text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-xl dark:shadow-none"
@@ -243,7 +243,7 @@ export default function SubjectHierarchyClient({
                              <BookOpen className="w-6 h-6" />
                           </div>
                           <div>
-                             <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Unit {unit.order_index || 'X'}</p>
+                             <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide mb-1 group-hover:text-indigo-500 transition-colors">Unit {unit.order_index || 'X'}</p>
                              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tighter leading-tight">{unit.title}</h3>
                           </div>
                        </div>
@@ -299,8 +299,8 @@ export default function SubjectHierarchyClient({
                    <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse border border-slate-100 dark:border-slate-700">
                         <Sparkles className="w-10 h-10 text-slate-300 dark:text-slate-600" />
                    </div>
-                   <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter mb-4">Planning Synchronization</h3>
-                   <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-sm mx-auto leading-relaxed">This version of the syllabus is currently being reconstructed by our academic masters. Re-route shortly!</p>
+                   <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter mb-4">Lessons will be added soon!</h3>
+                   <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-sm mx-auto leading-relaxed">We are currently updating the lessons for this subject. Please check back later.</p>
                 </div>
               )}
            </div>
@@ -327,7 +327,7 @@ export default function SubjectHierarchyClient({
                       </div>
                       <div className="py-2 flex-1 min-w-0">
                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate tracking-tight">{book.title}</p>
-                         {book.subtitle && <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-2 font-bold tracking-widest truncate">{book.subtitle}</p>}
+                         {book.subtitle && <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 font-bold tracking-wide truncate">{book.subtitle}</p>}
                       </div>
                    </a>
                  ))}
@@ -349,12 +349,12 @@ export default function SubjectHierarchyClient({
                       <GraduationCap className="w-7 h-7" />
                    </div>
                    <h3 className="text-2xl font-bold text-white leading-tight mb-4 tracking-tighter">Advance Your Mastery: <br/><span className="text-indigo-400 dark:text-indigo-200">{linkedCourses[0].title}</span></h3>
-                   <p className="text-slate-400 dark:text-indigo-100 text-[11px] font-bold tracking-widest mb-10 leading-relaxed opacity-80">Gain industrial mastery in {subject?.title} with our world-class guided curriculum.</p>
+                   <p className="text-slate-400 dark:text-indigo-100 text-xs font-bold tracking-wide mb-10 leading-relaxed opacity-80">Gain mastery in {subject?.title} with our world-class guided curriculum.</p>
                    <Link 
                       href={`/courses/${linkedCourses[0].slug}`}
-                      className="w-full inline-flex items-center justify-center gap-3 bg-white text-slate-900 px-8 py-5 rounded-2xl text-[11px] font-bold tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-2xl group"
+                      className="w-full inline-flex items-center justify-center gap-3 bg-white text-slate-900 px-8 py-5 rounded-2xl text-xs font-bold tracking-wide hover:bg-slate-50 transition-all active:scale-95 shadow-2xl group"
                    >
-                      Enroll Strategy <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      Enroll Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                    </Link>
                 </div>
              </div>
