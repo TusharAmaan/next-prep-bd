@@ -56,15 +56,12 @@ export default function LocationTracker() {
             })
             .eq('id', user.id);
 
-          console.log("Location updated:", readableLocation);
-
+          // Location updated - Log removed for clarity
         } catch (error) {
           console.error("Error fetching city:", error);
         }
       }, (error) => {
-          // If user denies, we catch it here. 
-          // Since we already set the localStorage item above, we won't ask again for 7 days.
-          console.log("Location permission denied or unavailable.");
+          // Location permission denied - Log removed for clarity
       });
     };
 

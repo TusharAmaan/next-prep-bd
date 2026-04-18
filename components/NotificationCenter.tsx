@@ -33,8 +33,7 @@ export function NotificationCenter({ userId, onNotificationClick }: Notification
   } = useRealtimeNotifications({
     userId,
     onNewNotification: (notification) => {
-      // Show toast or alert for new notification
-      console.log('New notification:', notification);
+      // New notification received - log removed for optimization
     },
   });
 

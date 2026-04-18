@@ -93,13 +93,27 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable} ${bangla.variable}`}
-      suppressHydrationWarning
     >
       <head>
-        {/* Organization Schema */}
+        {/* Combined SEO Structured Data */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(getOrganizationSchema()) }}
+          dangerouslySetInnerHTML={{ 
+            __html: JSON.stringify([
+              getOrganizationSchema(),
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "NextPrepBD",
+                url: "https://nextprepbd.com",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: "https://nextprepbd.com/search?q={search_term_string}",
+                  "query-input": "required name=search_term_string",
+                },
+              }
+            ]) 
+          }}
         />
         {/* Prevent FOUC: apply dark class before paint */}
         <script dangerouslySetInnerHTML={{ __html: `
@@ -113,8 +127,8 @@ export default function RootLayout({
       </head>
       <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ThemeProvider>
-          {/* MathJax Configuration */}
-          <Script id="mathjax-config" strategy="beforeInteractive">
+          {/* MathJax Configuration (Deferred) */}
+          <Script id="mathjax-config" strategy="lazyOnload">
             {`
               window.MathJax = {
                 tex: {
@@ -129,38 +143,18 @@ export default function RootLayout({
               };
             `}
           </Script>
-
           <Script
             id="mathjax-script"
             src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
 
+          {/* AdSense (Lazy) */}
           <Script
             id="adsbygoogle-init"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3105440348785747"
             crossOrigin="anonymous"
-          />
-
-          <Script
-            id="website-schema"
-            type="application/ld+json"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "WebSite",
-                name: "NextPrepBD",
-                url: "https://nextprepbd.com",
-                potentialAction: {
-                  "@type": "SearchAction",
-                  target:
-                    "https://nextprepbd.com/search?q={search_term_string}",
-                  "query-input": "required name=search_term_string",
-                },
-              }),
-            }}
           />
 
           <Header />
@@ -169,7 +163,7 @@ export default function RootLayout({
           </main>
           <Toaster position="top-right" />
           <Footer />
-          <Analytics/>
+          <Analytics mode={'production'} />
           <SpeedInsights />
           <ScrollToTop />
           <GoogleAnalytics gaId="G-9BGK82JB2D" />

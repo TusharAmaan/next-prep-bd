@@ -9,7 +9,7 @@ import {
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
   Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
   AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight, Moon, Sun, Monitor, Mail, CheckCircle2 as LucideCheckCircle2,
-  Calendar, Award
+  Calendar, Award, AlertCircle
 } from "lucide-react";
 
 import StatsCard from "@/components/admin/dashboard/StatsCard";
@@ -182,6 +182,7 @@ export default function AdminDashboard() {
       { id: 'pending', label: 'Pending Reviews', icon: AlertTriangle, badge: stats.pendingCount },
       { isDivider: true, label: 'Content' },
       { id: 'materials', label: 'Study Materials', icon: FileStack },
+      { id: 'segment_updates', label: 'Segment Updates', icon: AlertCircle },
       { id: 'lecture_sheets', label: 'Lecture Sheets', icon: FileText },
       { id: 'lesson_plans', label: 'Lesson Plans', icon: BookOpen },
       { id: 'ebooks', label: 'eBooks', icon: BookOpen },
@@ -409,6 +410,7 @@ export default function AdminDashboard() {
                     {activeTab === 'news' && <ContentManager activeTab="news" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
 
                     {activeTab === 'materials' && <ContentManager activeTab="materials" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
+                    {activeTab === 'segment_updates' && <ContentManager activeTab="segment_updates" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                     {activeTab === 'ebooks' && <ContentManager activeTab="ebooks" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
 
                 </div>
