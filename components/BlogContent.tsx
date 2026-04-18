@@ -41,10 +41,10 @@ export default function BlogContent({ content, className }: { content: string, c
   return (
     <div 
       ref={contentRef}
-      className={`prose prose-lg max-w-none 
-        prose-headings:font-bold prose-headings:text-slate-900 
-        prose-a:text-blue-600 prose-img:rounded-2xl 
-        prose-p:leading-relaxed prose-p:text-slate-700 
+      className={`prose prose-lg dark:prose-invert max-w-none 
+        prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-white
+        prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl 
+        prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300
         ${className}`}
       dangerouslySetInnerHTML={{ __html: content }} 
     />
