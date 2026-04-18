@@ -11,6 +11,7 @@ import { Calendar, Clock, Share2, ChevronLeft, Eye } from "lucide-react";
 import NewsSidebar from "@/components/news/NewsSidebar";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import ShareButtons from "@/components/news/ShareButtons";
+import SinglePostContent from "@/components/public/SinglePostContent";
 
 export const dynamic = "force-dynamic";
 
@@ -106,83 +107,22 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
 
       <div className="max-w-7xl mx-auto px-6">
 
-        {/* BREADCRUMBS */}
-        <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">
-          <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-          <Link href="/news" className="hover:text-indigo-600 transition-colors">Newsroom</Link>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-          <span className="text-slate-600 truncate max-w-[200px]">{post.title}</span>
-        </nav>
-
         <div className="flex flex-col lg:flex-row gap-12">
-
-          {/* LEFT: MAIN ARTICLE CONTENT */}
           <main className="flex-1 min-w-0">
+            <SinglePostContent 
+                post={post}
+                formattedDate={formatDate(post.created_at)}
+                readTime={parseInt(getReadTime(post.content))}
+                isLoggedIn={true} // News is usually public but we pass true to ensure actions work
+            />
 
-            {/* ARTICLE HEADER */}
-            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 mb-10 shadow-sm border border-slate-100 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-8">
-                <span className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest">
-                  {post.category || "General"}
-                </span>
-                <div className="flex items-center gap-4">
-                  <BookmarkButton
-                    itemType="news"
-                    itemId={post.id.toString()}
-                    metadata={{ title: post.title, thumbnail_url: post.image_url }}
-                  />
-                  <div className="p-2 text-slate-400"><Share2 className="w-5 h-5" /></div>
-                </div>
-              </div>
-
-              <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tight">
-                {post.title}
-              </h1>
-
-              <div className="flex flex-wrap items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest pb-8 border-b border-slate-50">
-                <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500" /> {formatDate(post.created_at)}</span>
-                <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500" /> {getReadTime(post.content)}</span>
-                <span className="flex items-center gap-2"><Eye className="w-4 h-4 text-indigo-500" /> 1.2k Views</span>
-              </div>
-
-              {post.image_url && (
-                <div className="mt-10 rounded-3xl overflow-hidden shadow-2xl relative aspect-video group">
-                  <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-              )}
-
-              <div className="mt-12">
-                <div
-                  className="prose prose-xl prose-indigo max-w-none text-slate-700 font-medium leading-[1.8]
-                                prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900
-                                prose-strong:font-black prose-strong:text-slate-900
-                                prose-img:rounded-3xl prose-img:shadow-xl"
-                  dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(post.content) }}
-                />
-              </div>
-
-              <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                <ShareButtons title={post.title} url={absoluteUrl} />
-                {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-end">
-                    {post.tags.map((tag: string, index: number) => (
-                      <span key={index} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">#{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100">
-              <h4 className="text-xl font-black text-slate-900 mb-8 pb-4 border-b border-slate-50 flex items-center gap-3">
-                <Share2 className="w-6 h-6 text-indigo-600" />
-                Community Join In
+            <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 md:p-12 mt-12 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+              <h4 className="text-xl font-black text-slate-800 dark:text-white mb-8 pb-4 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-3 uppercase tracking-tighter">
+                <Share2 className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                Community Discussion
               </h4>
               <Discussion itemType="news" itemId={post.id.toString()} />
             </div>
-
           </main>
 
           <div className="w-full lg:w-80 shrink-0">
@@ -203,7 +143,6 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
               </div>
             </div>
           </div>
-
         </div>
 
         <div className="mt-20">

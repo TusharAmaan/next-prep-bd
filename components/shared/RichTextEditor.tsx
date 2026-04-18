@@ -30,20 +30,32 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
             'insertdatetime', 'media', 'table', 'help', 'wordcount', 'codesample', 'math'
           ],
-          toolbar: 'undo redo | formatselect | ' +
-            'bold italic underline strikethrough | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'link image media table math | removeformat | codesample code fullscreen preview | help',
+          toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+            'bold italic underline strikethrough | forecolor backcolor | align | ' +
+            'bullist numlist outdent indent | ' +
+            'link image media table | math | codesample | removeformat | fullscreen preview | help',
+          font_family_formats: 'Geist Sans=var(--font-geist-sans); Bengali=var(--font-bangla); Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica,sans-serif; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Noto Serif Bengali=notoserifbangla,serif',
+          font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 30pt 36pt 48pt 60pt 72pt',
           skin: darkMode ? "oxide-dark" : "oxide",
           content_css: darkMode ? "dark" : "default",
           content_style: `
             @import url('https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css');
+            :root {
+                --font-geist-sans: "Inter", sans-serif;
+                --font-bangla: "Noto Serif Bengali", serif;
+            }
             body { 
-              font-family:Inter,sans-serif; 
-              font-size:16px; 
+              font-family: var(--font-geist-sans), sans-serif; 
+              font-size: 16px; 
               color: ${darkMode ? '#f1f5f9' : '#334155'}; 
               background: ${darkMode ? '#0f172a' : '#ffffff'}; 
+              line-height: 1.6;
+              padding: 2rem;
+              max-width: 900px;
+              margin: 0 auto;
             }
+            h1, h2, h3, h4, h5, h6 { color: ${darkMode ? '#ffffff' : '#0f172a'}; font-weight: 800; }
+            .font-bangla { font-family: var(--font-bangla) !important; }
           `,
           branding: false,
           statusbar: true,

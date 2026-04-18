@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { FileText, HelpCircle, Printer } from "lucide-react";
-import PrintableBlogBody from "@/components/PrintableBlogBody";
+import { useState } from "react";
+import { FileText, HelpCircle, Sparkles } from "lucide-react";
+import SinglePostContent from "@/components/public/SinglePostContent";
 import QuizView from "@/components/public/QuizView";
-import { useReactToPrint } from "react-to-print";
 
 interface WrapperProps {
   post: any;
@@ -24,85 +23,92 @@ export default function BlogContentWrapper({
   isLoggedIn 
 }: WrapperProps) {
   const [activeTab, setActiveTab] = useState<'article' | 'quiz'>('article');
-  
-  const articleRef = useRef<HTMLDivElement>(null);
-  const quizRef = useRef<HTMLDivElement>(null);
-
-  const handlePrint = useReactToPrint({
-    contentRef: activeTab === 'article' ? articleRef : quizRef,
-    documentTitle: `${post.title} - ${activeTab === 'article' ? 'Article' : 'Practice Questions'}`,
-  });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       
-      {/* 1. TAB SWITCHER */}
+      {/* === PREMIUM TAB SELECTOR === */}
       {questions && questions.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-2 flex gap-3 shadow-xl sticky top-24 z-30 mx-4 md:mx-0 print:hidden transition-colors backdrop-blur-xl bg-white/90 dark:bg-slate-900/90">
-          <button
-            onClick={() => setActiveTab('article')}
-            className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-              activeTab === 'article' 
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl shadow-slate-900/20 dark:shadow-white/10' 
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <FileText size={18} /> Read Perspective
-          </button>
-          <button
-            onClick={() => setActiveTab('quiz')}
-            className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all relative ${
-              activeTab === 'quiz' 
-                ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30' 
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
-            }`}
-          >
-            <HelpCircle size={18} /> Practice Lab
-            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black transition-colors ${
-                activeTab === 'quiz' ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
-            }`}>
-              {questions.length}
-            </span>
-          </button>
+        <div className="flex justify-center px-4 md:px-0 sticky top-24 z-30 pointer-events-none">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/50 dark:border-slate-800/50 p-1.5 flex gap-1 shadow-2xl shadow-indigo-500/10 rounded-[2rem] pointer-events-auto transition-all hover:scale-[1.02]">
+            <button
+              onClick={() => setActiveTab('article')}
+              className={`flex items-center gap-3 px-8 py-4 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 ${
+                activeTab === 'article' 
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' 
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              <FileText size={16} className={activeTab === 'article' ? "animate-pulse" : ""} /> 
+              Article
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('quiz')}
+              className={`flex items-center gap-3 px-8 py-4 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 relative ${
+                activeTab === 'quiz' 
+                  ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/30' 
+                  : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20'
+              }`}
+            >
+              <HelpCircle size={16} className={activeTab === 'quiz' ? "animate-bounce" : ""} />
+              Practice Lab
+              <div className={`ml-1 px-2 py-0.5 rounded-full text-[9px] font-black transition-all ${
+                  activeTab === 'quiz' ? 'bg-white/20 text-white scale-110' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+              }`}>
+                {questions.length}
+              </div>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* 2. CONTENT AREA */}
-      <div className="min-h-[500px]">
+      {/* === CONTENT CONTAINER === */}
+      <main className="min-h-[600px] relative">
         
-        {/* ARTICLE TAB */}
-        <div className={activeTab === 'article' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}>
-          <div ref={articleRef} className="print:p-10">
-             <PrintableBlogBody 
+        {/* ARTICLE SECTION */}
+        <div className={activeTab === 'article' ? 'block transition-all duration-700' : 'hidden'}>
+           <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+              <SinglePostContent 
                 post={post} 
                 formattedDate={formattedDate}
                 readTime={readTime}
                 bengaliFontClass={bengaliFontClass} 
                 isLoggedIn={isLoggedIn}
-                attachmentUrl={post.content_url} 
-                onPrintTrigger={handlePrint} 
-             />
-          </div>
+              />
+           </div>
         </div>
 
-        {/* QUIZ TAB */}
+        {/* QUIZ SECTION */}
         {activeTab === 'quiz' && (
-          <div ref={quizRef} className="print:p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="mb-12 print:hidden text-center border-b border-slate-100 dark:border-slate-800 pb-10">
-                <div className="w-16 h-16 bg-indigo-600 text-white rounded-[1.5rem] flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl shadow-indigo-600/30 rotate-3">?</div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter leading-tight">{post.title}</h1>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Interactive Assessment Portal</p>
+          <div className="animate-in fade-in zoom-in-95 duration-700 ease-out">
+             <div className="mb-12 text-center border-b border-slate-100 dark:border-slate-800 pb-16">
+                <div className="relative inline-block mb-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-[2rem] flex items-center justify-center text-4xl font-black shadow-2xl shadow-indigo-500/40 rotate-6 animate-pulse">
+                        <Sparkles size={32} />
+                    </div>
+                </div>
+                <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter leading-tight max-w-4xl mx-auto">
+                    {post.title}
+                </h1>
+                <div className="inline-flex items-center gap-3 px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+                    <span>Interactive Assessment Portal</span>
+                    <div className="w-1 h-1 rounded-full bg-indigo-400" />
+                    <span>{questions.length} Questions</span>
+                </div>
              </div>
              
-             <QuizView 
-                questions={questions} 
-                isLoggedIn={isLoggedIn} 
-                title={post.title} 
-             />
+             <div className="max-w-5xl mx-auto">
+                <QuizView 
+                    questions={questions} 
+                    isLoggedIn={isLoggedIn} 
+                    title={post.title} 
+                />
+             </div>
           </div>
         )}
 
-      </div>
+      </main>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
-import PrintableBlogBody from "@/components/PrintableBlogBody";
+import SinglePostContent from "@/components/public/SinglePostContent";
 import { Noto_Serif_Bengali } from "next/font/google"; 
 import { Metadata } from 'next';
 import { createClient } from "@/utils/supabase/server";
@@ -93,17 +93,6 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
     url: currentUrl
   });
 
-  const compatiblePost = {
-    ...post,
-    subjects: {
-        groups: {
-            segments: {
-                title: post.segments?.title || post.type.replace('_', ' ')
-            }
-        }
-    }
-  };
-
   return (
     <>
       <script
@@ -117,17 +106,15 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
         <section className="max-w-7xl mx-auto px-6 py-12 pt-32">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-              
               <div className="lg:col-span-8">
-                  <PrintableBlogBody 
-                      post={compatiblePost}
+                  <SinglePostContent 
+                      post={post}
                       formattedDate={formattedDate}
-                      attachmentUrl={post.attachment_url}
                       bengaliFontClass={bengaliFont.className} 
                       isLoggedIn={isLoggedIn} 
                   />
 
-                  <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 p-8 md:p-12 mt-12 transition-colors">
+                  <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 p-8 md:p-12 mt-12 transition-colors">
                       <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-8 flex items-center gap-4 uppercase tracking-tighter">
                           <span className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl shadow-sm">💬</span>
                           Community Discussion
