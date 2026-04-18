@@ -127,27 +127,6 @@ export default function RootLayout({
       </head>
       <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ThemeProvider>
-          {/* MathJax Configuration (Deferred) */}
-          <Script id="mathjax-config" strategy="lazyOnload">
-            {`
-              window.MathJax = {
-                tex: {
-                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
-                  processEscapes: true,
-                },
-                options: {
-                  ignoreHtmlClass: 'tex2jax_ignore',
-                  processHtmlClass: 'tex2jax_process'
-                }
-              };
-            `}
-          </Script>
-          <Script
-            id="mathjax-script"
-            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-            strategy="lazyOnload"
-          />
 
           {/* AdSense (Lazy) */}
           <Script

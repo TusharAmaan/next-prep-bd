@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseServer";
 import CurriculumContentClient from "./CurriculumContentClient";
 import { Metadata } from 'next';
 import { getBreadcrumbSchema, getArticleSchema } from "@/lib/seo-utils";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ subjectId: string, contentId: string }> }): Promise<Metadata> {
   const { contentId, subjectId } = await params;
 
+  const supabase = await createClient();
   const { data: content } = await supabase
     .from('lesson_plan_contents')
     .select(`*, lesson_plan_lessons (*, lesson_plan_units (*))`)
@@ -34,6 +35,8 @@ export async function generateMetadata({ params }: { params: Promise<{ subjectId
 
 export default async function ContentDetailPage({ params }: { params: Promise<{ subjectId: string, contentId: string }> }) {
   const { subjectId, contentId } = await params;
+
+  const supabase = await createClient();
 
   // 1. Fetch initial content
   const { data: initialContent } = await supabase
@@ -69,8 +72,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
     .order('order_index');
 
   // 4. Get User Session (Server Component)
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user || null;
+  const { data: { user } } = await supabase.auth.getUser();
 
   const currentUrl = `https://nextprepbd.com/curriculum/${subjectId}/${contentId}`;
   

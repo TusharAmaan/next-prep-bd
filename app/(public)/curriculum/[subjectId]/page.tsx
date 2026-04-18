@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseServer";
 import SubjectHierarchyClient from "./SubjectHierarchyClient";
 import { Metadata } from 'next';
 import { getBreadcrumbSchema } from "@/lib/seo-utils";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ subjectId: string }> }): Promise<Metadata> {
   const { subjectId } = await params;
 
+  const supabase = await createClient();
   const { data: subData } = await supabase
     .from('subjects')
     .select('*, groups(title, segments(title))')
@@ -35,6 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ subjectId
 
 export default async function SubjectHierarchyPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
+  const supabase = await createClient();
 
   // 1. Fetch Subject Info
   const { data: subData } = await supabase

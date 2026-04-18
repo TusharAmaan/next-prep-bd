@@ -39,7 +39,7 @@ function SearchContent() {
       setResults(data.results || []);
       setTotal(data.total || 0);
     } catch (err) {
-      console.error(err);
+      // Search error handled
       setError(true);
     } finally {
       setLoading(false);
@@ -78,8 +78,8 @@ function SearchContent() {
           <div className="max-w-7xl mx-auto relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-12">
                   <div className="max-w-3xl">
-                    <div className="flex items-center gap-2 md:gap-3 text-[11px] font-bold text-indigo-400 tracking-widest mb-6 md:mb-10 bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-6 py-2 rounded-full w-fit">
-                        <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" /> Comprehensive Index
+                    <div className="flex items-center gap-2 md:gap-3 text-xs font-bold text-indigo-400 tracking-widest mb-6 md:mb-10 bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-6 py-2 rounded-full w-fit">
+                        <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" /> Academic Archives
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1] md:leading-[1.1] mb-6 md:mb-10 text-white">
                        Unified <br className="hidden md:block"/>
@@ -87,9 +87,9 @@ function SearchContent() {
                     </h1>
                     <p className="text-base md:text-xl text-slate-400 font-medium leading-relaxed max-w-xl opacity-80">
                        {q ? (
-                         <>Mapping <span className="text-white font-bold">{total}</span> intelligence records for query <span className="text-indigo-400 font-bold">"{q}"</span></>
+                         <>Found <span className="text-white font-bold">{total}</span> matching records for <span className="text-indigo-400 font-bold">"{q}"</span></>
                        ) : (
-                         "Access our entire academic ecosystem including courses, research papers, and curriculum archives."
+                         "Access our comprehensive academic library including courses, textbooks, and curriculum archives."
                        )}
                     </p>
                   </div>
@@ -102,7 +102,7 @@ function SearchContent() {
                           name="q"
                           defaultValue={q}
                           className="w-full pl-12 md:pl-16 pr-16 md:pr-20 py-5 md:py-7 rounded-2xl md:rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-3xl outline-none focus:border-indigo-500 focus:bg-white/10 transition-all font-bold text-white text-base md:text-lg placeholder:text-slate-500 tracking-tight" 
-                          placeholder="Execute search protocol..."
+                          placeholder="Search for subjects, lessons, or topics..."
                         />
                         <button type="submit" className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-500 text-white w-10 md:w-14 h-10 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-2xl shadow-indigo-600/40 active:scale-95">
                             <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
@@ -136,8 +136,8 @@ function SearchContent() {
                         </div>
                      </div>
                      <div className="flex flex-col items-center gap-3">
-                        <p className="text-slate-900 dark:text-white text-[11px] font-bold tracking-[0.4em] animate-pulse">Synchronizing Records</p>
-                        <span className="text-slate-400 dark:text-slate-500 text-[9px] font-bold tracking-widest opacity-60">Optimizing intelligence nodes...</span>
+                        <p className="text-slate-900 dark:text-white text-xs font-bold tracking-[0.4em] animate-pulse">Searching Archives</p>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs font-bold tracking-widest opacity-60">Exploring database catalogs...</span>
                      </div>
                   </div>
                 ) : results.length > 0 ? (
@@ -175,25 +175,25 @@ function SearchContent() {
                      <div className="w-20 md:w-32 h-20 md:h-32 bg-slate-50 dark:bg-slate-800 text-slate-200 dark:text-slate-700 rounded-3xl md:rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 md:mb-12 shadow-inner border border-slate-100 dark:border-slate-700 transition-transform group-hover:rotate-12 duration-700">
                         <Search className="w-10 h-10 md:w-14 md:h-14" />
                      </div>
-                     <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6 tracking-tight leading-none">Intelligence <br/>Departure</h3>
-                     <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 md:mb-12 max-w-sm mx-auto text-base md:text-lg leading-relaxed">The requested protocol yielded no matches in our current archives. Reconfigure keywords.</p>
+                     <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6 tracking-tight leading-none">No Results <br/>Found</h3>
+                     <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 md:mb-12 max-w-sm mx-auto text-base md:text-lg leading-relaxed">The requested query yielded no matches in our current archives. Try using different keywords.</p>
                                           <div className="flex flex-col sm:flex-row justify-center gap-6">
                         <button 
                            onClick={() => { setQ(""); setType("all"); }}
-                           className="px-12 py-5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-100 dark:border-slate-700 rounded-2xl font-bold tracking-[0.2em] hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all text-[11px] shadow-sm"
+                           className="px-12 py-5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-100 dark:border-slate-700 rounded-2xl font-bold tracking-[0.2em] hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all text-xs shadow-sm"
                         >
-                           Reset Engine
+                           Clear Filters
                         </button>
-                        <Link href="/" className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-bold tracking-[0.2em] shadow-3xl shadow-indigo-600/30 hover:bg-indigo-500 hover:-translate-y-1 transition-all text-[11px] flex items-center justify-center gap-4">
-                           <ArrowLeft className="w-4 h-4"/> Back to Hub
+                        <Link href="/" className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-bold tracking-[0.2em] shadow-3xl shadow-indigo-600/30 hover:bg-indigo-500 hover:-translate-y-1 transition-all text-xs flex items-center justify-center gap-4">
+                           <ArrowLeft className="w-4 h-4"/> Back to Home
                         </Link>
                      </div>
                   </div>
                 )}
 
                 {error && (
-                  <div className="p-16 bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-[3rem] border-2 border-dashed border-rose-100 dark:border-rose-900/30 text-center font-bold tracking-[0.3em] text-[11px] animate-pulse">
-                    Database Connection Interrupted. Re-establish protocol connection.
+                  <div className="p-16 bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-[3rem] border-2 border-dashed border-rose-100 dark:border-rose-900/30 text-center font-bold tracking-[0.3em] text-xs animate-pulse">
+                    Database Connection Interrupted. Please check your connection.
                   </div>
                 )}
              </div>
@@ -209,7 +209,7 @@ export default function SearchPage() {
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 transition-colors">
         <div className="flex flex-col items-center gap-8">
             <Loader2 className="w-16 h-16 animate-spin text-indigo-600" />
-            <p className="text-[11px] font-bold tracking-[0.4em] text-slate-400 animate-pulse">Initializing Discovery Engine...</p>
+            <p className="text-xs font-bold tracking-[0.4em] text-slate-400 animate-pulse">Loading Academic Archives...</p>
         </div>
       </div>
     }>

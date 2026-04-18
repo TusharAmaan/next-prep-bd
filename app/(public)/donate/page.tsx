@@ -63,7 +63,7 @@ export default function DonatePage() {
         .limit(5);
       if (data) setRecentDonations(data);
     } catch (e) {
-      console.error(e);
+      // Quietly handle fetch error
     }
   }
 
@@ -109,7 +109,7 @@ export default function DonatePage() {
            <motion.div 
              initial={{ opacity: 0, scale: 0.9 }}
              animate={{ opacity: 1, scale: 1 }}
-             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-bold tracking-widest mb-6"
+             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold tracking-widest mb-6"
            >
              <Heart className="w-4 h-4 fill-rose-600 dark:fill-rose-400" /> Support NextPrepBD
            </motion.div>
@@ -162,7 +162,7 @@ export default function DonatePage() {
                            
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-3">
-                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Your Full Name</label>
+                                 <label className="text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">Your Full Name</label>
                                  <input 
                                    type="text" 
                                    placeholder="e.g. Tushar Ahmed"
@@ -172,7 +172,7 @@ export default function DonatePage() {
                                  />
                               </div>
                               <div className="space-y-3">
-                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Donation Amount (BDT)</label>
+                                 <label className="text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">Donation Amount (BDT)</label>
                                  <input 
                                    type="number" 
                                    placeholder="500"
@@ -184,7 +184,7 @@ export default function DonatePage() {
                            </div>
 
                            <div className="space-y-5">
-                              <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Select Payment Method</label>
+                              <label className="text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">Select Payment Method</label>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                  {PAYMENT_METHODS.map((method) => (
                                    <button 
@@ -200,7 +200,7 @@ export default function DonatePage() {
                                       <div className={`w-16 h-12 rounded-xl flex items-center justify-center font-bold overflow-hidden bg-white/20 backdrop-blur-sm p-1`}>
                                          <img src={method.logo} alt={method.name} className="w-full h-full object-contain" />
                                       </div>
-                                      <span className={`text-[11px] font-bold tracking-[0.2em] ${formData.payment_method === method.id ? (method.id === 'upay' ? 'text-slate-900' : 'text-white') : 'text-slate-600 dark:text-slate-400'}`}>
+                                      <span className={`text-xs font-bold tracking-[0.2em] ${formData.payment_method === method.id ? (method.id === 'upay' ? 'text-slate-900' : 'text-white') : 'text-slate-600 dark:text-slate-400'}`}>
                                         {method.name}
                                       </span>
                                    </button>
@@ -219,7 +219,7 @@ export default function DonatePage() {
                           exit={{ opacity: 0, x: -20 }}
                           className="space-y-10"
                         >
-                           <button onClick={() => setStep(1)} className="text-[11px] font-bold text-rose-500 tracking-widest flex items-center gap-2 mb-4 group">
+                           <button onClick={() => setStep(1)} className="text-xs font-bold text-rose-500 tracking-widest flex items-center gap-2 mb-4 group">
                               <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Change Method
                            </button>
 
@@ -231,7 +231,7 @@ export default function DonatePage() {
                               <div className="space-y-8">
                                  <div className="flex justify-between items-center py-6 border-b border-white/20">
                                     <div>
-                                       <p className="text-[11px] font-bold tracking-widest text-white/60 mb-2">Send To (Personal)</p>
+                                       <p className="text-xs font-bold tracking-widest text-white/60 mb-2">Send To (Personal)</p>
                                        <p className="text-3xl font-bold tracking-wider">{PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.number}</p>
                                     </div>
                                     <button 
@@ -251,7 +251,7 @@ export default function DonatePage() {
 
                            <form onSubmit={handleSubmit} className="space-y-8">
                               <div className="space-y-3">
-                                 <label className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500">Transaction ID (TrxID)</label>
+                                 <label className="text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">Transaction ID (TrxID)</label>
                                  <div className="relative">
                                     <input 
                                       required
@@ -293,13 +293,13 @@ export default function DonatePage() {
                               </p>
                            </div>
                            <div className="bg-slate-50 dark:bg-slate-800 p-8 rounded-[2.5rem] inline-block border border-slate-100 dark:border-slate-700">
-                               <p className="text-[11px] font-bold tracking-widest text-slate-400 dark:text-slate-500 mb-3">Ref ID</p>
+                               <p className="text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500 mb-3">Ref ID</p>
                                <p className="text-xl font-bold text-slate-700 dark:text-white tracking-[0.4em]">{formData.transaction_id}</p>
                            </div>
                            <div className="pt-10">
                               <button 
                                 onClick={() => {setStep(1); setFormData({amount: "", donor_name: "", payment_method: "", transaction_id: ""}); setIsSuccess(false);}}
-                                className="px-10 py-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-bold tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+                                className="px-10 py-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
                               >
                                  Make Another Donation
                               </button>
@@ -340,7 +340,7 @@ export default function DonatePage() {
 
               {/* Recent Donors List */}
               <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 shadow-sm border border-slate-100 dark:border-slate-800">
-                 <h4 className="text-[11px] font-bold tracking-[0.3em] text-slate-900 dark:text-white mb-10 flex items-center gap-4">
+                 <h4 className="text-xs font-bold tracking-[0.3em] text-slate-900 dark:text-white mb-10 flex items-center gap-4">
                    <History className="w-5 h-5 text-rose-500" /> Recent Activity
                  </h4>
                  <div className="space-y-8">
@@ -351,7 +351,7 @@ export default function DonatePage() {
                          </div>
                          <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate tracking-tight">{donor.donor_name}</p>
-                            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500">{new Date(donor.created_at).toLocaleDateString()}</p>
+                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">{new Date(donor.created_at).toLocaleDateString()}</p>
                          </div>
                          <div className="text-sm font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-4 py-2 rounded-xl">
                             ৳{donor.amount}
@@ -359,7 +359,7 @@ export default function DonatePage() {
                       </div>
                     )) : (
                       <div className="text-center py-12 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2rem]">
-                         <p className="text-[11px] font-bold text-slate-400 tracking-widest">Be the first to donate</p>
+                         <p className="text-xs font-bold text-slate-400 tracking-widest">Be the first to donate</p>
                       </div>
                     )}
                  </div>
