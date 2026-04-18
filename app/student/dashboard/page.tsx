@@ -155,7 +155,15 @@ export default function ModernStudentDashboard() {
         .select("*")
         .eq("id", userId)
         .single();
-      if (profileData) setProfile(profileData as Profile);
+      if (profileData) {
+  setProfile(profileData as Profile);
+  // Role-based redirect after profile is loaded
+  if (profileData.role === 'admin') {
+    router.replace('/admin');
+  } else if (profileData.role === 'editor') {
+    router.replace('/editor/dashboard');
+  }
+}
 
       // 2. Fetch Enrolled Courses
       // We check the 'course_enrollments' table (aligned with schema)

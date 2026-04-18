@@ -65,6 +65,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAdminRoute = path.startsWith('/admin');
   const isTutorRoute = path.startsWith('/tutor');
+  const isEditorRoute = path.startsWith('/editor');
   const isAuthRoute = path.startsWith('/login') || path.startsWith('/register');
 
   // A. Protect Private Routes (Admin/Tutor)
@@ -94,11 +95,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/student/dashboard', request.url));
     }
 
+    // Rule 3: Editor Dashboard -> 'editor' OR 'admin'
+    if (isEditorRoute && role !== 'editor' && role !== 'admin') {
+      return NextResponse.redirect(new URL('/student/dashboard', request.url));
+    }
+
     // Rule 3: Smart Login Redirect
     // If logged in & accessing /login, send to their correct dashboard
     if (isAuthRoute) {
         if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url));
         if (role === 'tutor') return NextResponse.redirect(new URL('/tutor/dashboard', request.url));
+        if (role === 'editor') return NextResponse.redirect(new URL('/editor/dashboard', request.url));
         return NextResponse.redirect(new URL('/student/dashboard', request.url));
     }
   }
