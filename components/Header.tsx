@@ -144,9 +144,11 @@ export default function Header() {
   };
 
   const getDashboardLink = () => {
-    if (profile?.role === 'admin') return '/admin';
-    if (profile?.role === 'tutor') return '/tutor/dashboard';
-    if (profile?.role === 'institution') return '/institution/dashboard';
+    const role = profile?.role?.toLowerCase() || '';
+    if (role === 'admin') return '/admin';
+    if (role === 'tutor') return '/tutor/dashboard';
+    if (role === 'institution') return '/institution/dashboard';
+    if (role === 'editor') return '/admin'; // Editors also use admin panel usually
     return '/student/dashboard'; 
   };
 

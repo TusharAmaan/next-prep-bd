@@ -118,21 +118,21 @@ export default function ProfilePage() {
         full_name: fullName, bio, institution, phone, city, 
     };
 
-    if (user.role === 'student') {
+    if (user?.role === 'student') {
         updates.current_goal = currentGoal;
         updates.date_of_birth = dob || null;
     }
-    else if (user.role === 'tutor') {
+    else if (user?.role === 'tutor') {
         updates.academic_records = academicRecords;
         updates.subjects = tutorSubjects;
         updates.interested_segments = tutorSubjects; // Sync for legacy support
     }
-    else if (user.role === 'editor') {
+    else if (user?.role === 'editor') {
         updates.social_links = socialLinks;
         updates.skills = skills.split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user?.id);
     setSaving(false);
     if (error) setModal({ isOpen: true, type: 'error', message: error.message });
     else {
@@ -219,6 +219,13 @@ export default function ProfilePage() {
     </div>
   );
 
+  if (!user) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-3">
+        <p className="font-bold text-slate-400">Profile not found. Please try logging in again.</p>
+        <button onClick={() => router.push('/login')} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold">Go to Login</button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 pt-24 md:pt-32 px-4 font-sans text-slate-900">
       <LocationTracker />
@@ -273,8 +280,8 @@ export default function ProfilePage() {
                     <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+880..." />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">{user.role === 'institute' ? 'Institute Name' : 'Institution'}</label>
-                    <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={institution} onChange={e => setInstitution(e.target.value)} placeholder={user.role === 'tutor' ? 'Current University/College' : 'e.g. Dhaka College'} />
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 ml-1">{user?.role === 'institute' ? 'Institute Name' : 'Institution'}</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all" value={institution} onChange={e => setInstitution(e.target.value)} placeholder={user?.role === 'tutor' ? 'Current University/College' : 'e.g. Dhaka College'} />
                 </div>
               </div>
           </section>
@@ -282,7 +289,7 @@ export default function ProfilePage() {
           {/* 2. ROLE SPECIFIC SECTIONS */}
           
           {/* --- STUDENT --- */}
-          {user.role === 'student' && (
+          {user?.role === 'student' && (
               <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl space-y-4">
                   <h4 className="flex items-center gap-2 font-bold text-blue-900"><GraduationCap className="w-5 h-5"/> Student Profile</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -302,7 +309,7 @@ export default function ProfilePage() {
           )}
 
           {/* --- TUTOR --- */}
-          {user.role === 'tutor' && (
+          {user?.role === 'tutor' && (
               <div className="space-y-6 animate-fade-in">
                   
                   {/* TEACHING EXPERTISE (3-Step Hierarchy) */}
