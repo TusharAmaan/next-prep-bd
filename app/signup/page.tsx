@@ -175,7 +175,7 @@ function SignupContent() {
           router.replace("/admin");
       } else {
           // Double check Profile Update (Redundancy for safety)
-          await supabase.from('profiles').update({ 
+          await supabase.from('users').update({ 
              phone, 
              whatsapp, 
              bio, 

@@ -24,7 +24,7 @@ export default function FeedbackPage() {
       }
       setUser(session.user);
       
-      const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      const { data } = await supabase.from('users').select('*').eq('id', session.user.id).single();
       setProfile(data);
     };
     checkUser();

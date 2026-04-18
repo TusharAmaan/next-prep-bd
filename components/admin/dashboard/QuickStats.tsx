@@ -34,7 +34,7 @@ export default function QuickStats() {
           { count: ebooks },
           { count: courses }
         ] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('users').select('*', { count: 'exact', head: true }),
           supabase.from('resources').select('*', { count: 'exact', head: true }),
           supabase.from('news').select('*', { count: 'exact', head: true }),
           supabase.from('ebooks').select('*', { count: 'exact', head: true }),

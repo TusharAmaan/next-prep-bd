@@ -75,7 +75,7 @@ export default function UserManagement({ onShowError, onShowSuccess, darkMode = 
         setTotalItems(count || 0);
       } else {
         // Fetch Users (Filtered by activeTab status)
-        let query = supabase.from('profiles')
+        let query = supabase.from('users')
           .select('*', { count: 'exact' })
           .eq('status', activeTab) // STRICT FILTER: 'active', 'pending', or 'suspended'
           .order('created_at', { ascending: false })
@@ -131,7 +131,7 @@ export default function UserManagement({ onShowError, onShowSuccess, darkMode = 
     syncUserUpdate(updatedUser);
 
     // DB Update
-    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId);
     
     if (error) { 
         onShowError(error.message); 
@@ -153,7 +153,7 @@ export default function UserManagement({ onShowError, onShowSuccess, darkMode = 
     syncUserUpdate(updatedUser);
 
     // DB Update
-    const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', userId);
+    const { error } = await supabase.from('users').update({ status: newStatus }).eq('id', userId);
     
     if (error) {
         onShowError(error.message);

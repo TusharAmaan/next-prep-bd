@@ -75,7 +75,7 @@ function LoginForm() {
       if (data.session) {
         // C. Fetch Profile & Redirect
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('users')
           .select('role, status')
           .eq('id', data.user.id)
           .single();

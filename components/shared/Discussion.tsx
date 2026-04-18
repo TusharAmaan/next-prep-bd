@@ -17,14 +17,14 @@ interface Comment {
   created_at: string;
   user_id: string;
   parent_id: string | null;
-  profiles: { id: string; full_name: string } | null;
+  users: { id: string; full_name: string } | null;
 }
 
 // Normalize Supabase join result (can be array or object)
 function normalizeComment(raw: any): Comment {
-  let profiles = raw.profiles;
-  if (Array.isArray(profiles)) profiles = profiles[0] || null;
-  return { ...raw, profiles };
+  let users = raw.users;
+  if (Array.isArray(users)) users = users[0] || null;
+  return { ...raw, users };
 }
 
 export default function Discussion({ itemType, itemId }: DiscussionProps) {
@@ -51,7 +51,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
         .from('comments')
         .select(`
           id, content, created_at, user_id, parent_id,
-          profiles:user_id(id, full_name)
+          users:user_id(id, full_name)
         `)
         .eq('item_type', itemType)
         .eq('item_id', itemId)
@@ -79,7 +79,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
       const { data, error } = await supabase
         .from('comments')
         .insert([{ item_type: itemType, item_id: itemId, content: content.trim(), parent_id: parentId, user_id: session.user.id }])
-        .select(`id, content, created_at, user_id, parent_id, profiles:user_id(id, full_name)`)
+        .select(`id, content, created_at, user_id, parent_id, users:user_id(id, full_name)`)
         .single();
 
       if (error) throw error;
@@ -128,12 +128,12 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   };
 
   const getInitial = (comment: Comment | any) => {
-    const name = comment.profiles?.full_name || comment.profiles?.[0]?.full_name || 'U';
+    const name = comment.users?.full_name || comment.users?.[0]?.full_name || 'U';
     return name.charAt(0).toUpperCase();
   };
 
   const getName = (comment: Comment | any) => {
-    return comment.profiles?.full_name || comment.profiles?.[0]?.full_name || 'Anonymous';
+    return comment.users?.full_name || comment.users?.[0]?.full_name || 'Anonymous';
   };
 
   return (
@@ -141,8 +141,8 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
       {/* --- COMPACT HEADER --- */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 transition-colors">
         <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{rootComments.length}</span>
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Responses</span>
+            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{rootComments.length}</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Responses</span>
         </div>
         <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500">
            <span>Sort:</span>
@@ -159,19 +159,19 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
 
       {/* --- SLEEK INPUT AREA --- */}
       {session ? (
-        <div className="mb-10 group">
-          <div className="flex gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-slate-500 text-sm shrink-0 shadow-sm">
+        <div className="mb-8">
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 flex items-center justify-center font-black text-xs shrink-0 shadow-sm border border-indigo-100 dark:border-indigo-800">
               {session.user.email?.charAt(0).toUpperCase()}
             </div>
-            <div className="flex-1 space-y-3">
-              <div className="relative overflow-hidden rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300">
+            <div className="flex-1 space-y-2">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300">
                 <textarea
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  placeholder="Share your perspective..."
-                  rows={2}
-                  className="w-full bg-transparent outline-none resize-none text-[15px] p-5 pb-2 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 placeholder:font-medium leading-relaxed transition-all"
+                  placeholder="Ask a question or share thoughts..."
+                  rows={newComment.trim() ? 2 : 1}
+                  className="w-full bg-transparent outline-none resize-none text-sm p-3.5 pb-2 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 placeholder:font-medium leading-relaxed transition-all"
                 />
                 
                 <div className={`flex justify-end p-3 pt-0 transition-all duration-300 transform ${newComment.trim() ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 h-0 overflow-hidden'}`}>
@@ -221,7 +221,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
             <p className="text-[11px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest leading-relaxed">No shared perspectives yet. <br/> Be the first to spark the discussion.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/40">
             {sortedRoots.map(comment => (
               <CommentItem
                 key={comment.id}
@@ -262,43 +262,43 @@ function CommentItem({ comment, replies, session, replyingTo, replyContent, setR
   const isOwner = session?.user?.id === comment.user_id;
 
   return (
-    <div className="py-8 animate-in fade-in duration-500">
-      <div className="flex gap-4">
+    <div className="py-6 animate-in fade-in duration-500">
+      <div className="flex gap-3">
         {/* Compact Avatar */}
-        <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-slate-400 text-xs shrink-0 shadow-sm">
+        <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-slate-400 text-[10px] shrink-0">
           {getInitial(comment)}
         </div>
 
         <div className="flex-1 min-w-0">
           {/* Metadata */}
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <span className="font-black text-slate-900 dark:text-white text-xs tracking-tight uppercase">{getName(comment)}</span>
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className="font-bold text-slate-900 dark:text-white text-xs tracking-tight">{getName(comment)}</span>
             <div className="w-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{timeAgo(comment.created_at)}</span>
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{timeAgo(comment.created_at)}</span>
           </div>
 
           {/* Content */}
-          <div className="bg-slate-50/50 dark:bg-slate-800/20 rounded-[1.5rem] p-5 mb-4 border border-transparent hover:border-slate-100 dark:hover:border-slate-800/60 transition-all group">
-            <p className="text-slate-700 dark:text-slate-300 text-[15px] leading-[1.8] whitespace-pre-wrap font-medium">
+          <div className="bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl p-4 mb-3 border border-transparent hover:border-slate-100 dark:hover:border-slate-800/60 transition-all group">
+            <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
                 {comment.content}
             </p>
           </div>
 
           {/* Minimal Actions */}
-          <div className="flex items-center gap-6 px-2">
+          <div className="flex items-center gap-5 px-1">
             <button
               onClick={() => onReply(replyingTo === comment.id ? null : comment.id)}
-              className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              className="group flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
-              <CornerDownRight className={`w-3.5 h-3.5 transition-transform duration-300 ${replyingTo === comment.id ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
+              <CornerDownRight className={`w-3 h-3 transition-transform duration-300 ${replyingTo === comment.id ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
               Reply
             </button>
             {isOwner && (
               <button
                 onClick={() => onDelete(comment.id)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 transition-colors"
+                className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3 h-3" />
                 Delete
               </button>
             )}

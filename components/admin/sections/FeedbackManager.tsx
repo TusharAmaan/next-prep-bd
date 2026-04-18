@@ -19,7 +19,7 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
       .from("feedbacks")
       .select(`
         *,
-        profiles:user_id (
+        users:user_id (
           full_name,
           email
         )
@@ -121,8 +121,8 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
                     // Priority 1: Linked Profile Data
                     // Priority 2: Direct columns on feedback table (full_name, email) - standard fallback
                     // Priority 3: "Anonymous" / "No email"
-                    const displayName = item.profiles?.full_name || item.full_name || "Anonymous";
-                    const displayEmail = item.profiles?.email || item.email || "No email";
+                    const displayName = item.users?.full_name || item.full_name || "Anonymous";
+                    const displayEmail = item.users?.email || item.email || "No email";
 
                     return (
                     <div 

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     // 2. Update Role (Force the upgrade)
     const { error: updateError } = await supabaseAdmin
-      .from('profiles')
+      .from('users')
       .update({ role: invite.role })
       .eq('id', userId);
 

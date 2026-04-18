@@ -62,7 +62,7 @@ export default function SubscriptionPage() {
     if (user) {
       // 1. Get Profile
       const { data: prof } = await supabase
-        .from('profiles')
+        .from('users')
         .select('*')
         .eq('id', user.id)
         .single();
@@ -98,7 +98,7 @@ export default function SubscriptionPage() {
       // Fallback: Direct update if RPC is missing (Safety net)
       const { data: { user } } = await supabase.auth.getUser();
       if(user) {
-          const { error: updateError } = await supabase.from('profiles').update({
+          const { error: updateError } = await supabase.from('users').update({
               subscription_plan: 'trial',
               subscription_status: 'active',
               is_trial_used: true,

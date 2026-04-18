@@ -74,18 +74,14 @@ export async function middleware(request: NextRequest) {
 
   // B. Role-Based Access Control (RBAC)
   if (user) {
-    // Fetch Role from Metadata or DB (DB is safer for critical checks)
-    let role = user.user_metadata?.role;
+    // Fetch Role securely from DB (Safety prioritized over speed for routing)
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
     
-    // If role isn't in metadata, fetch it securely from profiles
-    if (!role) {
-       const { data: profile } = await supabase
-         .from('profiles')
-         .select('role')
-         .eq('id', user.id)
-         .single();
-       role = profile?.role;
-    }
+    const role = profile?.role || user.user_metadata?.role;
 
     // Rule 1: Admin Dashboard -> Only 'admin'
     if (isAdminRoute && role !== 'admin') {

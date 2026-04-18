@@ -94,14 +94,14 @@ export default function AdminDashboard() {
             ] = await Promise.all([
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
                 supabase.from("question_bank").select('*', { count: 'exact', head: true }),
-                supabase.from("profiles").select('*', { count: 'exact', head: true }),
+                supabase.from("users").select('*', { count: 'exact', head: true }),
                 supabase.from("donations").select('amount').eq('status', 'approved'),
 
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']).lt('created_at', startThisMonth),
                 supabase.from("question_bank").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
-                supabase.from("profiles").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
+                supabase.from("users").select('*', { count: 'exact', head: true }).lt('created_at', startThisMonth),
                 
-                supabase.from("profiles").select('id, full_name, created_at').order('created_at', { ascending: false }).limit(5),
+                supabase.from("users").select('id, full_name, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("resources").select('id, title, type, created_at').order('created_at', { ascending: false }).limit(5),
                 supabase.from("news").select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
 
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.replace("/login"); return; }
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+            const { data: profile } = await supabase.from('users').select('*').eq('id', session.user.id).single();
             if (profile?.role !== 'admin' && profile?.role !== 'editor') { router.replace("/"); return; }
             setCurrentUser(profile);
             fetchDashboardData();

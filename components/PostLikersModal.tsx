@@ -20,7 +20,7 @@ export default function PostLikersModal({ resourceId, resourceTitle, onClose }: 
         .from('likes')
         .select(`
           created_at,
-          profiles (
+          users (
             id, full_name, email, role, institution
           )
         `)
@@ -75,16 +75,16 @@ export default function PostLikersModal({ resourceId, resourceTitle, onClose }: 
                     {likers.map((item: any, i) => (
                         <div key={i} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
                             <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-500">
-                                {item.profiles?.full_name?.[0] || "?"}
+                                {item.users?.full_name?.[0] || "?"}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                     <h4 className="font-bold text-slate-800 text-sm truncate">
-                                        {item.profiles?.full_name || "Unknown User"}
+                                        {item.users?.full_name || "Unknown User"}
                                     </h4>
-                                    {getRoleBadge(item.profiles?.role)}
+                                    {getRoleBadge(item.users?.role)}
                                 </div>
-                                <p className="text-xs text-slate-500 truncate">{item.profiles?.institution || item.profiles?.email}</p>
+                                <p className="text-xs text-slate-500 truncate">{item.users?.institution || item.users?.email}</p>
                             </div>
                             <div className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
                                 {new Date(item.created_at).toLocaleDateString()}

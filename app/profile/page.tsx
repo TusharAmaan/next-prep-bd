@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
       // Fetch Profile + Hierarchy Data
       const [profileRes, segRes, grpRes, subRes] = await Promise.all([
-         supabase.from('profiles').select('*').eq('id', session.user.id).single(),
+         supabase.from('users').select('*').eq('id', session.user.id).single(),
          supabase.from('segments').select('id, title, slug'),
          supabase.from('groups').select('id, title, slug, segment_id'),
          supabase.from('subjects').select('id, title, slug, group_id')
@@ -104,7 +104,7 @@ export default function ProfilePage() {
 
         // Editor
         setSocialLinks(data.social_links || { facebook: "", linkedin: "" });
-        setSkills(data.skills ? data.skills.join(", ") : "");
+        setSkills(Array.isArray(data.skills) ? data.skills.join(", ") : "");
       }
       setLoading(false);
     };
@@ -129,10 +129,10 @@ export default function ProfilePage() {
     }
     else if (user?.role === 'editor') {
         updates.social_links = socialLinks;
-        updates.skills = skills.split(',').map(s => s.trim()).filter(Boolean);
+        updates.skills = (typeof skills === 'string' ? skills : "").split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    const { error } = await supabase.from('profiles').update(updates).eq('id', user?.id);
+    const { error } = await supabase.from('users').update(updates).eq('id', user?.id);
     setSaving(false);
     if (error) setModal({ isOpen: true, type: 'error', message: error.message });
     else {
@@ -408,7 +408,7 @@ export default function ProfilePage() {
           )}
 
           {/* --- EDITOR --- */}
-          {user.role === 'editor' && (
+          {user?.role === 'editor' && (
               <div className="bg-emerald-50/50 border border-emerald-100 p-5 rounded-2xl space-y-4">
                   <h4 className="flex items-center gap-2 font-bold text-emerald-900"><LinkIcon className="w-5 h-5"/> Social & Skills</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
