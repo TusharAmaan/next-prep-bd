@@ -138,13 +138,14 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
 
   return (
     <div className="w-full">
-      {/* --- COMPACT HEADER --- */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 transition-colors">
-        <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{rootComments.length}</span>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Responses</span>
+    <div className="w-full">
+      {/* --- MINIMAL HEADER --- */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-2 px-3 py-1 bg-indigo-600/10 dark:bg-indigo-400/10 border border-indigo-500/20 rounded-full">
+            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{rootComments.length} Responses</span>
         </div>
-        <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500">
+        <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800/50" />
+        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
            <span>Sort:</span>
            <select
             value={sortOrder}
@@ -196,11 +197,26 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
           </div>
         </div>
       ) : (
-        <div className="mb-10 p-8 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[2.5rem] border border-indigo-100/50 dark:border-indigo-800/30 text-center transition-all">
-          <p className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-5">Join the conversation to help others grow.</p>
-          <a href="/login" className="inline-flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-indigo-600/20">
-            Sign In Now <CornerDownRight className="w-4 h-4" />
-          </a>
+        <div className="relative group mb-12">
+          {/* Decorative background for prompt */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          
+          <div className="relative p-8 md:p-10 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-[2rem] text-center overflow-hidden shadow-sm">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full pointer-events-none" />
+             
+             <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <MessageSquare className="w-6 h-6" />
+             </div>
+             <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Join the Discussion</h4>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 max-w-xs mx-auto leading-relaxed">Sign in to share your insights, ask questions, and collaborate with the community.</p>
+             
+             <a 
+              href="/login" 
+              className="inline-flex items-center gap-3 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95"
+             >
+               Sign In Now <CornerDownRight className="w-4 h-4" />
+             </a>
+          </div>
         </div>
       )}
 
@@ -262,10 +278,10 @@ function CommentItem({ comment, replies, session, replyingTo, replyContent, setR
   const isOwner = session?.user?.id === comment.user_id;
 
   return (
-    <div className="py-6 animate-in fade-in duration-500">
-      <div className="flex gap-3">
+    <div className="py-5 animate-in fade-in duration-500">
+      <div className="flex gap-4">
         {/* Compact Avatar */}
-        <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-slate-400 text-[10px] shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-slate-400 text-[9px] shrink-0">
           {getInitial(comment)}
         </div>
 

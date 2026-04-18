@@ -6,8 +6,8 @@ import SinglePostContent from "@/components/public/SinglePostContent";
 import { Noto_Serif_Bengali } from "next/font/google"; 
 import { Metadata } from 'next';
 import { createClient } from "@/utils/supabase/server";
-import FacebookComments from "@/components/FacebookComments";
 import { getBreadcrumbSchema, getArticleSchema } from "@/lib/seo-utils";
+import Discussion from "@/components/shared/Discussion";
 
 export const dynamic = "force-dynamic";
 
@@ -114,14 +114,8 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
                       isLoggedIn={isLoggedIn} 
                   />
 
-                  <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 p-8 md:p-12 mt-12 transition-colors">
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-8 flex items-center gap-4 uppercase tracking-tighter">
-                          <span className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl shadow-sm">💬</span>
-                          Community Discussion
-                      </h3>
-                      <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 min-h-[100px] flex justify-center border border-slate-100 dark:border-slate-800 shadow-inner">
-                          <FacebookComments url={currentUrl} />
-                      </div>
+                  <div className="mt-12 no-print">
+                      <Discussion itemType="update" itemId={post.id.toString()} />
                   </div>
               </div>
 

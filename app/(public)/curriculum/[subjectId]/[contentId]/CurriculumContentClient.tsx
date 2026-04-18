@@ -34,6 +34,7 @@ import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
 import Discussion from '@/components/shared/Discussion';
 import TypographyScaler from '@/components/shared/TypographyScaler';
+import { useTheme } from '@/components/shared/ThemeProvider';
 
 interface ClientProps {
   subjectId: string;
@@ -58,7 +59,7 @@ export default function CurriculumContentClient({
   const [hasMore, setHasMore] = useState(true);
   const [reachedBoundary, setReachedBoundary] = useState(false);
   
-  const [isDarkMode, setIsDarkMode] = useState(true); 
+  const { isDark, toggleTheme } = useTheme();
   const [isTocOpenMobile, setIsTocOpenMobile] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState<{id: string, show: boolean} | null>(null);
 
@@ -85,7 +86,7 @@ export default function CurriculumContentClient({
         // KaTeX error handled silently or with a fallback
       }
     }
-  }, [loadedContents, isDarkMode]);
+  }, [loadedContents, isDark]);
 
   const flatContentIndex = useMemo(() => {
      let flat: any[] = [];
@@ -204,14 +205,14 @@ export default function CurriculumContentClient({
      toast.success("Saved to Library");
   };
 
-  const bgMain = isDarkMode ? "bg-slate-950" : "bg-white";
-  const textMain = isDarkMode ? "text-slate-100" : "text-slate-900";
-  const borderCol = isDarkMode ? "border-slate-800" : "border-slate-100";
-  const proseClass = isDarkMode ? "prose-invert prose-slate" : "prose-slate";
-  const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
+  // Theme constants
+  const textMain = isDark ? "text-slate-100" : "text-slate-900";
+  const borderCol = isDark ? "border-slate-800" : "border-slate-100";
+  const proseClass = isDark ? "prose-invert prose-slate" : "prose-slate";
+  const textMuted = isDark ? "text-slate-400" : "text-slate-500";
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${bgMain}`}>
+    <div className={`min-h-screen transition-colors duration-500 bg-white dark:bg-slate-950`}>
       <TypographyScaler />
       
       {/* PRE NAVIGATION */}
@@ -225,10 +226,10 @@ export default function CurriculumContentClient({
              
              <div className="flex items-center gap-2 md:gap-3">
                  <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-lg md:shadow-xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 ${isDarkMode ? 'text-amber-400' : 'text-indigo-600'}`}
+                  onClick={toggleTheme}
+                  className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shadow-lg md:shadow-xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 ${isDark ? 'text-amber-400' : 'text-indigo-600'}`}
                  >
-                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                  </button>
                  <button 
                     onClick={() => setIsTocOpenMobile(true)}
@@ -280,19 +281,21 @@ export default function CurriculumContentClient({
                           {c.title}
                        </h1>
 
-                       <div className={`p-6 bg-slate-50 dark:bg-slate-900 border ${borderCol} rounded-[2rem] flex items-center gap-4 transition-colors`}>
-                           <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border ${borderCol} flex items-center justify-center shadow-inner"><User className="w-6 h-6 text-slate-400" /></div>
-                           <div className="flex-1">
-                               <p className="text-xs font-bold text-slate-900 dark:text-white tracking-widest">Master Educator</p>
-                               <p className="text-xs font-bold text-slate-400 tracking-widest mt-1">Verified Content • {new Date(c.created_at).toLocaleDateString()}</p>
+                       <div className={`p-3.5 bg-slate-50 dark:bg-slate-900 border ${borderCol} rounded-2xl flex items-center gap-4 transition-colors`}>
+                           <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border ${borderCol} flex items-center justify-center shadow-inner shrink-0">
+                               <User className="w-5 h-5 text-slate-400" />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Master Educator</p>
+                               <p className="text-[10px] font-bold text-slate-400 tracking-wide mt-0.5 truncate uppercase">Verified Content • {new Date(c.created_at).toLocaleDateString()}</p>
                            </div>
                            
-                           <div className="flex gap-2 relative">
+                           <div className="flex gap-1.5 relative shrink-0">
                               <button 
                                 onClick={() => setShowShareMenu(showShareMenu?.id === c.id ? null : {id: c.id, show: true})}
-                                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
+                                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
                               >
-                                 <Share2 className="w-4 h-4" />
+                                 <Share2 className="w-3.5 h-3.5" />
                               </button>
                               {showShareMenu?.id === c.id && (
                                  <div className={`absolute bottom-full right-0 mb-3 w-56 rounded-2xl shadow-3xl border overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 bg-white dark:bg-slate-900 ${borderCol}`}>
@@ -303,9 +306,9 @@ export default function CurriculumContentClient({
                               )}
                               <button 
                                 onClick={handleSave}
-                                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
+                                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-white dark:bg-slate-800 border ${borderCol} hover:border-indigo-500 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm`}
                               >
-                                 <Bookmark className="w-4 h-4" />
+                                 <Bookmark className="w-3.5 h-3.5" />
                               </button>
                            </div>
                        </div>
@@ -328,7 +331,7 @@ export default function CurriculumContentClient({
 
                        {isPaywalled && index === 0 && (
                           <div className="mt-12">
-                             <div className={`h-64 bg-gradient-to-t ${isDarkMode ? 'from-slate-950 via-slate-950/90' : 'from-white via-white/90'} to-transparent -translate-y-64 pointer-events-none`} />
+                             <div className={`h-64 bg-gradient-to-t from-white dark:from-slate-950 via-white/90 dark:via-slate-950/90 to-transparent -translate-y-64 pointer-events-none`} />
                              <div className="relative -mt-48 p-12 bg-slate-900 dark:bg-indigo-600 rounded-[3rem] text-white shadow-3xl text-center group overflow-hidden border border-white/10">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
                                 <div className="relative z-10 space-y-8">
@@ -365,7 +368,7 @@ export default function CurriculumContentClient({
              )}
 
              {reachedBoundary && (
-                <div className={`p-16 rounded-[4rem] border-2 border-dashed ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-indigo-50/50 border-indigo-100'} text-center animate-in zoom-in-95 duration-700`}>
+                <div className={`p-16 rounded-[4rem] border-2 border-dashed bg-indigo-50/50 dark:bg-slate-900/50 border-indigo-100 dark:border-slate-800 text-center animate-in zoom-in-95 duration-700`}>
                    <div className="w-20 h-20 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-600/30 border-4 border-white dark:border-slate-800">
                       <Sparkles className="w-10 h-10" />
                    </div>
