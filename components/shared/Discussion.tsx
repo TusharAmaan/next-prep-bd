@@ -138,7 +138,6 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
 
   return (
     <div className="w-full">
-    <div className="w-full">
       {/* --- MINIMAL HEADER --- */}
       <div className="flex items-center gap-3 mb-8">
         <div className="flex items-center gap-2 px-3 py-1 bg-indigo-600/10 dark:bg-indigo-400/10 border border-indigo-500/20 rounded-full">
