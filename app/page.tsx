@@ -101,17 +101,17 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-bold tracking-wide text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
-                <span className="relative flex h-1.5 md:h-2 w-1.5 md:w-2">
+            <div className="inline-flex items-center gap-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 px-4 md:px-6 py-2 rounded-full text-[10px] md:text-xs font-bold tracking-tight text-indigo-600 dark:text-indigo-400 mb-8 md:mb-12 shadow-sm">
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 md:h-2 w-1.5 md:w-2 bg-indigo-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
                 </span>
-                Your journey to academic success starts here
+                Academic excellence starts here
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 md:mb-10 leading-[1.1] md:leading-[1] animate-fade-in-up">
+            <h1 className="text-4xl sm:text-5xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-8 md:mb-12 leading-[1.1] md:leading-[0.95] animate-fade-in-up">
                 Master your <br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow">learning journey.</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">learning journey.</span>
             </h1>
             
             <p className="max-w-xl mx-auto text-base md:text-xl text-slate-400 font-medium leading-relaxed mb-10 md:mb-12 animate-fade-in-up opacity-80" style={{ animationDelay: '100ms' }}>
@@ -135,65 +135,55 @@ export default async function HomePage() {
         <section className="max-w-6xl mx-auto px-5 md:px-6 relative z-20 -mt-10 md:-mt-24">
           <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-6 md:p-12 border border-slate-100 dark:border-slate-800">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 md:divide-x divide-slate-100 dark:divide-slate-800/50">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 md:gap-16 mt-20 md:mt-32 max-w-4xl mx-auto">
                   <div className="flex flex-col items-center text-center group">
-                      <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
-                          <FileText className="w-6 h-6 md:w-8 md:h-8" />
-                      </div>
-                      <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">12,000+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Study Materials</p>
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">12k+</h3>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Materials verified</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
-                      <div className="w-12 h-12 md:w-16 md:h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
-                          <Users className="w-6 h-6 md:w-8 md:h-8" />
-                      </div>
-                      <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">5,400+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active Students</p>
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">5k+</h3>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Daily students</p>
                   </div>
-                  <div className="flex flex-col items-center text-center group">
-                      <div className="w-12 h-12 md:w-16 md:h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
-                          <Zap className="w-6 h-6 md:w-8 md:h-8 fill-current" />
-                      </div>
-                      <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">Daily</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Content Updates</p>
+                  <div className="flex flex-col items-center text-center group hidden lg:flex">
+                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">Live</h3>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active updates</p>
                   </div>
+            </div>
               </div>
           </div>
         </section>
       </ScrollReveal>
 
-      {/* 3. CHOOSE YOUR GOAL */}
+       {/* 3. CHOOSE YOUR GOAL */}
       <ScrollReveal>
-        <section className="pt-16 md:pt-32 pb-12 md:pb-16 max-w-7xl mx-auto px-5 md:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 md:mb-20 gap-6 md:gap-8">
-              <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-wide">
-                      <Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5" />
-                      Learning Paths
-                  </div>
-                  <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight leading-[1] md:leading-[1.1]">
-                      Select Your <br className="hidden md:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Goal</span>
-                  </h2>
-              </div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md text-base md:text-lg leading-relaxed opacity-80">
-                  Carefully designed pathways and curated archives to help you reach the next academic level.
+        <section className="pt-24 md:pt-40 pb-20 md:pb-32 max-w-7xl mx-auto px-5 md:px-6">
+          <div className="mb-16 md:mb-24">
+              <h2 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-6">
+                  Select your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">primary goal</span>.
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xl text-base md:text-xl leading-relaxed opacity-80">
+                  Tailored pathways and curated study archives built to help you reach the next academic level.
               </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
               {goalCards.map((card, idx) => {
                   const Icon = card.icon;
+                  const titleClean = card.title === "SSC" ? "School" : card.title === "HSC" ? "College" : card.title;
                   return (
                       <ScrollReveal key={idx} delay={idx * 50}>
                         <Link href={card.link} className="group relative block h-full">
-                            <div className="h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col group">
-                                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] ${card.bg} flex items-center justify-center mb-5 md:mb-8 shadow-2xl transform group-hover:scale-110 transition-all duration-500`}>
-                                    <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                            <div className="h-full bg-slate-50 dark:bg-slate-900/40 border border-transparent dark:border-white/5 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] hover:bg-white dark:hover:bg-slate-900 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-700 hover:-translate-y-2 flex flex-col group overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all"></div>
+                                <div className="flex items-center gap-6 mb-8 md:mb-12">
+                                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl md:rounded-[1.5rem] bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700">
+                                        <Icon className="w-7 h-7 md:w-8 md:h-8" />
+                                    </div>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{titleClean}</h3>
                                 </div>
-                                <h3 className="text-base md:text-xl font-bold text-slate-900 dark:text-white mb-2 md:mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none tracking-tight">{card.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-6 md:mb-8 font-bold tracking-wide opacity-70 line-clamp-2">{card.desc}</p>
-                                <div className="mt-auto flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-xs tracking-wide gap-2 md:gap-3">
-                                    <span>Browse</span>
-                                    <div className="flex-1 h-[2.5px] bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-400 transition-all duration-500"></div>
+                                <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-8 opacity-80">{card.desc}</p>
+                                <div className="mt-auto flex items-center gap-3 text-indigo-600 dark:text-indigo-400 group-hover:translate-x-2 transition-transform duration-500">
+                                   <ArrowRight className="w-6 h-6" />
                                 </div>
                             </div>
                         </Link>
@@ -204,37 +194,33 @@ export default async function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* 4. PREVIOUS YEAR QUESTIONS */}
+       {/* 4. PREVIOUS YEAR QUESTIONS */}
       <ScrollReveal>
-        <section className="py-16 md:py-32 bg-slate-100/50 dark:bg-slate-900/30 relative overflow-hidden border-y border-slate-100 dark:border-slate-800/50">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 dark:bg-indigo-400/5 -skew-x-12 translate-x-1/2 -z-0"></div>
+        <section className="py-24 md:py-40 bg-white dark:bg-slate-950 relative overflow-hidden border-y border-slate-100 dark:border-white/5">
           <div className="max-w-7xl mx-auto px-5 md:px-6 relative z-10">
-              <div className="text-center mb-12 md:mb-24">
-                  <div className="inline-block px-3 md:px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold tracking-wide rounded-lg mb-6 shadow-2xl shadow-indigo-600/30">Archives</div>
-                  <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-4 md:mb-6 leading-[1.1] md:leading-none">Exam Archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Index</span></h2>
-                  <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed opacity-80">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
+              <div className="mb-16 md:mb-24">
+                  <h2 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-6 md:mb-8 leading-none">Exam archive <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">index</span></h2>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-base md:text-xl font-medium leading-relaxed opacity-80">Verified solutions for over a decade of board and competitive exams at your fingertips.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
                   {segments.map((seg: any, i: number) => (
                       <ScrollReveal key={seg.id} delay={i * 50}>
                         <Link 
                             href={`/resources/${seg.slug}?type=question`} 
-                            className="group flex items-center bg-white dark:bg-slate-900 p-5 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all duration-500 hover:-translate-y-1.5"
+                            className="group flex flex-col bg-slate-50 dark:bg-slate-900/40 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-transparent dark:border-white/5 hover:bg-white dark:hover:bg-slate-900 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-700 hover:-translate-y-2 shadow-sm hover:shadow-2xl overflow-hidden"
                         >
-                            <div className="w-12 h-12 md:w-20 md:h-20 shrink-0 rounded-xl md:rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 transition-all duration-500 shadow-inner">
-                                <FileClock className="w-6 h-6 md:w-8 md:h-8 text-slate-400 dark:text-slate-600 group-hover:text-white transition-colors" />
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl md:rounded-[1.5rem] bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700">
+                                    <FileClock className="w-7 h-7 md:w-8 md:h-8" />
+                                </div>
+                                <h4 className="font-bold text-2xl md:text-3xl text-slate-900 dark:text-white tracking-tight">{seg.title}</h4>
                             </div>
-                            <div className="ml-4 md:ml-8">
-                                <div className="flex items-center gap-3 mb-1.5 md:mb-2">
-                                    <h4 className="font-bold text-base md:text-xl text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none">{seg.title}</h4>
-                                    <span className="text-[11px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-2 md:px-3 py-1 rounded-lg tracking-wide border border-green-100 dark:border-green-800/30 animate-pulse">Live</span>
-                                </div>
-                                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide mb-3 md:mb-4 line-clamp-1 opacity-70">{getQuestionText(seg.slug)}</p>
-                                <div className="flex items-center gap-4 md:gap-6">
-                                    <span className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide leading-none"><Users className="w-3 h-3 text-indigo-400" /> 12k+</span>
-                                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide group-hover:translate-x-1.5 transition-transform duration-500">View <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5 inline" /></span>
-                                </div>
+                            <p className="text-sm md:text-base font-medium text-slate-500 dark:text-slate-400 tracking-normal mb-8 line-clamp-2 opacity-80">{getQuestionText(seg.slug)}</p>
+                            <div className="mt-auto flex items-center gap-4">
+                                <span className="flex items-center gap-2 text-xs font-bold text-indigo-600/60 dark:text-indigo-400/60 tracking-tight leading-none"><Users className="w-4 h-4" /> 12k access</span>
+                                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800 group-hover:bg-indigo-600/30 transition-all"></div>
+                                <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400 group-hover:translate-x-2 transition-transform duration-500" />
                             </div>
                         </Link>
                       </ScrollReveal>

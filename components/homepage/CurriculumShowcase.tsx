@@ -76,39 +76,59 @@ const CurriculumShowcase = ({ isLoggedIn }: CurriculumShowcaseProps) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
-          {categories.map((cat, idx) => {
-            const Icon = cat.icon;
-            return (
-              <div 
-                key={idx} 
-                className="group relative bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3rem] border border-slate-100 dark:border-slate-800 p-8 md:p-10 hover:shadow-2xl dark:hover:shadow-indigo-900/20 transition-all duration-700 hover:-translate-y-3 flex flex-col"
-              >
-                <div className={`w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-[2rem] bg-gradient-to-br ${cat.color} flex items-center justify-center text-white mb-8 md:mb-10 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-700`}>
-                  <Icon className="w-7 h-7 md:w-10 md:h-10" />
-                </div>
-                
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-6 md:mb-8 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-none">{cat.title}</h3>
-                
-                <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 flex-1">
-                  {cat.items.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5 md:gap-3 text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
-                      <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-1 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+          {/* Main Academic Cards (7 cols) */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+            {categories.slice(0, 2).map((cat, idx) => {
+              const Icon = cat.icon;
+              return (
                 <Link 
+                  key={idx} 
                   href={cat.link}
-                  className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-all group/btn group-hover:translate-x-2 duration-500"
+                  className="group relative bg-slate-50 dark:bg-slate-900/50 rounded-3xl md:rounded-[3rem] p-8 md:p-12 hover:bg-white dark:hover:bg-slate-900 border border-transparent dark:border-white/5 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-700 hover:-translate-y-2 flex flex-col shadow-sm hover:shadow-2xl overflow-hidden"
                 >
-                  View Details
-                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/10 to-transparent blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700"></div>
+                  
+                  <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl md:rounded-[1.5rem] bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-8 md:mb-10 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700`}>
+                    <Icon className="w-7 h-7 md:w-8 md:h-8" />
+                  </div>
+                  
+                  <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6 tracking-tight leading-tight">{cat.title}</h3>
+                  <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-8">
+                    Comprehensive study materials and strategic archives tailored for {cat.title.toLowerCase()}.
+                  </p>
+                  
+                  <div className="mt-auto flex items-center gap-3">
+                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800 group-hover:bg-indigo-600/30 transition-all"></div>
+                    <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400 group-hover:translate-x-2 transition-transform duration-500" />
+                  </div>
                 </Link>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* Secondary Cards (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-6 md:gap-8">
+             {categories.slice(2, 4).map((cat, idx) => {
+              const Icon = cat.icon;
+              return (
+                <Link 
+                  key={idx} 
+                  href={cat.link}
+                  className="group relative flex items-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl md:rounded-[3rem] p-8 md:p-10 hover:bg-white dark:hover:bg-slate-900 border border-transparent dark:border-white/5 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-700 hover:-translate-y-2 shadow-sm hover:shadow-2xl overflow-hidden"
+                >
+                  <div className={`w-14 h-14 md:w-20 md:h-20 shrink-0 rounded-2xl md:rounded-[2rem] bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 dark:text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700`}>
+                    <Icon className="w-7 h-7 md:w-9 md:h-9" />
+                  </div>
+                  <div className="ml-6 md:ml-10 flex-1">
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-2 md:mb-3 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{cat.title}</h3>
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed opacity-80">Paths to {cat.title.toLowerCase()} entry and growth.</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-slate-300 dark:text-slate-800 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-2 transition-all duration-500" />
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {isLoggedIn && (

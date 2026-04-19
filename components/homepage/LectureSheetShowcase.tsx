@@ -83,88 +83,56 @@ const LectureSheetShowcase = ({ isLoggedIn }: LectureSheetShowcaseProps) => {
 
           {/* Right: The Interactive "Flow" Graphic */}
           <div className="lg:col-span-6 relative animate-in zoom-in-95 duration-1000 hidden lg:block">
-             <div className="relative z-10 bg-white/5 backdrop-blur-3xl border border-white/10 p-12 md:p-16 rounded-[4rem] shadow-3xl">
+              <div className="relative z-10 space-y-24 md:space-y-32">
                 
-                {/* Step 1: User Request */}
-                <div className="mb-16 relative">
-                   <div className="flex items-center gap-6 mb-6">
-                      <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-600/30">
-                         <HelpCircle className="w-8 h-8 text-white" />
+                {/* Point 1: Request */}
+                <div className="relative group">
+                   <div className="flex items-start gap-8 md:gap-12">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-indigo-600 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-600/30 shrink-0 group-hover:scale-110 transition-transform duration-700">
+                         <HelpCircle className="w-8 h-8 md:w-10 md:h-10 text-white" />
                       </div>
-                      <div>
-                         <p className="text-xs font-bold text-indigo-400 tracking-wide mb-1">Step 01</p>
-                         <h4 className="text-xl font-bold text-white tracking-tight">Tell us what's missing</h4>
-                      </div>
-                   </div>
-                   <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
-                      <div className="flex justify-between items-center text-xs font-medium">
-                         <span className="text-slate-500">Requested Topic:</span>
-                         <span className="text-indigo-400">Higher Physics Dynamics</span>
-                      </div>
-                      <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
-                         <div className="h-full bg-gradient-to-r from-indigo-600 to-cyan-500 w-3/4 animate-pulse shadow-glow"></div>
+                      <div className="pt-2">
+                         <h4 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">Tell us what you're looking for</h4>
+                         <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-sm opacity-80">
+                           Just send us the topic or subject names you need. Our system logs your request instantly.
+                         </p>
                       </div>
                    </div>
-                   <div className="absolute left-8 top-full h-16 w-0.5 bg-gradient-to-b from-indigo-600 to-transparent opacity-30"></div>
+                   <div className="absolute left-8 md:left-10 top-20 md:top-24 h-24 md:h-32 w-px bg-gradient-to-b from-indigo-600 to-transparent opacity-20"></div>
                 </div>
 
-                {/* Step 2: Expert Working */}
-                <div className="mb-16 relative flex justify-end">
-                   <div className="w-full max-w-sm">
-                      <div className="flex items-center gap-6 mb-6 justify-end text-right">
-                         <div>
-                            <p className="text-xs font-bold text-purple-400 tracking-wide mb-1">Step 02</p>
-                            <h4 className="text-xl font-bold text-white tracking-tight">Our team starts work</h4>
-                         </div>
-                         <div className="w-16 h-16 bg-purple-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-600/30">
-                            <Clock className="w-8 h-8 text-white" />
-                         </div>
+                {/* Point 2: Preparation */}
+                <div className="relative group flex justify-end text-right">
+                   <div className="flex items-start gap-8 md:gap-12 justify-end">
+                      <div className="pt-2">
+                         <h4 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">Our team starts the preparation</h4>
+                         <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-sm ml-auto opacity-80">
+                           Qualified educators and subject experts craft the highest quality materials for your journey.
+                         </p>
                       </div>
-                      <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-white/5 flex flex-col items-center shadow-inner">
-                         <div className="flex -space-x-4 mb-6">
-                            {[1, 2, 3].map(i => (
-                               <div key={i} className="w-12 h-12 rounded-[1.5rem] border-4 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden shadow-2xl">
-                                  <img src={`https://i.pravatar.cc/100?img=${i+50}`} alt="tutor" className="object-cover w-full h-full" />
-                               </div>
-                            ))}
-                         </div>
-                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500 tracking-wide">
-                            <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping"></span>
-                            Preparing your materials...
-                         </div>
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-600 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-purple-600/30 shrink-0 group-hover:scale-110 transition-transform duration-700">
+                         <Clock className="w-8 h-8 md:w-10 md:h-10 text-white" />
                       </div>
                    </div>
-                   <div className="absolute right-8 top-full h-16 w-0.5 bg-gradient-to-b from-purple-600 to-transparent opacity-30"></div>
+                   <div className="absolute right-8 md:right-10 top-20 md:top-24 h-24 md:h-32 w-px bg-gradient-to-b from-purple-600 to-transparent opacity-20"></div>
                 </div>
 
-                {/* Step 3: Delivered */}
-                <div className="relative">
-                   <div className="flex items-center gap-6 mb-6">
-                      <div className="w-16 h-16 bg-cyan-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-600/30">
-                         <CheckCircle className="w-8 h-8 text-white" />
+                {/* Point 3: Ready */}
+                <div className="relative group">
+                   <div className="flex items-start gap-8 md:gap-12">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-cyan-600 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-cyan-600/30 shrink-0 group-hover:scale-110 transition-transform duration-700">
+                         <CheckCircle className="w-8 h-8 md:w-10 md:h-10 text-white" />
                       </div>
-                      <div>
-                         <p className="text-xs font-bold text-cyan-400 tracking-wide mb-1">Step 03</p>
-                         <h4 className="text-xl font-bold text-white tracking-tight">Ready for you</h4>
-                      </div>
-                   </div>
-                   <div className="bg-cyan-500/10 p-8 rounded-[2.5rem] border border-cyan-500/20 flex items-center justify-between group/file cursor-pointer hover:bg-cyan-500/20 transition-all duration-500 shadow-inner">
-                      <div className="flex items-center gap-6">
-                         <div className="w-14 h-14 bg-cyan-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-cyan-500/50 group-hover/file:scale-110 transition-transform duration-500">
-                            <CloudDownload className="w-6 h-6 text-white" />
-                         </div>
-                         <div>
-                            <p className="text-sm font-bold text-cyan-400 tracking-tight">physics-dynamics-x1.pdf</p>
-                            <p className="text-[10px] text-cyan-500/60 font-medium tracking-wide mt-1">Uploaded successfully</p>
-                         </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center group-hover/file:bg-cyan-500 group-hover/file:text-white transition-all text-cyan-500">
-                         <ArrowUpRight className="w-5 h-5" />
+                      <div className="pt-2">
+                         <h4 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">Ready for your studies</h4>
+                         <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-sm opacity-80">
+                           Your custom materials are uploaded and ready for download within 24 hours.
+                         </p>
                       </div>
                    </div>
                 </div>
 
-             </div>
+              </div>
 
              {/* Background Glow */}
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-indigo-600/20 blur-[150px] -z-10 rounded-full animate-pulse"></div>
