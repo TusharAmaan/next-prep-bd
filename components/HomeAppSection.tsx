@@ -16,28 +16,28 @@ export default function HomeAppSection() {
             <div className="absolute -bottom-40 -left-40 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-purple-600 rounded-full blur-[100px] md:blur-[150px] opacity-20 animate-pulse"></div>
 
             <div className="relative z-10 space-y-8 md:space-y-12">
-                <div className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-1.5 md:py-2 rounded-full bg-white/5 border border-white/10 text-indigo-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-2 md:mb-4">
+                <div className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-1.5 md:py-2 rounded-full bg-white/5 border border-white/10 text-indigo-400 text-[10px] md:text-xs font-bold tracking-wide mb-2 md:mb-4">
                     <Zap className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-400 fill-amber-400" />
-                    Mobile Ecosystem
+                    Learn anywhere
                 </div>
                 
-                <h2 className="text-4xl md:text-8xl font-black text-white mb-6 md:mb-8 tracking-tighter leading-[1] md:leading-[0.9] uppercase italic">
-                    Academy in <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 text-glow">Your Pocket.</span>
+                <h2 className="text-4xl md:text-7xl font-bold text-white mb-6 md:mb-8 tracking-tight leading-[1.1] md:leading-[1]">
+                    Study whenever <br className="hidden md:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">you need.</span>
                 </h2>
                 
-                <p className="text-slate-400 text-base md:text-2xl mb-10 md:mb-16 max-w-3xl mx-auto leading-relaxed font-medium opacity-90">
-                    Experience seamless learning with the NextPrepBD mobile app. Access offline journals, solve instant quizzes, and stay ahead with real-time academic alerts.
+                <p className="text-slate-400 text-base md:text-xl mb-10 md:mb-16 max-w-2xl mx-auto leading-relaxed font-medium opacity-80">
+                    Experience seamless learning with our mobile app. Access offline study materials, practice with quizzes, and get real-time updates directly on your phone.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
                     {/* APP STORE BUTTON */}
                     <button 
                         onClick={() => setIsOpen(true)}
-                        className="group flex items-center gap-4 md:gap-6 bg-white text-slate-950 px-8 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-[2rem] font-black uppercase tracking-[0.15em] hover:bg-slate-100 transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
+                        className="group flex items-center gap-4 md:gap-6 bg-white text-slate-950 px-8 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-[2rem] font-bold transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
                     >
                         <Apple className="w-6 h-6 md:w-8 md:h-8 fill-current" />
                         <div className="text-left leading-none">
-                            <div className="text-[7px] md:text-[9px] opacity-40 mb-1">Coming Soon to</div>
+                            <div className="text-[10px] opacity-40 mb-1">Coming Soon to</div>
                             <div className="text-sm md:text-lg">App Store</div>
                         </div>
                     </button>
@@ -45,19 +45,19 @@ export default function HomeAppSection() {
                     {/* PLAY STORE BUTTON */}
                     <button 
                         onClick={() => setIsOpen(true)}
-                        className="group flex items-center gap-4 md:gap-6 bg-white/5 backdrop-blur-3xl border border-white/10 text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-[2rem] font-black uppercase tracking-[0.15em] hover:bg-white/10 transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
+                        className="group flex items-center gap-4 md:gap-6 bg-white/5 backdrop-blur-3xl border border-white/10 text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-[2rem] font-bold transition shadow-2xl hover:scale-105 active:scale-95 duration-500"
                     >
                         <PlayCircle className="w-6 h-6 md:w-8 md:h-8 fill-current text-indigo-400" />
                         <div className="text-left leading-none">
-                            <div className="text-[7px] md:text-[9px] opacity-40 mb-1">Android App</div>
+                            <div className="text-[10px] opacity-40 mb-1">Coming Soon to</div>
                             <div className="text-sm md:text-lg">Google Play</div>
                         </div>
                     </button>
                 </div>
 
-                <div className="pt-12 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center justify-center gap-4">
+                <div className="pt-12 text-xs font-bold text-slate-500 tracking-wide flex items-center justify-center gap-4 opacity-60">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                    Encrypted & Secure 
+                    Safe & Secure for all students
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                 </div>
             </div>
@@ -76,19 +76,19 @@ export default function HomeAppSection() {
                 <Sparkles className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 dark:text-indigo-400 animate-pulse" />
               </div>
 
-              <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 md:mb-6 uppercase tracking-tighter leading-none italic">
-                Evolution in Progress
+               <h3 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6 tracking-tight leading-none">
+                Almost there!
               </h3>
 
-              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg leading-relaxed mb-10 md:mb-12 font-medium opacity-90">
-                The <span className="text-slate-950 dark:text-white font-black">NextPrepBD Mobile Ecosystem</span> is entering the final deployment phase. We are engineering a revolutionary offline learning experience for all candidates.
+              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg leading-relaxed mb-10 md:mb-12 font-medium opacity-80">
+                The <span className="text-slate-900 dark:text-white font-bold">NextPrepBD Mobile App</span> is in its final testing phase. We're working hard to bring you the best mobile study experience ever.
               </p>
 
               <button 
                 onClick={() => setIsOpen(false)}
-                className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-black py-4 md:py-6 rounded-xl md:rounded-2xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition shadow-2xl shadow-indigo-600/20 uppercase tracking-[0.2em] text-[9px] md:text-[10px] active:scale-95 duration-300"
+                className="w-full bg-indigo-600 text-white font-bold py-4 md:py-6 rounded-xl md:rounded-2xl transition shadow-2xl shadow-indigo-600/20 text-sm md:text-base active:scale-95 duration-300"
               >
-                Acknowledge Protocol
+                Got it, keep me posted!
               </button>
               
               <button 

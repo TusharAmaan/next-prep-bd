@@ -101,29 +101,29 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs font-bold tracking-wide text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
+            <div className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-3xl border border-white/10 px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-bold tracking-wide text-indigo-400 mb-8 md:mb-10 shadow-2xl animate-fade-in-down">
                 <span className="relative flex h-1.5 md:h-2 w-1.5 md:w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 md:h-2 w-1.5 md:w-2 bg-indigo-500"></span>
                 </span>
-                Bangladesh's Premier Academic Platform
+                Your journey to academic success starts here
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 md:mb-10 leading-[1] md:leading-[1.1] animate-fade-in-up">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 md:mb-10 leading-[1.1] md:leading-[1] animate-fade-in-up">
                 Master your <br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow text-glow">Learning</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 bg-300% animate-gradient-flow">learning journey.</span>
             </h1>
             
-            <p className="max-w-xl mx-auto text-base md:text-xl text-slate-400 font-medium leading-relaxed mb-10 md:mb-12 animate-fade-in-up opacity-90" style={{ animationDelay: '100ms' }}>
-                Access verified resources, strategic archives, and expert guidance. The revolutionary platform built for excellence.
+            <p className="max-w-xl mx-auto text-base md:text-xl text-slate-400 font-medium leading-relaxed mb-10 md:mb-12 animate-fade-in-up opacity-80" style={{ animationDelay: '100ms' }}>
+                Access verified study resources, strategic archives, and expert guidance. Built to help you excel in your exams.
             </p>
 
-            <form action="/search" method="GET" className="bg-white/5 backdrop-blur-3xl p-2 md:p-3 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 max-w-3xl mx-auto flex flex-col sm:flex-row gap-2.5 md:gap-4 shadow-3xl transform transition-all hover:scale-[1.02] animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
+            <form action="/search" method="GET" className="bg-white/5 backdrop-blur-3xl p-2 md:p-3 rounded-[1.5rem] md:rounded-3xl border border-white/10 max-w-3xl mx-auto flex flex-col sm:flex-row gap-2.5 md:gap-4 shadow-3xl transform transition-all hover:scale-[1.01] animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
                 <div className="relative flex-1">
                     <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 w-5 h-5 md:w-6 md:h-6 transition-colors" />
-                    <input name="q" type="text" placeholder="Search resources..." className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-14 md:pl-16 pr-5 py-3 md:py-5 text-sm md:text-lg font-bold tracking-wide" required />
+                    <input name="q" type="text" placeholder="What are you looking for today?" className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 pl-14 md:pl-16 pr-5 py-3 md:py-5 text-base md:text-lg font-bold tracking-wide" required />
                 </div>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-[2rem] font-bold text-xs tracking-wide transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-2.5 hover:scale-105 active:scale-95 duration-500">
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-2xl font-bold text-sm transition-all shadow-2xl shadow-indigo-600/30 w-full sm:w-auto flex items-center justify-center gap-2.5 active:scale-95 duration-500">
                     Search <ArrowRight className="w-4 h-4" />
                 </button>
             </form>
@@ -140,21 +140,21 @@ export default async function HomePage() {
                           <FileText className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">12,000+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Verified Assets</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Study Materials</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
                           <Users className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">5,400+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active Candidates</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active Students</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl md:rounded-[1.5rem] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner">
                           <Zap className="w-6 h-6 md:w-8 md:h-8 fill-current" />
                       </div>
                       <h3 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 md:mb-2">Daily</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Resource Updates</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Content Updates</p>
                   </div>
               </div>
           </div>
