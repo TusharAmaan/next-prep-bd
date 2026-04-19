@@ -81,10 +81,10 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-indigo-600"/> User Feedback
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm mt-1">Manage support tickets and user inquiries.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage support tickets and user inquiries.</p>
         </div>
         
         <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -144,11 +144,11 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
                                 <div>
                                     {/* Subject / Category display */}
                                     <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                                        {item.category ? <span className="uppercase text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded mr-2">{item.category}</span> : null}
+                                        {item.category ? <span className="uppercase text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded mr-2">{item.category}</span> : null}
                                         {/* If you have a 'subject' column, use it. Otherwise, show preview of message */}
                                         {item.subject || "Feedback Message"}
                                     </h4>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
                                         <span className="font-bold text-indigo-600">
                                             {displayName}
                                         </span>
@@ -158,11 +158,11 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
                                 </div>
                                 <div className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-2 py-1 rounded-md shadow-sm">
                                     <Clock className="w-3 h-3" />
-                                    {new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    {new Date(item.created_at).toLocaleDateString()}
                                 </div>
                             </div>
 
-                            <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 text-sm leading-relaxed bg-white dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50 whitespace-pre-wrap">
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed bg-white dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50 whitespace-pre-wrap">
                                 {item.message}
                             </p>
                         </div>

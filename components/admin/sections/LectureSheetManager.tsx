@@ -348,7 +348,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
           </button>
           <button 
             onClick={() => setActiveView('sheets')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${activeView === 'sheets' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'}`}
           >
             <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
             All Sheets
@@ -368,7 +368,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-2" />
           <select 
             className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
@@ -403,7 +403,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
             requests.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
                 <MessageSquare className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">No requests found yet.</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">No requests found yet.</p>
               </div>
             ) : (
               requests.filter(r => {
@@ -433,13 +433,13 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                         {req.topic}
                       </h3>
                       
-                      <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
                         <span className="bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{req.segments?.title}</span>
                         {req.groups?.title && <span className="bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{req.groups.title}</span>}
                         <span className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md">{req.subjects?.title}</span>
                       </div>
 
-                      <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500 italic">"{req.comment}"</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 italic">"{req.comment}"</p>
                       
                       <div className="pt-2 flex items-center gap-4 text-xs font-medium text-slate-400 dark:text-slate-500">
                         <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Requested by: {req.profiles?.full_name || 'Unknown User'}</span>

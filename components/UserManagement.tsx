@@ -241,10 +241,10 @@ export default function UserManagement({ onShowError, onShowSuccess, darkMode = 
   const TabButton = ({ id, label, icon: Icon, colorClass }: any) => (
     <button 
       onClick={() => setActiveTab(id)} 
-      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
+      className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border ${
         activeTab === id 
         ? `bg-white dark:bg-slate-900 ${colorClass} shadow-sm border-slate-200 dark:border-slate-700` 
-        : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 border-transparent hover:bg-slate-50 dark:bg-slate-800/50'
+        : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:bg-slate-800/50'
       }`}
     >
       <Icon className="w-4 h-4" /> {label}
@@ -254,19 +254,19 @@ export default function UserManagement({ onShowError, onShowSuccess, darkMode = 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* HEADER */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
         <div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">User Management</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold">Manage team access & students.</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">User Management</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-bold">Manage team access & students.</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
+        <div className="flex flex-wrap gap-2 items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl w-full lg:w-auto">
             <TabButton id="active" label="Active" icon={UserCheck} colorClass="text-emerald-600" />
             <TabButton id="pending" label="Pending" icon={Clock} colorClass="text-orange-600" />
             <TabButton id="suspended" label="Suspended" icon={Ban} colorClass="text-red-600" />
-            <div className="w-px h-6 bg-slate-300 mx-1"></div>
+            <div className="hidden sm:block w-px h-6 bg-slate-300 dark:bg-slate-700 mx-1"></div>
             <TabButton id="invitations" label="Invites" icon={Mail} colorClass="text-indigo-600" />
+            <button onClick={() => setIsInviteOpen(true)} className="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition-all flex items-center gap-2"><span>✉️</span> Invite</button>
         </div>
-        <button onClick={() => setIsInviteOpen(true)} className="ml-auto xl:ml-0 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2"><span>✉️</span> Invite</button>
       </div>
 
       <FilterBar search={search} setSearch={setSearch} roleFilter={roleFilter} setRoleFilter={setRoleFilter} activeTab={activeTab} />

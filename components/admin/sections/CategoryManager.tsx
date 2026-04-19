@@ -156,10 +156,10 @@ export default function CategoryManager({
     <div className="animate-fade-in space-y-6">
       
       {/* HEADER TOOLBAR */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col xl:flex-row items-center gap-6 justify-between">
+      <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col lg:flex-row items-start lg:items-center gap-4 sm:gap-6 justify-between">
          
          {/* Search & Filter */}
-         <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
+         <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
             <div className="relative w-full md:w-64">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"/>
                 <input 
@@ -174,7 +174,7 @@ export default function CategoryManager({
                     <button 
                         key={t}
                         onClick={() => setActiveFilter(t)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold capitalize whitespace-nowrap transition-all border ${activeFilter === t ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600'}`}
                     >
                         {t === 'resource' ? 'Materials' : (t === 'blog' ? 'Blogs' : (t === 'pdf' ? 'PDFs' : (t === 'video' ? 'Videos' : (t === 'question' ? 'Questions' : t))))}
                     </button>
@@ -213,21 +213,21 @@ export default function CategoryManager({
                             (cat.type || 'general') === 'ebook' ? 'bg-orange-50 text-orange-600' :
                             (cat.type || 'general') === 'resource' ? 'bg-purple-50 text-purple-600' :
                             (cat.type || 'general') === 'course' ? 'bg-emerald-50 text-emerald-600' :
-                            'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500'
+                            'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                         }`}>
                             {cat.type === 'resource' ? 'Material' : (cat.type === 'blog' ? 'Blog' : (cat.type === 'pdf' ? 'PDF' : (cat.type === 'video' ? 'Video' : (cat.type === 'question' ? 'Question' : cat.type || 'General'))))}
                         </span>
                         <button 
                             onClick={(e) => handleDelete(e, cat.id)} 
                             disabled={isDeleting === cat.id}
-                            className="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                            className="text-slate-300 hover:text-red-500 p-1 lg:opacity-0 lg:group-hover:opacity-100 transition-all disabled:opacity-50"
                         >
                             {isDeleting === cat.id ? <RefreshCw className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4" />}
                         </button>
                     </div>
 
                     <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg truncate" title={cat.name}>{cat.name}</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base sm:text-lg truncate" title={cat.name}>{cat.name}</h3>
                         <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1 flex items-center gap-1">
                             <Tag className="w-3 h-3" />
                             {loadingCounts ? '...' : (localCounts[cat.id] || 0)} items linked

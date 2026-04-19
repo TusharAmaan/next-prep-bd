@@ -80,56 +80,56 @@ export default function AnalyticsChart() {
       <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none transition-all ${isDark ? 'bg-indigo-500/5' : 'bg-indigo-500/5'} group-hover:bg-indigo-500/10`}></div>
       <div className={`absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl -ml-24 -mb-24 pointer-events-none transition-all ${isDark ? 'bg-emerald-500/5' : 'bg-emerald-500/5'} group-hover:bg-emerald-500/10`}></div>
 
-      <div className="p-5 relative z-10 flex flex-col h-full">
+      <div className="p-3 sm:p-5 relative z-10 flex flex-col h-full">
           {/* Header */}
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
             <div>
-                <h3 className={`text-xl font-black flex items-center gap-2 tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <h3 className={`text-lg sm:text-xl font-black flex items-center gap-2 tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     Platform Insights
                     <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${isDark ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Live
                     </span>
                 </h3>
-                <p className={`text-sm font-medium mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>14-Day Trajectory & System Health</p>
+                <p className={`text-xs sm:text-sm font-medium mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>14-Day Trajectory</p>
             </div>
             
-            <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                <button onClick={() => setActiveTab('overview')} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'overview' ? (isDark ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm') : (isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}>Growth</button>
-                <button onClick={() => setActiveTab('activity')} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'activity' ? (isDark ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm') : (isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}>Content</button>
+            <div className={`flex p-1 rounded-xl border w-full sm:w-auto ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                <button onClick={() => setActiveTab('overview')} className={`flex-1 sm:flex-none px-4 py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${activeTab === 'overview' ? (isDark ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm') : (isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}>Growth</button>
+                <button onClick={() => setActiveTab('activity')} className={`flex-1 sm:flex-none px-4 py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${activeTab === 'activity' ? (isDark ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm') : (isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}>Content</button>
             </div>
           </div>
 
           {/* Key Metrics Row */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${isDark ? 'bg-slate-800/30 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
-                      <TrendingUp className="w-5 h-5" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+              <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border flex items-center gap-3 sm:gap-4 transition-all ${isDark ? 'bg-slate-800/30 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                      <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>New Users</p>
-                      <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{loading ? '-' : `+${totalUsers}`}</p>
+                      <p className={`text-[8px] sm:text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Users</p>
+                      <p className={`text-lg sm:text-2xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{loading ? '-' : `+${totalUsers}`}</p>
                   </div>
               </div>
-              <div className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${isDark ? 'bg-slate-800/30 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-600'}`}>
-                      <Database className="w-5 h-5" />
+              <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border flex items-center gap-3 sm:gap-4 transition-all ${isDark ? 'bg-slate-800/30 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-600'}`}>
+                      <Database className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                      <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Uploads</p>
-                      <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{loading ? '-' : `+${totalUploads}`}</p>
+                      <p className={`text-[8px] sm:text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Ups</p>
+                      <p className={`text-lg sm:text-2xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{loading ? '-' : `+${totalUploads}`}</p>
                   </div>
               </div>
           </div>
 
           {/* Main Chart */}
-          <div className="flex-1 w-full min-h-[220px] relative">
+          <div className="w-full h-[350px] sm:h-[450px] relative">
             {loading ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                     <span className="text-sm font-bold tracking-widest uppercase">Aggregating Data...</span>
                 </div>
             ) : (
-                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                <ResponsiveContainer width="100%" height="100%">
                     {activeTab === 'overview' ? (
                         <AreaChart data={data.growth} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                             <defs>

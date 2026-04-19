@@ -59,7 +59,7 @@ export default function HierarchyManager({
         }`}
         onClick={() => setActiveLevel(level)}
     >
-        <div className={`p-4 font-bold border-b text-sm uppercase tracking-wider ${activeLevel === level ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
+        <div className={`p-4 font-bold border-b text-sm uppercase tracking-wider ${activeLevel === level ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400'}`}>
             {title}
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1 h-[400px]">
@@ -89,21 +89,21 @@ export default function HierarchyManager({
 
   return (
     <div className="animate-fade-in h-full flex flex-col">
-        <div className="mb-6 flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
             <div>
                 <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Hierarchy Manager</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold">Organize your content structure</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Organize your content structure</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
                 <input 
-                    className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm outline-none w-64 focus:ring-2 focus:ring-indigo-500 font-medium" 
+                    className="flex-1 md:w-64 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium" 
                     placeholder={`New ${activeLevel} name...`} 
                     value={newName} 
                     onChange={e => setNewName(e.target.value)} 
                 />
                 <button 
                     onClick={handleAdd} 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"
                 >
                     <Plus className="w-4 h-4" /> Add {activeLevel}
                 </button>

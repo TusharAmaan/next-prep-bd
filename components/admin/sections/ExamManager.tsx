@@ -31,9 +31,12 @@ export default function ExamManager({
     darkMode?: boolean 
 }) {
   const supabase = createClient();
+  const [activeView, setActiveView] = useState<'exams' | 'requests'>('exams');
   const [exams, setExams] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStatus, setActiveStatus] = useState<string>("all");
+  const [activeRequestStatus, setActiveRequestStatus] = useState<string>("all");
   
   // Create/Edit State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,9 +111,43 @@ export default function ExamManager({
     setLoading(false);
   };
 
+  const fetchRequests = async () => {
+    setLoading(true);
+    let query = supabase
+      .from('exam_requests')
+      .select('*, profiles:student_id(full_name, email)')
+      .order('created_at', { ascending: false });
+    
+    if (activeRequestStatus !== "all") {
+      query = query.eq('status', activeRequestStatus);
+    }
+
+    const { data } = await query;
+    if (data) setRequests(data);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    fetchExams();
-  }, [activeStatus]);
+    if (activeView === 'exams') {
+      fetchExams();
+    } else {
+      fetchRequests();
+    }
+  }, [activeView, activeStatus, activeRequestStatus]);
+
+  const updateRequestStatus = async (requestId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('exam_requests')
+        .update({ status })
+        .eq('id', requestId);
+      
+      if (error) throw error;
+      fetchRequests();
+    } catch (err: any) {
+      showAlert("Error", err.message);
+    }
+  };
 
   const handleSave = async () => {
     if (!formData.title || !formData.segment_id) return showAlert("Missing Information", "Title and Segment are required");
@@ -193,23 +230,43 @@ export default function ExamManager({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <Calendar className="w-8 h-8 text-indigo-500" />
-            Exam Management Center
+          <h2 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+            <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
+            Exam Management
           </h2>
-          <p className="text-slate-500 font-bold mt-1">Create, schedule and publish live exams for students.</p>
+          <p className="text-slate-500 font-bold mt-1 text-[10px] sm:text-base">Schedule and publish live exams.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95"
-        >
-          <Plus size={20} /> CREATE NEW EXAM
-        </button>
+        <div className="flex flex-wrap bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
+          <button 
+            onClick={() => setActiveView('exams')}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'exams' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+          >
+            <Calendar className="w-4 h-4" />
+            Exams
+          </button>
+          <button 
+            onClick={() => setActiveView('requests')}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+          >
+            <Clock className="w-4 h-4" />
+            Student Requests
+          </button>
+        </div>
+
+        {activeView === 'exams' && (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95"
+          >
+            <Plus size={20} /> CREATE NEW EXAM
+          </button>
+        )}
       </div>
 
-      {/* Tabs */}
+      {/* Tabs / Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {['all', 'draft', 'published', 'scheduled', 'unpublished'].map(status => (
+        {activeView === 'exams' ? (
+          ['all', 'draft', 'published', 'scheduled', 'unpublished'].map(status => (
             <button 
                 key={status}
                 onClick={() => setActiveStatus(status)}
@@ -221,7 +278,22 @@ export default function ExamManager({
             >
                 {status}
             </button>
-        ))}
+          ))
+        ) : (
+          ['all', 'pending', 'approved', 'rejected'].map(status => (
+            <button 
+                key={status}
+                onClick={() => setActiveRequestStatus(status)}
+                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    activeRequestStatus === status 
+                    ? "bg-indigo-600 text-white" 
+                    : "bg-white dark:bg-slate-900 text-slate-400 border border-slate-200 dark:border-slate-800"
+                }`}
+            >
+                {status}
+            </button>
+          ))
+        )}
       </div>
 
       {/* List */}
@@ -229,74 +301,144 @@ export default function ExamManager({
         {loading ? (
           <div className="p-24 flex flex-col items-center">
             <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
-            <p className="font-bold text-slate-500">Retrieving exams...</p>
+            <p className="font-bold text-slate-500">Synchronizing data...</p>
           </div>
-        ) : exams.length === 0 ? (
-          <div className="p-24 text-center">
-            <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="font-bold text-slate-500">No exams found in this category.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b dark:border-slate-700">
-                <tr>
-                  <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Exam Details</th>
-                  <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Type & Category</th>
-                  <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {exams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
-                    <td className="px-10 py-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600">
-                                <FileText size={24} />
-                            </div>
-                            <div>
-                                <h4 className="font-black text-slate-800 dark:text-white">{exam.title}</h4>
-                                <p className="text-xs text-slate-500 font-bold">{exam.duration_minutes} min • {exam.total_marks} marks</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td className="px-10 py-8">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-black uppercase text-indigo-600">{exam.exam_type.replace('_', ' ')}</span>
-                            <span className="text-[10px] text-slate-400 font-bold">
-                                {segments.find(s => s.id === exam.segment_id)?.title || 'No Segment'} 
-                                {exam.subject_id ? ` > ${subjects.find(s => s.id === exam.subject_id)?.title}` : ''}
-                            </span>
-                        </div>
-                    </td>
-                    <td className="px-10 py-8">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                            exam.status === 'published' ? 'bg-green-100 text-green-700' :
-                            exam.status === 'scheduled' ? 'bg-amber-100 text-amber-700' :
-                            'bg-slate-100 text-slate-600'
-                        }`}>
-                            {exam.status}
-                        </span>
-                        {exam.status === 'scheduled' && exam.start_time && (
-                            <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
-                                Starts: {new Date(exam.start_time).toLocaleString()}
-                            </p>
-                        )}
-                    </td>
-                    <td className="px-10 py-8 text-right space-x-2">
-                        <button onClick={() => openEdit(exam)} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
-                            <Eye size={18} />
-                        </button>
-                        <button onClick={() => deleteExam(exam.id)} className="p-2.5 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
-                            <Trash2 size={18} />
-                        </button>
-                    </td>
+        ) : activeView === 'exams' ? (
+          exams.length === 0 ? (
+            <div className="p-24 text-center">
+              <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="font-bold text-slate-500">No exams found in this category.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b dark:border-slate-700">
+                  <tr>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Exam Details</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Type & Category</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {exams.map((exam) => (
+                    <tr key={exam.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
+                      <td className="px-10 py-8">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600">
+                                  <FileText size={24} />
+                              </div>
+                              <div>
+                                  <h4 className="font-black text-slate-800 dark:text-white">{exam.title}</h4>
+                                  <p className="text-xs text-slate-500 font-bold">{exam.duration_minutes} min • {exam.total_marks} marks</p>
+                              </div>
+                          </div>
+                      </td>
+                      <td className="px-10 py-8">
+                          <div className="flex flex-col gap-1">
+                              <span className="text-xs font-black uppercase text-indigo-600">{exam.exam_type?.replace('_', ' ') || 'standard'}</span>
+                              <span className="text-[10px] text-slate-400 font-bold">
+                                  {segments.find(s => s.id === exam.segment_id)?.title || 'No Segment'} 
+                                  {exam.subject_id ? ` > ${subjects.find(s => s.id === exam.subject_id)?.title}` : ''}
+                              </span>
+                          </div>
+                      </td>
+                      <td className="px-10 py-8">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                              exam.status === 'published' ? 'bg-green-100 text-green-700' :
+                              exam.status === 'scheduled' ? 'bg-amber-100 text-amber-700' :
+                              'bg-slate-100 text-slate-600'
+                          }`}>
+                              {exam.status}
+                          </span>
+                      </td>
+                      <td className="px-10 py-8 text-right space-x-2">
+                          <button onClick={() => openEdit(exam)} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
+                              <Eye size={18} />
+                          </button>
+                          <button onClick={() => deleteExam(exam.id)} className="p-2.5 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
+                              <Trash2 size={18} />
+                          </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          requests.length === 0 ? (
+            <div className="p-24 text-center">
+              <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="font-bold text-slate-500">No exam requests found.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b dark:border-slate-700">
+                  <tr>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Student</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Subject & Details</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {requests.map((req) => (
+                    <tr key={req.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
+                      <td className="px-10 py-8">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center font-black text-indigo-600">
+                                  {(req.profiles?.full_name || 'U').charAt(0)}
+                              </div>
+                              <div>
+                                  <h4 className="font-black text-slate-800 dark:text-white">{req.profiles?.full_name || 'Unknown'}</h4>
+                                  <p className="text-xs text-slate-500 font-bold">{req.profiles?.email}</p>
+                              </div>
+                          </div>
+                      </td>
+                      <td className="px-10 py-8">
+                          <div className="flex flex-col gap-1">
+                              <span className="text-xs font-black uppercase text-indigo-600">{req.subject || 'Standard Exam'}</span>
+                              <p className="text-[11px] text-slate-500 font-medium line-clamp-1 italic">"{req.details || 'No additional details'}"</p>
+                          </div>
+                      </td>
+                      <td className="px-10 py-8">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                              req.status === 'approved' ? 'bg-green-100 text-green-700' :
+                              req.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-amber-100 text-amber-700'
+                          }`}>
+                              {req.status}
+                          </span>
+                      </td>
+                      <td className="px-10 py-8 text-right space-x-2">
+                        {req.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => updateRequestStatus(req.id, 'approved')} 
+                              className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all uppercase tracking-tighter"
+                            >
+                                APPROVE
+                            </button>
+                            <button 
+                              onClick={() => updateRequestStatus(req.id, 'rejected')} 
+                              className="px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all uppercase tracking-tighter"
+                            >
+                                REJECT
+                            </button>
+                          </>
+                        )}
+                        {req.status !== 'pending' && (
+                          <span className="text-[10px] font-bold text-slate-300 italic">Resolved</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
 

@@ -129,8 +129,9 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: any) {
 export default function QuestionBankManager({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState<'list' | 'create'>('list');
+  const [view, setView] = useState<'list' | 'create' | 'reports'>('list');
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // List State
@@ -218,7 +219,33 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
       setLoading(false);
   }, [filters, searchQuery, pagination.page, pagination.itemsPerPage]);
 
-  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
+  const fetchReports = async () => {
+      setLoading(true);
+      const { data } = await supabase
+          .from('user_question_reports')
+          .select('*, profiles:user_id(full_name, email), question:question_id(question_text)')
+          .order('created_at', { ascending: false });
+      if (data) setReports(data);
+      setLoading(false);
+  };
+
+  useEffect(() => { 
+      if (view === 'list') fetchQuestions();
+      else if (view === 'reports') fetchReports();
+  }, [view, fetchQuestions]);
+
+  const updateReportStatus = async (reportId: string, status: string) => {
+      try {
+          const { error } = await supabase
+              .from('user_question_reports')
+              .update({ status })
+              .eq('id', reportId);
+          if (error) throw error;
+          fetchReports();
+      } catch (err: any) {
+          showModal('error', err.message);
+      }
+  };
 
   // --- DROPDOWN LOGIC ---
   const loadGroups = async (segId: string, isFilter: boolean) => {
@@ -630,14 +657,28 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
        <CustomModal isOpen={modal.isOpen} type={modal.type} message={modal.message} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
        {/* HEADER */}
-       <div className="flex justify-between items-center mb-6 px-6 pt-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 pb-4">
+       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 px-4 sm:px-6 pt-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 pb-4 gap-4">
           <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Question Manager</h2>
-              <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs font-medium mt-1">Create, edit, and organize question bank content.</p>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">Question Manager</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mt-1">Create, edit, and organize question bank content.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 items-center">
+               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mr-2">
+                   <button 
+                       onClick={() => setView('list')}
+                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                   >
+                       Repository
+                   </button>
+                   <button 
+                       onClick={() => setView('reports')}
+                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'reports' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                   >
+                       Reports {reports.filter(r => r.status === 'pending').length > 0 && <span className="ml-1 bg-rose-500 text-white text-[8px] px-1 rounded-full">{reports.filter(r => r.status === 'pending').length}</span>}
+                   </button>
+               </div>
               {view === 'list' && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                       <button onClick={handleDownloadSample} className="flex items-center gap-2 px-3 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-[10px] font-bold transition-all">
                           <HelpCircle size={14} /> Sample CSV
                       </button>
@@ -659,6 +700,95 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
               )}
           </div>
        </div>
+
+        {/* === REPORTS VIEW === */}
+        {view === 'reports' && (
+            <div className="flex flex-col h-full overflow-hidden px-6 pb-6">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden h-full flex flex-col">
+                    {loading ? (
+                        <div className="flex-1 flex items-center justify-center p-20">
+                            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                        </div>
+                    ) : reports.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
+                            <CheckCircle className="w-12 h-12 text-slate-200 mb-4" />
+                            <p className="font-bold text-slate-500 italic">No bug reports found. Everything is smooth!</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-auto flex-1">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 dark:bg-slate-800/50 sticky top-0 border-b dark:border-slate-700">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400">Student & Question</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400">Issue / Reason</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {reports.map((report) => (
+                                        <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                            <td className="px-6 py-6 max-w-sm">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                                                        {(report.profiles?.full_name || 'U').charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black text-slate-800 dark:text-white">{report.profiles?.full_name || 'Unknown'}</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold">{report.profiles?.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                    <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2" dangerouslySetInnerHTML={{__html: report.question?.question_text}}></p>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-6">
+                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 italic">"{report.reason || 'No description provided'}"</p>
+                                            </td>
+                                            <td className="px-6 py-6">
+                                                <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                                                    report.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 
+                                                    report.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                                                }`}>
+                                                    {report.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-6 text-right space-x-2">
+                                                {report.status === 'pending' && (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => updateReportStatus(report.id, 'resolved')}
+                                                            className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                                            title="Mark Resolved"
+                                                        >
+                                                            <CheckCircle size={14} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => updateReportStatus(report.id, 'rejected')}
+                                                            className="p-2 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                                                            title="Reject Report"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleEdit({ id: report.question_id, ...report.question })} 
+                                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                                    title="Edit Question"
+                                                >
+                                                    <Edit3 size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
 
        {/* === CREATE / EDIT VIEW === */}
        {view === 'create' && (
@@ -767,7 +897,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                    <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-indigo-200 transition-all group relative">
                                        <div className="flex justify-between items-start mb-2">
                                            <span className="text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded">{sq.question_type} • {sq.marks} pts</span>
-                                           <div className="flex gap-2">
+                                           <div className="flex flex-wrap gap-2">
                                                <button onClick={() => openSubForm(sq, i)} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600"><Edit3 size={14}/></button>
                                                <button onClick={() => { const n = [...subQuestions]; n.splice(i, 1); setSubQuestions(n); }} className="text-slate-400 dark:text-slate-500 hover:text-red-600"><Trash2 size={14}/></button>
                                            </div>
@@ -780,7 +910,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                {subQForm.isOpen && (
                                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border-2 border-indigo-100 shadow-lg animate-in slide-in-from-bottom-2">
                                        <div className="flex justify-between mb-4">
-                                           <div className="flex gap-2">
+                                           <div className="flex flex-wrap gap-2">
                                                <button onClick={() => setSubQForm(p => ({...p, type: 'mcq'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'mcq' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 dark:border-slate-700'}`}>MCQ</button>
                                                <button onClick={() => setSubQForm(p => ({...p, type: 'descriptive'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'descriptive' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 dark:border-slate-700'}`}>Descriptive</button>
                                            </div>
@@ -803,7 +933,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                            <div className="mt-4 space-y-2">
                                                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Options</label>
                                                {subQForm.options.map((opt, i) => (
-                                                   <div key={i} className="flex gap-2 items-center">
+                                                   <div key={i} className="flex flex-wrap gap-2 items-center">
                                                        <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300'}`}><CheckCircle size={14}/></button>
                                                        <input className="flex-1 border-b text-sm p-1 outline-none" value={opt.option_text} onChange={e => { const n = [...subQForm.options]; n[i].option_text = e.target.value; setSubQForm(p => ({...p, options: n})); }} placeholder={`Option ${i+1}`}/>
                                                    </div>
@@ -918,7 +1048,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                    </div>
                    <div className="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">Page {pagination.page + 1}</span>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <button onClick={() => setPagination(p => ({...p, page: Math.max(0, p.page - 1)}))} disabled={pagination.page === 0} className="px-3 py-1 bg-white dark:bg-slate-900 border rounded disabled:opacity-50">Prev</button>
                             <button onClick={() => setPagination(p => ({...p, page: p.page + 1}))} disabled={!hasMore} className="px-3 py-1 bg-white dark:bg-slate-900 border rounded disabled:opacity-50">Next</button>
                         </div>
