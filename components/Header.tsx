@@ -61,7 +61,7 @@ export default function Header() {
         return; 
     }
     setUser(session.user);
-    const { data } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+    const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     if (data) {
       setProfile(data);
       if (data.role === 'admin') fetchNotifications();
@@ -147,7 +147,9 @@ export default function Header() {
   };
 
   const getDashboardLink = () => {
-    if (!profile) return '#'; // Prevent early click redirects
+    if (!user) return '/login';
+    if (!profile) return '#'; 
+    
     const role = profile.role?.toLowerCase() || 'student';
     if (role === 'admin') return '/admin';
     if (role === 'tutor') return '/tutor/dashboard';

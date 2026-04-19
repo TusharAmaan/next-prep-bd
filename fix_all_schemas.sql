@@ -35,8 +35,9 @@ ALTER TABLE public.comments ALTER COLUMN post_type DROP NOT NULL;
 -- ── 2. FIX USER_ID FK TO REFERENCE PROFILES ──
 -- This allows PostgREST to resolve the `profiles:user_id(...)` join
 ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS comments_user_id_fkey;
+ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS comments_profile_id_fkey;
 ALTER TABLE public.comments
-ADD CONSTRAINT comments_user_id_fkey
+ADD CONSTRAINT comments_profile_id_fkey
 FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 -- ── 3. FIX SEGMENT_UPDATES TABLE ──

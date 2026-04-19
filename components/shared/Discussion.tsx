@@ -17,14 +17,14 @@ interface Comment {
   created_at: string;
   user_id: string;
   parent_id: string | null;
-  users: { id: string; full_name: string } | null;
+  profiles: { id: string; full_name: string } | null;
 }
 
 // Normalize Supabase join result (can be array or object)
 function normalizeComment(raw: any): Comment {
-  let users = raw.users;
-  if (Array.isArray(users)) users = users[0] || null;
-  return { ...raw, users };
+  let profiles = raw.profiles;
+  if (Array.isArray(profiles)) profiles = profiles[0] || null;
+  return { ...raw, profiles };
 }
 
 export default function Discussion({ itemType, itemId }: DiscussionProps) {
@@ -51,7 +51,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
         .from('comments')
         .select(`
           id, content, created_at, user_id, parent_id,
-          users:user_id(id, full_name)
+          profiles:user_id(id, full_name)
         `)
         .eq('item_type', itemType)
         .eq('item_id', itemId)
@@ -79,7 +79,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
       const { data, error } = await supabase
         .from('comments')
         .insert([{ item_type: itemType, item_id: itemId, content: content.trim(), parent_id: parentId, user_id: session.user.id }])
-        .select(`id, content, created_at, user_id, parent_id, users:user_id(id, full_name)`)
+        .select(`id, content, created_at, user_id, parent_id, profiles:user_id(id, full_name)`)
         .single();
 
       if (error) throw error;
@@ -128,12 +128,12 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
   };
 
   const getInitial = (comment: Comment | any) => {
-    const name = comment.users?.full_name || comment.users?.[0]?.full_name || 'U';
+    const name = comment.profiles?.full_name || comment.profiles?.[0]?.full_name || 'U';
     return name.charAt(0).toUpperCase();
   };
 
   const getName = (comment: Comment | any) => {
-    return comment.users?.full_name || comment.users?.[0]?.full_name || 'Anonymous';
+    return comment.profiles?.full_name || comment.profiles?.[0]?.full_name || 'Anonymous';
   };
 
   return (

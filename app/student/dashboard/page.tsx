@@ -151,7 +151,7 @@ export default function ModernStudentDashboard() {
 
       // 1. Fetch Profile
       const { data: profileData } = await supabase
-        .from("users")
+        .from('profiles')
         .select("*")
         .eq("id", userId)
         .single();

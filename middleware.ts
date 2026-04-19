@@ -77,7 +77,7 @@ export async function middleware(request: NextRequest) {
   if (user) {
     // Fetch Role securely from DB (Safety prioritized over speed for routing)
     const { data: profile } = await supabase
-      .from('users')
+      .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();

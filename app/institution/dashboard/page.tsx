@@ -71,7 +71,7 @@ export default function InstitutionDashboard() {
 
       // Check if user is institution admin
       const { data: profileData } = await supabase
-        .from("users")
+        .from('profiles')
         .select("*")
         .eq("id", userData.user.id)
         .single();
@@ -86,7 +86,7 @@ export default function InstitutionDashboard() {
 
       // Fetch member list - institutions can view members created under their domain
       const { data: membersData } = await supabase
-        .from("users")
+        .from('profiles')
         .select(
           "id, email, full_name, role, status, created_at, institution"
         )

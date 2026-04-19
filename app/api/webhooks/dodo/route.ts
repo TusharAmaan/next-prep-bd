@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + (planType === 'pro_monthly' ? 30 : 365));
 
-    await supabaseAdmin.from('users').update({
+    await supabaseAdmin.from('profiles').update({
       subscription_plan: 'pro',
       subscription_status: 'active',
       subscription_expiry: expiryDate.toISOString(),

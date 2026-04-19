@@ -20,7 +20,7 @@ export default function TutorDashboardLayout({ children }: { children: React.Rea
       }
       
       const { data: profile } = await supabase
-        .from("users")
+        .from('profiles')
         .select("role")
         .eq("id", user.id)
         .single();

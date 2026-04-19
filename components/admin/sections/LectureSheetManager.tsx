@@ -118,7 +118,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
       if (activeView === 'requests') {
         const { data, error } = await supabase
           .from('lecture_sheet_requests')
-          .select('*, users(full_name, email), segments(title), groups(title), subjects(title)')
+          .select('*, profiles(full_name, email), segments(title), groups(title), subjects(title)')
           .order('created_at', { ascending: false });
         if (error) throw error;
         setRequests(data || []);
@@ -190,7 +190,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
   const fetchGrantedUsers = async (sheetId: string) => {
     const { data, error } = await supabase
       .from('lecture_sheet_access')
-      .select('*, users(full_name, email)')
+      .select('*, profiles(full_name, email)')
       .eq('lecture_sheet_id', sheetId);
     if (!error) setGrantedUsers(data || []);
   };
@@ -200,7 +200,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
     setIsSearchingUser(true);
     try {
       const { data: profile, error: pError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id, full_name, email')
         .eq('email', targetUserEmail)
         .single();
@@ -407,7 +407,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
               </div>
             ) : (
               requests.filter(r => {
-                const matchesSearch = r.topic.toLowerCase().includes(searchTerm.toLowerCase()) || (r.users?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearch = r.topic.toLowerCase().includes(searchTerm.toLowerCase()) || (r.profiles?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
                 const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
                 return matchesSearch && matchesStatus;
               }).map((req) => (
@@ -442,7 +442,7 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                       <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500 italic">"{req.comment}"</p>
                       
                       <div className="pt-2 flex items-center gap-4 text-xs font-medium text-slate-400 dark:text-slate-500">
-                        <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Requested by: {req.users?.full_name || 'Unknown User'}</span>
+                        <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Requested by: {req.profiles?.full_name || 'Unknown User'}</span>
                         {req.user_deadline && (
                           <span className={`flex items-center gap-1 font-bold ${new Date(req.user_deadline) < new Date() ? 'text-red-500' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
                             <Clock className="w-3 h-3" /> 
@@ -811,8 +811,8 @@ const LectureSheetManager: React.FC<LectureSheetManagerProps> = ({ segments, gro
                         grantedUsers.map(access => (
                           <div key={access.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl group">
                              <div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{access.users?.full_name}</p>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">{access.users?.email}</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{access.profiles?.full_name}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">{access.profiles?.email}</p>
                              </div>
                              <button 
                                onClick={() => handleRevokeAccess(access.id)}

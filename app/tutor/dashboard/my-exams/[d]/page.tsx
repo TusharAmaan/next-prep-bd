@@ -89,7 +89,7 @@ function BuilderContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        const { data: prof } = await supabase.from('users')
+        const { data: prof } = await supabase.from('profiles')
             .select('subscription_plan, institute_name, subscription_status')
             .eq('id', user.id)
             .single();

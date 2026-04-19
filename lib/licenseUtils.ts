@@ -114,7 +114,7 @@ export async function getLicenseMembers(licenseId: string) {
   try {
     const { data: members, error } = await supabase
       .from('license_members')
-      .select('*, users(id, full_name, email)')
+      .select('*, profiles(id, full_name, email)')
       .eq('license_id', licenseId)
       .order('added_at', { ascending: false });
 

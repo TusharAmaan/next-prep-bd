@@ -27,7 +27,7 @@ export default function EditorDashboardLayout({
       }
 
       const { data: profile, error } = await supabase
-        .from("users")
+        .from('profiles')
         .select("role, full_name")
         .eq("id", session.user.id)
         .single();

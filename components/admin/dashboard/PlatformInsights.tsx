@@ -47,7 +47,7 @@ export default function PlatformInsights() {
           supabase.from("ebooks").select("*", { count: "exact", head: true }),
           supabase.from("courses").select("*", { count: "exact", head: true }),
           supabase.from("news").select("*", { count: "exact", head: true }),
-          supabase.from("users").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
+          supabase.from('profiles').select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
           supabase.from("resources").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
           supabase.from("question_bank").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
           supabase.from("resources").select("id, title, type, like_count").order("like_count", { ascending: false }).limit(5),

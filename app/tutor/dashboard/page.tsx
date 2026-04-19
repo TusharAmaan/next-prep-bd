@@ -41,7 +41,7 @@ export default function TutorDashboard() {
 
       // 1. Fetch Profile
       const { data: prof } = await supabase
-        .from("users")
+        .from('profiles')
         .select("*")
         .eq("id", user.id)
         .single();

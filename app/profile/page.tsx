@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
       // Fetch Profile + Hierarchy Data
       const [profileRes, segRes, grpRes, subRes] = await Promise.all([
-         supabase.from('users').select('*').eq('id', session.user.id).single(),
+         supabase.from('profiles').select('*').eq('id', session.user.id).single(),
          supabase.from('segments').select('id, title, slug'),
          supabase.from('groups').select('id, title, slug, segment_id'),
          supabase.from('subjects').select('id, title, slug, group_id')
@@ -132,7 +132,7 @@ export default function ProfilePage() {
         updates.skills = (typeof skills === 'string' ? skills : "").split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    const { error } = await supabase.from('users').update(updates).eq('id', user?.id);
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user?.id);
     setSaving(false);
     if (error) setModal({ isOpen: true, type: 'error', message: error.message });
     else {

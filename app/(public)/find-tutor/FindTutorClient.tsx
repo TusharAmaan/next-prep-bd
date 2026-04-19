@@ -31,7 +31,7 @@ export default function FindTutorClient() {
       setLoading(true);
       
       const [profiles, segments, groups, subjects] = await Promise.all([
-        supabase.from('users').select('*').eq('role', 'tutor').eq('status', 'active').eq('is_featured', true).order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').eq('role', 'tutor').eq('status', 'active').eq('is_featured', true).order('created_at', { ascending: false }),
         supabase.from('segments').select('id, title, slug'),
         supabase.from('groups').select('id, title, slug, segment_id'),
         supabase.from('subjects').select('id, title, slug, group_id')

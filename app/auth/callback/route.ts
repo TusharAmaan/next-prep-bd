@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     if (!error && session) {
       const { data: profile } = await supabase
-        .from('users')
+        .from('profiles')
         .select('role, status')
         .eq('id', session.user.id)
         .single();

@@ -49,7 +49,7 @@ export default function LocationTracker() {
 
           // 6. Save to Supabase
           await supabase
-            .from('users')
+            .from('profiles')
             .update({ 
               city: readableLocation,
               location_updated_at: new Date().toISOString()

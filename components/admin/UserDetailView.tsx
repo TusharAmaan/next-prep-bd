@@ -115,10 +115,10 @@ export default function UserDetailView({
         else if (field === 'status') {
             if (value === 'active') await onApproveUser(user.id);
             else if (value === 'suspended') await onSuspendUser(user.id);
-            else await supabase.from('users').update({ status: 'pending' }).eq('id', user.id);
+            else await supabase.from('profiles').update({ status: 'pending' }).eq('id', user.id);
         } 
         else if (field === 'is_featured') {
-            await supabase.from('users').update({ is_featured: value }).eq('id', user.id);
+            await supabase.from('profiles').update({ is_featured: value }).eq('id', user.id);
         }
     } catch (error: any) {
         alert(`Error: ${error.message}`);
@@ -130,7 +130,7 @@ export default function UserDetailView({
   const saveNotes = async () => {
       if (notes === user.admin_notes) return;
       setIsSaving(true);
-      await supabase.from('users').update({ admin_notes: notes }).eq('id', user.id);
+      await supabase.from('profiles').update({ admin_notes: notes }).eq('id', user.id);
       setIsSaving(false);
   };
 
@@ -161,7 +161,7 @@ export default function UserDetailView({
           const expiryDate = new Date();
           expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
 
-          const { error: profileError } = await supabase.from('users').update({
+          const { error: profileError } = await supabase.from('profiles').update({
               subscription_plan: 'pro',
               subscription_status: 'active',
               subscription_expiry: expiryDate.toISOString(),
@@ -187,7 +187,7 @@ export default function UserDetailView({
       if(!confirm("Are you sure you want to manually update this subscription?")) return;
       
       setIsSaving(true);
-      const { error } = await supabase.from('users').update({
+      const { error } = await supabase.from('profiles').update({
           subscription_plan: subPlan,
           subscription_status: subStatus,
           subscription_expiry: subExpiry ? new Date(subExpiry).toISOString() : null,

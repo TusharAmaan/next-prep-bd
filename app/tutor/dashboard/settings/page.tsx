@@ -21,7 +21,7 @@ export default function TutorSettings() {
       if (user) {
         // 1. Fetch Plan AND Status
         const { data } = await supabase
-            .from('users')
+            .from('profiles')
             .select('institute_name, avatar_url, subscription_plan, subscription_status')
             .eq('id', user.id)
             .single();
@@ -51,7 +51,7 @@ export default function TutorSettings() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        const { error } = await supabase.from('users').update({
+        const { error } = await supabase.from('profiles').update({
             institute_name: instituteName,
             avatar_url: logoUrl 
         }).eq('id', user.id);
