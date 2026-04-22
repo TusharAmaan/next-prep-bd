@@ -49,7 +49,7 @@ export default function CurriculumClient({
       {/* MOBILE FILTER TRIGGER */}
       <button 
         onClick={() => setIsFilterOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-2xl flex items-center justify-center animate-bounce transition-all active:scale-95 shadow-indigo-600/30"
+        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl flex items-center justify-center transition-all active:scale-95 shadow-indigo-600/30"
       >
         <Filter className="w-5 h-5" />
       </button>
@@ -59,11 +59,11 @@ export default function CurriculumClient({
         <div className="fixed inset-0 z-[100] lg:hidden flex justify-start">
            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)}></div>
            <div className="relative w-full max-w-[320px] bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 border-r border-slate-100 dark:border-slate-800">
-             <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-3">
+             <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Filter className="w-5 h-5 text-indigo-500" /> Subject Explorer
                 </h3>
-                <button onClick={() => setIsFilterOpen(false)} className="p-2.5 md:p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-xl md:rounded-2xl transition-colors"><X className="w-5 h-5" /></button>
+                <button onClick={() => setIsFilterOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
              </div>
              <SidebarContent 
                 segments={segments} 
@@ -79,35 +79,35 @@ export default function CurriculumClient({
       )}
 
       {/* Hero Header */}
-      <div className="text-center max-w-4xl mx-auto mb-16 md:mb-24">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase tracking-widest mb-6 md:mb-8">
+      <div className="text-center max-w-3xl mx-auto mb-10 md:mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-semibold text-xs mb-4 md:mb-6">
           <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" /> Structured Subjects
         </div>
-        <h1 className="text-4xl md:text-8xl font-black text-slate-900 dark:text-white mb-6 md:mb-8 leading-[1] md:leading-[0.9] uppercase tracking-tighter">
+        <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6 leading-tight tracking-tight">
           Master every <br className="hidden md:block"/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Subject</span>
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium text-base md:text-xl leading-relaxed mb-8 md:mb-12 max-w-2xl mx-auto transition-colors opacity-80">
+        <p className="text-slate-500 dark:text-slate-400 font-medium text-base md:text-lg leading-relaxed mb-6 md:mb-8 max-w-2xl mx-auto transition-colors opacity-80">
           Explore our professionally curated lesson plans. Track your progress, read seamlessly on any device, and master your exams.
         </p>
         
         <div className="relative max-w-2xl mx-auto group">
-          <Search className="absolute left-5 md:left-7 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 md:w-6 md:h-6 group-focus-within:text-indigo-600 transition-colors" />
+          <Search className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-600 transition-colors" />
           <input 
             type="text" 
             placeholder="Search subjects..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 md:pl-16 pr-6 md:pr-8 py-4 md:py-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-[2.5rem] outline-none focus:ring-4 focus:ring-indigo-600/10 dark:focus:ring-indigo-500/10 font-black text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-xl md:shadow-2xl shadow-indigo-100/20 dark:shadow-none text-sm md:text-base"
+            className="w-full pl-12 md:pl-14 pr-6 py-3 md:py-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-indigo-600/20 dark:focus:ring-indigo-500/20 font-medium text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-sm text-sm md:text-base"
           />
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
         {/* DESKTOP SIDEBAR */}
-        <aside className="hidden lg:block w-72 shrink-0 sticky top-32 h-fit space-y-10">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl dark:shadow-indigo-900/5 transition-colors">
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                  <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-[0.3em] flex items-center gap-3">
+        <aside className="hidden lg:block w-64 shrink-0 sticky top-32 h-fit space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm transition-colors">
+              <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                       <Layers className="w-4 h-4 text-indigo-500" /> Filters
                   </h3>
               </div>
@@ -122,11 +122,11 @@ export default function CurriculumClient({
               />
           </div>
 
-          <div className="bg-slate-900 dark:bg-indigo-600 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 -mr-4 -mt-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-              <h4 className="font-black uppercase tracking-tight text-xl leading-tight mb-4 relative z-10">Strategic <br/>Blueprint</h4>
-              <p className="text-slate-400 dark:text-indigo-100 text-xs font-bold leading-relaxed mb-8 relative z-10 font-black uppercase tracking-widest opacity-60">Engineered for high-performance evolution.</p>
-              <Link href="/about" className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest bg-white text-slate-900 px-8 py-4 rounded-2xl hover:bg-slate-50 transition-all relative z-10 w-full group">
+          <div className="bg-slate-900 dark:bg-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <h4 className="font-bold text-lg mb-2 relative z-10">Strategic <br/>Blueprint</h4>
+              <p className="text-slate-300 dark:text-indigo-100 text-xs font-medium mb-6 relative z-10 opacity-90">Engineered for high-performance evolution.</p>
+              <Link href="/about" className="flex items-center justify-center gap-2 text-xs font-semibold bg-white text-slate-900 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-all relative z-10 w-full group">
                   Research <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
               </Link>
           </div>
@@ -135,54 +135,54 @@ export default function CurriculumClient({
          {/* CONTENT AREA */}
         <div className="flex-1 min-w-0">
           {(selectedSegment !== 'all' || selectedGroup !== 'all') && (
-            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-8 md:mb-10">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-6 md:mb-8">
                  {selectedSegment !== 'all' && (
-                    <button onClick={() => {setSelectedSegment('all'); setSelectedGroup('all');}} className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl md:rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-500/20 transition-all group">
-                        {segments.find(s => s.id.toString() === selectedSegment)?.title} <X className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-90 transition-transform"/>
+                    <button onClick={() => {setSelectedSegment('all'); setSelectedGroup('all');}} className="flex items-center gap-2 px-3 py-1.5 md:py-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-500/20 transition-all group">
+                        {segments.find(s => s.id.toString() === selectedSegment)?.title} <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"/>
                     </button>
                 )}
                 {selectedGroup !== 'all' && (
-                    <button onClick={() => setSelectedGroup('all')} className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl md:rounded-2xl text-xs font-black uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all group">
-                        {groups.find(g => g.id.toString() === selectedGroup)?.title} <X className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-90 transition-transform"/>
+                    <button onClick={() => setSelectedGroup('all')} className="flex items-center gap-2 px-3 py-1.5 md:py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-medium hover:text-slate-900 dark:hover:text-white transition-all group">
+                        {groups.find(g => g.id.toString() === selectedGroup)?.title} <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform"/>
                     </button>
                 )}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {filteredSubjects.map(sub => (
                   <Link 
                       key={sub.id} 
                       href={`/curriculum/${sub.id}`}
-                      className="group relative bg-white dark:bg-slate-900 flex flex-col h-64 md:h-72 p-6 md:p-10 rounded-[1.5rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 shadow-sm hover:shadow-2xl dark:hover:shadow-indigo-900/10 hover:-translate-y-2 md:hover:-translate-y-3 transition-all duration-500 overflow-hidden"
+                      className="group relative bg-white dark:bg-slate-900 flex flex-col p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 shadow-sm hover:shadow-lg dark:hover:shadow-indigo-900/10 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                   >
-                      <div className="absolute top-0 right-0 w-32 md:w-40 h-32 md:h-40 bg-indigo-500/5 rounded-bl-full -mr-8 md:-mr-12 -mt-8 md:-mt-12 transition-all group-hover:bg-indigo-500/10 group-hover:scale-110"></div>
+                      <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-indigo-500/10 group-hover:scale-110"></div>
                       
-                      <div className="relative z-10 flex items-start justify-between mb-auto">
-                          <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 dark:bg-slate-800 rounded-xl md:rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner border border-slate-100 dark:border-slate-700">
-                              <Book className="w-5 h-5 md:w-7 md:h-7" />
+                      <div className="relative z-10 flex items-start justify-between mb-4">
+                          <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                              <Book className="w-6 h-6" />
                           </div>
-                           <div className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors mb-2 text-right">
+                           <div className="text-xs font-medium text-slate-500 transition-colors text-right">
                               {sub.groups?.segments?.title || 'General'}
                           </div>
                       </div>
                       
-                      <div className="relative z-10 pt-4 md:pt-6">
-                          <p className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 transition-colors group-hover:text-indigo-400">{sub.groups?.title || 'Module'}</p>
-                          <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight mb-6 md:mb-8 uppercase leading-tight line-clamp-2">{sub.title}</h3>
-                          <div className="flex items-center gap-3 md:gap-4 text-indigo-600 dark:text-indigo-400 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] group-hover:translate-x-2 md:group-hover:translate-x-3 transition-transform">
-                              Scan Curriculum <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <div className="relative z-10 pt-2 flex-1 flex flex-col">
+                          <p className="text-xs font-medium text-slate-500 mb-1 transition-colors group-hover:text-indigo-500">{sub.groups?.title || 'Module'}</p>
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-4 leading-snug line-clamp-2">{sub.title}</h3>
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs group-hover:translate-x-1 transition-transform mt-auto">
+                              Scan Curriculum <ChevronRight className="w-3.5 h-3.5" />
                           </div>
                       </div>
                   </Link>
               ))}
 
                {filteredSubjects.length === 0 && (
-                   <div className="col-span-full py-20 md:py-32 text-center bg-white dark:bg-slate-900/50 rounded-[2rem] md:rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-inner transition-colors">
-                      <Search className="w-16 md:w-20 h-16 md:h-20 text-slate-200 dark:text-slate-800 mx-auto mb-6 md:mb-8 animate-pulse" />
-                      <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">No results found</h3>
-                      <p className="text-slate-500 dark:text-slate-400 mt-3 md:mt-4 max-w-sm mx-auto text-sm font-medium">Try adjusting your filters to find what you're looking for.</p>
-                      <button onClick={() => {setSearchTerm(''); setSelectedSegment('all'); setSelectedGroup('all');}} className="mt-8 md:mt-12 px-10 md:px-12 py-4 md:py-5 bg-slate-900 dark:bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl md:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-indigo-600/20">Reset Filters</button>
+                   <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 transition-colors">
+                      <Search className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No results found</h3>
+                      <p className="text-slate-500 mt-1 max-w-sm mx-auto text-sm">Try adjusting your filters to find what you're looking for.</p>
+                      <button onClick={() => {setSearchTerm(''); setSelectedSegment('all'); setSelectedGroup('all');}} className="mt-6 px-6 py-2.5 bg-slate-900 dark:bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-indigo-500 transition-colors">Reset Filters</button>
                   </div>
               )}
           </div>
@@ -194,13 +194,13 @@ export default function CurriculumClient({
 
  function SidebarContent({ segments, groups, selectedSegment, setSelectedSegment, selectedGroup, setSelectedGroup, activeGroups }: any) {
     return (
-        <div className="p-6 md:p-8 space-y-8 md:space-y-12">
+        <div className="p-5 space-y-6">
             <div>
-                <h4 className="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 mb-4 md:mb-6 tracking-[0.2em] uppercase">Academic Segment</h4>
-                 <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Academic Segment</h4>
+                 <div className="space-y-1">
                     <button 
                         onClick={() => { setSelectedSegment('all'); setSelectedGroup('all'); }}
-                        className={`w-full text-left px-4 md:px-5 py-3 md:py-4 rounded-lg md:rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedSegment === 'all' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedSegment === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                     >
                         Show All
                     </button>
@@ -208,21 +208,21 @@ export default function CurriculumClient({
                         <button 
                             key={seg.id}
                             onClick={() => { setSelectedSegment(seg.id.toString()); setSelectedGroup('all'); }}
-                            className={`w-full text-left flex justify-between items-center px-4 md:px-5 py-3 md:py-4 rounded-lg md:rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedSegment === seg.id.toString() ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                            className={`w-full text-left flex justify-between items-center px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedSegment === seg.id.toString() ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                         >
                             {seg.title}
-                            {selectedSegment === seg.id.toString() && <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+                            {selectedSegment === seg.id.toString() && <CheckCircle2 className="w-4 h-4" />}
                         </button>
                     ))}
                 </div>
             </div>
 
-            <div className={`transition-all duration-700 ${selectedSegment === 'all' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
-                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-6 tracking-[0.2em] uppercase">Focus Group</h4>
-                 <div className="space-y-2">
+            <div className={`transition-all duration-300 ${selectedSegment === 'all' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Focus Group</h4>
+                 <div className="space-y-1">
                     <button 
                         onClick={() => setSelectedGroup('all')}
-                        className={`w-full text-left px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedGroup === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-xl shadow-slate-900/10' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedGroup === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                     >
                         All Categories
                     </button>
@@ -230,14 +230,14 @@ export default function CurriculumClient({
                         <button 
                             key={grp.id}
                             onClick={() => setSelectedGroup(grp.id.toString())}
-                            className={`w-full text-left flex justify-between items-center px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedGroup === grp.id.toString() ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-xl shadow-slate-900/10' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                            className={`w-full text-left flex justify-between items-center px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedGroup === grp.id.toString() ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                         >
                             {grp.title}
-                            {selectedGroup === grp.id.toString() && <CheckCircle2 className="w-4 h-4 text-indigo-400" />}
+                            {selectedGroup === grp.id.toString() && <CheckCircle2 className="w-4 h-4" />}
                         </button>
                     ))}
                 </div>
-                {selectedSegment === 'all' && <p className="text-xs text-slate-400 mt-4 italic font-bold uppercase tracking-widest">Select segment to unlock</p>}
+                {selectedSegment === 'all' && <p className="text-xs text-slate-500 mt-2 italic font-medium">Select a segment first</p>}
             </div>
         </div>
     );

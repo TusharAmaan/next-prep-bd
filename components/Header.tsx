@@ -231,6 +231,7 @@ export default function Header() {
                     src="/icon.png" 
                     alt="NextPrepBD" 
                     fill
+                    sizes="36px"
                     className="object-contain"
                 />
             </div>
