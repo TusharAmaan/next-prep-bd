@@ -133,22 +133,20 @@ export default async function HomePage() {
       {/* 2. STATS BAR */}
       <ScrollReveal>
         <section className="max-w-6xl mx-auto px-5 md:px-6 relative z-20 -mt-10 md:-mt-24">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-6 md:p-12 border border-slate-100 dark:border-slate-800">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 md:divide-x divide-slate-100 dark:divide-slate-800/50">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 md:gap-16 mt-20 md:mt-32 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-8 md:p-12 border border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 sm:divide-x divide-slate-100 dark:divide-slate-800/50">
                   <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">12k+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Materials verified</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Materials verified</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">5k+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Daily students</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Daily students</p>
                   </div>
-                  <div className="flex flex-col items-center text-center group hidden lg:flex">
+                  <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">Live</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">Active updates</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Active updates</p>
                   </div>
-            </div>
               </div>
           </div>
         </section>
