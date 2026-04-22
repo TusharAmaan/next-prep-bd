@@ -241,11 +241,11 @@ export default function CurriculumContentClient({
           </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
-        <div className="flex flex-col lg:flex-row gap-12 md:gap-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 relative">
+        <div className="flex flex-col lg:flex-row gap-8 md:gap-12">
           
           {/* MAIN COLUMN */}
-          <article ref={articleRef} className="flex-1 max-w-4xl space-y-32">
+          <article ref={articleRef} className="flex-1 max-w-4xl space-y-16">
              {loadedContents.map((c, index) => {
                 const isBengali = c.version === 'bn';
                 let htmlBody = c.content_body || "";
@@ -263,21 +263,21 @@ export default function CurriculumContentClient({
                 }
 
                 return (
-                 <div key={c.id} id={`content-${c.id}`} className="scroll-mt-32">
-                    <header className="mb-12">
-                       <div className="flex items-center gap-4 mb-8 flex-wrap">
-                          <div className="px-4 py-1.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-widest rounded-full">
+                 <div key={c.id} id={`content-${c.id}`} className="scroll-mt-24">
+                    <header className="mb-8">
+                       <div className="flex items-center gap-3 mb-6 flex-wrap">
+                          <div className="px-3 py-1 bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold tracking-widest rounded-full">
                              {c.lesson_plan_lessons?.lesson_plan_units?.title}
                           </div>
-                          <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">
-                             <div className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> 5-8 min read</div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-slate-500 dark:text-slate-400">
+                             <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> 5-8 min read</div>
                           </div>
-                          <div className="ml-auto flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">
-                             <div className="flex items-center gap-2"><Eye className="w-3.5 h-3.5" /> {c.view_count || 0} views</div>
+                          <div className="ml-auto flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-slate-500 dark:text-slate-400">
+                             <div className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" /> {c.view_count || 0} views</div>
                           </div>
                        </div>
                        
-                       <h1 className={`text-3xl sm:text-4xl md:text-6xl font-bold mb-6 md:mb-8 leading-[1.1] md:leading-[0.9] tracking-tight ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
+                       <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-6 leading-tight tracking-tight ${textMain} ${isBengali ? 'font-bangla' : ''}`}>
                           {c.title}
                        </h1>
 
@@ -394,52 +394,52 @@ export default function CurriculumContentClient({
           </article>
 
           {/* SIDEBAR NAVIGATION */}
-          <aside className="hidden lg:block w-96 shrink-0 sticky top-40 h-fit max-h-[80vh] flex flex-col">
-             <div className={`flex-1 overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3rem] p-10 flex flex-col shadow-2xl dark:shadow-none transition-colors`}>
-                <div className="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-slate-800 pb-8">
-                   <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-600/20"><Layers className="w-6 h-6" /></div>
+          <aside className="hidden lg:block w-80 xl:w-96 shrink-0 sticky top-32 h-[calc(100vh-9rem)] flex flex-col">
+             <div className={`flex-1 overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 flex flex-col shadow-xl dark:shadow-none transition-colors`}>
+                <div className="flex items-center gap-4 mb-6 border-b border-slate-50 dark:border-slate-800 pb-4">
+                   <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20"><Layers className="w-5 h-5" /></div>
                    <div>
-                      <h3 className={`text-xs font-bold tracking-widest ${textMain}`}>Course Index</h3>
-                      <p className={`text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 mt-1`}>Your Status</p>
+                      <h3 className={`text-sm font-bold tracking-tight ${textMain}`}>Course Index</h3>
+                      <p className={`text-[11px] font-semibold tracking-wider text-indigo-600 dark:text-indigo-400 mt-0.5`}>Your Status</p>
                    </div>
                 </div>
 
-                <div className="overflow-y-auto flex-1 pr-4 space-y-3 custom-scrollbar">
+                <div className="overflow-y-auto flex-1 pr-2 space-y-2 custom-scrollbar">
                    {hierarchy.map(unit => {
                       const unitKey = String(unit.id);
                       const isUnitOpen = expandedUnits.has(unitKey);
                       const unitHasViewed = unit.lesson_plan_lessons?.some((l: any) => l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id)));
                       
                       return (
-                        <div key={unit.id} className="space-y-2">
+                        <div key={unit.id} className="space-y-1.5">
                          <button
                            onClick={() => toggleUnit(unitKey)}
-                           className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left group ${unitHasViewed ? 'bg-indigo-600/5 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group ${unitHasViewed ? 'bg-indigo-600/5 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                          >
-                             <div className={`w-1.5 h-6 rounded-full shrink-0 transition-all ${unitHasViewed ? 'bg-indigo-600 scale-y-110' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                             <h4 className={`text-xs font-bold flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600 dark:text-indigo-400' : textMain}`}>{unit.title}</h4>
-                             <ChevronDown size={14} className={`transition-transform duration-500 text-slate-300 ${isUnitOpen ? 'rotate-180' : ''}`} />
+                             <div className={`w-1 h-5 rounded-full shrink-0 transition-all ${unitHasViewed ? 'bg-indigo-600 scale-y-110' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                             <h4 className={`text-sm font-semibold flex-1 truncate font-bangla ${unitHasViewed ? 'text-indigo-600 dark:text-indigo-400' : textMain}`}>{unit.title}</h4>
+                             <ChevronDown size={14} className={`transition-transform duration-300 text-slate-400 ${isUnitOpen ? 'rotate-180' : ''}`} />
                          </button>
                          
                          {isUnitOpen && (
-                           <div className="space-y-4 pl-6 border-l-2 border-slate-50 dark:border-slate-800 ml-5 animate-in slide-in-from-top-2 duration-300">
+                           <div className="space-y-2 pl-4 border-l-2 border-slate-50 dark:border-slate-800 ml-3.5 animate-in slide-in-from-top-2 duration-300">
                             {unit.lesson_plan_lessons?.sort((a:any, b:any) => a.order_index - b.order_index).map((l: any) => {
                                const lessonKey = String(l.id);
                                const isLessonOpen = expandedLessons.has(lessonKey);
                                const lessonHasViewed = l.lesson_plan_contents?.some((c: any) => loadedContents.some(lc => lc.id === c.id));
 
                                return (
-                                 <div key={l.id} className="space-y-2">
+                                 <div key={l.id} className="space-y-1.5">
                                   <button
                                     onClick={() => toggleLesson(lessonKey)}
-                                    className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-400'}`}
+                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${lessonHasViewed ? 'text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-500'}`}
                                   >
-                                     <ChevronDown size={12} className={`transition-transform duration-500 ${isLessonOpen ? 'rotate-180' : ''}`} />
-                                     <span className="text-xs font-bold truncate flex-1 font-bangla">{l.title}</span>
+                                     <ChevronDown size={12} className={`transition-transform duration-300 ${isLessonOpen ? 'rotate-180' : ''}`} />
+                                     <span className="text-xs font-semibold truncate flex-1 font-bangla">{l.title}</span>
                                   </button>
 
                                   {isLessonOpen && (
-                                    <div className="space-y-1.5 pl-4">
+                                    <div className="space-y-1 pl-3">
                                      {l.lesson_plan_contents?.sort((a:any, b:any) => a.order_index - b.order_index).map((c: any) => {
                                       const isViewed = loadedContents.some(loaded => loaded.id === c.id);
                                       return (
@@ -450,7 +450,7 @@ export default function CurriculumContentClient({
                                              if (element) element.scrollIntoView({ behavior: 'smooth' });
                                              else window.location.href = `/curriculum/${subjectId}/${c.id}`;
                                           }}
-                                          className={`relative w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-bangla overflow-hidden group/item ${isViewed ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                          className={`relative w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all font-bangla overflow-hidden group/item ${isViewed ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                                         >
                                            <span className="truncate flex-1">{c.title}</span>
                                            {isViewed && <CheckCircle2 size={12} className="shrink-0" />}
@@ -469,8 +469,8 @@ export default function CurriculumContentClient({
                    })}
                 </div>
 
-                <div className="mt-10 pt-8 border-t border-slate-50 dark:border-slate-800">
-                    <Link href={`/curriculum/${subjectId}`} className="w-full flex items-center justify-center gap-3 py-5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-200 rounded-2xl text-xs font-bold tracking-widest hover:bg-slate-900 hover:text-white hover:border-transparent transition-all shadow-sm">
+                <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
+                    <Link href={`/curriculum/${subjectId}`} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-200 rounded-xl text-xs font-semibold tracking-wide hover:bg-slate-900 hover:text-white hover:border-transparent transition-all shadow-sm">
                         <ArrowRight size={14} className="rotate-180" /> Back to Subject
                     </Link>
                 </div>
