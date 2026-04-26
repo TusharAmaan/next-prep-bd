@@ -52,7 +52,7 @@ export default function LeaderboardPage() {
       let query = supabase
         .from('profiles')
         .select('id, full_name, batch, gamification_points, gamification_rank, avatar_url')
-        .gte('gamification_points', 10) // Minimum 10 points to show on leaderboard
+        .gte('gamification_points', 0) // Minimum 0 points to show on leaderboard
         .order('gamification_points', { ascending: false })
         .limit(50);
 
@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
 
         const { count } = await rankQuery;
         // Only count as ranked if user has >= 10 points
-        setCurrentUserRank(profile.gamification_points >= 10 ? (count || 0) + 1 : 0);
+        setCurrentUserRank(profile.gamification_points >= 0 ? (count || 0) + 1 : 0);
       }
 
     } catch (err) {
