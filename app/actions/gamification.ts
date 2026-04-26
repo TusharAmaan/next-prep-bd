@@ -141,3 +141,27 @@ export async function addGamificationPoints(userId: string, points: number, acti
     }]);
   }
 }
+
+export async function rewardProfileCompletion(userId: string) {
+  const supabase = await createClient();
+  
+  // Check if already rewarded
+  const { data: alreadyRewarded } = await supabase
+    .from('activity_logs')
+    .select('id')
+    .eq('actor_id', userId)
+    .eq('action_type', 'profile_completion_reward')
+    .single();
+
+  if (alreadyRewarded) return { success: false, message: "Already rewarded" };
+
+  await addGamificationPoints(userId, 50, "Completed profile to 100%");
+  
+  await supabase.from('activity_logs').insert([{
+    actor_id: userId,
+    action_type: 'profile_completion_reward',
+    details: "Earned 50 points for completing profile"
+  }]);
+
+  return { success: true, points: 50 };
+}

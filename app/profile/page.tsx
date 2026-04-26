@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [institution, setInstitution] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState(""); 
+  const [batch, setBatch] = useState(""); 
   
   // --- STUDENT SPECIFIC ---
   const [currentGoal, setCurrentGoal] = useState("");
@@ -89,6 +90,7 @@ export default function ProfilePage() {
         setInstitution(data.institution || "");
         setPhone(data.phone || "");
         setCity(data.city || "");
+        setBatch(data.batch || "");
         
         // Student
         setCurrentGoal(data.current_goal || "");
@@ -115,7 +117,7 @@ export default function ProfilePage() {
   const handleUpdate = async () => {
     setSaving(true);
     const updates: any = {
-        full_name: fullName, bio, institution, phone, city, 
+        full_name: fullName, bio, institution, phone, city, batch,
     };
 
     if (user?.role === 'student') {
@@ -303,6 +305,10 @@ export default function ProfilePage() {
                       <div>
                           <label className="text-xs font-bold text-blue-800/70 block mb-1.5 ml-1">Date of Birth</label>
                           <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200" />
+                      </div>
+                      <div>
+                          <label className="text-xs font-bold text-blue-800/70 block mb-1.5 ml-1">Current Batch</label>
+                          <input type="text" value={batch} onChange={(e) => setBatch(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. Batch 2026" />
                       </div>
                   </div>
               </div>

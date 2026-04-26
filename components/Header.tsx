@@ -541,7 +541,7 @@ export default function Header() {
         <div className={`p-5 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/30'}`}>
             {user ? (
                 <button onClick={handleLogout} className={`w-full flex items-center justify-center gap-2 py-3.5 font-bold rounded-xl transition-all active:scale-95 ${isDark ? 'bg-slate-800 border border-slate-700 text-red-400 hover:bg-red-900/20' : 'bg-white border border-slate-200 text-red-500 shadow-sm hover:bg-red-50'}`}>
-                    <LogOut className="w-4 h-4" /> Sign Out
+                    <LogOut className="w-4 h-4" /> Log Out
                 </button>
             ) : (
                 <div className="grid grid-cols-2 gap-3">

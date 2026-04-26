@@ -89,24 +89,13 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
       
       const manualIds = (accessData || []).map(a => a.lecture_sheet_id);
 
-      // Fetch sheets that are public OR in manualIds
-      let query = supabase
+      // Fetch sheets only if in manualIds
+      let { data: sheetsData } = await supabase
         .from('lecture_sheets')
         .select('*, segments(title), groups(title), subjects(title)')
-        .eq('is_published', true);
+        .in('id', manualIds);
       
-      const { data: sheetsData } = await query;
-      
-      // Filter by access_type and manual access (Professional Handling)
-      const eligible = (sheetsData || []).filter(s => {
-        if (s.access_type === 'public') return true;
-        if (manualIds.includes(s.id)) return true;
-        // Batch restricted logic
-        if (s.access_type === 'restricted' && user.batch && s.allowed_batches?.includes(user.batch)) return true;
-        return false;
-      });
-      
-      setAvailableSheets(eligible);
+      setAvailableSheets(sheetsData || []);
     } catch (err) {
       console.error("Error fetching student sheets:", err);
     } finally {

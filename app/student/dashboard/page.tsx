@@ -28,11 +28,15 @@ import {
   Search as SearchIcon,
   Library,
   Users,
-  HelpCircle
+  HelpCircle,
+  Trash2 as TrashIcon,
+  ThumbsUp,
+  MessageCircle
 } from "lucide-react";
 import StudentLectureSheets from "@/components/lecture-sheets/StudentLectureSheets";
 import BookmarkButton from "@/components/shared/BookmarkButton";
-import { processDailyGamification } from "@/app/actions/gamification";
+import { processDailyGamification, rewardProfileCompletion } from "@/app/actions/gamification";
+import { toast } from "sonner";
 
 // --- Types ---
 interface Profile {
@@ -47,6 +51,8 @@ interface Profile {
   phone?: string;
   institution?: string;
   city?: string;
+  bio?: string;
+  date_of_birth?: string;
   current_streak?: number;
   gamification_points?: number;
   gamification_rank?: string;
@@ -57,6 +63,8 @@ interface ActivityLog {
   action_type: string;
   details: string;
   created_at: string;
+  item_id?: number;
+  item_title?: string;
 }
 
 interface Course {
@@ -160,16 +168,31 @@ export default function ModernStudentDashboard() {
     if (!profile) return 0;
     const fields = [
       profile.full_name,
-      profile.email,
-      profile.current_goal,
-      profile.batch,
       profile.phone,
       profile.institution,
-      profile.city
+      profile.current_goal,
+      profile.batch,
+      profile.city,
+      profile.bio,
+      profile.date_of_birth
     ];
-    const filled = fields.filter(f => f && f.trim() !== "").length;
+    const filled = fields.filter(f => {
+      if (typeof f === 'string') return f.trim() !== "";
+      return f !== null && f !== undefined;
+    }).length;
     return Math.round((filled / fields.length) * 100);
   }, [profile]);
+
+  const handleClaimProfileReward = async () => {
+    if (!profile || profileProgress < 100) return;
+    const res = await rewardProfileCompletion(profile.id);
+    if (res.success) {
+      toast.success("Awesome! You earned 50 points for completing your profile.");
+      fetchDashboardData();
+    } else {
+      toast.error(res.message || "Failed to claim reward");
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -191,14 +214,14 @@ export default function ModernStudentDashboard() {
         .eq("id", userId)
         .single();
       if (profileData) {
-  setProfile(profileData as Profile);
-  // Role-based redirect after profile is loaded
-  if (profileData.role === 'admin') {
-    router.replace('/admin');
-  } else if (profileData.role === 'editor') {
-    router.replace('/editor/dashboard');
-  }
-}
+        setProfile(profileData as Profile);
+        // Role-based redirect after profile is loaded
+        if (profileData.role === 'admin') {
+          router.replace('/admin');
+        } else if (profileData.role === 'editor') {
+          router.replace('/editor/dashboard');
+        }
+      }
 
       // 2. Fetch Enrolled Courses
       // We check the 'course_enrollments' table (aligned with schema)
@@ -260,14 +283,19 @@ export default function ModernStudentDashboard() {
         })));
       }
 
-      // 5. Fetch Exams
+      // 5. Fetch Official Exams (Mock Tests)
       const { data: examsData } = await supabase
-        .from("exam_papers")
-        .select("id, title, duration, total_marks, created_at, is_finalized")
-        .eq("user_id", userId)
+        .from("exams")
+        .select("id, title, duration_minutes, total_marks, created_at, status")
+        .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(5);
-      if (examsData) setExams(examsData as ExamPaper[]);
+      if (examsData) {
+        setExams((examsData as any[]).map(e => ({
+          ...e,
+          duration: `${e.duration_minutes}m`
+        })));
+      }
 
       // 6. Fetch Badges
       const { data: badgesData } = await supabase
@@ -276,6 +304,31 @@ export default function ModernStudentDashboard() {
         .eq("user_id", userId)
         .order("awarded_at", { ascending: false });
       if (badgesData) setBadges(badgesData as unknown as UserBadge[]);
+
+      // 7. Fetch Likes & Comments for Activity Log
+      const [likesRes, commentsRes] = await Promise.all([
+        supabase.from('likes').select('id, created_at, resource_id, resources(title)').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
+        supabase.from('comments').select('id, content, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5)
+      ]);
+
+      const combinedActivities: ActivityLog[] = [
+        ...(likesRes.data || []).map(l => ({
+          id: l.id,
+          action_type: 'like',
+          details: `Liked: ${(Array.isArray(l.resources) ? l.resources[0]?.title : (l.resources as any)?.title) || 'a resource'}`,
+          created_at: l.created_at,
+          item_id: l.id
+        })),
+        ...(commentsRes.data || []).map(c => ({
+          id: c.id,
+          action_type: 'comment',
+          details: `Commented: "${c.content.substring(0, 30)}..."`,
+          created_at: c.created_at,
+          item_id: c.id
+        }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
+
+      setActivities(combinedActivities);
 
       // Pre-calculate stats
       setStats({
@@ -292,118 +345,84 @@ export default function ModernStudentDashboard() {
     }
   };
 
+  const handleRemoveActivity = async (id: number, type: string) => {
+    if (!confirm(`Are you sure you want to remove this ${type}?`)) return;
+    try {
+      const table = type === 'like' ? 'likes' : 'comments';
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) throw error;
+      toast.success(`${type} removed`);
+      fetchDashboardData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
-        <h2 className="text-xl font-semibold text-slate-700">Loading your workspace...</h2>
-        <p className="text-slate-500 mt-2">Preparing your learning journey</p>
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300">Setting things up...</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Getting your dashboard ready</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFBFD] pt-28 pb-20 font-sans selection:bg-indigo-100 selection:text-indigo-900 relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-28 pb-20 font-sans selection:bg-indigo-100 selection:text-indigo-900 relative">
       <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay pointer-events-none z-0"></div>
-      <div className="absolute top-0 right-0 w-[1000px] h-[700px] bg-gradient-to-bl from-indigo-200/40 via-purple-200/20 to-transparent blur-[120px] pointer-events-none z-0" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         
-        {/* --- Header Section (Bento Grid Hero) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {/* Welcome Card */}
-          <div className="md:col-span-2 bg-gradient-to-br from-[#0B1120] via-[#1E1B4B] to-[#312E81] rounded-[2.5rem] p-10 md:p-14 text-white shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
-              <GraduationCap className="w-64 h-64" />
-            </div>
-            
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-8">
-                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-bold tracking-widest backdrop-blur-md">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    {profile?.subscription_plan === "premium" ? "Premium Scholar" : "Active Learner"}
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold tracking-widest backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                    🔥 {profile?.current_streak || 0} Day Streak
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold tracking-widest backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                    <Trophy className="w-4 h-4 text-purple-400" />
-                    {profile?.gamification_rank || "Novice"} ({profile?.gamification_points || 0} pts)
-                  </span>
-                </div>
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 leading-tight text-white">
-                  Welcome back,<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">{profile?.full_name?.split(" ")[0] || "Student"}</span>! 🚀
-                </h1>
-                <p className="text-indigo-200/80 text-lg max-w-xl leading-relaxed font-medium">
-                  {profile?.current_goal 
-                    ? `Your current goal: ${profile.current_goal}. Let's crush it today.`
-                    : "Ready to conquer new challenges? Pick up right where you left off."}
-                </p>
+        {/* --- Top Nav (Simple) --- */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <div>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Hey, {profile?.full_name?.split(" ")[0] || "Learner"} 👋
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Ready to crush your goals today?</p>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
+                 <span className="text-amber-500 font-black">🔥 {profile?.current_streak || 0}</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-100 dark:border-slate-800 pl-2">Streak</span>
               </div>
-              <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                <button className="w-full sm:w-auto px-8 py-4 bg-white text-indigo-950 font-bold rounded-2xl hover:bg-slate-50 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] flex items-center justify-center gap-3 active:scale-95 transform">
-                  <PlayCircle className="w-6 h-6 text-indigo-600" /> Resume Learning
-                </button>
-                <button className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md active:scale-95">
-                  <Target className="w-6 h-6 text-purple-300" /> View Targets
-                </button>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
+                 <Trophy className="w-4 h-4 text-purple-500" />
+                 <span className="text-slate-900 dark:text-white font-black">{profile?.gamification_points || 0}</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-100 dark:border-slate-800 pl-2">{profile?.gamification_rank}</span>
               </div>
-            </div>
-          </div>
-
-          {/* Quick Real-time Stats Card */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
-              <h3 className="text-slate-900 font-bold text-lg flex items-center gap-3 tracking-tight">
-                <Activity className="w-6 h-6 text-emerald-500" /> Activity Pulse
-              </h3>
-            </div>
-            <div className="space-y-6 flex-1 flex flex-col justify-center">
-              <div className="flex items-center justify-between group cursor-default">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                    <BookOpen className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 text-3xl leading-none">{stats.coursesCount}</p>
-                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Active Courses</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between group cursor-default">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                    <Calendar className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 text-3xl leading-none">{stats.examsCount}</p>
-                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Exams Taken</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between group cursor-default">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
-                    <Trophy className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 text-3xl leading-none">{badges.length}</p>
-                    <p className="text-[11px] text-slate-400 font-bold tracking-widest mt-1">Badges Earned</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+           </div>
         </div>
 
-        {/* --- Navigation Tabs (Pill style) --- */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-6 sticky top-16 md:top-20 z-40 bg-[#FAFBFD]/90 backdrop-blur-md -mx-4 px-4 md:mx-0 md:px-0">
+        {/* --- Quick Overview (Compact Pulse) --- */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+           {[
+             { label: 'Courses', value: stats.coursesCount, icon: BookOpen, color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' },
+             { label: 'Mock Tests', value: stats.examsCount, icon: GraduationCap, color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' },
+             { label: 'Rank', value: profile?.gamification_rank || 'N/A', icon: Target, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' },
+             { label: 'Badges', value: badges.length, icon: Award, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
+           ].map(stat => (
+             <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${stat.color}`}>
+                   <stat.icon className="w-6 h-6" />
+                </div>
+                <div>
+                   <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stat.value}</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                </div>
+             </div>
+           ))}
+        </div>
+
+        {/* --- Navigation Tabs --- */}
+        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2 sticky top-16 md:top-20 z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md -mx-4 px-4 md:mx-0 md:px-0">
           {[
-            { id: "overview", label: "Overview", icon: BarChart3 },
+            { id: "overview", label: "My Hub", icon: BarChart3 },
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "lecture_sheets", label: "Sheets", icon: FileText },
-            { id: "exams", label: "Exams", icon: Award },
-            { id: "bookmarks", label: "Library", icon: Library },
+            { id: "exams", label: "Mock Tests", icon: Award },
+            { id: "bookmarks", label: "Saved", icon: Library },
             { id: "achievements", label: "Badges", icon: Trophy },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -412,13 +431,13 @@ export default function ModernStudentDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
                   isActive 
-                    ? "bg-slate-900 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] -translate-y-1" 
-                    : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-100 hover:border-slate-200 shadow-sm"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg -translate-y-1" 
+                    : "bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-100 dark:border-slate-800 shadow-sm"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                <Icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
                 {tab.label}
               </button>
             );
@@ -482,35 +501,43 @@ export default function ModernStudentDashboard() {
                   </div>
                 </section>
 
-                {/* Profile Completeness */}
+                {/* Profile Progress */}
                 {profileProgress < 100 ? (
-                  <section className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <section className="bg-white dark:bg-slate-900 p-8 md:p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-xl font-bold text-slate-900">Profile Progress</h2>
-                        <p className="text-slate-500 text-sm mt-1">Complete your profile to unlock full features.</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Profile Progress</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Complete your profile to unlock rewards and full features.</p>
                       </div>
-                      <div className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                      <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
                         {profileProgress}%
                       </div>
                     </div>
-                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner mb-6">
+                    <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner mb-6">
                       <div 
                         className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
                         style={{ width: `${profileProgress}%` }}
                       ></div>
                     </div>
-                    <Link href="/profile" className="inline-block w-full text-center px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors">
-                      Complete Profile Now
+                    <Link href="/profile" className="inline-block w-full text-center px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-all">
+                      Go to Profile
                     </Link>
                   </section>
                 ) : (
                   <section className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 md:p-10 rounded-[2.5rem] border border-indigo-500 shadow-2xl text-white relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
                     <div className="relative z-10 flex flex-col justify-between h-full">
-                      <div>
-                        <h2 className="text-2xl font-bold mb-2">Ready to Study?</h2>
-                        <p className="text-indigo-100 text-sm leading-relaxed mb-8">Access your personalized curriculum built specifically for {profile?.batch || "your goal"}.</p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h2 className="text-2xl font-bold mb-2">Ready to Study?</h2>
+                          <p className="text-indigo-100 text-sm leading-relaxed mb-8">Access your personalized curriculum built specifically for {profile?.batch || "your goal"}.</p>
+                        </div>
+                        <button 
+                          onClick={handleClaimProfileReward}
+                          className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold transition-all"
+                        >
+                           Claim Bonus
+                        </button>
                       </div>
                       <Link href={`/curriculum?batch=${profile?.batch || ''}`} className="w-full text-center px-6 py-4 bg-white text-indigo-900 font-black rounded-xl hover:bg-slate-50 transition-colors shadow-xl active:scale-95 flex justify-center items-center gap-2">
                         <BookOpen className="w-5 h-5" /> Visit Lesson Plan
@@ -528,11 +555,11 @@ export default function ModernStudentDashboard() {
                     <History className="w-6 h-6 text-indigo-500" /> Recent Exams
                   </h3>
                   <div className="space-y-4">
-                    {exams.slice(0, 3).map(exam => (
-                      <div key={exam.id} className="group cursor-pointer p-4 rounded-2xl hover:bg-slate-50 transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2 pr-4">{exam.title}</p>
-                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded inline-block whitespace-nowrap">{exam.total_marks} Pts</span>
+                    {exams.slice(0, 5).map((exam) => (
+                      <div key={exam.id} className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm line-clamp-1">{exam.title}</h4>
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded inline-block whitespace-nowrap">{exam.total_marks} Pts</span>
                         </div>
                         <div className="flex items-center gap-4 text-xs font-bold text-slate-400 tracking-wide">
                           <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {new Date(exam.created_at).toLocaleDateString()}</span>
@@ -545,21 +572,28 @@ export default function ModernStudentDashboard() {
                 </div>
 
                 {/* Recent Activity Timeline */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                    <Activity className="w-6 h-6 text-blue-500" /> Activity Log
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                    <Activity className="w-6 h-6 text-blue-500" /> Recent Activity
                   </h3>
-                  <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                    {activities.map((act, i) => (
-                      <div key={act.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-indigo-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10"></div>
-                        <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] bg-slate-50 p-3 rounded border border-slate-100 shadow-sm ml-4 md:ml-0 md:mr-4 md:group-odd:ml-4 md:group-odd:mr-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-slate-800 text-sm capitalize">{act.action_type.replace(/_/g, " ")}</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mb-2 truncate" title={act.details}>{act.details || "Activity recorded"}</p>
-                          <span className="text-[10px] font-semibold text-slate-400">{new Date(act.created_at).toLocaleDateString()}</span>
+                  <div className="space-y-4">
+                    {activities.map((act) => (
+                      <div key={`${act.action_type}-${act.id}`} className="group flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                        <div className="flex items-center gap-4 min-w-0">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${act.action_type === 'like' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20'}`}>
+                              {act.action_type === 'like' ? <ThumbsUp className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
+                           </div>
+                           <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{act.details}</p>
+                              <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">{new Date(act.created_at).toLocaleDateString()}</p>
+                           </div>
                         </div>
+                        <button 
+                          onClick={() => handleRemoveActivity(act.id, act.action_type)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all"
+                        >
+                           <TrashIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                     {activities.length === 0 && <p className="text-sm text-slate-500 text-center py-4">No recent activity.</p>}
@@ -775,12 +809,20 @@ export default function ModernStudentDashboard() {
           {/* ACHIEVEMENTS TAB */}
           {activeTab === "achievements" && (
             <div className="space-y-12">
-              <div className="text-center md:text-left max-w-2xl px-2">
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 text-[11px] font-bold rounded-full mb-3">
-                   <Trophy className="w-3.5 h-3.5" /> Hall of Fame
-                </span>
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tighter leading-none mb-3">Personal Achievements</h2>
-                <p className="text-slate-500 font-medium text-sm md:text-base">Track your milestones and showcase your dedication to excellence.</p>
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
+                <div className="max-w-2xl">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 text-[11px] font-bold rounded-full mb-3 uppercase tracking-widest">
+                     <Trophy className="w-3.5 h-3.5" /> Achievements
+                  </span>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none mb-3">Your Badges</h2>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium text-sm md:text-base">Milestones you've reached during your learning journey.</p>
+                </div>
+                <Link 
+                  href="/student/leaderboard"
+                  className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200 dark:shadow-none"
+                >
+                   <Trophy className="w-5 h-5" /> View Leaderboard
+                </Link>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8">

@@ -52,6 +52,7 @@ export default function LeaderboardPage() {
       let query = supabase
         .from('profiles')
         .select('id, full_name, batch, gamification_points, gamification_rank, avatar_url')
+        .gte('gamification_points', 10) // Minimum 10 points to show on leaderboard
         .order('gamification_points', { ascending: false })
         .limit(50);
 
@@ -74,7 +75,8 @@ export default function LeaderboardPage() {
         }
 
         const { count } = await rankQuery;
-        setCurrentUserRank((count || 0) + 1);
+        // Only count as ranked if user has >= 10 points
+        setCurrentUserRank(profile.gamification_points >= 10 ? (count || 0) + 1 : 0);
       }
 
     } catch (err) {
@@ -108,12 +110,28 @@ export default function LeaderboardPage() {
                 <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
                   <Trophy className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Hall of Fame</h1>
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Hall of Fame</h1>
               </div>
-              <p className="text-slate-500 font-medium">Compete, earn points, and climb the ranks.</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Compete, earn points, and climb the ranks.</p>
+            </div>
+
+            {/* Rank Overview - Concise */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-wrap gap-4 items-center justify-center md:justify-start">
+               {[
+                 { label: 'Novice', pts: '0+', color: 'text-slate-400' },
+                 { label: 'Scholar', pts: '100+', color: 'text-indigo-400' },
+                 { label: 'Expert', pts: '250+', color: 'text-emerald-400' },
+                 { label: 'Master', pts: '500+', color: 'text-amber-400' },
+                 { label: 'Grandmaster', pts: '1000+', color: 'text-rose-500' },
+               ].map(r => (
+                 <div key={r.label} className="text-center">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${r.color}`}>{r.label}</p>
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500">{r.pts} pts</p>
+                 </div>
+               ))}
             </div>
             
-            <div className="flex bg-slate-200/50 p-1 rounded-xl w-full md:w-auto">
+            <div className="flex bg-slate-200/50 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto shrink-0">
               <button 
                 onClick={() => setFilter("global")}
                 className={`flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${filter === "global" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
