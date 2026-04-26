@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import StudentLectureSheets from "@/components/lecture-sheets/StudentLectureSheets";
 import BookmarkButton from "@/components/shared/BookmarkButton";
+import { processDailyGamification } from "@/app/actions/gamification";
 
 // --- Types ---
 interface Profile {
@@ -43,6 +44,12 @@ interface Profile {
   current_goal?: string;
   batch?: string;
   subscription_plan?: string;
+  phone?: string;
+  institution?: string;
+  city?: string;
+  current_streak?: number;
+  gamification_points?: number;
+  gamification_rank?: string;
 }
 
 interface ActivityLog {
@@ -123,6 +130,16 @@ export default function ModernStudentDashboard() {
     });
   }, [bookmarks, searchTerm, libraryFilter]);
 
+  const groupedBookmarks = useMemo(() => {
+    const groups: Record<string, typeof filteredBookmarks> = {};
+    filteredBookmarks.forEach(b => {
+      const type = b.type;
+      if (!groups[type]) groups[type] = [];
+      groups[type].push(b);
+    });
+    return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+  }, [filteredBookmarks]);
+
   const getLibraryLink = (type: string, id: number) => {
     switch(type) {
       case 'course': return `/courses/${id}`;
@@ -139,6 +156,21 @@ export default function ModernStudentDashboard() {
     fetchDashboardData();
   }, []);
 
+  const profileProgress = useMemo(() => {
+    if (!profile) return 0;
+    const fields = [
+      profile.full_name,
+      profile.email,
+      profile.current_goal,
+      profile.batch,
+      profile.phone,
+      profile.institution,
+      profile.city
+    ];
+    const filled = fields.filter(f => f && f.trim() !== "").length;
+    return Math.round((filled / fields.length) * 100);
+  }, [profile]);
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -148,6 +180,9 @@ export default function ModernStudentDashboard() {
         return;
       }
       const userId = userData.user.id;
+
+      // 0. Process Gamification Daily Login
+      await processDailyGamification(userId);
 
       // 1. Fetch Profile
       const { data: profileData } = await supabase
@@ -283,10 +318,19 @@ export default function ModernStudentDashboard() {
             
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-bold tracking-widest mb-8 backdrop-blur-md">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  {profile?.subscription_plan === "premium" ? "Premium Scholar" : "Active Learner"}
-                </span>
+                <div className="flex flex-wrap items-center gap-2 mb-8">
+                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-200 text-xs font-bold tracking-widest backdrop-blur-md">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    {profile?.subscription_plan === "premium" ? "Premium Scholar" : "Active Learner"}
+                  </span>
+                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold tracking-widest backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                    🔥 {profile?.current_streak || 0} Day Streak
+                  </span>
+                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold tracking-widest backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                    <Trophy className="w-4 h-4 text-purple-400" />
+                    {profile?.gamification_rank || "Novice"} ({profile?.gamification_points || 0} pts)
+                  </span>
+                </div>
                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 leading-tight text-white">
                   Welcome back,<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">{profile?.full_name?.split(" ")[0] || "Student"}</span>! 🚀
                 </h1>
@@ -438,34 +482,42 @@ export default function ModernStudentDashboard() {
                   </div>
                 </section>
 
-                {/* Performance Chart (Mock Implementation) */}
-                <section className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold text-slate-900">Performance Over Time</h2>
-                      <p className="text-slate-500 text-sm mt-1">Your mock test scores this month</p>
-                    </div>
-                    <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" /> +12%
-                    </div>
-                  </div>
-                  <div className="h-48 flex items-end justify-between gap-2 px-2">
-                    {[40, 55, 48, 65, 75, 82, stats.averageScore].map((h, i) => (
-                      <div key={i} className="w-full bg-indigo-50 rounded-t-lg relative group">
-                        <div 
-                          className="absolute bottom-0 w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg transition-all duration-700 group-hover:opacity-90"
-                          style={{ height: `${h}%` }}
-                        ></div>
-                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity">
-                          {h}%
-                        </div>
+                {/* Profile Completeness */}
+                {profileProgress < 100 ? (
+                  <section className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900">Profile Progress</h2>
+                        <p className="text-slate-500 text-sm mt-1">Complete your profile to unlock full features.</p>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-400 mt-4 px-2">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span>
-                  </div>
-                </section>
+                      <div className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                        {profileProgress}%
+                      </div>
+                    </div>
+                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner mb-6">
+                      <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
+                        style={{ width: `${profileProgress}%` }}
+                      ></div>
+                    </div>
+                    <Link href="/profile" className="inline-block w-full text-center px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors">
+                      Complete Profile Now
+                    </Link>
+                  </section>
+                ) : (
+                  <section className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 md:p-10 rounded-[2.5rem] border border-indigo-500 shadow-2xl text-white relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                    <div className="relative z-10 flex flex-col justify-between h-full">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">Ready to Study?</h2>
+                        <p className="text-indigo-100 text-sm leading-relaxed mb-8">Access your personalized curriculum built specifically for {profile?.batch || "your goal"}.</p>
+                      </div>
+                      <Link href={`/curriculum?batch=${profile?.batch || ''}`} className="w-full text-center px-6 py-4 bg-white text-indigo-900 font-black rounded-xl hover:bg-slate-50 transition-colors shadow-xl active:scale-95 flex justify-center items-center gap-2">
+                        <BookOpen className="w-5 h-5" /> Visit Lesson Plan
+                      </Link>
+                    </div>
+                  </section>
+                )}
               </div>
 
               {/* Sidebar (Right) */}
@@ -650,43 +702,58 @@ export default function ModernStudentDashboard() {
                  ))}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredBookmarks.map((bkm) => (
-                  <div key={bkm.id} className="bg-white rounded-3xl p-6 border border-slate-100 hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm flex flex-col h-full focus-within:ring-2 focus-within:ring-indigo-200">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                        {bkm.type === "question" ? <HelpCircle className="w-8 h-8" /> : (bkm.type === "course" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "ebook" ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />))}
+              {/* Grouped Bookmarks */}
+              <div className="space-y-12">
+                {groupedBookmarks.map(([type, items]) => (
+                  <div key={type} className="space-y-4">
+                    <h3 className="text-lg font-bold text-slate-800 tracking-tight capitalize flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        {type === "question" ? <HelpCircle className="w-4 h-4" /> : (type === "course" ? <PlayCircle className="w-4 h-4" /> : (type === "ebook" ? <BookOpen className="w-4 h-4" /> : <FileText className="w-4 h-4" />))}
                       </div>
-                      <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} metadata={{ title: bkm.title }} />
-                    </div>
-                    <div className="space-y-4 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">{bkm.type.replace('_', ' ')}</span>
+                      {type.replace('_', ' ')}s
+                      <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
+                    </h3>
+                    
+                    <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 gap-6 snap-x snap-mandatory custom-scrollbar">
+                      {items.map((bkm) => (
+                        <div key={bkm.id} className="min-w-[280px] md:min-w-[320px] max-w-[320px] snap-center bg-white rounded-3xl p-6 border border-slate-100 hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm flex flex-col focus-within:ring-2 focus-within:ring-indigo-200">
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                              {bkm.type === "question" ? <HelpCircle className="w-8 h-8" /> : (bkm.type === "course" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "ebook" ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />))}
+                            </div>
+                            <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} metadata={{ title: bkm.title }} />
+                          </div>
+                          <div className="space-y-4 flex-1 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">{bkm.type.replace('_', ' ')}</span>
+                              </div>
+                              <Link 
+                                  href={getLibraryLink(bkm.type, bkm.resource_id)}
+                                  className="block"
+                              >
+                                <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight leading-tight line-clamp-2">
+                                   {bkm.title}
+                                </h3>
+                              </Link>
+                            </div>
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
+                              <span className="text-[11px] font-bold text-slate-400">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
+                              <Link 
+                                 href={getLibraryLink(bkm.type, bkm.resource_id)}
+                                 className="text-xs font-bold text-slate-900 hover:text-indigo-600 tracking-widest transition-colors flex items-center gap-1 group/btn"
+                              >
+                                 View <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                              </Link>
+                            </div>
+                          </div>
                         </div>
-                        <Link 
-                            href={getLibraryLink(bkm.type, bkm.resource_id)}
-                            className="block"
-                        >
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight leading-tight line-clamp-2">
-                             {bkm.title}
-                          </h3>
-                        </Link>
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
-                        <span className="text-[11px] font-bold text-slate-400">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
-                        <Link 
-                           href={getLibraryLink(bkm.type, bkm.resource_id)}
-                           className="text-xs font-bold text-slate-900 hover:text-indigo-600 tracking-widest transition-colors flex items-center gap-1 group/btn"
-                        >
-                           View <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                        </Link>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 ))}
-                
-                {filteredBookmarks.length === 0 && bookmarks.length > 0 && (
+
+                {groupedBookmarks.length === 0 && bookmarks.length > 0 && (
                   <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                     <SearchIcon className="w-16 h-16 text-slate-100 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-slate-900 tracking-tight">No results found</h3>

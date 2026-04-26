@@ -229,12 +229,24 @@ const StudentLectureSheets: React.FC<StudentLectureSheetsProps> = ({ user }) => 
            </button>
         </div>
         
+        <div className="hidden md:block">
+          <button 
+            onClick={() => setShowRequestModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-100 active:scale-95 text-base"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Ask Lecture Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-24 right-4 z-50">
         <button 
           onClick={() => setShowRequestModal(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 md:px-6 py-3 rounded-xl md:2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-100 active:scale-95 text-sm md:text-base"
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-full shadow-[0_8px_30px_rgba(79,70,229,0.4)] flex items-center justify-center transition-all active:scale-95"
         >
-          <Plus className="w-5 h-5" />
-          <span className="md:inline">Ask Lecture Sheet</span>
+          <Plus className="w-8 h-8" />
         </button>
       </div>
 
