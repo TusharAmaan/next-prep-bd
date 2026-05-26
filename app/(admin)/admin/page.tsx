@@ -7,7 +7,7 @@ import { useTheme } from "@/components/shared/ThemeProvider";
 import AnalyticsChart from "@/components/admin/dashboard/AnalyticsChart";
 import { 
   LayoutDashboard, FileText, Users, Layers, BookOpen, 
-  Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, RefreshCw, 
+  Bell, FileStack, Settings, HelpCircle, X, Clock, MessageSquare, ShieldAlert, RefreshCw, 
   AlertTriangle, Database, GraduationCap, Newspaper, Palette, Heart, TrendingUp, DollarSign, UserCheck, Menu, Search, ChevronRight, Moon, Sun, Monitor, Mail, CheckCircle2 as LucideCheckCircle2,
   Calendar, Award, AlertCircle
 } from "lucide-react";
@@ -36,6 +36,7 @@ import CertificateDesigner from "@/components/admin/sections/CertificateDesigner
 import DonationManager from "@/components/admin/sections/DonationManager";
 import NewsletterManager from "@/components/admin/sections/NewsletterManager";
 import ExamManager from "@/components/admin/sections/ExamManager";
+import ForumManager from "@/components/admin/sections/ForumManager";
 
 
 const getMonthRanges = () => {
@@ -60,7 +61,8 @@ export default function AdminDashboard() {
         questions: { total: 0, trend: 0 },
         donations: { total: 0, count: 0 },
         users: { total: 0, trend: 0 },
-        pendingCount: 0
+        pendingCount: 0,
+        pendingReportsCount: 0
     });
     const [activities, setActivities] = useState<any[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]); 
@@ -91,7 +93,8 @@ export default function AdminDashboard() {
                 matTotal, quesTotal, userTotal, donationData,
                 matLast, quesLast, userLast,
                 recentUsers, recentResources, recentNews,
-                sysUpdate, recentFeedbacks, pendingReviews
+                sysUpdate, recentFeedbacks, pendingReviews,
+                pendingReports
             ] = await Promise.all([
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
                 supabase.from("question_bank").select('*', { count: 'exact', head: true }),
@@ -108,7 +111,8 @@ export default function AdminDashboard() {
 
                 supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single(),
                 supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10),
-                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('status', 'pending')
+                supabase.from("resources").select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+                supabase.from("forum_moderation_reports").select('*', { count: 'exact', head: true }).eq('status', 'pending')
             ]);
 
             const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
@@ -119,7 +123,8 @@ export default function AdminDashboard() {
                 questions: { total: quesTotal.count || 0, trend: calcTrend(quesTotal.count || 0, quesLast.count || 0) },
                 donations: { total: totalDonation, count: donationData.data?.length || 0 },
                 users: { total: userTotal.count || 0, trend: calcTrend(userTotal.count || 0, userLast.count || 0) },
-                pendingCount: (pendingReviews.count || 0)
+                pendingCount: (pendingReviews.count || 0),
+                pendingReportsCount: (pendingReports.count || 0)
             });
 
             const rawActivities = [
@@ -202,6 +207,7 @@ export default function AdminDashboard() {
       {
         label: 'Community & Growth',
         items: [
+          { id: 'forum_manager', label: 'Forum Moderator', icon: ShieldAlert, badge: stats.pendingReportsCount },
           { id: 'discussion', label: 'Student Discussions', icon: MessageSquare },
           { id: 'newsletter', label: 'Newsletter', icon: Mail },
           { id: 'donations', label: 'Donation Hub', icon: Heart },
@@ -444,6 +450,7 @@ export default function AdminDashboard() {
                       {activeTab === 'courses' && <CourseManager darkMode={isDark} />}
                       {activeTab === 'exams' && <ExamManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} /> }
                       {activeTab === 'feedback' && <FeedbackManager darkMode={isDark} />}
+                      {activeTab === 'forum_manager' && <ForumManager darkMode={isDark} />}
                       {activeTab === 'discussion' && <div className="p-6 h-full bg-white dark:bg-[#1a1d2d] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"><Discussion itemType="admin" itemId="admin" /></div>}
                       {activeTab === 'news' && <ContentManager activeTab="news" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                       {activeTab === 'materials' && <ContentManager activeTab="materials" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}

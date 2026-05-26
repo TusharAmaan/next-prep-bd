@@ -288,6 +288,7 @@ export default function Header() {
 
             <NavLink href="/courses">Courses</NavLink>
             <NavLink href="/ebooks">eBooks</NavLink>
+            <NavLink href="/forum">Forum</NavLink>
             
             {/* More Dropdown */}
             <div className="relative" ref={moreRef}>
@@ -492,6 +493,10 @@ export default function Header() {
 
                 <Link href="/curriculum" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${pathname?.startsWith("/curriculum") ? (isDark ? 'bg-indigo-900/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600') : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}>
                     <BookOpen className="w-5 h-5"/> Lesson Plans
+                </Link>
+
+                <Link href="/forum" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${pathname?.startsWith("/forum") ? (isDark ? 'bg-indigo-900/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600') : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}>
+                    <MessageSquare className="w-5 h-5"/> Forum
                 </Link>
                 
                 {user && (
