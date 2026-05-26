@@ -10,7 +10,7 @@ import CommentSection from '@/components/forum/CommentSection';
 export const revalidate = 60; 
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // 1. Fetch data logic
@@ -96,7 +96,8 @@ async function fetchThreadData(id: string) {
 
 // 2. SEO: Dynamic Metadata & Canonical
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = await fetchThreadData(params.id);
+  const resolvedParams = await params;
+  const data = await fetchThreadData(resolvedParams.id);
   if (!data || !data.thread) return { title: 'Thread Not Found' };
 
   const { thread } = data;
@@ -107,14 +108,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${thread.title} | NextPrepBD Forum`,
     description: cleanDescription,
     alternates: {
-      canonical: `https://nextprepbd.com/forum/thread/${params.id}`,
+      canonical: `https://nextprepbd.com/forum/thread/${resolvedParams.id}`,
     },
   };
 }
 
 // 3. Page Component
 export default async function ForumThreadPage({ params }: Props) {
-  const data = await fetchThreadData(params.id);
+  const resolvedParams = await params;
+  const data = await fetchThreadData(resolvedParams.id);
   
   if (!data || data.error || !data.thread) {
     return (
@@ -130,7 +132,7 @@ export default async function ForumThreadPage({ params }: Props) {
           {data?.error || "Discussion thread could not be retrieved."}
         </div>
         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-6 font-semibold uppercase tracking-wider">
-          Thread ID: {params.id}
+          Thread ID: {resolvedParams.id}
         </p>
       </div>
     );
