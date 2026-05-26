@@ -17,30 +17,66 @@ interface Props {
 async function fetchThreadData(id: string) {
   const supabase = await createClient();
 
-  const { data: thread, error } = await supabase
+  // 1. Fetch main thread details (same simple query that succeeds on homepage)
+  const { data: thread, error: threadError } = await supabase
     .from('forum_threads')
     .select(`
       *,
       author:profiles!forum_threads_author_id_fkey(id, full_name, gamification_rank),
       segment:segments(title),
       group:groups(title),
-      subject:subjects(title),
-      questions:forum_thread_questions!thread_id(
-        order_index,
-        question:question_bank!question_bank_id(id, question_text, explanation, options:question_options!question_id(id, option_text, is_correct))
-      )
+      subject:subjects(title)
     `)
     .eq('id', id)
     .single();
 
-  if (error) {
-    console.error("Error in fetchThreadData:", error);
+  if (threadError) {
+    console.error("Error in fetchThreadData (thread query):", threadError);
+    return null;
+  }
+  if (!thread) return null;
+
+  // 2. Fetch linked questions separately (resilient to schema/relation/RLS variations)
+  thread.questions = [];
+  try {
+    const { data: mappings, error: mapError } = await supabase
+      .from('forum_thread_questions')
+      .select('question_bank_id, order_index')
+      .eq('thread_id', id);
+
+    if (!mapError && mappings && mappings.length > 0) {
+      const qIds = mappings.map((m: any) => m.question_bank_id);
+      
+      const { data: questions, error: qError } = await supabase
+        .from('question_bank')
+        .select(`
+          id, 
+          question_text, 
+          explanation, 
+          options:question_options(id, option_text, is_correct)
+        `)
+        .in('id', qIds);
+
+      if (!qError && questions) {
+        thread.questions = mappings.map((m: any) => {
+          const matchedQ = questions.find((q: any) => q.id === m.question_bank_id);
+          return {
+            order_index: m.order_index,
+            question: matchedQ
+          };
+        }).filter((tq: any) => tq.question);
+      } else if (qError) {
+        console.error("Non-fatal: Error fetching questions from bank:", qError);
+      }
+    } else if (mapError) {
+      console.error("Non-fatal: Error fetching thread question mappings:", mapError);
+    }
+  } catch (err) {
+    console.error("Non-fatal: Exception in questions fetching:", err);
   }
 
-  if (error || !thread) return null;
-
   // Fetch comments (flat list for simplicity, frontend will tree-ify or we can do it here)
-  const { data: comments } = await supabase
+  const { data: comments, error: commentsError } = await supabase
     .from('forum_comments')
     .select(`
       *,
@@ -48,6 +84,10 @@ async function fetchThreadData(id: string) {
     `)
     .eq('thread_id', id)
     .order('created_at', { ascending: true });
+
+  if (commentsError) {
+    console.error("Non-fatal: Error fetching comments:", commentsError);
+  }
 
   return { thread, comments: comments || [] };
 }
