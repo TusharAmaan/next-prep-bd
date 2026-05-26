@@ -72,33 +72,44 @@ export default function RichTextEditor({ initialValue, onChange, darkMode = fals
           setup: (editor: any) => {
             editor.on('init', () => {
               const doc = editor.getDoc();
+              if (!doc) return;
               const head = doc.head;
               
-              // 1. Add KaTeX Script to Iframe
-              const script = doc.createElement('script');
-              script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
-              script.onload = () => {
-                const renderMath = () => {
-                  const body = editor.getBody();
-                  const win = editor.getWin();
-                  if (body && win.renderMathInElement) {
-                    win.renderMathInElement(body, {
-                      delimiters: [
-                        { left: "$$", right: "$$", display: true },
-                        { left: "$", right: "$", display: false },
-                        { left: "\\(", right: "\\)", display: false },
-                        { left: "\\[", right: "\\]", display: true },
-                      ],
-                      throwOnError: false,
-                    });
-                  }
-                };
+              // 1. Add core KaTeX script
+              const katexScript = doc.createElement('script');
+              katexScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+              
+              katexScript.onload = () => {
+                // 2. Add auto-render extension
+                const autoRenderScript = doc.createElement('script');
+                autoRenderScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
+                
+                autoRenderScript.onload = () => {
+                  const renderMath = () => {
+                    const body = editor.getBody();
+                    const win = editor.getWin();
+                    if (body && win.renderMathInElement) {
+                      win.renderMathInElement(body, {
+                        delimiters: [
+                          { left: "$$", right: "$$", display: true },
+                          { left: "$", right: "$", display: false },
+                          { left: "\\(", right: "\\)", display: false },
+                          { left: "\\[", right: "\\]", display: true },
+                        ],
+                        throwOnError: false,
+                      });
+                    }
+                  };
 
-                // Initial render + on change
-                setTimeout(renderMath, 100);
-                editor.on('change keyup undo redo', renderMath);
+                  // Initial render + on change
+                  setTimeout(renderMath, 100);
+                  editor.on('change keyup undo redo', renderMath);
+                };
+                
+                head.appendChild(autoRenderScript);
               };
-              head.appendChild(script);
+              
+              head.appendChild(katexScript);
             });
 
             editor.ui.registry.addButton('insertMath', { 

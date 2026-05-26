@@ -9,6 +9,7 @@ import {
   ThumbsUp, BookOpen, AlertCircle, PlusCircle 
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import MathRenderer from "../shared/MathRenderer";
 
 interface ForumListProps {
   initialThreads: any[];
@@ -434,6 +435,7 @@ export default function ForumList({
         </div>
 
       </div>
+      <MathRenderer />
     </div>
   );
 }

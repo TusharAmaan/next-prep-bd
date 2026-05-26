@@ -9,6 +9,8 @@ import {
   Clock, ArrowRight, Loader2, ArrowLeft, ArrowUpRight, 
   Edit, PlusCircle, Save, X 
 } from "lucide-react";
+import RichTextEditor from "@/components/admin/sections/RichTextEditor";
+import MathRenderer from "@/components/shared/MathRenderer";
 
 export default function ForumManager({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
@@ -553,16 +555,10 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               </div>
             )}
 
-            {/* Content Textarea */}
+            {/* Content Editor */}
             <div className="md:col-span-2 space-y-2">
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Post Body / Content</label>
-              <textarea 
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={8}
-                placeholder="Write discussion content or HTML..."
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-855 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100 text-sm leading-relaxed font-semibold transition-all font-sans resize-y"
-              />
+              <RichTextEditor content={content} onChange={setContent} darkMode={darkMode} />
             </div>
 
           </div>
@@ -964,6 +960,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         </div>
       )}
 
+      <MathRenderer />
     </div>
   );
 }
