@@ -25,13 +25,17 @@ async function fetchThreadData(id: string) {
       segment:segments(title),
       group:groups(title),
       subject:subjects(title),
-      questions:forum_thread_questions(
+      questions:forum_thread_questions!thread_id(
         order_index,
-        question:question_bank(id, question_text, explanation, options:question_options(id, option_text, is_correct))
+        question:question_bank!question_bank_id(id, question_text, explanation, options:question_options!question_id(id, option_text, is_correct))
       )
     `)
     .eq('id', id)
     .single();
+
+  if (error) {
+    console.error("Error in fetchThreadData:", error);
+  }
 
   if (error || !thread) return null;
 
