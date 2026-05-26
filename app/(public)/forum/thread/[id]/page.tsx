@@ -32,9 +32,11 @@ async function fetchThreadData(id: string) {
 
   if (threadError) {
     console.error("Error in fetchThreadData (thread query):", threadError);
-    return null;
+    return { thread: null, comments: [], error: threadError.message || JSON.stringify(threadError) };
   }
-  if (!thread) return null;
+  if (!thread) {
+    return { thread: null, comments: [], error: "No thread found matching this ID in the database." };
+  }
 
   // 2. Fetch linked questions separately (resilient to schema/relation/RLS variations)
   thread.questions = [];
@@ -95,7 +97,7 @@ async function fetchThreadData(id: string) {
 // 2. SEO: Dynamic Metadata & Canonical
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await fetchThreadData(params.id);
-  if (!data) return { title: 'Thread Not Found' };
+  if (!data || !data.thread) return { title: 'Thread Not Found' };
 
   const { thread } = data;
   // Strip HTML for description
@@ -114,8 +116,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ForumThreadPage({ params }: Props) {
   const data = await fetchThreadData(params.id);
   
-  if (!data) {
-    notFound();
+  if (!data || data.error || !data.thread) {
+    return (
+      <div className="max-w-xl mx-auto my-16 p-8 bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-center">
+        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 text-red-650 dark:text-red-400 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+          !
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">Failed to Load Discussion</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
+          The forum thread could not be loaded due to a query or database permission issue:
+        </p>
+        <div className="text-xs text-red-600 dark:text-red-400 font-mono font-bold leading-relaxed bg-red-50 dark:bg-red-950/20 p-4 rounded-xl border border-red-150 dark:border-red-900/30 text-left overflow-x-auto max-h-64">
+          {data?.error || "Discussion thread could not be retrieved."}
+        </div>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-6 font-semibold uppercase tracking-wider">
+          Thread ID: {params.id}
+        </p>
+      </div>
+    );
   }
 
   const { thread, comments } = data;
