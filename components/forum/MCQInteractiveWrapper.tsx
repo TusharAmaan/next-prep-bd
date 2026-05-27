@@ -33,7 +33,13 @@ export default function MCQInteractiveWrapper({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showAnswerManual, setShowAnswerManual] = useState(false);
   const [nonLoggedInClicked, setNonLoggedInClicked] = useState(false);
+
+  // Sync manual answer with explanation
+  useEffect(() => {
+    setShowAnswerManual(showExplanation);
+  }, [showExplanation]);
 
   // Sync state if initial value changes
   useEffect(() => {
@@ -200,6 +206,32 @@ export default function MCQInteractiveWrapper({
               <div className="mt-5 text-xs font-bold text-rose-500 bg-rose-500/10 dark:bg-rose-950/20 px-4 py-2 border border-rose-500/20 rounded-xl flex items-center gap-1.5 animate-in slide-in-from-top-2 duration-200">
                 <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
                 <span>Log in to see the answer.</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {options.length > 0 && (
+          <div className="flex items-center gap-2 mt-4 animate-in fade-in duration-205">
+            <button
+              type="button"
+              onClick={() => {
+                if (!isLoggedIn) {
+                  setNonLoggedInClicked(true);
+                  return;
+                }
+                const newShow = !showAnswerManual;
+                setShowAnswerManual(newShow);
+                setShowExplanation(newShow);
+              }}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5"
+            >
+              <span>{showAnswerManual ? 'Hide Answer' : 'Show Answer'}</span>
+            </button>
+            
+            {showAnswerManual && isLoggedIn && (
+              <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-extrabold shadow-sm font-mono animate-in zoom-in-95 duration-150">
+                {getCorrectOptionLetter()}
               </div>
             )}
           </div>
