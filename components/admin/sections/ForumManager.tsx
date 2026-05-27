@@ -59,6 +59,9 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
   const [modalSearch, setModalSearch] = useState("");
   const [modalTypeFilter, setModalTypeFilter] = useState("all");
   const [modalDifficultyFilter, setModalDifficultyFilter] = useState("all");
+  const [modalSegmentFilter, setModalSegmentFilter] = useState("all");
+  const [modalGroupFilter, setModalGroupFilter] = useState("all");
+  const [modalSubjectFilter, setModalSubjectFilter] = useState("all");
 
   const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
@@ -123,7 +126,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         supabase.from("segments").select("id, title").order("id"),
         supabase.from("groups").select("id, title, segment_id").order("id"),
         supabase.from("subjects").select("id, title, group_id").order("id"),
-        supabase.from("question_bank").select("id, question_text").order("created_at", { ascending: false })
+        supabase.from("question_bank").select("id, question_text, question_type, difficulty, explanation, segment_id, group_id, subject_id").order("created_at", { ascending: false })
       ]);
 
       if (sRes.data) setSegmentsList(sRes.data);
@@ -168,6 +171,9 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
     setModalSearch("");
     setModalTypeFilter("all");
     setModalDifficultyFilter("all");
+    setModalSegmentFilter("all");
+    setModalGroupFilter("all");
+    setModalSubjectFilter("all");
   };
 
   // Save thread
@@ -581,8 +587,11 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
   // Filter questions for the search popup modal
   const filteredModalQuestions = questionsList.filter((q: any) => {
-    if (modalTypeFilter !== 'all' && q.question_type !== modalTypeFilter) return false;
-    if (modalDifficultyFilter !== 'all' && q.difficulty !== modalDifficultyFilter) return false;
+    if (modalTypeFilter !== 'all' && q.question_type?.toLowerCase() !== modalTypeFilter.toLowerCase()) return false;
+    if (modalDifficultyFilter !== 'all' && q.difficulty?.toLowerCase() !== modalDifficultyFilter.toLowerCase()) return false;
+    if (modalSegmentFilter !== 'all' && q.segment_id !== Number(modalSegmentFilter)) return false;
+    if (modalGroupFilter !== 'all' && q.group_id !== Number(modalGroupFilter)) return false;
+    if (modalSubjectFilter !== 'all' && q.subject_id !== Number(modalSubjectFilter)) return false;
     if (modalSearch.trim()) {
       return q.question_text?.toLowerCase().includes(modalSearch.toLowerCase());
     }
@@ -598,7 +607,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <ShieldAlert className="w-6 h-6 text-indigo-600"/> Forum Moderator
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">moderate flagged posts, manage student discussions, pin announcements, and edit threads.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Moderate Flagged Posts, Manage Student Discussions, Pin Announcements, and Edit Threads.</p>
         </div>
 
         {/* Tab Switcher */}
@@ -610,7 +619,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 activeTab === 'reports' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <AlertTriangle className="w-4 h-4" /> flagged reports
+              <AlertTriangle className="w-4 h-4" /> Flagged Reports
             </button>
             <button
               onClick={() => { setActiveTab('threads'); setSearchQuery(''); }}
@@ -618,7 +627,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 activeTab === 'threads' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <MessageSquare className="w-4 h-4" /> discussions
+              <MessageSquare className="w-4 h-4" /> Discussions
             </button>
           </div>
         )}
@@ -805,146 +814,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             </div>
 
             {/* Dynamic Question Builder & Question Bank Popup Link */}
-            {(threadType === 'question_post' || threadType === 'reading_comprehension') && (
-              <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Linked Questions</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowQuestionModal(true)}
-                      className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-indigo-650 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold transition-all"
-                    >
-                      Link Question from Bank
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newQ = {
-                          id: `inline-${Date.now()}-${Math.random()}`,
-                          question_text: "New practice question text...",
-                          question_type: "mcq",
-                          explanation: "",
-                          options: [
-                            { option_text: "Option A text", is_correct: true },
-                            { option_text: "Option B text", is_correct: false },
-                            { option_text: "Option C text", is_correct: false },
-                            { option_text: "Option D text", is_correct: false },
-                            { option_text: "Option E text", is_correct: false }
-                          ]
-                        };
-                        setLinkedQuestions(prev => [...prev, newQ]);
-                      }}
-                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100/60 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold transition-all"
-                    >
-                      Create Question Inline
-                    </button>
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  {linkedQuestions.map((q, idx) => (
-                    <div key={q.id} className="p-5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-2xl space-y-4 text-left relative">
-                      <button
-                        type="button"
-                        onClick={() => setLinkedQuestions(prev => prev.filter(l => l.id !== q.id))}
-                        className="absolute top-4 right-4 p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-650"
-                        title="Remove question"
-                      >
-                        <Trash2 className="w-4.5 h-4.5 text-rose-500" />
-                      </button>
-
-                      <div className="flex items-center gap-3">
-                        <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Question {idx + 1}</span>
-                        <select
-                          value={q.question_type}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_type: val } : l));
-                          }}
-                          className="px-2.5 py-1 text-[11px] font-bold bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-lg"
-                        >
-                          <option value="mcq">MCQ Choice Question</option>
-                          <option value="descriptive">Descriptive Question</option>
-                        </select>
-                      </div>
-
-                      {/* Question Text */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-450 uppercase">Question Content</label>
-                        <textarea
-                          value={q.question_text}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_text: val } : l));
-                          }}
-                          className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
-                          rows={2}
-                        />
-                      </div>
-
-                      {/* Explanation */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-450 uppercase">Explanation / Reference</label>
-                        <textarea
-                          value={q.explanation || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, explanation: val } : l));
-                          }}
-                          className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
-                          rows={2}
-                          placeholder="Provide explanation details here..."
-                        />
-                      </div>
-
-                      {/* Options (MCQ only) */}
-                      {q.question_type === "mcq" && (
-                        <div className="space-y-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
-                          <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Choices (Check correct one)</label>
-                          {q.options?.map((opt: any, optIdx: number) => (
-                            <div key={optIdx} className="flex items-center gap-3">
-                              <input
-                                type="radio"
-                                name={`correct-${q.id}`}
-                                checked={!!opt.is_correct}
-                                onChange={() => {
-                                  const updatedOpts = q.options.map((o: any, oi: number) => ({
-                                    ...o,
-                                    is_correct: oi === optIdx
-                                  }));
-                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
-                                }}
-                                className="w-4 h-4 text-indigo-650"
-                              />
-                              <input
-                                type="text"
-                                value={opt.option_text}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const updatedOpts = q.options.map((o: any, oi: number) => ({
-                                    ...o,
-                                    option_text: val
-                                  }));
-                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
-                                }}
-                                placeholder={`Option ${OPTION_LETTERS[optIdx]}`}
-                                className="flex-1 p-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-lg outline-none focus:border-indigo-500"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {linkedQuestions.length === 0 && (
-                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/10 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 font-semibold">
-                      No questions linked yet. Click above to select from bank or write new ones.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* SEO / Metadata Section */}
             <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
@@ -998,6 +868,154 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               <RichTextEditor content={content} onChange={setContent} darkMode={darkMode} />
             </div>
 
+            {/* Dynamic Question Builder & Question Bank Popup Link */}
+            {(threadType === 'question_post' || threadType === 'reading_comprehension') && (
+              <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Linked Questions</label>
+                  {(threadType !== 'question_post' || linkedQuestions.length === 0) && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuestionModal(true)}
+                        className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold transition-all"
+                      >
+                        Link Question from Bank
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newQ = {
+                            id: `inline-${Date.now()}-${Math.random()}`,
+                            question_text: threadType === 'question_post' ? title : "New practice question text...",
+                            question_type: "mcq",
+                            explanation: "",
+                            options: [
+                              { option_text: "Option A text", is_correct: true },
+                              { option_text: "Option B text", is_correct: false },
+                              { option_text: "Option C text", is_correct: false },
+                              { option_text: "Option D text", is_correct: false },
+                              { option_text: "Option E text", is_correct: false }
+                            ]
+                          };
+                          setLinkedQuestions(prev => [...prev, newQ]);
+                        }}
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100/60 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold transition-all"
+                      >
+                        Create Question Inline
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {linkedQuestions.map((q, idx) => (
+                    <div key={q.id} className="p-5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-2xl space-y-4 text-left relative">
+                      <button
+                        type="button"
+                        onClick={() => setLinkedQuestions(prev => prev.filter(l => l.id !== q.id))}
+                        className="absolute top-4 right-4 p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-650"
+                        title="Remove question"
+                      >
+                        <Trash2 className="w-4.5 h-4.5 text-rose-500" />
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Question {idx + 1}</span>
+                        <select
+                          value={q.question_type}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_type: val } : l));
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-lg"
+                        >
+                          <option value="mcq">MCQ Choice Question</option>
+                          <option value="descriptive">Descriptive Question</option>
+                        </select>
+                      </div>
+
+                      {/* Hide question content and explanation if it is a single question_post thread type */}
+                      {threadType !== 'question_post' && (
+                        <>
+                          {/* Question Text */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-450 uppercase">Question Content</label>
+                            <textarea
+                              value={q.question_text}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_text: val } : l));
+                              }}
+                              className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-250 font-semibold"
+                              rows={2}
+                            />
+                          </div>
+
+                          {/* Explanation */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-450 uppercase">Explanation / Reference</label>
+                            <textarea
+                              value={q.explanation || ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, explanation: val } : l));
+                              }}
+                              className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-250 font-semibold"
+                              rows={2}
+                              placeholder="Provide explanation details here..."
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Options (MCQ only) */}
+                      {(q.question_type?.toLowerCase() === "mcq" || q.question_type === "MCQ") && (
+                        <div className="space-y-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                          <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Choices (Check correct one)</label>
+                          {q.options?.map((opt: any, optIdx: number) => (
+                            <div key={optIdx} className="flex items-center gap-3">
+                              <input
+                                type="radio"
+                                name={`correct-${q.id}`}
+                                checked={!!opt.is_correct}
+                                onChange={() => {
+                                  const updatedOpts = q.options.map((o: any, oi: number) => ({
+                                    ...o,
+                                    is_correct: oi === optIdx
+                                  }));
+                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
+                                }}
+                                className="w-4 h-4 text-indigo-650"
+                              />
+                              <input
+                                type="text"
+                                value={opt.option_text}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updatedOpts = q.options.map((o: any, oi: number) => 
+                                    oi === optIdx ? { ...o, option_text: val } : o
+                                  );
+                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
+                                }}
+                                placeholder={`Option ${OPTION_LETTERS[optIdx]}`}
+                                className="flex-1 p-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-lg outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {linkedQuestions.length === 0 && (
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/10 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 font-semibold">
+                      No questions linked yet. Click above to select from bank or write new ones.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Form Actions */}
@@ -1027,10 +1045,10 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text"
-                placeholder={activeTab === 'reports' ? "search reports..." : "search discussions..."}
+                placeholder={activeTab === 'reports' ? "Search Reports..." : "Search Discussions..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-250 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-250 transition-all"
               />
             </div>
 
@@ -1045,7 +1063,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                         reportFilter === f ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-855'
                       }`}
                     >
-                      {f}
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -1065,7 +1083,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             {loading ? (
               <div className="p-16 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin mb-3 text-indigo-500" />
-                <span>gathering records...</span>
+                <span>Gathering Records...</span>
               </div>
             ) : activeTab === 'reports' ? (
               /* REPORTS PANEL */
@@ -1073,7 +1091,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 {filteredReports.length === 0 ? (
                   <div className="p-16 text-center text-slate-400 dark:text-slate-500">
                     <CheckCircle2 className="w-12 h-12 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-                    <p className="font-semibold">no pending flagged reports found.</p>
+                    <p className="font-semibold">No Pending Flagged Reports Found.</p>
                   </div>
                 ) : (
                   filteredReports.map((report) => {
@@ -1099,7 +1117,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${
                               isComment ? 'bg-amber-500/10 text-amber-500' : 'bg-indigo-500/10 text-indigo-500'
                             }`}>
-                              {isComment ? 'flagged reply' : 'flagged discussion'}
+                              {isComment ? 'Flagged Reply' : 'Flagged Discussion'}
                             </span>
 
                             <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
@@ -1112,7 +1130,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                             <h4 className="font-bold text-slate-800 dark:text-slate-200">
                               {isComment ? 'Reply in: ' : ''}
                               <span className="text-slate-900 dark:text-white font-extrabold">
-                                {report.thread?.title || 'deleted discussion'}
+                                {report.thread?.title || 'Deleted Discussion'}
                               </span>
                             </h4>
                             
@@ -1139,7 +1157,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                               target="_blank"
                               className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all"
                             >
-                              view on board <ArrowUpRight className="w-3.5 h-3.5" />
+                              View on Board <ArrowUpRight className="w-3.5 h-3.5" />
                             </Link>
                           )}
 
@@ -1149,7 +1167,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                 onClick={() => updateReportStatus(report.id, 'reviewed')}
                                 className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all"
                               >
-                                dismiss report
+                                Dismiss Report
                               </button>
                               
                               <button
@@ -1162,7 +1180,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                 }}
                                 className="flex items-center justify-center gap-1.5 px-3 py-2 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-900/30 transition-all"
                               >
-                                <Trash2 className="w-3.5 h-3.5" /> delete offending {isComment ? 'reply' : 'discussion'}
+                                <Trash2 className="w-3.5 h-3.5" /> Delete Offending {isComment ? 'Reply' : 'Discussion'}
                               </button>
                             </>
                           )}
@@ -1172,7 +1190,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                               onClick={() => updateReportStatus(report.id, 'resolved')}
                               className="flex items-center justify-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-600 hover:text-white text-green-600 dark:text-green-400 rounded-lg text-xs font-bold border border-green-500/20 transition-all"
                             >
-                              resolve report
+                              Resolve Report
                             </button>
                           )}
                         </div>
@@ -1188,19 +1206,19 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 <table className="w-full text-left text-sm border-collapse">
                   <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-xs font-bold">
                     <tr>
-                      <th className="px-6 py-4">discussion</th>
-                      <th className="px-6 py-4">author</th>
-                      <th className="px-6 py-4">category</th>
-                      <th className="px-6 py-4 text-center">metrics</th>
-                      <th className="px-6 py-4 text-center">pin</th>
-                      <th className="px-6 py-4 text-right">actions</th>
+                      <th className="px-6 py-4">Discussion</th>
+                      <th className="px-6 py-4">Author</th>
+                      <th className="px-6 py-4">Category</th>
+                      <th className="px-6 py-4 text-center">Metrics</th>
+                      <th className="px-6 py-4 text-center">Pin</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                     {filteredThreads.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="p-12 text-center text-slate-400 dark:text-slate-500">
-                          no discussions found.
+                          No Discussions Found.
                         </td>
                       </tr>
                     ) : (
@@ -1280,7 +1298,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                   onClick={() => openRepliesDrawer(thread)}
                                   className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-colors"
                                 >
-                                  replies
+                                  Replies
                                 </button>
                                 <button
                                   onClick={() => deleteThread(thread.id)}
@@ -1321,8 +1339,8 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">thread moderation</h3>
-                  <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">replies & comments manager</p>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Thread Moderation</h3>
+                  <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Replies & Comments Manager</p>
                 </div>
               </div>
               
@@ -1331,7 +1349,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 target="_blank"
                 className="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1 hover:underline"
               >
-                open thread <ArrowUpRight className="w-3.5 h-3.5" />
+                Open Thread <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -1344,11 +1362,11 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               {loadingComments ? (
                 <div className="py-12 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center">
                   <Loader2 className="w-6 h-6 animate-spin mb-2 text-indigo-500" />
-                  <span>loading comments...</span>
+                  <span>Loading Comments...</span>
                 </div>
               ) : threadComments.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 dark:text-slate-500">
-                  <p>this thread has no comments yet.</p>
+                  <p>This Thread Has No Comments Yet.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1524,7 +1542,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                           } else {
                             // Fetch options if MCQ to prefill builder
                             let qOptions: any[] = [];
-                            if (q.question_type === 'mcq') {
+                            if (q.question_type?.toLowerCase() === 'mcq') {
                               const { data: optData } = await supabase
                                 .from("question_options")
                                 .select("id, option_text, is_correct")
