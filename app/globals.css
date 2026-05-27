@@ -409,25 +409,69 @@ body {
   }
 }
 
-/* Override inline black text color declarations in dark mode inside prose to maintain contrast */
-.dark .prose [style*="color: rgb(0, 0, 0)"],
-.dark .prose [style*="color: rgb(15, 23, 42)"],
-.dark .prose [style*="color: #000000"],
-.dark .prose [style*="color: #000"],
-.dark .prose [style*="color: #0f172a"],
-.dark .prose [style*="color:black"] {
-  color: revert-layer !important;
+/* Override inline black/dark-gray text color declarations in dark mode inside prose to maintain contrast */
+.dark .prose [style*="color: rgb(0, 0, 0)" i],
+.dark .prose [style*="color: rgb(15, 23, 42)" i],
+.dark .prose [style*="color: rgb(17, 24, 39)" i],
+.dark .prose [style*="color: rgb(31, 41, 55)" i],
+.dark .prose [style*="color: rgb(51, 51, 51)" i],
+.dark .prose [style*="color: rgb(55, 65, 81)" i],
+.dark .prose [style*="color: rgb(34, 34, 34)" i],
+.dark .prose [style*="color: rgb(68, 68, 68)" i],
+.dark .prose [style*="color: rgb(100, 116, 139)" i],
+.dark .prose [style*="color: #000000" i],
+.dark .prose [style*="color: #000" i],
+.dark .prose [style*="color: #111111" i],
+.dark .prose [style*="color: #111" i],
+.dark .prose [style*="color: #222222" i],
+.dark .prose [style*="color: #222" i],
+.dark .prose [style*="color: #333333" i],
+.dark .prose [style*="color: #333" i],
+.dark .prose [style*="color: #444444" i],
+.dark .prose [style*="color: #444" i],
+.dark .prose [style*="color: #1e293b" i],
+.dark .prose [style*="color: #0f172a" i],
+.dark .prose [style*="color: #374151" i],
+.dark .prose [style*="color: #1f2937" i],
+.dark .prose [style*="color: #111827" i],
+.dark .prose [style*="color:black" i] {
   color: inherit !important;
 }
 
-.dark .prose span[style*="color: rgb(0, 0, 0)"],
-.dark .prose span[style*="color: #000000"],
-.dark .prose p[style*="color: rgb(0, 0, 0)"],
-.dark .prose p[style*="color: #000000"] {
+.dark .prose span[style*="color: rgb(" i],
+.dark .prose span[style*="color: #" i],
+.dark .prose p[style*="color: rgb(" i],
+.dark .prose p[style*="color: #" i] {
+  /* General fallback for any darkish text colors in dark mode span elements */
   color: inherit !important;
 }
 
 /* Force TinyMCE generated elements with hardcoded background colors to stay transparent in dark mode */
-.dark .prose [style*="background-color"] {
+.dark .prose [style*="background-color" i] {
   background-color: transparent !important;
+}
+
+/* Styling for quotes inside forum comments (GMAT Club style) */
+blockquote {
+  border-left: 4px solid #6366f1 !important; /* Indigo border */
+  background-color: rgba(99, 102, 241, 0.04) !important; /* Light indigo background */
+  padding: 0.75rem 1rem !important;
+  margin: 0.75rem 0 !important;
+  border-radius: 0 0.75rem 0.75rem 0;
+  font-style: italic;
+  color: #4b5563;
+}
+.dark blockquote {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  color: #94a3b8;
+  border-left-color: #818cf8 !important; /* Indigo-400 border */
+}
+blockquote strong {
+  color: #1e1b4b;
+  font-style: normal;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.dark blockquote strong {
+  color: #e0e7ff;
 }

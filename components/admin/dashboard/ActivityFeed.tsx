@@ -2,7 +2,8 @@
 
 import { 
   User, FileText, Clock, BookOpen, 
-  HelpCircle, Video, Newspaper, GraduationCap, File
+  HelpCircle, Video, Newspaper, GraduationCap, File,
+  MessageSquare, ShieldAlert, Heart
 } from "lucide-react";
 import { useTheme } from "@/components/shared/ThemeProvider";
 
@@ -33,6 +34,12 @@ const getActivityStyle = (type: string) => {
       return { icon: <Video className="w-4 h-4" />, bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400' };
     case 'news':
       return { icon: <Newspaper className="w-4 h-4" />, bg: 'bg-sky-100 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400' };
+    case 'forum':
+      return { icon: <MessageSquare className="w-4 h-4" />, bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' };
+    case 'report':
+      return { icon: <ShieldAlert className="w-4 h-4" />, bg: 'bg-rose-100 dark:bg-rose-950/20', text: 'text-rose-600 dark:text-rose-400' };
+    case 'kudos':
+      return { icon: <Heart className="w-4 h-4" />, bg: 'bg-amber-150/15 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-450' };
     default:
       return { icon: <File className="w-4 h-4" />, bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400' };
   }

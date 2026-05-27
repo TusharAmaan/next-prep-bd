@@ -80,18 +80,22 @@ export async function toggleForumUpvote(threadId: string | null, commentId: stri
   if (threadId) query = query.eq('thread_id', threadId)
   if (commentId) query = query.eq('comment_id', commentId)
 
-  const { data: existingVote } = await query.single()
+  const { data: existingVote } = await query.maybeSingle()
 
   if (existingVote) {
     // Remove upvote
     await supabase.from('forum_upvotes').delete().eq('id', existingVote.id)
     
-    // Decrease count on the target
+    // Decrement upvote count directly on thread/comment to guarantee accuracy
     if (threadId) {
-        // We use an RPC for atomic decrement usually, but fallback to trigger or direct update if needed
-        // For simplicity, we rely on the trigger to update user gamification points.
-        // We still need to update the upvotes count on the thread/comment itself.
-        // This is best done via another trigger or RPC to avoid race conditions.
+      const { data: thread } = await supabase.from('forum_threads').select('upvotes').eq('id', threadId).single()
+      const newUpvotes = Math.max(0, (thread?.upvotes || 0) - 1)
+      await supabase.from('forum_threads').update({ upvotes: newUpvotes }).eq('id', threadId)
+    }
+    if (commentId) {
+      const { data: comment } = await supabase.from('forum_comments').select('upvotes').eq('id', commentId).single()
+      const newUpvotes = Math.max(0, (comment?.upvotes || 0) - 1)
+      await supabase.from('forum_comments').update({ upvotes: newUpvotes }).eq('id', commentId)
     }
     
     revalidatePath(threadId ? `/forum/thread/${threadId}` : `/forum/thread`)
@@ -106,6 +110,19 @@ export async function toggleForumUpvote(threadId: string | null, commentId: stri
     if (commentId) insertData.comment_id = commentId
 
     await supabase.from('forum_upvotes').insert(insertData)
+
+    // Increment upvote count directly on thread/comment to guarantee accuracy
+    if (threadId) {
+      const { data: thread } = await supabase.from('forum_threads').select('upvotes').eq('id', threadId).single()
+      const newUpvotes = (thread?.upvotes || 0) + 1
+      await supabase.from('forum_threads').update({ upvotes: newUpvotes }).eq('id', threadId)
+    }
+    if (commentId) {
+      const { data: comment } = await supabase.from('forum_comments').select('upvotes').eq('id', commentId).single()
+      const newUpvotes = (comment?.upvotes || 0) + 1
+      await supabase.from('forum_comments').update({ upvotes: newUpvotes }).eq('id', commentId)
+    }
+
     revalidatePath(threadId ? `/forum/thread/${threadId}` : `/forum/thread`)
     return { upvoted: true }
   }
@@ -249,5 +266,58 @@ export async function getForumTagsSuggestions(prefix: string) {
   }
 
   return data || []
+}
+
+export async function createForumComment(threadId: string, content: string, parentId: string | null = null) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Unauthorized")
+
+  if (!content || content.trim().length === 0) {
+    throw new Error("Comment content cannot be empty")
+  }
+
+  // Fetch current user profile to determine if expert reply
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isExpert = profile?.role === 'tutor' || profile?.role === 'admin'
+
+  const { data: comment, error: insertError } = await supabase
+    .from('forum_comments')
+    .insert({
+      thread_id: threadId,
+      author_id: user.id,
+      content: content.trim(),
+      parent_id: parentId,
+      upvotes: 0,
+      is_expert_reply: isExpert
+    })
+    .select()
+    .single()
+
+  if (insertError) {
+    console.error("Error inserting forum comment:", insertError)
+    throw new Error(insertError.message || "Failed to create comment")
+  }
+
+  // Create an activity log entry
+  try {
+    await supabase.from('activity_logs').insert([{
+      actor_id: user.id,
+      action_type: 'forum_comment_create',
+      details: `Added reply to thread ${threadId}`
+    }])
+  } catch (err) {
+    console.error("Failed to log activity:", err)
+  }
+
+  revalidatePath(`/forum/thread/${threadId}`)
+  
+  return { success: true, comment }
 }
 

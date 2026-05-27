@@ -14,6 +14,7 @@ interface ThreadMainPostProps {
   initialIsBookmarked?: boolean;
   hasAnswered?: boolean;
   previouslySelectedOptionId?: string;
+  previouslyTimeSpent?: number;
   metrics?: { [key: string]: number };
 }
 
@@ -24,6 +25,7 @@ export default function ThreadMainPost({
   initialIsBookmarked = false,
   hasAnswered = false,
   previouslySelectedOptionId,
+  previouslyTimeSpent,
   metrics
 }: ThreadMainPostProps) {
   const [upvotes, setUpvotes] = useState(thread.upvotes);
@@ -151,32 +153,49 @@ export default function ThreadMainPost({
         </div>
       </div>
 
-      {/* MCQ option boxes placed at the red box */}
-      {thread.thread_type === 'question_post' && thread.questions && thread.questions.length > 0 && (
-        <div className="mb-6 animate-in fade-in duration-300">
-          {thread.questions.map((tq: any) => (
-            <MCQInteractiveWrapper 
-              key={tq.question.id}
-              threadId={thread.id}
-              options={tq.question.options || []}
-              hasAnswered={hasAnsweredState}
-              previouslySelectedOptionId={selectedOptionState}
-              metrics={metrics}
-              isLoggedIn={!!currentUserId}
-              onAnswered={(optionId: string) => {
-                setHasAnsweredState(true);
-                setSelectedOptionState(optionId);
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       {/* TinyMCE Content */}
       <div 
         className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-250 text-base leading-relaxed mb-6 font-medium"
         dangerouslySetInnerHTML={{ __html: thread.content }}
       />
+
+      {/* MCQ option boxes placed below post content */}
+      {thread.thread_type === 'question_post' && thread.questions && thread.questions.length > 0 && (
+        <div className="mb-6 animate-in fade-in duration-300 space-y-4">
+          {thread.questions.map((tq: any) => {
+            const q = tq.question;
+            return (
+              <div key={q.id} className="space-y-4">
+                {q.options && q.options.length > 0 && (
+                  <div className="space-y-2.5 my-4 pl-4 border-l-2 border-slate-200 dark:border-slate-800">
+                    {q.options.map((opt: any, optIdx: number) => (
+                      <div key={opt.id} className="text-slate-750 dark:text-slate-350 text-sm font-semibold flex items-start gap-2">
+                        <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
+                          {['A', 'B', 'C', 'D', 'E', 'F', 'G'][optIdx] || ''}.
+                        </span>
+                        <div dangerouslySetInnerHTML={{ __html: opt.option_text }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <MCQInteractiveWrapper 
+                  threadId={thread.id}
+                  options={q.options || []}
+                  hasAnswered={hasAnsweredState}
+                  previouslySelectedOptionId={selectedOptionState}
+                  previouslyTimeSpent={previouslyTimeSpent}
+                  metrics={metrics}
+                  isLoggedIn={!!currentUserId}
+                  onAnswered={(optionId: string) => {
+                    setHasAnsweredState(true);
+                    setSelectedOptionState(optionId);
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
       
       {/* Initialize KaTeX */}
       <MathRenderer />

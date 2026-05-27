@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ThreadMainPost from '@/components/forum/ThreadMainPost';
 import MCQInteractiveWrapper from '@/components/forum/MCQInteractiveWrapper';
+import DescriptiveRevealWrapper from '@/components/forum/DescriptiveRevealWrapper';
 import CommentSection from '@/components/forum/CommentSection';
 import { ClipboardList, Timer, BarChart3, User, Flame, Target, TrendingUp, Zap, BookOpen, AlertCircle } from 'lucide-react';
 
@@ -170,7 +171,11 @@ export default async function ForumThreadPage({ params }: Props) {
   let initialIsBookmarked = false;
   let hasAnswered = false;
   let previouslySelectedOptionId = undefined;
+  let previouslyTimeSpent = undefined;
   const userAttemptsMap: { [questionId: string]: string } = {};
+  const userAttemptsTimeMap: { [questionId: string]: number } = {};
+  let userCommentUpvotes: string[] = [];
+  let currentUserProfile: any = null;
 
   if (user) {
     // Check upvote status
@@ -198,7 +203,7 @@ export default async function ForumThreadPage({ params }: Props) {
     // Check if user answered questions mapped to this thread
     const { data: attemptsData } = await supabase
       .from('forum_question_attempts')
-      .select('question_id, selected_option_id')
+      .select('question_id, selected_option_id, time_spent_seconds')
       .eq('thread_id', thread.id)
       .eq('user_id', user.id);
     
@@ -206,18 +211,21 @@ export default async function ForumThreadPage({ params }: Props) {
       attemptsData.forEach((att: any) => {
         if (att.question_id && att.selected_option_id) {
           userAttemptsMap[att.question_id] = att.selected_option_id;
+          userAttemptsTimeMap[att.question_id] = att.time_spent_seconds || 0;
         }
       });
       // Fallback for single question post
       hasAnswered = true;
       previouslySelectedOptionId = attemptsData[0].selected_option_id;
+      previouslyTimeSpent = attemptsData[0].time_spent_seconds || 0;
     }
 
     // Fetch user stats
-    const [attemptsCountRes, correctCountRes, profileRes] = await Promise.all([
+    const [attemptsCountRes, correctCountRes, profileRes, commentVotesRes] = await Promise.all([
       supabase.from('forum_question_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
       supabase.from('forum_question_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_correct', true),
-      supabase.from('profiles').select('current_streak').eq('id', user.id).single()
+      supabase.from('profiles').select('current_streak, id, full_name, gamification_rank').eq('id', user.id).single(),
+      supabase.from('forum_upvotes').select('comment_id').eq('user_id', user.id).not('comment_id', 'is', null)
     ]);
 
     const totalAttempts = attemptsCountRes.count || 0;
@@ -228,6 +236,18 @@ export default async function ForumThreadPage({ params }: Props) {
       accuracyRate: totalAttempts ? Math.round((correctAttempts / totalAttempts) * 100) : 100,
       currentStreak: profileRes.data?.current_streak || 0
     };
+
+    if (profileRes.data) {
+      currentUserProfile = {
+        id: profileRes.data.id,
+        full_name: profileRes.data.full_name,
+        gamification_rank: profileRes.data.gamification_rank
+      };
+    }
+
+    if (commentVotesRes.data) {
+      userCommentUpvotes = commentVotesRes.data.map((v: any) => v.comment_id || '');
+    }
   }
 
   // 2. Fetch options analytics metrics
@@ -301,6 +321,7 @@ export default async function ForumThreadPage({ params }: Props) {
             initialIsBookmarked={initialIsBookmarked}
             hasAnswered={hasAnswered}
             previouslySelectedOptionId={previouslySelectedOptionId}
+            previouslyTimeSpent={previouslyTimeSpent}
             metrics={metrics}
           />
 
@@ -332,37 +353,32 @@ export default async function ForumThreadPage({ params }: Props) {
                       </div>
                       
                       {isMCQ ? (
-                        <MCQInteractiveWrapper 
-                          threadId={thread.id}
-                          options={q.options || []}
-                          hasAnswered={hasAnsweredQ}
-                          previouslySelectedOptionId={userSelectedOption}
-                          metrics={metrics}
-                          isLoggedIn={!!user}
-                        />
-                      ) : (
-                        /* Descriptive question: no choices required */
-                        <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/80 space-y-3">
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Your Response</label>
-                          <textarea
-                            placeholder="Type your answer, notes, or explanation here..."
-                            rows={3}
-                            className="w-full p-3 text-sm bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100 font-medium"
-                          />
-                          {q.explanation && (
-                            <div className="pt-2 border-t border-slate-150 dark:border-slate-800 mt-2">
-                              <details className="group cursor-pointer">
-                                <summary className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline list-none flex items-center gap-1">
-                                  <span>Reveal Explanation & Details</span>
-                                </summary>
-                                <div 
-                                  className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-450 font-medium prose dark:prose-invert"
-                                  dangerouslySetInnerHTML={{ __html: q.explanation }}
-                                />
-                              </details>
+                        <>
+                          {q.options && q.options.length > 0 && (
+                            <div className="space-y-2.5 mt-3 mb-5 pl-4 border-l-2 border-slate-200 dark:border-slate-800">
+                              {q.options.map((opt: any, optIdx: number) => (
+                                <div key={opt.id} className="text-slate-750 dark:text-slate-350 text-sm font-semibold flex items-start gap-2">
+                                  <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
+                                    {['A', 'B', 'C', 'D', 'E', 'F', 'G'][optIdx] || ''}.
+                                  </span>
+                                  <div dangerouslySetInnerHTML={{ __html: opt.option_text }} />
+                                </div>
+                              ))}
                             </div>
                           )}
-                        </div>
+                          <MCQInteractiveWrapper 
+                            threadId={thread.id}
+                            options={q.options || []}
+                            hasAnswered={hasAnsweredQ}
+                            previouslySelectedOptionId={userSelectedOption}
+                            previouslyTimeSpent={userAttemptsTimeMap[q.id] || 0}
+                            metrics={metrics}
+                            isLoggedIn={!!user}
+                          />
+                        </>
+                      ) : (
+                        /* Descriptive question: direct question and a button to reveal the answer below */
+                        <DescriptiveRevealWrapper explanation={q.explanation || ""} />
                       )}
                     </div>
                   );
@@ -376,6 +392,8 @@ export default async function ForumThreadPage({ params }: Props) {
             threadId={thread.id} 
             initialComments={rootComments}
             currentUserId={user?.id}
+            userCommentUpvotes={userCommentUpvotes}
+            currentUserProfile={currentUserProfile}
           />
         </div>
 

@@ -319,7 +319,7 @@ export default function ForumList({
               selectedType !== "All" || 
               selectedDifficulty !== "All";
 
-            const renderThreadCard = (thread: any) => {
+            const renderThreadListItem = (thread: any, isLast: boolean) => {
               const badge = getThreadTypeBadge(thread.thread_type);
               const diffBadge = getDifficultyBadge(thread.difficulty);
               const commentsCount = thread.forum_comments?.length || 0;
@@ -327,23 +327,21 @@ export default function ForumList({
               return (
                 <div
                   key={thread.id}
-                  className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-400/50 hover:shadow-xl dark:hover:shadow-indigo-900/5 p-5 rounded-[1.8rem] transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left"
+                  className={`group relative hover:bg-slate-50/50 dark:hover:bg-slate-800/30 p-4 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left ${
+                    !isLast ? "border-b border-slate-100 dark:border-slate-800/80" : ""
+                  }`}
                 >
-                  {thread.is_pinned && (
-                    <div className="absolute top-4 right-6 flex items-center gap-1.5 text-[10px] font-bold text-indigo-500">
-                      <Pin className="w-3.5 h-3.5 fill-current" /> Pinned
-                    </div>
-                  )}
-
-                  <div className="flex-1 space-y-2.5">
+                  <div className="flex-1 min-w-0 space-y-1.5">
                     {/* Badge / Category Header */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${badge.bg}`}>
-                        {badge.label}
-                      </span>
+                      {thread.is_pinned && (
+                        <span className="flex items-center gap-1 text-[9px] font-black text-indigo-650 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded">
+                          <Pin className="w-3 h-3 fill-current" /> Pinned
+                        </span>
+                      )}
                       
                       {diffBadge && (
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${diffBadge}`}>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${diffBadge}`}>
                           {thread.difficulty ? thread.difficulty.charAt(0).toUpperCase() + thread.difficulty.slice(1) : ''}
                         </span>
                       )}
@@ -357,53 +355,44 @@ export default function ForumList({
 
                     {/* Title */}
                     <Link href={`/forum/thread/${thread.id}`}>
-                      <h3 className="text-base font-extrabold text-slate-850 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight line-clamp-2">
+                      <h4 className="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight line-clamp-2">
                         {thread.title}
-                      </h3>
+                      </h4>
                     </Link>
 
                     {/* Author & Meta */}
-                    <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-                      <div className="w-5.5 h-5.5 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[9px]">
-                        {thread.author?.full_name?.[0]?.toUpperCase() || "U"}
-                      </div>
-                      <span className="font-semibold text-[11px]">{thread.author?.full_name || "Community Member"}</span>
-                      <span className="text-slate-300 dark:text-slate-700">•</span>
-                      <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                      <span className="font-semibold text-slate-650 dark:text-slate-350">{thread.author?.full_name || "Community Member"}</span>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-400" />
                         {isClient ? new Date(thread.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
                       </div>
                     </div>
                   </div>
 
                   {/* Stats & Actions Area */}
-                  <div className="flex items-center gap-4 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50 pt-3 md:pt-0 shrink-0">
+                  <div className="flex items-center gap-4 shrink-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800/40 pt-2.5 md:pt-0">
                     <div className="flex items-center gap-3 text-slate-400">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-0.5">
-                          <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[11px] font-bold">{thread.upvotes}</span>
-                        </div>
+                      <div className="flex items-center gap-1" title="Upvotes">
+                        <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs font-semibold">{thread.upvotes}</span>
                       </div>
 
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-0.5">
-                          <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[11px] font-bold">{commentsCount}</span>
-                        </div>
+                      <div className="flex items-center gap-1" title="Replies">
+                        <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs font-semibold">{commentsCount}</span>
                       </div>
 
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-0.5">
-                          <Eye className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[11px] font-bold">{thread.views}</span>
-                        </div>
+                      <div className="flex items-center gap-1" title="Views">
+                        <Eye className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs font-semibold">{thread.views}</span>
                       </div>
                     </div>
 
                     <Link 
                       href={`/forum/thread/${thread.id}`}
-                      className="w-8.5 h-8.5 rounded-full bg-slate-50 dark:bg-slate-850 hover:bg-indigo-650 hover:text-white text-slate-400 flex items-center justify-center transition-all group-hover:translate-x-1"
+                      className="w-7.5 h-7.5 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-650 dark:hover:text-indigo-400 text-slate-400 flex items-center justify-center transition-all group-hover:translate-x-0.5 border border-slate-200/40 dark:border-slate-700/50"
                     >
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
@@ -414,8 +403,8 @@ export default function ForumList({
 
             if (hasActiveFilters) {
               return filteredThreads.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredThreads.map((thread) => renderThreadCard(thread))}
+                <div className="bg-slate-50/30 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                  {filteredThreads.map((thread, idx) => renderThreadListItem(thread, idx === filteredThreads.length - 1))}
                 </div>
               ) : (
                 <div className="text-center py-24 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
@@ -448,7 +437,7 @@ export default function ForumList({
                         </h2>
                       </div>
 
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                      <div className="flex flex-col gap-8">
                         {[
                           { type: 'standard', label: 'Standard Discussions' },
                           { type: 'question_post', label: 'Practice Questions' },
@@ -463,11 +452,11 @@ export default function ForumList({
                                 {sub.label}
                               </h3>
                               {subThreads.length > 0 ? (
-                                <div className="space-y-3">
-                                  {subThreads.map(t => renderThreadCard(t))}
+                                <div className="bg-slate-50/30 dark:bg-slate-950/15 border border-slate-150/80 dark:border-slate-800/80 rounded-2xl overflow-hidden">
+                                  {subThreads.map((t, idx) => renderThreadListItem(t, idx === subThreads.length - 1))}
                                 </div>
                               ) : (
-                                <div className="py-6 px-4 text-center bg-slate-50/50 dark:bg-slate-950/20 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 font-semibold italic">
+                                <div className="py-5 px-4 text-center bg-slate-50/30 dark:bg-slate-950/10 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 dark:text-slate-500 font-medium italic">
                                   No discussions available in this category.
                                 </div>
                               )}
@@ -493,7 +482,7 @@ export default function ForumList({
                         </h2>
                       </div>
 
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                      <div className="flex flex-col gap-8">
                         {[
                           { type: 'standard', label: 'Standard Discussions' },
                           { type: 'question_post', label: 'Practice Questions' },
@@ -508,11 +497,11 @@ export default function ForumList({
                                 {sub.label}
                               </h3>
                               {subThreads.length > 0 ? (
-                                <div className="space-y-3">
-                                  {subThreads.map(t => renderThreadCard(t))}
+                                <div className="bg-slate-50/30 dark:bg-slate-950/15 border border-slate-150/80 dark:border-slate-800/80 rounded-2xl overflow-hidden">
+                                  {subThreads.map((t, idx) => renderThreadListItem(t, idx === subThreads.length - 1))}
                                 </div>
                               ) : (
-                                <div className="py-6 px-4 text-center bg-slate-50/50 dark:bg-slate-950/20 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 font-semibold italic">
+                                <div className="py-5 px-4 text-center bg-slate-50/30 dark:bg-slate-950/10 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 dark:text-slate-500 font-medium italic">
                                   No discussions available in this category.
                                 </div>
                               )}

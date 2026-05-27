@@ -94,7 +94,8 @@ export default function AdminDashboard() {
                 matLast, quesLast, userLast,
                 recentUsers, recentResources, recentNews,
                 sysUpdate, recentFeedbacks, pendingReviews,
-                pendingReports
+                pendingReports,
+                recentForumThreads, recentForumReports, recentForumUpvotes
             ] = await Promise.all([
                 supabase.from("resources").select('*', { count: 'exact', head: true }).in('type', ['pdf', 'video', 'blog']),
                 supabase.from("question_bank").select('*', { count: 'exact', head: true }),
@@ -112,7 +113,11 @@ export default function AdminDashboard() {
                 supabase.from("system_updates").select('*').order('created_at', { ascending: false }).limit(1).single(),
                 supabase.from("feedbacks").select('*').order('created_at', { ascending: false }).limit(10),
                 supabase.from("resources").select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-                supabase.from("forum_moderation_reports").select('*', { count: 'exact', head: true }).eq('status', 'pending')
+                supabase.from("forum_moderation_reports").select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+                
+                supabase.from("forum_threads").select("id, title, created_at, updated_at").order("created_at", { ascending: false }).limit(5),
+                supabase.from("forum_moderation_reports").select("id, reason, created_at, reporter:reporter_id(full_name), thread:thread_id(title)").order("created_at", { ascending: false }).limit(5),
+                supabase.from("forum_upvotes").select("id, created_at, thread:forum_threads(title), comment:forum_comments(content, thread:forum_threads(title)), user:profiles!forum_upvotes_user_id_fkey(full_name)").order("created_at", { ascending: false }).limit(5)
             ]);
 
             const calcTrend = (total: number, prevTotal: number) => total - prevTotal;
@@ -131,6 +136,39 @@ export default function AdminDashboard() {
                 ...(recentUsers.data || []).map(u => ({ type: 'user', title: u.full_name || 'New User', action: 'New Registration', created_at: u.created_at })),
                 ...(recentResources.data || []).map(r => ({ type: 'blog', title: r.title, action: `New ${r.type}`, created_at: r.created_at })),
                 ...(recentNews.data || []).map(n => ({ type: 'news', title: n.title, action: 'News Update', created_at: n.created_at })),
+                ...(recentForumThreads.data || []).map((t: any) => {
+                    const isEdit = t.updated_at && new Date(t.updated_at).getTime() > new Date(t.created_at).getTime() + 1000;
+                    return {
+                        type: 'forum',
+                        title: t.title,
+                        action: isEdit ? 'Forum Thread Edited' : 'New Forum Post',
+                        created_at: isEdit ? t.updated_at : t.created_at
+                    };
+                }),
+                ...(recentForumReports.data || []).map((rep: any) => {
+                    const reporterName = rep.reporter?.full_name || 'A user';
+                    const threadTitle = rep.thread?.title || 'a discussion';
+                    return {
+                        type: 'report',
+                        title: `"${threadTitle}" reported by ${reporterName} (Reason: ${rep.reason})`,
+                        action: 'Forum Post Flagged',
+                        created_at: rep.created_at
+                    };
+                }),
+                ...(recentForumUpvotes.data || []).map((vote: any) => {
+                    const voterName = vote.user?.full_name || 'Someone';
+                    const targetTitle = vote.thread?.title 
+                        ? vote.thread.title 
+                        : vote.comment?.thread?.title 
+                            ? `reply on "${vote.comment.thread.title}"` 
+                            : 'a post';
+                    return {
+                        type: 'kudos',
+                        title: `${voterName} liked "${targetTitle}"`,
+                        action: 'Kudos Received',
+                        created_at: vote.created_at
+                    };
+                }),
             ];
 
             setActivities(rawActivities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));

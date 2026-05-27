@@ -10,6 +10,7 @@ interface MCQInteractiveWrapperProps {
   options: { id: string; option_text: string; is_correct?: boolean }[];
   hasAnswered: boolean;
   previouslySelectedOptionId?: string;
+  previouslyTimeSpent?: number;
   metrics?: { [optionId: string]: number };
   isLoggedIn?: boolean;
   onAnswered?: (optionId: string) => void;
@@ -17,19 +18,20 @@ interface MCQInteractiveWrapperProps {
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
-export default function MCQInteractiveWrapper({ 
-  threadId, 
-  options, 
+export default function MCQInteractiveWrapper({
+  threadId,
+  options,
   hasAnswered: initialHasAnswered,
   previouslySelectedOptionId,
+  previouslyTimeSpent = 0,
   metrics,
   isLoggedIn,
   onAnswered
 }: MCQInteractiveWrapperProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(previouslySelectedOptionId || null);
   const [hasAnswered, setHasAnswered] = useState(initialHasAnswered);
-  const [timeSpent, setTimeSpent] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(previouslyTimeSpent);
+  const [isPaused, setIsPaused] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
@@ -45,7 +47,10 @@ export default function MCQInteractiveWrapper({
   useEffect(() => {
     setHasAnswered(initialHasAnswered);
     setSelectedOption(previouslySelectedOptionId || null);
-  }, [initialHasAnswered, previouslySelectedOptionId]);
+    if (previouslyTimeSpent !== undefined) {
+      setTimeSpent(previouslyTimeSpent);
+    }
+  }, [initialHasAnswered, previouslySelectedOptionId, previouslyTimeSpent]);
 
   // Timer logic
   useEffect(() => {
@@ -61,6 +66,8 @@ export default function MCQInteractiveWrapper({
   const handleOptionClick = async (optionId: string) => {
     if (hasAnswered) return;
 
+    setIsPaused(true);
+
     if (!isLoggedIn) {
       setNonLoggedInClicked(true);
       setSelectedOption(optionId);
@@ -68,7 +75,6 @@ export default function MCQInteractiveWrapper({
     }
 
     setSelectedOption(optionId);
-    setIsPaused(true);
     setIsSubmitting(true);
     setError('');
 
@@ -76,6 +82,8 @@ export default function MCQInteractiveWrapper({
       const result = await submitQuestionAttempt(threadId, optionId, timeSpent);
       if (result.success) {
         setHasAnswered(true);
+        setShowAnswerManual(true);
+        setShowExplanation(true);
         if (onAnswered) {
           onAnswered(optionId);
         }
@@ -104,18 +112,18 @@ export default function MCQInteractiveWrapper({
 
   return (
     <div className="bg-[#FAFBFD] dark:bg-[#15171E] rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-sm overflow-hidden mb-8 text-left">
-      
+
       {/* Control Dashboard Header */}
       <div className="bg-slate-100/70 dark:bg-slate-800/40 p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-xs font-black text-slate-850 dark:text-slate-250 uppercase tracking-widest bg-blue-100 dark:bg-blue-900/30 text-blue-650 dark:text-blue-400 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
-            <Timer className="w-3.5 h-3.5" /> GMAT Timer
+            <Timer className="w-3.5 h-3.5" /> Timer
           </span>
           <div className="flex items-center gap-1.5 font-mono text-base font-extrabold text-slate-850 dark:text-slate-100">
             <span>{formatTime(timeSpent)}</span>
             {!hasAnswered && (
-              <button 
-                onClick={() => setIsPaused(!isPaused)} 
+              <button
+                onClick={() => setIsPaused(!isPaused)}
                 className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
                 title={isPaused ? "Resume Timer" : "Pause Timer"}
               >
@@ -159,7 +167,7 @@ export default function MCQInteractiveWrapper({
                 const isSelected = selectedOption === opt.id;
                 const showMetrics = hasAnswered && metrics;
                 const pct = showMetrics ? (metrics[opt.id] || 0) : 0;
-                
+
                 return (
                   <div key={opt.id} className="flex flex-col items-center gap-2">
                     <motion.button
@@ -182,16 +190,15 @@ export default function MCQInteractiveWrapper({
                             : {}
                       }
                       transition={{ duration: 0.3 }}
-                      className={`w-12 h-12 rounded-full border-2 font-black text-sm flex items-center justify-center transition-colors shadow-sm ${
-                        hasAnswered
+                      className={`w-12 h-12 rounded-full border-2 font-black text-sm flex items-center justify-center transition-colors shadow-sm ${hasAnswered
                           ? ''
                           : 'bg-white dark:bg-[#1C1F26] border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 text-slate-750 dark:text-slate-300 hover:text-blue-650'
-                      }`}
+                        }`}
                       title={hasAnswered ? `Answer choice ${letter}` : `Select ${letter}`}
                     >
                       {letter}
                     </motion.button>
-                    
+
                     {showMetrics && (
                       <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-[#1C1F26] px-1.5 py-0.5 rounded border border-slate-150 dark:border-slate-800 shadow-sm font-mono">
                         {pct}%
@@ -201,37 +208,44 @@ export default function MCQInteractiveWrapper({
                 );
               })}
             </div>
-            
-            {nonLoggedInClicked && (
-              <div className="mt-5 text-xs font-bold text-rose-500 bg-rose-500/10 dark:bg-rose-950/20 px-4 py-2 border border-rose-500/20 rounded-xl flex items-center gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
-                <span>Log in to see the answer.</span>
-              </div>
-            )}
           </div>
         )}
 
         {options.length > 0 && (
-          <div className="flex items-center gap-2 mt-4 animate-in fade-in duration-205">
-            <button
-              type="button"
-              onClick={() => {
-                if (!isLoggedIn) {
-                  setNonLoggedInClicked(true);
-                  return;
-                }
-                const newShow = !showAnswerManual;
-                setShowAnswerManual(newShow);
-                setShowExplanation(newShow);
-              }}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5"
-            >
-              <span>{showAnswerManual ? 'Hide Answer' : 'Show Answer'}</span>
-            </button>
-            
-            {showAnswerManual && isLoggedIn && (
-              <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-extrabold shadow-sm font-mono animate-in zoom-in-95 duration-150">
-                {getCorrectOptionLetter()}
+          <div className="flex flex-col gap-3 mt-4 animate-in fade-in duration-205">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setNonLoggedInClicked(true);
+                    return;
+                  }
+                  const newShow = !showAnswerManual;
+                  setShowAnswerManual(newShow);
+                  setShowExplanation(newShow);
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-blue-650 dark:text-blue-400 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5"
+              >
+                <span>{showAnswerManual ? 'Hide Answer' : 'Show Answer'}</span>
+              </button>
+
+              {showAnswerManual && isLoggedIn && (
+                <div className="flex items-center gap-2 animate-in zoom-in-95 duration-150">
+                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-850 dark:text-slate-200 rounded-xl text-xs font-extrabold shadow-sm font-mono">
+                    Correct Option: <span className="text-emerald-600 dark:text-emerald-400">{getCorrectOptionLetter()}</span>
+                  </div>
+                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold shadow-sm font-mono">
+                    Time Taken: <span className="text-slate-800 dark:text-slate-250 font-black">{formatTime(timeSpent)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {nonLoggedInClicked && (
+              <div className="text-xs font-bold text-rose-500 bg-rose-500/10 dark:bg-rose-950/20 px-4 py-2 border border-rose-500/20 rounded-xl flex items-center gap-1.5 w-fit animate-in slide-in-from-top-2 duration-205">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                <span>Log in to see the answer.</span>
               </div>
             )}
           </div>
@@ -253,7 +267,7 @@ export default function MCQInteractiveWrapper({
             Correct Option: <span className="text-green-600 dark:text-green-400 font-extrabold">Option {getCorrectOptionLetter()}</span>
           </div>
           <p className="text-xs text-slate-750 dark:text-slate-300 leading-relaxed font-medium">
-            You selected option <span className="font-bold uppercase text-slate-900 dark:text-white">{selectedOption ? OPTION_LETTERS[options.findIndex(o => o.id === selectedOption)] : ''}</span>. 
+            You selected option <span className="font-bold uppercase text-slate-900 dark:text-white">{selectedOption ? OPTION_LETTERS[options.findIndex(o => o.id === selectedOption)] : ''}</span>.
             GMAT timer captured a total time spent of <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{formatTime(timeSpent)}</span>.
           </p>
         </div>
