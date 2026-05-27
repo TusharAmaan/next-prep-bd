@@ -32,6 +32,8 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
   const [editorMode, setEditorMode] = useState(false);
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [createdThreadId, setCreatedThreadId] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -42,6 +44,23 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
   const [selGrp, setSelGrp] = useState("");
   const [selSub, setSelSub] = useState("");
   const [linkedQuestionId, setLinkedQuestionId] = useState("");
+
+  // New Form states for Tagging, SEO, and Multiple Linked Questions builder
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [seoTags, setSeoTags] = useState<string[]>([]);
+  const [isSeoTitleEdited, setIsSeoTitleEdited] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [tagSuggestions, setTagSuggestions] = useState<any[]>([]);
+  const [linkedQuestions, setLinkedQuestions] = useState<any[]>([]);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+
+  // Link Question Modal Search / Filter states
+  const [modalSearch, setModalSearch] = useState("");
+  const [modalTypeFilter, setModalTypeFilter] = useState("all");
+  const [modalDifficultyFilter, setModalDifficultyFilter] = useState("all");
+
+  const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
   // Dropdown lists
   const [segmentsList, setSegmentsList] = useState<any[]>([]);
@@ -138,7 +157,17 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
     setSelGrp("");
     setSelSub("");
     setLinkedQuestionId("");
+    setSeoTitle("");
+    setSeoDescription("");
+    setSeoTags([]);
+    setIsSeoTitleEdited(false);
+    setTagInput("");
+    setTagSuggestions([]);
+    setLinkedQuestions([]);
     setEditingThreadId(null);
+    setModalSearch("");
+    setModalTypeFilter("all");
+    setModalDifficultyFilter("all");
   };
 
   // Save thread
@@ -161,6 +190,9 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         segment_id: selSeg ? Number(selSeg) : null,
         group_id: selGrp ? Number(selGrp) : null,
         subject_id: selSub ? Number(selSub) : null,
+        seo_title: seoTitle.trim() || null,
+        seo_description: seoDescription.trim() || null,
+        seo_tags: seoTags,
         updated_at: new Date().toISOString()
       };
 
@@ -185,32 +217,147 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         threadId = data.id;
       }
 
-      // Handle linked question mapping if question_post
-      if (threadType === "question_post" && linkedQuestionId) {
-        // Delete any existing maps first to avoid UNIQUE conflict
+      // Handle linked tags mapping
+      if (seoTags && seoTags.length > 0) {
+        const tagIds: number[] = [];
+        for (const tName of seoTags) {
+          const { data: existingTag } = await supabase
+            .from("forum_tags")
+            .select("id")
+            .eq("name", tName.trim())
+            .maybeSingle();
+            
+          if (existingTag) {
+            tagIds.push(existingTag.id);
+          } else {
+            const { data: newTag, error: tagErr } = await supabase
+              .from("forum_tags")
+              .insert({ name: tName.trim() })
+              .select("id")
+              .single();
+            if (!tagErr && newTag) {
+              tagIds.push(newTag.id);
+            }
+          }
+        }
+        
+        await supabase
+          .from("forum_thread_tags")
+          .delete()
+          .eq("thread_id", threadId);
+          
+        if (tagIds.length > 0) {
+          const tagMappings = tagIds.map(tid => ({
+            thread_id: threadId,
+            tag_id: tid
+          }));
+          await supabase
+            .from("forum_thread_tags")
+            .insert(tagMappings);
+        }
+      } else {
+        await supabase
+          .from("forum_thread_tags")
+          .delete()
+          .eq("thread_id", threadId);
+      }
+
+      // Handle multiple linked questions mapping (via builder list)
+      if ((threadType === "question_post" || threadType === "reading_comprehension") && linkedQuestions.length > 0) {
+        
+        const finalQuestionIds: string[] = [];
+
+        for (const q of linkedQuestions) {
+          const isInline = String(q.id).startsWith("inline-");
+          
+          if (isInline) {
+            // Save inline question to bank
+            const { data: newQ, error: qErr } = await supabase
+              .from("question_bank")
+              .insert({
+                question_text: q.question_text,
+                question_type: q.question_type,
+                explanation: q.explanation || null,
+                difficulty: difficulty || 'medium',
+                segment_id: selSeg ? Number(selSeg) : null,
+                group_id: selGrp ? Number(selGrp) : null,
+                subject_id: selSub ? Number(selSub) : null
+              })
+              .select("id")
+              .single();
+              
+            if (qErr) throw qErr;
+
+            // Save MCQ options if applicable
+            if (q.question_type === "mcq" && q.options && q.options.length > 0) {
+              const optPayloads = q.options.map((opt: any, index: number) => ({
+                question_id: newQ.id,
+                option_text: opt.option_text,
+                is_correct: !!opt.is_correct,
+                order_index: index
+              }));
+              const { error: optErr } = await supabase
+                .from("question_options")
+                .insert(optPayloads);
+              if (optErr) throw optErr;
+            }
+            finalQuestionIds.push(newQ.id);
+          } else {
+            // Existing question from bank: update it if edited
+            await supabase
+              .from("question_bank")
+              .update({
+                question_text: q.question_text,
+                explanation: q.explanation || null
+              })
+              .eq("id", q.id);
+
+            // Re-insert option correctness if MCQ
+            if (q.question_type === "mcq" && q.options) {
+              for (const opt of q.options) {
+                if (opt.id) {
+                  await supabase
+                    .from("question_options")
+                    .update({
+                      option_text: opt.option_text,
+                      is_correct: !!opt.is_correct
+                    })
+                    .eq("id", opt.id);
+                }
+              }
+            }
+            finalQuestionIds.push(q.id);
+          }
+        }
+
+        // Delete any existing mappings
         await supabase
           .from("forum_thread_questions")
           .delete()
           .eq("thread_id", threadId);
 
-        // Insert mapping
+        // Insert new mappings
+        const mappings = finalQuestionIds.map((qid, index) => ({
+          thread_id: threadId,
+          question_bank_id: qid,
+          order_index: index
+        }));
+        
         const { error: mapError } = await supabase
           .from("forum_thread_questions")
-          .insert({
-            thread_id: threadId,
-            question_bank_id: linkedQuestionId,
-            order_index: 0
-          });
+          .insert(mappings);
         if (mapError) throw mapError;
+
       } else {
-        // Clear mapping if not question_post or no question selected
+        // Clear mapping if not question/passage type
         await supabase
           .from("forum_thread_questions")
           .delete()
           .eq("thread_id", threadId);
       }
 
-      alert("Saved Successfully!");
+      setCreatedThreadId(threadId);
+      setShowSuccessToast(true);
       setEditorMode(false);
       resetForm();
       fetchThreads();
@@ -231,21 +378,52 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
     setSelSeg(thread.segment_id ? String(thread.segment_id) : "");
     setSelGrp(thread.group_id ? String(thread.group_id) : "");
     setSelSub(thread.subject_id ? String(thread.subject_id) : "");
+    setSeoTitle(thread.seo_title || "");
+    setSeoDescription(thread.seo_description || "");
+    setSeoTags(thread.seo_tags || []);
+    setIsSeoTitleEdited(!!thread.seo_title);
     
-    // Prefill linked question mapping if type is question_post
-    if (thread.thread_type === "question_post") {
+    // Fetch linked questions mappings for both MCQ and Reading Comprehension
+    try {
       const { data: qData } = await supabase
         .from("forum_thread_questions")
         .select("question_bank_id")
         .eq("thread_id", thread.id)
-        .limit(1);
+        .order("order_index", { ascending: true });
+        
       if (qData && qData.length > 0) {
-        setLinkedQuestionId(qData[0].question_bank_id);
+        const qIds = qData.map((q: any) => q.question_bank_id);
+        const { data: questions } = await supabase
+          .from("question_bank")
+          .select("id, question_text, explanation, question_type")
+          .in("id", qIds);
+          
+        const { data: allOptions } = await supabase
+          .from("question_options")
+          .select("id, question_id, option_text, is_correct")
+          .in("question_id", qIds)
+          .order("order_index", { ascending: true });
+        
+        if (questions) {
+          const merged = questions.map((q: any) => {
+            const options = allOptions ? allOptions.filter((opt: any) => opt.question_id === q.id) : [];
+            return {
+              id: q.id,
+              question_text: q.question_text,
+              explanation: q.explanation,
+              question_type: q.question_type,
+              options: options.map(o => ({ id: o.id, option_text: o.option_text, is_correct: o.is_correct }))
+            };
+          });
+          const sorted = qIds.map(qid => merged.find(m => m.id === qid)).filter(Boolean);
+          setLinkedQuestions(sorted);
+        }
       } else {
-        setLinkedQuestionId("");
+        setLinkedQuestions([]);
       }
-    } else {
-      setLinkedQuestionId("");
+    } catch (err) {
+      console.error("Error loading linked questions for edit:", err);
+      setLinkedQuestions([]);
     }
     
     setEditorMode(true);
@@ -401,6 +579,16 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
     return true;
   });
 
+  // Filter questions for the search popup modal
+  const filteredModalQuestions = questionsList.filter((q: any) => {
+    if (modalTypeFilter !== 'all' && q.question_type !== modalTypeFilter) return false;
+    if (modalDifficultyFilter !== 'all' && q.difficulty !== modalDifficultyFilter) return false;
+    if (modalSearch.trim()) {
+      return q.question_text?.toLowerCase().includes(modalSearch.toLowerCase());
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 relative">
       
@@ -461,12 +649,18 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               <input 
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTitle(val);
+                  if (!isSeoTitleEdited) {
+                    setSeoTitle(val);
+                  }
+                }}
                 placeholder="Enter discussion title..."
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
               />
             </div>
-
+ 
             {/* Type */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thread Type</label>
@@ -478,7 +672,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 <option value="standard">Standard Discussion</option>
                 <option value="question_post">MCQ / Practice Question</option>
                 <option value="study_strategy">Study Strategy</option>
-                <option value="tutor_announcement">Tutor Announcement</option>
+                <option value="reading_comprehension">Reading Comprehension</option>
               </select>
             </div>
 
@@ -537,23 +731,266 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               </select>
             </div>
 
-            {/* Conditional Question Bank Link */}
-            {threadType === "question_post" && (
-              <div className="space-y-2 animate-in slide-in-from-top duration-300">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Link Question from Bank</label>
-                <select 
-                  value={linkedQuestionId}
-                  onChange={(e) => setLinkedQuestionId(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all"
-                >
-                  <option value="">Select Question...</option>
-                  {questionsList.map(q => {
-                    const cleanQ = q.question_text?.replace(/<[^>]+>/g, '').substring(0, 80) + '...';
-                    return <option key={q.id} value={q.id}>{cleanQ}</option>;
-                  })}
-                </select>
+            {/* Topic tag system (YouTube Video Tag Style suggestions) */}
+            <div className="md:col-span-2 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topic Tags (Press Enter or comma to add)</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {seoTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold rounded-lg border border-indigo-100 dark:border-indigo-800">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setSeoTags(prev => prev.filter(t => t !== tag))}
+                      className="text-indigo-400 hover:text-indigo-650 focus:outline-none"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={async (e) => {
+                    const prefix = e.target.value;
+                    setTagInput(prefix);
+                    if (prefix.trim().length > 0) {
+                      const { data } = await supabase
+                        .from('forum_tags')
+                        .select('name')
+                        .ilike('name', `%${prefix}%`)
+                        .limit(5);
+                      setTagSuggestions(data || []);
+                    } else {
+                      setTagSuggestions([]);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                      e.preventDefault();
+                      const cleanTag = tagInput.trim();
+                      if (cleanTag && !seoTags.includes(cleanTag)) {
+                        setSeoTags(prev => [...prev, cleanTag]);
+                        setTagInput("");
+                        setTagSuggestions([]);
+                      }
+                    }
+                  }}
+                  placeholder="Type topic tag (e.g. Data Sufficiency) and press Enter..."
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
+                />
+                
+                {tagSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-[200] max-h-40 overflow-y-auto">
+                    {tagSuggestions.map(sugg => (
+                      <button
+                        key={sugg.name}
+                        type="button"
+                        onClick={() => {
+                          if (!seoTags.includes(sugg.name)) {
+                            setSeoTags(prev => [...prev, sugg.name]);
+                          }
+                          setTagInput("");
+                          setTagSuggestions([]);
+                        }}
+                        className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-855 transition-colors"
+                      >
+                        {sugg.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dynamic Question Builder & Question Bank Popup Link */}
+            {(threadType === 'question_post' || threadType === 'reading_comprehension') && (
+              <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Linked Questions</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowQuestionModal(true)}
+                      className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-indigo-650 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Link Question from Bank
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newQ = {
+                          id: `inline-${Date.now()}-${Math.random()}`,
+                          question_text: "New practice question text...",
+                          question_type: "mcq",
+                          explanation: "",
+                          options: [
+                            { option_text: "Option A text", is_correct: true },
+                            { option_text: "Option B text", is_correct: false },
+                            { option_text: "Option C text", is_correct: false },
+                            { option_text: "Option D text", is_correct: false },
+                            { option_text: "Option E text", is_correct: false }
+                          ]
+                        };
+                        setLinkedQuestions(prev => [...prev, newQ]);
+                      }}
+                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100/60 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Create Question Inline
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {linkedQuestions.map((q, idx) => (
+                    <div key={q.id} className="p-5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-2xl space-y-4 text-left relative">
+                      <button
+                        type="button"
+                        onClick={() => setLinkedQuestions(prev => prev.filter(l => l.id !== q.id))}
+                        className="absolute top-4 right-4 p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-650"
+                        title="Remove question"
+                      >
+                        <Trash2 className="w-4.5 h-4.5 text-rose-500" />
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Question {idx + 1}</span>
+                        <select
+                          value={q.question_type}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_type: val } : l));
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-lg"
+                        >
+                          <option value="mcq">MCQ Choice Question</option>
+                          <option value="descriptive">Descriptive Question</option>
+                        </select>
+                      </div>
+
+                      {/* Question Text */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-450 uppercase">Question Content</label>
+                        <textarea
+                          value={q.question_text}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, question_text: val } : l));
+                          }}
+                          className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* Explanation */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-450 uppercase">Explanation / Reference</label>
+                        <textarea
+                          value={q.explanation || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, explanation: val } : l));
+                          }}
+                          className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
+                          rows={2}
+                          placeholder="Provide explanation details here..."
+                        />
+                      </div>
+
+                      {/* Options (MCQ only) */}
+                      {q.question_type === "mcq" && (
+                        <div className="space-y-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                          <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Choices (Check correct one)</label>
+                          {q.options?.map((opt: any, optIdx: number) => (
+                            <div key={optIdx} className="flex items-center gap-3">
+                              <input
+                                type="radio"
+                                name={`correct-${q.id}`}
+                                checked={!!opt.is_correct}
+                                onChange={() => {
+                                  const updatedOpts = q.options.map((o: any, oi: number) => ({
+                                    ...o,
+                                    is_correct: oi === optIdx
+                                  }));
+                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
+                                }}
+                                className="w-4 h-4 text-indigo-650"
+                              />
+                              <input
+                                type="text"
+                                value={opt.option_text}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updatedOpts = q.options.map((o: any, oi: number) => ({
+                                    ...o,
+                                    option_text: val
+                                  }));
+                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
+                                }}
+                                placeholder={`Option ${OPTION_LETTERS[optIdx]}`}
+                                className="flex-1 p-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-lg outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {linkedQuestions.length === 0 && (
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/10 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 font-semibold">
+                      No questions linked yet. Click above to select from bank or write new ones.
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* SEO / Metadata Section */}
+            <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">Metadata & SEO Settings</label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Meta Title</label>
+                  <input
+                    type="text"
+                    value={seoTitle}
+                    onChange={(e) => {
+                      setSeoTitle(e.target.value);
+                      setIsSeoTitleEdited(true);
+                    }}
+                    placeholder="Enter Meta Title..."
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Meta Keywords (Comma separated)</label>
+                  <input
+                    type="text"
+                    value={seoTags.join(", ")}
+                    onChange={(e) => {
+                      const tagsArray = e.target.value.split(",").map(t => t.trim()).filter(Boolean);
+                      setSeoTags(tagsArray);
+                    }}
+                    placeholder="tag1, tag2, tag3"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                  />
+                </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Meta Description</label>
+                  <textarea
+                    value={seoDescription}
+                    onChange={(e) => setSeoDescription(e.target.value)}
+                    placeholder="Enter Meta Description..."
+                    rows={2}
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-855 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Content Editor */}
             <div className="md:col-span-2 space-y-2">
@@ -956,6 +1393,171 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal Toast Popup */}
+      {showSuccessToast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#1C1F26] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-w-sm w-full text-center space-y-5 animate-scale-up">
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+              ✓
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                Saved Successfully!
+              </h3>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
+                The forum discussion thread has been successfully published/updated on the discussion board.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 pt-2">
+              {createdThreadId && (
+                <Link
+                  href={`/forum/thread/${createdThreadId}`}
+                  target="_blank"
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
+                >
+                  View Discussion on Board <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+              <button
+                onClick={() => {
+                  setShowSuccessToast(false);
+                  setCreatedThreadId(null);
+                }}
+                className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LINK QUESTION FROM BANK MODAL */}
+      {showQuestionModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#1C1F26] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-w-4xl w-full flex flex-col max-h-[85vh] animate-scale-up text-left">
+            <div className="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-4 mb-4">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                Link Question from Bank
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQuestionModal(false)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-650 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Search and Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="relative md:col-span-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search question bank..."
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 font-semibold"
+                />
+              </div>
+              <select
+                value={modalTypeFilter}
+                onChange={(e) => setModalTypeFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 font-semibold"
+              >
+                <option value="all">All Types</option>
+                <option value="mcq">MCQ Choice Question</option>
+                <option value="descriptive">Descriptive Question</option>
+              </select>
+              <select
+                value={modalDifficultyFilter}
+                onChange={(e) => setModalDifficultyFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 font-semibold"
+              >
+                <option value="all">All Difficulties</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            
+            {/* Question List */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {filteredModalQuestions.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                  No matching questions found in the bank.
+                </div>
+              ) : (
+                filteredModalQuestions.map((q: any) => {
+                  const cleanText = q.question_text?.replace(/<[^>]+>/g, '').substring(0, 220) + '...';
+                  const isLinked = linkedQuestions.some(l => l.id === q.id);
+                  
+                  return (
+                    <div 
+                      key={q.id}
+                      className="p-4 bg-slate-50 dark:bg-slate-800/35 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 flex justify-between gap-4 items-center hover:border-indigo-500/30 transition-all"
+                    >
+                      <div className="space-y-1 text-left flex-1 min-w-0">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded uppercase">
+                            {q.question_type}
+                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-400 rounded uppercase">
+                            {q.difficulty || 'medium'}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 dark:text-slate-250 text-xs leading-relaxed font-semibold line-clamp-2">
+                          {cleanText}
+                        </p>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (isLinked) {
+                            setLinkedQuestions(prev => prev.filter(l => l.id !== q.id));
+                          } else {
+                            // Fetch options if MCQ to prefill builder
+                            let qOptions: any[] = [];
+                            if (q.question_type === 'mcq') {
+                              const { data: optData } = await supabase
+                                .from("question_options")
+                                .select("id, option_text, is_correct")
+                                .eq("question_id", q.id)
+                                .order("order_index", { ascending: true });
+                              if (optData) qOptions = optData;
+                            }
+                            setLinkedQuestions(prev => [...prev, { ...q, options: qOptions }]);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isLinked 
+                            ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-sm' 
+                            : 'bg-indigo-650 hover:bg-indigo-700 text-white shadow-sm'
+                        }`}
+                      >
+                        {isLinked ? 'Unlink' : 'Link Question'}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            
+            <div className="border-t border-slate-150 dark:border-slate-800 pt-4 mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowQuestionModal(false)}
+                className="px-5 py-2.5 bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-850 rounded-xl text-xs font-bold transition-all"
+              >
+                Close Question Bank
+              </button>
+            </div>
           </div>
         </div>
       )}

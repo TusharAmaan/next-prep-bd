@@ -98,10 +98,10 @@ export default function ForumList({
           label: "Practice Question",
           bg: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
         };
-      case "tutor_announcement":
+      case "reading_comprehension":
         return {
-          label: "Tutor Post",
-          bg: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+          label: "Reading Comprehension",
+          bg: "bg-cyan-550/10 text-cyan-600 dark:text-cyan-400 border border-cyan-550/20",
         };
       case "study_strategy":
         return {
@@ -249,7 +249,7 @@ export default function ForumList({
                     <option value="standard">Standard Discussion</option>
                     <option value="question_post">Practice Question</option>
                     <option value="study_strategy">Study Strategy</option>
-                    <option value="tutor_announcement">Tutor Post</option>
+                    <option value="reading_comprehension">Reading Comprehension</option>
                   </select>
                 </div>
 
@@ -309,128 +309,223 @@ export default function ForumList({
             </div>
           </div>
 
-          {/* List or Cards */}
-          {filteredThreads.length > 0 ? (
-            <div className="space-y-4">
-              {filteredThreads.map((thread) => {
-                const badge = getThreadTypeBadge(thread.thread_type);
-                const diffBadge = getDifficultyBadge(thread.difficulty);
-                const commentsCount = thread.forum_comments?.length || 0;
+          {/* Thread Card and Grid Section Groupings */}
+          {(() => {
+            const hasActiveFilters = 
+              search.trim() !== "" || 
+              selectedSegment !== "All" || 
+              selectedGroup !== "All" || 
+              selectedSubject !== "All" || 
+              selectedType !== "All" || 
+              selectedDifficulty !== "All";
 
-                return (
-                  <div
-                    key={thread.id}
-                    className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-400/50 hover:shadow-xl dark:hover:shadow-indigo-900/5 p-6 rounded-[2rem] transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-6"
-                  >
-                    {thread.is_pinned && (
-                      <div className="absolute top-4 right-6 flex items-center gap-1.5 text-[10px] font-bold text-indigo-500">
-                        <Pin className="w-3.5 h-3.5 fill-current" /> Pinned
-                      </div>
-                    )}
+            const renderThreadCard = (thread: any) => {
+              const badge = getThreadTypeBadge(thread.thread_type);
+              const diffBadge = getDifficultyBadge(thread.difficulty);
+              const commentsCount = thread.forum_comments?.length || 0;
 
-                    <div className="flex-1 space-y-3">
-                      {/* Badge / Category Header */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${badge.bg}`}>
-                          {badge.label}
-                        </span>
-                        
-                        {diffBadge && (
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${diffBadge}`}>
-                            {thread.difficulty ? thread.difficulty.charAt(0).toUpperCase() + thread.difficulty.slice(1) : ''}
-                          </span>
-                        )}
-
-                        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                          {thread.segment?.title && `${thread.segment.title}`}
-                          {thread.group?.title && ` › ${thread.group.title}`}
-                          {thread.subject?.title && ` › ${thread.subject.title}`}
-                        </span>
-                      </div>
-
-                      {/* Title */}
-                      <Link href={`/forum/thread/${thread.id}`}>
-                        <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight line-clamp-2">
-                          {thread.title}
-                        </h3>
-                      </Link>
-
-                      {/* Author & Meta */}
-                      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                        <div className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px]">
-                          {thread.author?.full_name?.[0]?.toUpperCase() || "U"}
-                        </div>
-                        <span className="font-semibold">{thread.author?.full_name || "Community Member"}</span>
-                        {thread.author?.gamification_rank && (
-                          <span className="bg-indigo-500/10 text-indigo-500 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                            {thread.author.gamification_rank}
-                          </span>
-                        )}
-                        <span className="text-slate-300 dark:text-slate-700">•</span>
-                        <div className="flex items-center gap-1 text-[11px] font-medium">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          {isClient ? new Date(thread.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
-                        </div>
-                      </div>
+              return (
+                <div
+                  key={thread.id}
+                  className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-400/50 hover:shadow-xl dark:hover:shadow-indigo-900/5 p-5 rounded-[1.8rem] transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left"
+                >
+                  {thread.is_pinned && (
+                    <div className="absolute top-4 right-6 flex items-center gap-1.5 text-[10px] font-bold text-indigo-500">
+                      <Pin className="w-3.5 h-3.5 fill-current" /> Pinned
                     </div>
+                  )}
 
-                    {/* Stats & Actions Area */}
-                    <div className="flex items-center gap-6 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50 pt-4 md:pt-0">
+                  <div className="flex-1 space-y-2.5">
+                    {/* Badge / Category Header */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${badge.bg}`}>
+                        {badge.label}
+                      </span>
                       
-                      {/* Metrics counts */}
-                      <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <ThumbsUp className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                            <span className="text-xs font-bold">{thread.upvotes}</span>
-                          </div>
-                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 block mt-0.5">Likes</span>
-                        </div>
+                      {diffBadge && (
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${diffBadge}`}>
+                          {thread.difficulty ? thread.difficulty.charAt(0).toUpperCase() + thread.difficulty.slice(1) : ''}
+                        </span>
+                      )}
 
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <MessageSquare className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                            <span className="text-xs font-bold">{commentsCount}</span>
-                          </div>
-                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 block mt-0.5">Replies</span>
-                        </div>
+                      <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                        {thread.segment?.title && `${thread.segment.title}`}
+                        {thread.group?.title && ` › ${thread.group.title}`}
+                        {thread.subject?.title && ` › ${thread.subject.title}`}
+                      </span>
+                    </div>
 
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <Eye className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                            <span className="text-xs font-bold">{thread.views}</span>
-                          </div>
-                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 block mt-0.5">Views</span>
+                    {/* Title */}
+                    <Link href={`/forum/thread/${thread.id}`}>
+                      <h3 className="text-base font-extrabold text-slate-850 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight line-clamp-2">
+                        {thread.title}
+                      </h3>
+                    </Link>
+
+                    {/* Author & Meta */}
+                    <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="w-5.5 h-5.5 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[9px]">
+                        {thread.author?.full_name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                      <span className="font-semibold text-[11px]">{thread.author?.full_name || "Community Member"}</span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        {isClient ? new Date(thread.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats & Actions Area */}
+                  <div className="flex items-center gap-4 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50 pt-3 md:pt-0 shrink-0">
+                    <div className="flex items-center gap-3 text-slate-400">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-[11px] font-bold">{thread.upvotes}</span>
                         </div>
                       </div>
 
-                      {/* Go link arrow */}
-                      <Link 
-                        href={`/forum/thread/${thread.id}`}
-                        className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-850 hover:bg-indigo-600 dark:hover:bg-indigo-500 hover:text-white text-slate-400 flex items-center justify-center transition-all group-hover:translate-x-1"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-[11px] font-bold">{commentsCount}</span>
+                        </div>
+                      </div>
 
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <Eye className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-[11px] font-bold">{thread.views}</span>
+                        </div>
+                      </div>
                     </div>
 
+                    <Link 
+                      href={`/forum/thread/${thread.id}`}
+                      className="w-8.5 h-8.5 rounded-full bg-slate-50 dark:bg-slate-850 hover:bg-indigo-650 hover:text-white text-slate-400 flex items-center justify-center transition-all group-hover:translate-x-1"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-24 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
-              <AlertCircle className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">No Discussions Found</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto mb-6">We couldn't find any threads matching your filters. Try checking other topics or resetting the filter.</p>
-              <button 
-                onClick={handleReset}
-                className="px-6 py-3 bg-indigo-600 text-white rounded-full text-xs font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all tracking-wide"
-              >
-                Reset Filters
-              </button>
-            </div>
-          )}
+                </div>
+              );
+            };
+
+            if (hasActiveFilters) {
+              return filteredThreads.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredThreads.map((thread) => renderThreadCard(thread))}
+                </div>
+              ) : (
+                <div className="text-center py-24 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+                  <AlertCircle className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">No Discussions Found</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto mb-6">We couldn't find any threads matching your search. Try adjusting the tags or resetting the filters.</p>
+                  <button 
+                    onClick={handleReset}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-full text-xs font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all tracking-wide"
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-16">
+                {/* Loop over segments */}
+                {segments.map((seg) => {
+                  const segmentThreads = threads.filter(t => t.segment_id === seg.id);
+                  if (segmentThreads.length === 0) return null;
+
+                  return (
+                    <div key={seg.id} className="space-y-6 bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm text-left">
+                      <div className="border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                        <h2 className="text-xl font-black tracking-tight text-slate-850 dark:text-white flex items-center gap-2.5">
+                          <span className="w-1.5 h-5.5 bg-indigo-600 rounded-full" />
+                          {seg.title} Threads
+                        </h2>
+                      </div>
+
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        {[
+                          { type: 'standard', label: 'Standard Discussions' },
+                          { type: 'question_post', label: 'Practice Questions' },
+                          { type: 'study_strategy', label: 'Study Strategies' },
+                          { type: 'reading_comprehension', label: 'Reading Comprehensions' }
+                        ].map((sub) => {
+                          const subThreads = segmentThreads.filter(t => t.thread_type === sub.type).slice(0, 5);
+
+                          return (
+                            <div key={sub.type} className="space-y-3">
+                              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-l-2 border-indigo-500 pl-2 mb-3">
+                                {sub.label}
+                              </h3>
+                              {subThreads.length > 0 ? (
+                                <div className="space-y-3">
+                                  {subThreads.map(t => renderThreadCard(t))}
+                                </div>
+                              ) : (
+                                <div className="py-6 px-4 text-center bg-slate-50/50 dark:bg-slate-950/20 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 font-semibold italic">
+                                  No discussions available in this category.
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* General / Uncategorized section */}
+                {(() => {
+                  const generalThreads = threads.filter(t => !t.segment_id);
+                  if (generalThreads.length === 0) return null;
+
+                  return (
+                    <div className="space-y-6 bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm text-left">
+                      <div className="border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                        <h2 className="text-xl font-black tracking-tight text-slate-850 dark:text-white flex items-center gap-2.5">
+                          <span className="w-1.5 h-5.5 bg-indigo-600 rounded-full" />
+                          General Discussions
+                        </h2>
+                      </div>
+
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        {[
+                          { type: 'standard', label: 'Standard Discussions' },
+                          { type: 'question_post', label: 'Practice Questions' },
+                          { type: 'study_strategy', label: 'Study Strategies' },
+                          { type: 'reading_comprehension', label: 'Reading Comprehensions' }
+                        ].map((sub) => {
+                          const subThreads = generalThreads.filter(t => t.thread_type === sub.type).slice(0, 5);
+
+                          return (
+                            <div key={sub.type} className="space-y-3">
+                              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-l-2 border-indigo-500 pl-2 mb-3">
+                                {sub.label}
+                              </h3>
+                              {subThreads.length > 0 ? (
+                                <div className="space-y-3">
+                                  {subThreads.map(t => renderThreadCard(t))}
+                                </div>
+                              ) : (
+                                <div className="py-6 px-4 text-center bg-slate-50/50 dark:bg-slate-950/20 border border-dashed border-slate-200/50 dark:border-slate-800/40 rounded-2xl text-xs text-slate-400 font-semibold italic">
+                                  No discussions available in this category.
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          })()}
 
         </div>
 

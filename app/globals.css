@@ -408,3 +408,26 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Override inline black text color declarations in dark mode inside prose to maintain contrast */
+.dark .prose [style*="color: rgb(0, 0, 0)"],
+.dark .prose [style*="color: rgb(15, 23, 42)"],
+.dark .prose [style*="color: #000000"],
+.dark .prose [style*="color: #000"],
+.dark .prose [style*="color: #0f172a"],
+.dark .prose [style*="color:black"] {
+  color: revert-layer !important;
+  color: inherit !important;
+}
+
+.dark .prose span[style*="color: rgb(0, 0, 0)"],
+.dark .prose span[style*="color: #000000"],
+.dark .prose p[style*="color: rgb(0, 0, 0)"],
+.dark .prose p[style*="color: #000000"] {
+  color: inherit !important;
+}
+
+/* Force TinyMCE generated elements with hardcoded background colors to stay transparent in dark mode */
+.dark .prose [style*="background-color"] {
+  background-color: transparent !important;
+}

@@ -141,6 +141,42 @@ CREATE TRIGGER forum_upvote_gamification_trigger
 AFTER INSERT OR DELETE ON public.forum_upvotes
 FOR EACH ROW EXECUTE FUNCTION sync_forum_upvote_to_profile();
 
+-- 8b. Trigger function for upvote count sync
+CREATE OR REPLACE FUNCTION public.sync_forum_upvotes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.thread_id IS NOT NULL THEN
+            UPDATE public.forum_threads
+            SET upvotes = COALESCE(upvotes, 0) + 1
+            WHERE id = NEW.thread_id;
+        ELSIF NEW.comment_id IS NOT NULL THEN
+            UPDATE public.forum_comments
+            SET upvotes = COALESCE(upvotes, 0) + 1
+            WHERE id = NEW.comment_id;
+        END IF;
+    ELSIF TG_OP = 'DELETE' THEN
+        IF OLD.thread_id IS NOT NULL THEN
+            UPDATE public.forum_threads
+            SET upvotes = GREATEST(0, COALESCE(upvotes, 0) - 1)
+            WHERE id = OLD.thread_id;
+        ELSIF OLD.comment_id IS NOT NULL THEN
+            UPDATE public.forum_comments
+            SET upvotes = GREATEST(0, COALESCE(upvotes, 0) - 1)
+            WHERE id = OLD.comment_id;
+        END IF;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Register Upvote Count Trigger
+DROP TRIGGER IF EXISTS forum_upvote_count_trigger ON public.forum_upvotes;
+CREATE TRIGGER forum_upvote_count_trigger
+AFTER INSERT OR DELETE ON public.forum_upvotes
+FOR EACH ROW EXECUTE FUNCTION public.sync_forum_upvotes_count();
+
+
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES

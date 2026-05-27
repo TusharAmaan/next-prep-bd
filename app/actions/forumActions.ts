@@ -10,10 +10,10 @@ export async function submitQuestionAttempt(threadId: string, optionId: string, 
   
   if (!user) throw new Error("Unauthorized")
 
-  // 1. Verify if the option is correct from question_options table
+  // 1. Verify if the option is correct and find the question_id from question_options table
   const { data: optionData, error: optionError } = await supabase
     .from('question_options')
-    .select('is_correct')
+    .select('is_correct, question_id')
     .eq('id', optionId)
     .single()
 
@@ -24,6 +24,7 @@ export async function submitQuestionAttempt(threadId: string, optionId: string, 
     thread_id: threadId,
     user_id: user.id,
     selected_option_id: optionId,
+    question_id: optionData.question_id,
     is_correct: optionData.is_correct,
     time_spent_seconds: timeSpentSeconds
   })
@@ -109,3 +110,144 @@ export async function toggleForumUpvote(threadId: string | null, commentId: stri
     return { upvoted: true }
   }
 }
+
+export async function submitModerationReport(
+  threadId: string | null,
+  commentId: string | null,
+  reasonType: string,
+  customMessage: string
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) throw new Error("You must be logged in to report posts.")
+
+  const formattedReason = customMessage.trim() 
+    ? `${reasonType} - ${customMessage.trim()}`
+    : reasonType
+
+  const { error } = await supabase
+    .from('forum_moderation_reports')
+    .insert({
+      reporter_id: user.id,
+      thread_id: threadId || null,
+      comment_id: commentId || null,
+      reason: formattedReason,
+      status: 'pending'
+    })
+
+  if (error) {
+    console.error("Error submitting report:", error)
+    throw new Error(error.message || "Failed to submit moderation report.")
+  }
+
+  return { success: true }
+}
+
+export async function toggleForumBookmark(threadId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Unauthorized")
+
+  // Check if bookmark exists
+  const { data: existingBookmark, error: selectError } = await supabase
+    .from('user_forum_bookmarks')
+    .select('thread_id')
+    .eq('user_id', user.id)
+    .eq('thread_id', threadId)
+    .maybeSingle()
+
+  if (selectError) {
+    console.error("Error checking bookmark:", selectError)
+    throw new Error("Failed to check bookmark state")
+  }
+
+  if (existingBookmark) {
+    // Delete bookmark
+    const { error: deleteError } = await supabase
+      .from('user_forum_bookmarks')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('thread_id', threadId)
+
+    if (deleteError) throw deleteError
+    revalidatePath(`/forum/thread/${threadId}`)
+    return { bookmarked: false }
+  } else {
+    // Insert bookmark
+    const { error: insertError } = await supabase
+      .from('user_forum_bookmarks')
+      .insert({
+        user_id: user.id,
+        thread_id: threadId
+      })
+
+    if (insertError) throw insertError
+    revalidatePath(`/forum/thread/${threadId}`)
+    return { bookmarked: true }
+  }
+}
+
+export async function checkIsBookmarked(threadId: string): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return false
+
+  const { data, error } = await supabase
+    .from('user_forum_bookmarks')
+    .select('thread_id')
+    .eq('user_id', user.id)
+    .eq('thread_id', threadId)
+    .maybeSingle()
+
+  if (error) {
+    console.error("Error checking bookmark:", error)
+    return false
+  }
+
+  return !!data
+}
+
+export async function getStudentForumStats() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Unauthorized")
+
+  const [savedRes, postsRes, repliesRes, upvotesCastRes, upvotesReceivedRes] = await Promise.all([
+    supabase.from('user_forum_bookmarks').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('forum_threads').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
+    supabase.from('forum_comments').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
+    supabase.from('forum_upvotes').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('forum_upvotes').select('*', { count: 'exact', head: true }).eq('author_id', user.id)
+  ])
+
+  return {
+    savedCount: savedRes.count || 0,
+    myPostsCount: postsRes.count || 0,
+    myRepliesCount: repliesRes.count || 0,
+    kudosGivenCount: upvotesCastRes.count || 0,
+    kudosReceivedCount: upvotesReceivedRes.count || 0
+  }
+}
+
+export async function getForumTagsSuggestions(prefix: string) {
+  if (!prefix || prefix.trim().length === 0) return []
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('forum_tags')
+    .select('id, name')
+    .ilike('name', `%${prefix}%`)
+    .limit(10)
+
+  if (error) {
+    console.error("Error fetching tag suggestions:", error)
+    return []
+  }
+
+  return data || []
+}
+

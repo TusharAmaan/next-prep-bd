@@ -37,6 +37,7 @@ import StudentLectureSheets from "@/components/lecture-sheets/StudentLectureShee
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import { processDailyGamification, rewardProfileCompletion } from "@/app/actions/gamification";
 import { toast } from "sonner";
+import { toggleForumBookmark } from "@/app/actions/forumActions";
 
 // --- Types ---
 interface Profile {
@@ -125,6 +126,22 @@ export default function ModernStudentDashboard() {
     bookmarksCount: 0,
     averageScore: 0,
   });
+
+  // Forum Tab States
+  const [forumStats, setForumStats] = useState({
+    savedCount: 0,
+    myPostsCount: 0,
+    myRepliesCount: 0,
+    kudosGivenCount: 0,
+    kudosReceivedCount: 0
+  });
+  const [forumSavedThreads, setForumSavedThreads] = useState<any[]>([]);
+  const [forumMyPosts, setForumMyPosts] = useState<any[]>([]);
+  const [forumMyReplies, setForumMyReplies] = useState<any[]>([]);
+  const [forumKudosGiven, setForumKudosGiven] = useState<any[]>([]);
+  const [forumKudosReceived, setForumKudosReceived] = useState<any[]>([]);
+  const [activeForumSubTab, setActiveForumSubTab] = useState("saved_threads");
+  const [forumActionLoading, setForumActionLoading] = useState<string | null>(null);
 
   // Library/Bookmarks States
   const [searchTerm, setSearchTerm] = useState("");
@@ -330,6 +347,95 @@ export default function ModernStudentDashboard() {
 
       setActivities(combinedActivities);
 
+      // 8. Fetch Forum Data
+      const [
+        savedThreadsRes,
+        myPostsRes,
+        myRepliesRes,
+        kudosGivenRes,
+        kudosReceivedRes
+      ] = await Promise.all([
+        supabase
+          .from('user_forum_bookmarks')
+          .select(`
+            created_at,
+            thread:forum_threads(
+              id,
+              title,
+              thread_type,
+              created_at,
+              segment:segments(id, title),
+              author:profiles!forum_threads_author_id_fkey(id, full_name, gamification_rank)
+            )
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('forum_threads')
+          .select(`
+            id,
+            title,
+            thread_type,
+            created_at,
+            segment:segments(id, title),
+            author:profiles!forum_threads_author_id_fkey(id, full_name, gamification_rank),
+            forum_comments(id)
+          `)
+          .eq('author_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('forum_comments')
+          .select(`
+            id,
+            content,
+            created_at,
+            thread:forum_threads(id, title)
+          `)
+          .eq('author_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('forum_upvotes')
+          .select(`
+            id,
+            created_at,
+            thread_id,
+            comment_id,
+            thread:forum_threads(id, title),
+            comment:forum_comments(id, content, thread:forum_threads(id, title)),
+            author:profiles!forum_upvotes_author_id_fkey(id, full_name)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('forum_upvotes')
+          .select(`
+            id,
+            created_at,
+            thread_id,
+            comment_id,
+            thread:forum_threads(id, title),
+            comment:forum_comments(id, content, thread:forum_threads(id, title)),
+            user:profiles!forum_upvotes_user_id_fkey(id, full_name)
+          `)
+          .eq('author_id', userId)
+          .order('created_at', { ascending: false })
+      ]);
+
+      const validSavedThreads = (savedThreadsRes.data || []).filter((item: any) => item.thread);
+      setForumSavedThreads(validSavedThreads);
+      setForumMyPosts(myPostsRes.data || []);
+      setForumMyReplies(myRepliesRes.data || []);
+      setForumKudosGiven(kudosGivenRes.data || []);
+      setForumKudosReceived(kudosReceivedRes.data || []);
+
+      setForumStats({
+        savedCount: validSavedThreads.length,
+        myPostsCount: (myPostsRes.data || []).length,
+        myRepliesCount: (myRepliesRes.data || []).length,
+        kudosGivenCount: (kudosGivenRes.data || []).length,
+        kudosReceivedCount: (kudosReceivedRes.data || []).length
+      });
+
       // Pre-calculate stats
       setStats({
         coursesCount: enrollmentData?.length || 0,
@@ -355,6 +461,25 @@ export default function ModernStudentDashboard() {
       fetchDashboardData();
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleUnsaveThread = async (threadId: string) => {
+    setForumActionLoading(threadId);
+    try {
+      const res = await toggleForumBookmark(threadId);
+      if (!res.bookmarked) {
+        toast.success("Thread removed from saved list");
+        setForumSavedThreads(prev => prev.filter(item => item.thread?.id !== threadId));
+        setForumStats(prev => ({
+          ...prev,
+          savedCount: Math.max(0, prev.savedCount - 1)
+        }));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove thread");
+    } finally {
+      setForumActionLoading(null);
     }
   };
 
@@ -423,6 +548,7 @@ export default function ModernStudentDashboard() {
             { id: "lecture_sheets", label: "Sheets", icon: FileText },
             { id: "exams", label: "Mock Tests", icon: Award },
             { id: "bookmarks", label: "Saved", icon: Library },
+            { id: "forum", label: "Forum Board", icon: MessageSquare },
             { id: "achievements", label: "Badges", icon: Trophy },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -871,6 +997,396 @@ export default function ModernStudentDashboard() {
 
           {activeTab === "lecture_sheets" && profile && (
             <StudentLectureSheets user={profile} />
+          )}
+
+          {/* FORUM TAB */}
+          {activeTab === "forum" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
+              {/* Forum Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                 {[
+                   { id: 'saved_threads', label: 'Saved Threads', value: forumStats.savedCount, icon: Bookmark, color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400' },
+                   { id: 'my_posts', label: 'My Posts', value: forumStats.myPostsCount, icon: MessageSquare, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                   { id: 'my_replies', label: 'My Replies', value: forumStats.myRepliesCount, icon: MessageCircle, color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' },
+                   { id: 'kudos_given', label: 'Kudos Given', value: forumStats.kudosGivenCount, icon: ThumbsUp, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' },
+                   { id: 'kudos_received', label: 'Kudos Received', value: forumStats.kudosReceivedCount, icon: Trophy, color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' },
+                 ].map(stat => (
+                   <button
+                     key={stat.id}
+                     onClick={() => {
+                       if (stat.id === 'kudos_given' || stat.id === 'kudos_received') {
+                         setActiveForumSubTab('kudos_log');
+                       } else {
+                         setActiveForumSubTab(stat.id);
+                       }
+                     }}
+                     className={`bg-white dark:bg-slate-900 border p-6 rounded-[2rem] shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 text-left w-full ${
+                       activeForumSubTab === stat.id || (activeForumSubTab === 'kudos_log' && (stat.id === 'kudos_given' || stat.id === 'kudos_received'))
+                         ? 'border-indigo-500 ring-2 ring-indigo-500/10'
+                         : 'border-slate-100 dark:border-slate-800'
+                     }`}
+                   >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${stat.color}`}>
+                         <stat.icon className="w-6 h-6" />
+                      </div>
+                      <div>
+                         <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stat.value}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                      </div>
+                   </button>
+                 ))}
+              </div>
+
+              {/* Inner Sub-navigation Tabs */}
+              <div className="flex border-b border-slate-100 dark:border-slate-800 gap-6 pb-0.5 overflow-x-auto hide-scrollbar">
+                {[
+                  { id: 'saved_threads', label: 'Saved Threads', icon: Bookmark },
+                  { id: 'my_posts', label: 'My Posts', icon: MessageSquare },
+                  { id: 'my_replies', label: 'Your Replies', icon: MessageCircle },
+                  { id: 'kudos_log', label: 'Kudos Log', icon: ThumbsUp },
+                ].map(subTab => {
+                  const Icon = subTab.icon;
+                  const isActive = activeForumSubTab === subTab.id;
+                  return (
+                    <button
+                      key={subTab.id}
+                      onClick={() => setActiveForumSubTab(subTab.id)}
+                      className={`flex items-center gap-2 pb-4 font-bold text-sm border-b-2 whitespace-nowrap transition-all duration-300 relative ${
+                        isActive
+                          ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
+                          : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {subTab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Sub-tab Panels */}
+              <div className="transition-all duration-300">
+                {/* SAVED THREADS SUB-TAB */}
+                {activeForumSubTab === 'saved_threads' && (
+                  <div className="space-y-4">
+                    {forumSavedThreads.map(({ thread, created_at }) => {
+                      if (!thread) return null;
+                      return (
+                        <div
+                          key={thread.id}
+                          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group"
+                        >
+                          <div className="space-y-2 max-w-3xl">
+                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                              <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 rounded-full uppercase tracking-wider text-[10px]">
+                                {thread.thread_type.replace('_', ' ')}
+                              </span>
+                              {thread.segment?.title && (
+                                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-full uppercase tracking-wider text-[10px]">
+                                  {thread.segment.title}
+                                </span>
+                              )}
+                              <span className="text-slate-400 font-medium">
+                                Saved {new Date(created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <Link href={`/forum/thread/${thread.id}`} className="block">
+                              <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors leading-snug">
+                                {thread.title}
+                              </h3>
+                            </Link>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5">
+                              By {thread.author?.full_name || 'Anonymous'}{' '}
+                              {thread.author?.gamification_rank && (
+                                <span className="text-[10px] text-indigo-500 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">
+                                  {thread.author.gamification_rank}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          
+                          <button
+                            onClick={() => handleUnsaveThread(thread.id)}
+                            disabled={forumActionLoading === thread.id}
+                            className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 p-3 rounded-2xl transition-all duration-300 flex items-center justify-center shrink-0 self-end md:self-center"
+                            title="Remove bookmark"
+                          >
+                            {forumActionLoading === thread.id ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <TrashIcon className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {forumSavedThreads.length === 0 && (
+                      <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800">
+                        <Bookmark className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">No saved threads</h3>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-md mx-auto text-center px-4">
+                          Bookmark discussions on the forum board to view them here for quick access and reference.
+                        </p>
+                        <Link href="/forum" className="inline-block mt-6 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-all text-sm shadow-md">
+                          Browse Forum
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* MY POSTS SUB-TAB */}
+                {activeForumSubTab === 'my_posts' && (
+                  <div className="space-y-4">
+                    {forumMyPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group"
+                      >
+                        <div className="space-y-2 max-w-3xl">
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                            <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 rounded-full uppercase tracking-wider text-[10px]">
+                              {post.thread_type.replace('_', ' ')}
+                            </span>
+                            {post.segment?.title && (
+                              <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-full uppercase tracking-wider text-[10px]">
+                                {post.segment.title}
+                              </span>
+                            )}
+                            <span className="text-slate-400 font-medium">
+                              Posted {new Date(post.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <Link href={`/forum/thread/${post.id}`} className="block">
+                            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors leading-snug">
+                              {post.title}
+                            </h3>
+                          </Link>
+                          <div className="flex items-center gap-4 text-xs text-slate-400 font-bold tracking-wide">
+                            <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-slate-400" /> {post.forum_comments?.length || 0} Replies</span>
+                          </div>
+                        </div>
+                        
+                        <Link
+                          href={`/forum/thread/${post.id}`}
+                          className="px-4 py-2 bg-slate-950 dark:bg-white text-white dark:text-slate-955 font-bold rounded-xl text-xs hover:opacity-90 transition-all flex items-center gap-1"
+                        >
+                          View Thread <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    ))}
+
+                    {forumMyPosts.length === 0 && (
+                      <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800">
+                        <MessageSquare className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">No posts yet</h3>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-md mx-auto text-center px-4">
+                          Share your first question, request study help, or post a strategy announcement to interact with peers.
+                        </p>
+                        <Link href="/forum" className="inline-block mt-6 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-all text-sm shadow-md">
+                          Go to Forum
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* YOUR REPLIES SUB-TAB */}
+                {activeForumSubTab === 'my_replies' && (
+                  <div className="space-y-4">
+                    {forumMyReplies.map((reply) => {
+                      if (!reply.thread) return null;
+                      return (
+                        <div
+                          key={reply.id}
+                          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:shadow-lg transition-all space-y-3"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs text-slate-400 font-bold tracking-wide">
+                              Replied on {new Date(reply.created_at).toLocaleDateString()}
+                            </span>
+                            <Link
+                              href={`/forum/thread/${reply.thread.id}`}
+                              className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                            >
+                              Go to Thread
+                            </Link>
+                          </div>
+                          
+                          <p className="text-slate-700 dark:text-slate-200 text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl italic border-l-4 border-indigo-500 font-medium">
+                            "{reply.content}"
+                          </p>
+                          
+                          <div className="text-xs text-slate-400 font-medium">
+                            In response to thread:{' '}
+                            <Link
+                              href={`/forum/thread/${reply.thread.id}`}
+                              className="font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-colors"
+                            >
+                              {reply.thread.title}
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {forumMyReplies.length === 0 && (
+                      <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800">
+                        <MessageCircle className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">No replies yet</h3>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-md mx-auto text-center px-4">
+                          Browse forum threads and join discussions by posting comments to help other learners!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* KUDOS LOG SUB-TAB */}
+                {activeForumSubTab === 'kudos_log' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Kudos Received */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 px-1">
+                        <Trophy className="w-5 h-5 text-purple-500" />
+                        Kudos Received ({forumStats.kudosReceivedCount})
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        {forumKudosReceived.map((kudos) => (
+                          <div
+                            key={kudos.id}
+                            className="bg-purple-50/30 dark:bg-purple-950/10 border border-purple-100/50 dark:border-purple-900/30 p-4 rounded-2xl flex items-start gap-3"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                              <ThumbsUp className="w-4.5 h-4.5" />
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                <span className="font-bold text-slate-955 dark:text-white">
+                                  {kudos.user?.full_name || 'A user'}
+                                </span>{' '}
+                                gave you kudos
+                              </p>
+                              <div className="text-xs text-slate-400 font-medium">
+                                {kudos.thread ? (
+                                  <>
+                                    on post:{' '}
+                                    <Link
+                                      href={`/forum/thread/${kudos.thread.id}`}
+                                      className="font-bold hover:text-indigo-600 transition-colors truncate block"
+                                    >
+                                      {kudos.thread.title}
+                                    </Link>
+                                  </>
+                                ) : kudos.comment ? (
+                                  <>
+                                    on comment:{' '}
+                                    <span className="italic">
+                                      "{kudos.comment.content.substring(0, 40)}..."
+                                    </span>
+                                    {kudos.comment.thread && (
+                                      <Link
+                                        href={`/forum/thread/${kudos.comment.thread.id}`}
+                                        className="font-bold hover:text-indigo-600 transition-colors truncate block mt-0.5"
+                                      >
+                                        in {kudos.comment.thread.title}
+                                      </Link>
+                                    )}
+                                  </>
+                                ) : (
+                                  'on your content'
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 block pt-1">
+                                {new Date(kudos.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+
+                        {forumKudosReceived.length === 0 && (
+                          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+                            No kudos received yet. Write helpful posts and replies to earn appreciation from the community!
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Kudos Given */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 px-1">
+                        <ThumbsUp className="w-5 h-5 text-amber-500" />
+                        Kudos Given ({forumStats.kudosGivenCount})
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        {forumKudosGiven.map((kudos) => (
+                          <div
+                            key={kudos.id}
+                            className="bg-amber-50/20 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 p-4 rounded-2xl flex items-start gap-3"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                              <ThumbsUp className="w-4.5 h-4.5" />
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                You gave kudos to{' '}
+                                <span className="font-bold text-slate-955 dark:text-white">
+                                  {kudos.recipient?.full_name || kudos.author?.full_name || 'Author'}
+                                </span>
+                              </p>
+                              <div className="text-xs text-slate-400 font-medium">
+                                {kudos.thread ? (
+                                  <>
+                                    on post:{' '}
+                                    <Link
+                                      href={`/forum/thread/${kudos.thread.id}`}
+                                      className="font-bold hover:text-indigo-600 transition-colors truncate block"
+                                    >
+                                      {kudos.thread.title}
+                                    </Link>
+                                  </>
+                                ) : kudos.comment ? (
+                                  <>
+                                    on comment:{' '}
+                                    <span className="italic">
+                                      "{kudos.comment.content.substring(0, 40)}..."
+                                    </span>
+                                    {kudos.comment.thread && (
+                                      <Link
+                                        href={`/forum/thread/${kudos.comment.thread.id}`}
+                                        className="font-bold hover:text-indigo-600 transition-colors truncate block mt-0.5"
+                                      >
+                                        in {kudos.comment.thread.title}
+                                      </Link>
+                                    )}
+                                  </>
+                                ) : (
+                                  'on content'
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 block pt-1">
+                                {new Date(kudos.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+
+                        {forumKudosGiven.length === 0 && (
+                          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+                            You haven't given any kudos yet. Show appreciation to helpful students by upvoting their contributions!
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
           )}
 
         </div>
