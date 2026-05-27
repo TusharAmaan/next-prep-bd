@@ -64,6 +64,14 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
   const [modalSubjectFilter, setModalSubjectFilter] = useState("all");
 
   const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  const DS_OPTIONS = [
+    "Statement (1) ALONE is sufficient, but statement (2) alone is not sufficient.",
+    "Statement (2) ALONE is sufficient, but statement (1) alone is not sufficient.",
+    "BOTH statements (1) and (2) TOGETHER are sufficient, but NEITHER statement ALONE is sufficient.",
+    "EACH statement ALONE is sufficient.",
+    "Statements (1) and (2) TOGETHER are NOT sufficient."
+  ];
+  const isDataSufficiency = seoTags.some(tag => tag.toLowerCase() === 'data sufficiency');
 
   // Dropdown lists
   const [segmentsList, setSegmentsList] = useState<any[]>([]);
@@ -149,6 +157,36 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
   useEffect(() => {
     fetchEditorDropdowns();
   }, []);
+
+  const linkedQuestionsTypesKey = linkedQuestions.map(q => `${q.id}-${q.question_type}`).join(',');
+
+  useEffect(() => {
+    if (isDataSufficiency) {
+      setLinkedQuestions(prev => {
+        let changed = false;
+        const updated = prev.map(q => {
+          if (q.question_type?.toLowerCase() === 'mcq' || q.question_type === 'MCQ') {
+            const currentOptions = q.options || [];
+            const needsUpdate = currentOptions.length !== 5 || currentOptions.some((opt: any, idx: number) => opt.option_text !== DS_OPTIONS[idx]);
+            if (needsUpdate) {
+              changed = true;
+              const newOptions = DS_OPTIONS.map((dsText, idx) => {
+                const existing = currentOptions[idx];
+                return {
+                  id: existing?.id,
+                  option_text: dsText,
+                  is_correct: existing ? !!existing.is_correct : (idx === 0)
+                };
+              });
+              return { ...q, options: newOptions };
+            }
+          }
+          return q;
+        });
+        return changed ? updated : prev;
+      });
+    }
+  }, [isDataSufficiency, seoTags, linkedQuestionsTypesKey]);
 
   // Reset form
   const resetForm = () => {
@@ -890,13 +928,18 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                             question_text: threadType === 'question_post' ? title : "New practice question text...",
                             question_type: "mcq",
                             explanation: "",
-                            options: [
-                              { option_text: "Option A text", is_correct: true },
-                              { option_text: "Option B text", is_correct: false },
-                              { option_text: "Option C text", is_correct: false },
-                              { option_text: "Option D text", is_correct: false },
-                              { option_text: "Option E text", is_correct: false }
-                            ]
+                            options: isDataSufficiency
+                              ? DS_OPTIONS.map((dsText, dsIdx) => ({
+                                  option_text: dsText,
+                                  is_correct: dsIdx === 0
+                                }))
+                              : [
+                                  { option_text: "Option A text", is_correct: true },
+                                  { option_text: "Option B text", is_correct: false },
+                                  { option_text: "Option C text", is_correct: false },
+                                  { option_text: "Option D text", is_correct: false },
+                                  { option_text: "Option E text", is_correct: false }
+                                ]
                           };
                           setLinkedQuestions(prev => [...prev, newQ]);
                         }}
@@ -972,7 +1015,9 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                       {/* Options (MCQ only) */}
                       {(q.question_type?.toLowerCase() === "mcq" || q.question_type === "MCQ") && (
                         <div className="space-y-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
-                          <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Choices (Check correct one)</label>
+                          <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">
+                            {isDataSufficiency ? "Data Sufficiency Choices (Select correct option)" : "Choices (Check correct one)"}
+                          </label>
                           {q.options?.map((opt: any, optIdx: number) => (
                             <div key={optIdx} className="flex items-center gap-3">
                               <input
@@ -986,21 +1031,28 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                   }));
                                   setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
                                 }}
-                                className="w-4 h-4 text-indigo-650"
+                                className="w-4 h-4 text-indigo-650 shrink-0"
                               />
-                              <input
-                                type="text"
-                                value={opt.option_text}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const updatedOpts = q.options.map((o: any, oi: number) => 
-                                    oi === optIdx ? { ...o, option_text: val } : o
-                                  );
-                                  setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
-                                }}
-                                placeholder={`Option ${OPTION_LETTERS[optIdx]}`}
-                                className="flex-1 p-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-lg outline-none focus:border-indigo-500"
-                              />
+                              {isDataSufficiency ? (
+                                <div className="flex-1 p-2.5 text-xs bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-700 dark:text-slate-350 font-semibold shadow-sm">
+                                  <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-1.5">{OPTION_LETTERS[optIdx]}:</span>
+                                  {opt.option_text}
+                                </div>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={opt.option_text}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const updatedOpts = q.options.map((o: any, oi: number) => 
+                                      oi === optIdx ? { ...o, option_text: val } : o
+                                    );
+                                    setLinkedQuestions(prev => prev.map(l => l.id === q.id ? { ...l, options: updatedOpts } : l));
+                                  }}
+                                  placeholder={`Option ${OPTION_LETTERS[optIdx]}`}
+                                  className="flex-1 p-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-lg outline-none focus:border-indigo-500"
+                                />
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1551,6 +1603,15 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                               if (optData) qOptions = optData;
                             }
                             setLinkedQuestions(prev => [...prev, { ...q, options: qOptions }]);
+
+                            // Auto-populate post body content with the GMAT question text
+                            if (threadType === 'question_post') {
+                              setContent(q.question_text || "");
+                              if (!title.trim()) {
+                                const cleanTitle = (q.question_text || "").replace(/<[^>]+>/g, '').substring(0, 100);
+                                setTitle(cleanTitle);
+                              }
+                            }
                           }
                         }}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
