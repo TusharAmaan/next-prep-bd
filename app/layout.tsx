@@ -1,5 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import Header from "@/components/Header";
@@ -125,6 +126,12 @@ export default function RootLayout({
             }
           } catch(e) {}
         `}} />
+        {/* Global Math Rendering (KaTeX CSS) */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ThemeProvider>
@@ -148,13 +155,6 @@ export default function RootLayout({
           <ScrollToTop />
           <GoogleAnalytics gaId="G-9BGK82JB2D" />
 
-          {/* Global Math Rendering (KaTeX) */}
-          <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-            integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
-            crossOrigin="anonymous"
-          />
           <MathRenderer />
         </ThemeProvider>
       </body>

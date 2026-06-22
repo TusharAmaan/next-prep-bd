@@ -136,7 +136,7 @@ export default function SinglePostContent({
 
         .dark .single-post-prose p,
         .dark .single-post-prose li,
-        .dark .single-post-prose span {
+        .dark .single-post-prose span:not(.katex):not(.katex *) {
             color: #cbd5e1 !important;
         }
       `}</style>

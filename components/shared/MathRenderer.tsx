@@ -89,16 +89,14 @@ export default function MathRenderer() {
     <>
       <Script
          id="katex-main"
-         src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+         src="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.js"
          strategy="lazyOnload"
-         integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
          crossOrigin="anonymous"
       />
       <Script
          id="katex-auto-render"
-         src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+         src="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/contrib/auto-render.min.js"
          strategy="lazyOnload"
-         integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
          crossOrigin="anonymous"
          onLoad={renderMath}
       />

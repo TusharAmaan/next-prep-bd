@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import ForumList from "@/components/forum/ForumList";
-import { MessageSquare, Sparkles } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -62,28 +62,25 @@ export default async function ForumIndexPage() {
       />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
         
-        {/* HERO SECTION */}
-        <div className="bg-slate-900 text-white pt-32 md:pt-40 pb-20 md:pb-32 px-4 md:px-6 relative overflow-hidden border-b border-white/5">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[150px] pointer-events-none -mr-40 -mt-20"></div>
-          <div className="max-w-7xl mx-auto relative z-10">
-            <div className="max-w-3xl">
-              <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-bold text-indigo-400 tracking-wider mb-6 md:mb-8 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full w-fit">
+        {/* Hero */}
+        <div className="bg-white dark:bg-slate-950 pt-28 md:pt-32 pb-10 md:pb-14 px-3 sm:px-4 md:px-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="w-full max-w-[1600px] mx-auto">
+            <div className="max-w-5xl">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-5">
                 <MessageSquare className="w-3.5 h-3.5" />
-                Welcome To Our Community Hub
+                NextPrepBD forum
               </div>
-              <h1 className="text-4xl sm:text-5xl md:text-8xl font-black tracking-tighter leading-[1] md:leading-[0.9] mb-6 md:mb-8">
-                Discussion <br className="hidden md:block"/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Board</span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight text-slate-950 dark:text-white mb-5">
+                Ask, answer, and study together.
               </h1>
-              <p className="text-base md:text-xl text-slate-400 font-medium leading-relaxed opacity-80">
-                Ask questions, share your study strategies, time your practice attempts, and chat with tutors and peers.
+              <p className="text-base md:text-lg text-slate-600 dark:text-slate-350 leading-8 max-w-3xl">
+                Browse student questions, practice threads, reading discussions, and study advice from people preparing for the same goals.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto">
-          {/* CLIENT-SIDE LIST ENGINE WITH FILTERS */}
+        <div className="w-full max-w-[1600px] mx-auto">
           <ForumList 
             initialThreads={safeThreads}
             segments={safeSegments}
@@ -91,8 +88,7 @@ export default async function ForumIndexPage() {
             subjects={safeSubjects}
           />
 
-          {/* APP BANNER */}
-          <div className="px-4 md:px-6 pb-12 md:pb-20">
+          <div className="px-3 sm:px-4 md:px-6 pb-10 md:pb-14">
             <ProfessionalAppBanner />
           </div>
         </div>

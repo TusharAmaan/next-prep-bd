@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ThumbsUp, MessageSquare, Flag, Quote as QuoteIcon, Loader2 } from 'lucide-react';
 import { toggleForumUpvote, createForumComment } from '@/app/actions/forumActions';
 import MathRenderer from '../shared/MathRenderer';
 import ReportModal from './ReportModal';
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
+import { capitalizeEachWord } from '@/utils/stringUtils';
 
 interface Comment {
   id: string;
@@ -38,18 +41,19 @@ export default function CommentSection({
   const [isSubmittingMain, setIsSubmittingMain] = useState(false);
   const [errorMain, setErrorMain] = useState('');
 
+  const mainReplyTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
+
   // Synchronize state with initialComments when props change
-  React.useEffect(() => {
+  useEffect(() => {
     setComments(initialComments);
   }, [initialComments]);
 
   // Re-run KaTeX math auto-render whenever the comments list updates
-  React.useEffect(() => {
-    // @ts-ignore
-    if (typeof window !== 'undefined' && window.renderMathInElement) {
+  useEffect(() => {
+    if (commentsContainerRef.current) {
       try {
-        // @ts-ignore
-        window.renderMathInElement(document.body, {
+        renderMathInElement(commentsContainerRef.current, {
           delimiters: [
             { left: "$$", right: "$$", display: true },
             { left: "$", right: "$", display: false },
@@ -63,6 +67,24 @@ export default function CommentSection({
       }
     }
   }, [comments]);
+
+  const adjustHeight = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    if (mainReplyTextareaRef.current) {
+      adjustHeight(mainReplyTextareaRef.current);
+    }
+  }, [mainReplyContent]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+    }
+  };
 
   // Recursively append reply to comments list
   const handleAddCommentLocally = (newComment: Comment) => {
@@ -112,34 +134,51 @@ export default function CommentSection({
         handleAddCommentLocally(newCommentObj);
         setMainReplyContent('');
       } else {
-        setErrorMain('Failed to post reply.');
+        setErrorMain(capitalizeEachWord('failed to post reply.'));
       }
     } catch (err: any) {
-      setErrorMain(err.message || 'An error occurred.');
+      setErrorMain(err.message || capitalizeEachWord('an error occurred.'));
     } finally {
       setIsSubmittingMain(false);
     }
   };
 
+  // Calculate total comment responses
+  const totalComments = comments.reduce((acc, c) => acc + 1 + (c.children?.length || 0), 0);
+
   return (
-    <div className="mt-8">
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-        Discussion ({comments.reduce((acc, c) => acc + 1 + (c.children?.length || 0), 0)})
+    <div className="mt-8" ref={commentsContainerRef}>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 text-left">
+        {capitalizeEachWord('discussion')} ({totalComments})
       </h2>
       
       {/* Reply Box */}
       {currentUserId ? (
-        <form onSubmit={handleSubmitMainComment} className="mb-8 p-5 bg-slate-50 dark:bg-[#1C1F26] rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <p className="text-slate-700 dark:text-slate-350 text-sm font-bold">Add a reply...</p>
-          <textarea
-            value={mainReplyContent}
-            onChange={(e) => setMainReplyContent(e.target.value)}
-            placeholder="Type your comment here..."
-            rows={4}
-            className="w-full px-4 py-3 text-sm bg-white dark:bg-[#252830] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-blue-500 text-slate-850 dark:text-slate-100 font-semibold transition-all resize-none shadow-sm"
-          />
+        <form onSubmit={handleSubmitMainComment} className="mb-6 p-4 bg-slate-50 dark:bg-[#1C1F26] rounded-2xl border border-slate-200/50 dark:border-slate-800/80 space-y-3">
+          <p className="text-slate-700 dark:text-slate-350 text-xs font-bold text-left">
+            {capitalizeEachWord('add a reply...')}
+          </p>
+          <div className="flex gap-3 items-start">
+            {/* Current user circular avatar initial */}
+            <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 flex items-center justify-center font-black text-xs shrink-0 shadow-sm border border-indigo-100 dark:border-indigo-800">
+              {currentUserProfile?.full_name?.charAt(0).toUpperCase() || 'Y'}
+            </div>
+            <div className="flex-1">
+              <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#252830] focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300">
+                <textarea
+                  ref={mainReplyTextareaRef}
+                  value={mainReplyContent}
+                  onChange={(e) => setMainReplyContent(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={capitalizeEachWord('type your comment here...')}
+                  rows={1}
+                  className="w-full px-4 py-3 text-sm bg-transparent border-none outline-none resize-none focus:ring-0 text-slate-850 dark:text-slate-100 font-semibold transition-all shadow-sm"
+                />
+              </div>
+            </div>
+          </div>
           {errorMain && (
-            <p className="text-rose-500 text-xs font-bold flex items-center gap-1">
+            <p className="text-rose-500 text-xs font-bold flex items-center gap-1 text-left pl-11">
               <span>{errorMain}</span>
             </p>
           )}
@@ -147,26 +186,28 @@ export default function CommentSection({
             <button
               type="submit"
               disabled={isSubmittingMain || !mainReplyContent.trim()}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-750 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-sm flex items-center gap-1.5"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-350 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-xs flex items-center gap-1.5"
             >
               {isSubmittingMain && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Post Reply</span>
+              <span>{capitalizeEachWord('post reply')}</span>
             </button>
           </div>
         </form>
       ) : (
-        <div className="mb-8 p-6 text-center bg-slate-50 dark:bg-[#1C1F26] rounded-xl border border-slate-200 dark:border-slate-800">
-          <p className="text-slate-600 dark:text-slate-400 font-medium mb-3">You must be logged in to join the discussion.</p>
+        <div className="mb-6 p-6 text-center bg-slate-50 dark:bg-[#1C1F26] rounded-xl border border-slate-200/55 dark:border-slate-850">
+          <p className="text-slate-600 dark:text-slate-400 font-medium mb-3">
+            {capitalizeEachWord('you must be logged in to join the discussion.')}
+          </p>
           <Link 
             href="/login" 
             className="inline-block px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Log In or Sign Up
+            {capitalizeEachWord('log in or sign up')}
           </Link>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {comments.map(comment => (
           <CommentThread 
             key={comment.id} 
@@ -177,11 +218,13 @@ export default function CommentSection({
             userCommentUpvotes={userCommentUpvotes}
             currentUserProfile={currentUserProfile}
             onAddReply={handleAddCommentLocally}
+            adjustHeight={adjustHeight}
+            handleKeyDown={handleKeyDown}
           />
         ))}
       </div>
       
-      {/* Ensure MathRenderer handles comments too */}
+      {/* Fallback MathRenderer just in case */}
       <MathRenderer />
     </div>
   );
@@ -195,7 +238,9 @@ function CommentThread({
   initialIsUpvoted,
   userCommentUpvotes,
   currentUserProfile,
-  onAddReply
+  onAddReply,
+  adjustHeight,
+  handleKeyDown
 }: { 
   comment: Comment; 
   threadId: string; 
@@ -205,6 +250,8 @@ function CommentThread({
   userCommentUpvotes: string[];
   currentUserProfile: any;
   onAddReply: (comment: Comment) => void;
+  adjustHeight: (el: HTMLTextAreaElement | null) => void;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }) {
   const [upvotes, setUpvotes] = useState(comment.upvotes);
   const [isUpvoted, setIsUpvoted] = useState(initialIsUpvoted);
@@ -214,28 +261,34 @@ function CommentThread({
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [errorReply, setErrorReply] = useState('');
 
+  const threadReplyTextareaRef = useRef<HTMLTextAreaElement>(null);
+
   // Sync state if initial value changes
-  React.useEffect(() => {
+  useEffect(() => {
     setIsUpvoted(initialIsUpvoted);
   }, [initialIsUpvoted]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setUpvotes(comment.upvotes);
   }, [comment.upvotes]);
 
+  // Adjust height of inline thread reply textarea
+  useEffect(() => {
+    if (threadReplyTextareaRef.current) {
+      adjustHeight(threadReplyTextareaRef.current);
+    }
+  }, [replyContent]);
+
   const handleUpvote = async () => {
     if (!currentUserId) {
-      alert("Log in to upvote comments.");
+      alert(capitalizeEachWord("log in to upvote comments."));
       return;
     }
     try {
-      // Optimistic UI update
       setIsUpvoted(!isUpvoted);
       setUpvotes(prev => isUpvoted ? prev - 1 : prev + 1);
-      
       await toggleForumUpvote(null, comment.id, comment.author.id);
     } catch (err) {
-      // Revert on error
       setIsUpvoted(!isUpvoted);
       setUpvotes(prev => isUpvoted ? prev + 1 : prev - 1);
     }
@@ -243,13 +296,13 @@ function CommentThread({
 
   const handleQuote = () => {
     if (!currentUserId) {
-      alert("Log in to reply or quote comments.");
+      alert(capitalizeEachWord("log in to reply or quote comments."));
       return;
     }
     setShowReplyForm(true);
     // Strip HTML tags for clean quote
     const cleanContent = comment.content.replace(/<[^>]+>/g, '').trim();
-    const quoteMarkup = `<blockquote><strong>${comment.author?.full_name || 'Anonymous'} wrote:</strong><br/>${cleanContent}</blockquote>\n`;
+    const quoteMarkup = `<blockquote><strong>${capitalizeEachWord(comment.author?.full_name || 'anonymous')} wrote:</strong><br/>${cleanContent}</blockquote>\n`;
     setReplyContent(prev => quoteMarkup + prev);
   };
 
@@ -276,135 +329,148 @@ function CommentThread({
         setReplyContent('');
         setShowReplyForm(false);
       } else {
-        setErrorReply('Failed to post reply.');
+        setErrorReply(capitalizeEachWord('failed to post reply.'));
       }
     } catch (err: any) {
-      setErrorReply(err.message || 'An error occurred.');
+      setErrorReply(err.message || capitalizeEachWord('an error occurred.'));
     } finally {
       setIsSubmittingReply(false);
     }
   };
 
+  const getInitial = (nameStr: string) => {
+    return (nameStr || 'A').charAt(0).toUpperCase();
+  };
+
   return (
-    <div className={`relative ${depth > 0 ? 'ml-6 pl-4 border-l-2 border-slate-200 dark:border-slate-800' : ''}`}>
-      <div className="bg-white dark:bg-[#1C1F26] p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-left space-y-3.5">
-        {/* Comment Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8.5 h-8.5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-black text-slate-500">
-              {comment.author?.full_name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            <div className="text-left">
-              <span className="font-extrabold text-slate-850 dark:text-slate-200 text-sm mr-2">
-                {comment.author?.full_name || 'Anonymous'}
-              </span>
-              {comment.is_expert_reply && (
-                <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 text-[10px] px-2 py-0.5 rounded font-black uppercase">
-                  Expert Reply
+    <div className={`relative text-left ${depth > 0 ? 'ml-6 pl-4 border-l-2 border-slate-200 dark:border-slate-800' : ''}`}>
+      <div className="flex gap-2.5 items-start py-1">
+        {/* Circular Avatar */}
+        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-slate-400 text-[10px] shrink-0">
+          {getInitial(comment.author?.full_name)}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          {/* Facebook Style unified comment bubble */}
+          <div className="flex flex-col items-start">
+            <div className="inline-block bg-slate-100 dark:bg-slate-800/80 border border-transparent dark:border-slate-800/40 rounded-2xl p-2.5 px-4 max-w-[90%] text-left">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="font-extrabold text-slate-850 dark:text-slate-200 text-xs hover:underline cursor-pointer">
+                  {capitalizeEachWord(comment.author?.full_name || 'anonymous')}
                 </span>
-              )}
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                {comment.author?.gamification_rank || 'Novice'} • {new Date(comment.created_at).toLocaleDateString()}
+                {comment.is_expert_reply && (
+                  <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 text-[8px] px-1.5 py-0.2 rounded font-black uppercase">
+                    {capitalizeEachWord('expert reply')}
+                  </span>
+                )}
               </div>
+              <div className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">
+                {capitalizeEachWord(comment.author?.gamification_rank || 'novice')} • {new Date(comment.created_at).toLocaleDateString()}
+              </div>
+              <div 
+                className="prose dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-250 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words"
+                dangerouslySetInnerHTML={{ __html: comment.content }}
+              />
             </div>
           </div>
+
+          {/* Minimal Dot-Separated Link Actions */}
+          <div className="flex items-center gap-2 px-3 mt-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
+            <button 
+              onClick={handleUpvote}
+              className={`hover:text-blue-600 transition-colors ${isUpvoted ? 'text-blue-600' : ''}`}
+            >
+              {upvotes} {capitalizeEachWord(upvotes === 1 ? 'kudo' : 'kudos')}
+            </button>
+            <span>•</span>
+            <button 
+              onClick={() => {
+                if (!currentUserId) {
+                  alert(capitalizeEachWord("log in to reply to comments."));
+                  return;
+                }
+                setShowReplyForm(!showReplyForm);
+              }}
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              {capitalizeEachWord('reply')}
+            </button>
+            <span>•</span>
+            <button 
+              onClick={handleQuote}
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              {capitalizeEachWord('quote')}
+            </button>
+            <span>•</span>
+            <button 
+              onClick={() => {
+                if (!currentUserId) {
+                  alert(capitalizeEachWord("please log in to report comments to moderators."));
+                  return;
+                }
+                setShowReportModal(true);
+              }}
+              className="hover:text-rose-500 dark:hover:text-rose-450 transition-colors ml-auto font-bold text-[10px]"
+            >
+              {capitalizeEachWord('report')}
+            </button>
+          </div>
+
+          {/* Inline nested Reply Form */}
+          {showReplyForm && (
+            <form onSubmit={handleSubmitReply} className="mt-3 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/50 dark:border-slate-800/80 space-y-2.5">
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="font-black text-slate-500 uppercase tracking-wider">
+                  {capitalizeEachWord(`reply to ${comment.author?.full_name || 'comment'}`)}
+                </span>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowReplyForm(false);
+                    setReplyContent('');
+                  }}
+                  className="font-bold text-rose-500 hover:underline"
+                >
+                  {capitalizeEachWord('cancel')}
+                </button>
+              </div>
+              <div className="flex gap-2 items-start">
+                <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-[9px] text-slate-400 shrink-0">
+                  {currentUserProfile?.full_name?.charAt(0).toUpperCase() || 'Y'}
+                </div>
+                <div className="flex-1">
+                  <div className="bg-white dark:bg-[#1C1F26] border border-slate-250 dark:border-slate-700 rounded-xl p-2.5 px-3 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+                    <textarea
+                      ref={threadReplyTextareaRef}
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={capitalizeEachWord('type your reply...')}
+                      rows={1}
+                      className="w-full bg-transparent outline-none resize-none text-slate-755 dark:text-slate-200 placeholder:text-slate-400 text-xs py-1 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+              {errorReply && (
+                <p className="text-rose-500 text-[10px] font-bold text-left pl-9">
+                  {errorReply}
+                </p>
+              )}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSubmittingReply || !replyContent.trim()}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white font-bold rounded-lg text-xs shadow-sm flex items-center gap-1"
+                >
+                  {isSubmittingReply && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{capitalizeEachWord('post reply')}</span>
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-
-        {/* Comment Body */}
-        <div 
-          className="prose dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-350 font-medium leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: comment.content }}
-        />
-
-        {/* Comment Actions */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex items-center gap-4 text-xs font-black text-slate-400">
-          <button 
-            onClick={handleUpvote}
-            className={`flex items-center gap-1 transition-colors ${
-              isUpvoted ? 'text-blue-600' : 'hover:text-slate-655 dark:hover:text-slate-200'
-            }`}
-          >
-            <ThumbsUp className={`w-3.5 h-3.5 ${isUpvoted ? 'fill-blue-600 text-blue-600' : ''}`} />
-            <span>{upvotes} Kudos</span>
-          </button>
-          
-          <button 
-            onClick={() => {
-              if (!currentUserId) {
-                alert("Log in to reply to comments.");
-                return;
-              }
-              setShowReplyForm(!showReplyForm);
-            }}
-            className="hover:text-slate-655 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Reply</span>
-          </button>
-
-          <button 
-            onClick={handleQuote}
-            className="hover:text-slate-655 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
-          >
-            <QuoteIcon className="w-3.5 h-3.5" />
-            <span>Quote</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              if (!currentUserId) {
-                alert("Please log in to report comments to moderators.");
-                return;
-              }
-              setShowReportModal(true);
-            }}
-            className="hover:text-rose-500 dark:hover:text-rose-400 flex items-center gap-1 transition-colors ml-auto font-bold text-[11px]"
-          >
-            <Flag className="w-3.5 h-3.5" />
-            <span>Report</span>
-          </button>
-        </div>
-
-        {/* Inline nested Reply Form */}
-        {showReplyForm && (
-          <form onSubmit={handleSubmitReply} className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3.5">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Reply to {comment.author?.full_name || 'Comment'}</span>
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowReplyForm(false);
-                  setReplyContent('');
-                }}
-                className="text-[10px] font-bold text-rose-500 hover:underline"
-              >
-                Cancel
-              </button>
-            </div>
-            <textarea
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Type your reply..."
-              rows={3}
-              className="w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#1C1F26] border border-slate-250 dark:border-slate-700 rounded-xl outline-none focus:border-blue-500 text-slate-850 dark:text-slate-250 font-semibold transition-all resize-none shadow-sm"
-            />
-            {errorReply && (
-              <p className="text-rose-500 text-[11px] font-bold">
-                {errorReply}
-              </p>
-            )}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isSubmittingReply || !replyContent.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white font-bold rounded-lg text-xs shadow-sm flex items-center gap-1"
-              >
-                {isSubmittingReply && <Loader2 className="w-3 h-3 animate-spin" />}
-                <span>Post Reply</span>
-              </button>
-            </div>
-          </form>
-        )}
       </div>
 
       {/* Report Modal Component */}
@@ -417,7 +483,7 @@ function CommentThread({
 
       {/* Render nested children */}
       {comment.children && comment.children.length > 0 && (
-        <div className="mt-4 space-y-4">
+        <div className="mt-2.5 space-y-2.5">
           {comment.children.map(child => (
             <CommentThread 
               key={child.id} 
@@ -429,6 +495,8 @@ function CommentThread({
               userCommentUpvotes={userCommentUpvotes}
               currentUserProfile={currentUserProfile}
               onAddReply={onAddReply}
+              adjustHeight={adjustHeight}
+              handleKeyDown={handleKeyDown}
             />
           ))}
         </div>
