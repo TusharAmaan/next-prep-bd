@@ -112,8 +112,8 @@ export default function BlogTOC({ content }: { content: string }) {
       {/* === DESKTOP SIDEBAR === */}
       <div className="hidden xl:block sticky top-32 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
         <div className="mb-6">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-            <AlignLeft className="w-4 h-4" /> Table of Contents
+          <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-4">
+            <AlignLeft className="w-3.5 h-3.5" /> Table of contents
           </h3>
           <TOCList />
         </div>

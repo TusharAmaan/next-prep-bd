@@ -215,7 +215,7 @@ export default function AdminDashboard() {
 
     const navGroups = [
       {
-        label: 'Overview',
+        label: 'Dashboard & Insights',
         items: [
           { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
           { id: 'analytics', label: 'System Insights', icon: TrendingUp },
@@ -223,38 +223,43 @@ export default function AdminDashboard() {
         ]
       },
       {
-        label: 'Academic Core',
+        label: 'Academic Curriculum',
         items: [
-          { id: 'hierarchy', label: 'Hierarchy', icon: Layers },
-          { id: 'categories', label: 'Categories', icon: Settings },
-          { id: 'question_bank', label: 'Question Bank', icon: Database },
+          { id: 'hierarchy', label: 'Stage Hierarchy', icon: Layers },
+          { id: 'categories', label: 'Class Categories', icon: Settings },
           { id: 'lesson_plans', label: 'Lesson Plans', icon: BookOpen },
-          { id: 'exams', label: 'Exam Center', icon: Calendar },
           { id: 'lecture_sheets', label: 'Lecture Sheets', icon: FileText },
         ]
       },
       {
-        label: 'Academic Assets',
+        label: 'Assessments & Practice',
         items: [
-          { id: 'materials', label: 'Study Materials', icon: FileStack },
-          { id: 'ebooks', label: 'eBooks', icon: BookOpen },
-          { id: 'courses', label: 'Courses', icon: GraduationCap },
+          { id: 'question_bank', label: 'Question Bank', icon: Database },
+          { id: 'exams', label: 'Exam Center', icon: Calendar },
           { id: 'qotd', label: 'QotD Scheduler', icon: Calendar },
         ]
       },
       {
-        label: 'Community & Growth',
+        label: 'Learning Materials',
         items: [
-          { id: 'forum_manager', label: 'Forum Moderator', icon: ShieldAlert, badge: stats.pendingReportsCount },
-          { id: 'discussion', label: 'Student Discussions', icon: MessageSquare },
-          { id: 'newsletter', label: 'Newsletter', icon: Mail },
-          { id: 'donations', label: 'Donation Hub', icon: Heart },
-          { id: 'badges', label: 'Gamification', icon: Award },
-          { id: 'news', label: 'Newsroom', icon: Newspaper },
+          { id: 'materials', label: 'Study Materials', icon: FileStack },
+          { id: 'ebooks', label: 'eBooks Library', icon: BookOpen },
+          { id: 'courses', label: 'Premium Courses', icon: GraduationCap },
         ]
       },
       {
-        label: 'System Control',
+        label: 'Community & Gamification',
+        items: [
+          { id: 'forum_manager', label: 'Forum Moderator', icon: ShieldAlert, badge: stats.pendingReportsCount },
+          { id: 'discussion', label: 'Student Discussions', icon: MessageSquare },
+          { id: 'badges', label: 'Badges & Rewards', icon: Award },
+          { id: 'news', label: 'Newsroom', icon: Newspaper },
+          { id: 'newsletter', label: 'Newsletter', icon: Mail },
+          { id: 'donations', label: 'Donation Hub', icon: Heart },
+        ]
+      },
+      {
+        label: 'System Administration',
         items: [
           { id: 'pending', label: 'Pending Reviews', icon: AlertTriangle, badge: stats.pendingCount },
           { id: 'users', label: 'User Management', icon: Users },
@@ -282,7 +287,7 @@ export default function AdminDashboard() {
                          <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30 transform rotate-3">N</div>
                          <div>
                             <h2 className={`text-xl font-black tracking-tighter leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>NextPrep<span className="text-indigo-600">BD</span></h2>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Admin Console</p>
+                            <p className="text-[10px] font-bold text-slate-400 tracking-wider mt-1">Admin Console</p>
                          </div>
                       </div>
                     )}
@@ -302,7 +307,7 @@ export default function AdminDashboard() {
                     {navGroups.map((group, gIdx) => (
                       <div key={gIdx} className="space-y-2">
                         {!isSidebarCollapsed && (
-                          <p className={`px-4 text-[10px] font-black tracking-[0.2em] uppercase transition-colors ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <p className={`px-4 text-[10px] font-black tracking-wider transition-colors ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                             {group.label}
                           </p>
                         )}
@@ -350,7 +355,7 @@ export default function AdminDashboard() {
                      onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                      className={`w-full h-12 rounded-2xl flex items-center justify-center transition-all ${isDark ? 'bg-slate-800/50 text-slate-500 hover:text-indigo-400 hover:bg-slate-800' : 'bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
                    >
-                     {isSidebarCollapsed ? <Menu className="w-5 h-5"/> : <div className="text-[10px] font-black tracking-widest flex items-center gap-3 uppercase">Collapse Menu <ChevronRight className="w-4 h-4 rotate-180"/></div>}
+                     {isSidebarCollapsed ? <Menu className="w-5 h-5"/> : <div className="text-[10px] font-black tracking-wider flex items-center gap-3">Collapse menu <ChevronRight className="w-4 h-4 rotate-180"/></div>}
                    </button>
                 </div>
             </aside>
@@ -382,9 +387,9 @@ export default function AdminDashboard() {
                                         <p className="text-indigo-100 text-sm sm:text-lg font-medium max-w-lg leading-relaxed opacity-90">Your command center is ready. You have <span className="font-black text-white underline underline-offset-4 decoration-rose-400">{stats.pendingCount} items</span> awaiting review today.</p>
                                     </div>
                                     <div className="flex flex-wrap justify-center gap-4">
-                                        <button onClick={() => setActiveTab('pending')} className="px-6 py-3 bg-white text-indigo-700 rounded-2xl text-xs font-black tracking-widest uppercase shadow-xl hover:scale-105 transition-all active:scale-95">Review Pending</button>
-                                        <button onClick={fetchDashboardData} className="px-6 py-3 bg-indigo-500/30 backdrop-blur-md text-white border border-white/20 rounded-2xl text-xs font-black tracking-widest uppercase hover:bg-indigo-500/50 transition-all flex items-center gap-2">
-                                            <RefreshCw className="w-4 h-4"/> Sync Data
+                                        <button onClick={() => setActiveTab('pending')} className="px-6 py-3 bg-white text-indigo-700 rounded-2xl text-xs font-black tracking-wide shadow-xl hover:scale-105 transition-all active:scale-95">Review pending</button>
+                                        <button onClick={fetchDashboardData} className="px-6 py-3 bg-indigo-500/30 backdrop-blur-md text-white border border-white/20 rounded-2xl text-xs font-black tracking-wide hover:bg-indigo-500/50 transition-all flex items-center gap-2">
+                                            <RefreshCw className="w-4 h-4"/> Sync data
                                         </button>
                                     </div>
                                 </div>
@@ -397,7 +402,7 @@ export default function AdminDashboard() {
                                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-500/10 text-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><Users className="w-5 h-5 sm:w-6 sm:h-6"/></div>
                                       <span className="text-[8px] sm:text-[10px] font-black text-green-500 bg-green-500/10 px-2 py-1 rounded-lg">+{stats.users.trend}</span>
                                    </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-[0.1em] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Students</p>
+                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Students</p>
                                    <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.users.total.toLocaleString()}</h4>
                                 </div>
 
@@ -406,7 +411,7 @@ export default function AdminDashboard() {
                                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/10 text-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><DollarSign className="w-5 h-5 sm:w-6 sm:h-6"/></div>
                                       <span className="text-[8px] sm:text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">{stats.donations.count}</span>
                                    </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-[0.1em] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Donations</p>
+                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Donations</p>
                                    <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>৳{stats.donations.total.toLocaleString()}</h4>
                                 </div>
 
@@ -415,7 +420,7 @@ export default function AdminDashboard() {
                                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/10 text-blue-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><FileStack className="w-5 h-5 sm:w-6 sm:h-6"/></div>
                                       <span className="text-[8px] sm:text-[10px] font-black text-blue-400 bg-blue-400/10 px-2 py-1 rounded-lg">ACT</span>
                                    </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-[0.1em] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Resources</p>
+                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Resources</p>
                                    <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.materials.total}</h4>
                                 </div>
 
@@ -424,7 +429,7 @@ export default function AdminDashboard() {
                                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-500/10 text-rose-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6"/></div>
                                       <span className={`text-[8px] sm:text-[10px] font-black px-2 py-1 rounded-lg ${stats.pendingCount > 0 ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>REQ</span>
                                    </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-[0.1em] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Queue</p>
+                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Queue</p>
                                    <h4 className={`text-xl sm:text-3xl font-black mt-1 ${stats.pendingCount > 0 ? 'text-rose-500' : isDark ? 'text-white' : 'text-slate-900'}`}>{stats.pendingCount}</h4>
                                 </div>
                              </div>
@@ -437,10 +442,10 @@ export default function AdminDashboard() {
                                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
                                          <div>
                                             <h4 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Platform Growth</h4>
-                                            <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mt-2">Aggregate analytics engine</p>
+                                            <p className="text-[10px] font-black text-slate-450 dark:text-slate-500 mt-2">Aggregate growth charts and trends</p>
                                          </div>
-                                         <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                            {['Month', 'Year'].map(t => <button key={t} className="px-4 py-2 rounded-lg text-[10px] font-black tracking-widest uppercase transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm">View {t}</button>)}
+                                         <div className="flex gap-1 bg-slate-100 dark:bg-slate-805 p-1 rounded-xl">
+                                            {['Month', 'Year'].map(t => <button key={t} className="px-4 py-2 rounded-lg text-[10px] font-black tracking-wider transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm">View {t.toLowerCase()}</button>)}
                                          </div>
                                       </div>
                                       <div className="h-[300px] sm:h-[400px]"><AnalyticsChart /></div>
@@ -460,9 +465,9 @@ export default function AdminDashboard() {
                                       <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl -mr-24 -mt-24 group-hover:scale-125 transition-transform duration-1000"></div>
                                       <Database className="w-10 h-10 text-indigo-400/50 mb-8" />
                                       <h4 className="text-2xl font-black mb-4 leading-tight">System Core</h4>
-                                      <p className="text-indigo-200/80 text-sm mb-10 leading-relaxed font-medium">Manage database schemas, caching layers, and high-level platform hierarchy.</p>
-                                      <button onClick={() => setActiveTab('hierarchy')} className="w-full py-4 bg-white text-indigo-950 rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase shadow-xl hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                                          Hierarchy Manager <ChevronRight className="w-4 h-4"/>
+                                      <p className="text-indigo-200/80 text-sm mb-10 leading-relaxed font-medium font-sans">Manage database schemas, caching layers, and high-level platform hierarchy.</p>
+                                      <button onClick={() => setActiveTab('hierarchy')} className="w-full py-4 bg-white text-indigo-955 rounded-2xl text-xs font-bold tracking-wide shadow-xl hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+                                          Hierarchy manager <ChevronRight className="w-4 h-4"/>
                                       </button>
                                    </div>
                                 </div>

@@ -124,10 +124,10 @@ export default function CurriculumClient({
 
           <div className="bg-slate-900 dark:bg-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
               <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-              <h4 className="font-bold text-lg mb-2 relative z-10">Strategic <br/>Blueprint</h4>
-              <p className="text-slate-300 dark:text-indigo-100 text-xs font-medium mb-6 relative z-10 opacity-90">Engineered for high-performance evolution.</p>
-              <Link href="/about" className="flex items-center justify-center gap-2 text-xs font-semibold bg-white text-slate-900 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-all relative z-10 w-full group">
-                  Research <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+              <h4 className="font-bold text-lg mb-2 relative z-10 font-sans">Syllabus breakdown</h4>
+              <p className="text-slate-305 dark:text-indigo-100 text-xs font-medium mb-6 relative z-10 opacity-90 font-sans">Structured breakdown of topics for your prep.</p>
+              <Link href="/curriculum" className="flex items-center justify-center gap-2 text-xs font-semibold bg-white text-slate-900 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-all relative z-10 w-full group">
+                  Read guide <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
               </Link>
           </div>
         </aside>
@@ -149,31 +149,32 @@ export default function CurriculumClient({
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-              {filteredSubjects.map(sub => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredSubjects.map((sub, sIdx) => (
                   <Link 
                       key={sub.id} 
                       href={`/curriculum/${sub.id}`}
-                      className="group relative bg-white dark:bg-slate-900 flex flex-col p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 shadow-sm hover:shadow-lg dark:hover:shadow-indigo-900/10 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group relative bg-white dark:bg-slate-900 flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/30 dark:hover:border-indigo-500/30 shadow-sm hover:shadow-md hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden animate-in fade-in slide-in-from-bottom-2"
+                      style={{ animationDelay: `${sIdx * 40}ms` }}
                   >
-                      <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-indigo-500/10 group-hover:scale-110"></div>
-                      
-                      <div className="relative z-10 flex items-start justify-between mb-4">
-                          <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all border border-slate-100 dark:border-slate-700">
-                              <Book className="w-6 h-6" />
-                          </div>
-                           <div className="text-xs font-medium text-slate-500 transition-colors text-right">
-                              {sub.groups?.segments?.title || 'General'}
-                          </div>
+                      <div className="w-10 h-10 bg-indigo-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+                          <BookOpen className="w-5 h-5" />
                       </div>
                       
-                      <div className="relative z-10 pt-2 flex-1 flex flex-col">
-                          <p className="text-xs font-medium text-slate-500 mb-1 transition-colors group-hover:text-indigo-500">{sub.groups?.title || 'Module'}</p>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-4 leading-snug line-clamp-2">{sub.title}</h3>
-                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs group-hover:translate-x-1 transition-transform mt-auto">
-                              Scan Curriculum <ChevronRight className="w-3.5 h-3.5" />
+                      <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                                  {sub.groups?.title || 'Subject'}
+                              </span>
+                              <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
+                                  • {sub.groups?.segments?.title || 'General'}
+                              </span>
                           </div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                              {sub.title}
+                          </h3>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-slate-350 dark:text-slate-700 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
               ))}
 
@@ -196,7 +197,7 @@ export default function CurriculumClient({
     return (
         <div className="p-5 space-y-6">
             <div>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Academic Segment</h4>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Syllabus stages</h4>
                  <div className="space-y-1">
                     <button 
                         onClick={() => { setSelectedSegment('all'); setSelectedGroup('all'); }}
@@ -218,7 +219,7 @@ export default function CurriculumClient({
             </div>
 
             <div className={`transition-all duration-300 ${selectedSegment === 'all' ? 'opacity-50 pointer-events-none' : ''}`}>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Focus Group</h4>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Subject categories</h4>
                  <div className="space-y-1">
                     <button 
                         onClick={() => setSelectedGroup('all')}
@@ -237,7 +238,7 @@ export default function CurriculumClient({
                         </button>
                     ))}
                 </div>
-                {selectedSegment === 'all' && <p className="text-xs text-slate-500 mt-2 italic font-medium">Select a segment first</p>}
+                {selectedSegment === 'all' && <p className="text-xs text-slate-500 mt-2 italic font-medium">Select a stage first</p>}
             </div>
         </div>
     );

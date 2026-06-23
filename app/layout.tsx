@@ -95,6 +95,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable} ${bangla.variable}`}
+      suppressHydrationWarning
     >
       <head>
         {/* Combined SEO Structured Data */}
@@ -133,7 +134,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+      <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`} suppressHydrationWarning>
         <ThemeProvider>
 
           {/* AdSense (Lazy) */}

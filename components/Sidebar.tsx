@@ -213,10 +213,10 @@ export default function Sidebar() {
         <div className="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 dark:from-indigo-950/30 dark:to-emerald-950/30 px-4 py-3 md:py-3.5">
           <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
             <LayoutGrid className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-500" />
-            Explore Segments
+            Choose stage
           </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans opacity-80">
-            Jump directly into the resources you care about.
+            Select your academic stage or exam category.
           </p>
         </div>
 
@@ -265,10 +265,10 @@ export default function Sidebar() {
             <div>
               <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
                 <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500" />
-                Latest Materials
+                Recent notes
               </h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans opacity-80">
-                Fresh PDFs, videos & blogs for your study.
+                Fresh files, video explanations, and articles.
               </p>
             </div>
             <div className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-slate-800 text-blue-500 shadow-sm border border-slate-100 dark:border-slate-700">
@@ -363,30 +363,30 @@ export default function Sidebar() {
           )}
         </div>
 
-        <div className="border-t border-slate-100 bg-slate-50/60">
+        <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
           <Link
             href="/blog"
-            className="block px-3 py-2.5 text-center text-xs font-bold tracking-wide text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 font-sans"
+            className="block px-3 py-2.5 text-center text-xs font-bold tracking-wide text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 font-sans"
           >
-            View All Materials
+            View all notes
           </Link>
         </div>
       </div>
 
       {/* 4. QUESTION ARCHIVE */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-amber-50/60 px-4 pt-3.5 pb-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className="border-b border-slate-100 dark:border-slate-800 bg-amber-50/60 dark:bg-amber-950/20 px-4 pt-3.5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 font-sans">
+              <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
                 <HelpCircle className="h-4 w-4 text-amber-500" />
-                Recent Questions
+                Practice questions
               </h3>
-              <p className="mt-1 text-xs text-slate-600 font-sans">
-                Practice problems & past questions by segment.
+              <p className="mt-1 text-xs text-slate-655 dark:text-slate-400 font-sans opacity-80">
+                Problems and quizzes from actual tests.
               </p>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-amber-500 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-amber-500 shadow-sm border border-slate-100 dark:border-slate-700">
               <HelpCircle className="h-4 w-4" />
             </div>
           </div>
@@ -403,7 +403,7 @@ export default function Sidebar() {
                     "whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors font-sans",
                     isActive
                       ? "border-amber-500 bg-amber-500 text-white shadow-sm"
-                      : "border-amber-100 bg-amber-50/70 text-amber-700 hover:border-amber-300 hover:bg-amber-100",
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-605 dark:text-slate-300 hover:border-amber-300 hover:bg-amber-50/60 dark:hover:bg-slate-700",
                   ].join(" ")}
                 >
                   {label}
@@ -419,19 +419,19 @@ export default function Sidebar() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-12 w-full animate-pulse rounded-xl bg-amber-50/60"
+                  className="h-12 w-full animate-pulse rounded-xl bg-amber-50/20 dark:bg-amber-950/20"
                 />
               ))}
             </div>
           ) : questions.length === 0 ? (
             <div className="py-6 text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-300">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-350">
                 <HelpCircle className="h-5 w-5" />
               </div>
-              <p className="text-xs font-semibold text-slate-700 font-sans">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
                 No questions found
               </p>
-              <p className="mt-1 text-[11px] text-slate-500 font-sans">
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-sans">
                 Try another segment or come back later.
               </p>
             </div>
@@ -442,17 +442,17 @@ export default function Sidebar() {
                   key={item.id}
                   href={getLink(item, segments)}
                   target={getTarget(item)}
-                  className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-amber-50/60"
+                  className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-amber-55/60 dark:hover:bg-amber-950/10"
                 >
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600 shadow-sm">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 text-amber-650 dark:text-amber-400 shadow-sm">
                     <HelpCircle className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 group-hover:text-amber-700 font-sans">
+                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800 dark:text-slate-200 group-hover:text-amber-700 dark:group-hover:text-amber-450 font-sans">
                       {item.title}
                     </p>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 font-sans">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400 font-sans">
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(item.created_at).toLocaleDateString(
                           undefined,
@@ -460,14 +460,14 @@ export default function Sidebar() {
                         )}
                       </span>
                       {questionFilter === "All" && item.segment_id && (
-                        <span className="truncate text-xs font-bold tracking-wide text-amber-700 font-sans">
+                        <span className="truncate text-xs font-bold tracking-wide text-amber-750 dark:text-amber-400 font-sans">
                           {segments.find((s) => s.id === item.segment_id)
                             ?.title || ""}
                         </span>
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="mt-1 h-3.5 w-3.5 text-amber-300 transition group-hover:text-amber-600" />
+                  <ChevronRight className="mt-1 h-3.5 w-3.5 text-amber-300 dark:text-amber-700 transition group-hover:text-amber-600 dark:group-hover:text-amber-400" />
                 </Link>
               ))}
             </div>
@@ -476,12 +476,12 @@ export default function Sidebar() {
       </div>
 
       {/* 5. SOCIAL MEDIA */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50 px-4 py-3.5">
-          <h3 className="text-xs font-bold tracking-wide text-slate-700 font-sans">
-            Stay Connected
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3.5">
+          <h3 className="text-xs font-bold tracking-wide text-slate-700 dark:text-slate-300 font-sans">
+            Stay connected
           </h3>
-          <p className="mt-1 text-xs text-slate-500 font-sans">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans">
             Follow us for tips, updates & new content.
           </p>
         </div>
@@ -492,16 +492,16 @@ export default function Sidebar() {
             href="https://www.facebook.com/profile.php?id=61584943876571"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-r from-[#1877F2]/5 via-white to-white px-3 py-2.5 transition-all hover:-translate-y-[1px] hover:border-[#1877F2]/40 hover:bg-[#1877F2]/5"
+            className="group flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-gradient-to-r from-[#1877F2]/5 via-white to-white dark:from-[#1877F2]/10 dark:via-slate-900 dark:to-slate-900 px-3 py-2.5 transition-all hover:-translate-y-[1px] hover:border-[#1877F2]/40 dark:hover:border-[#1877F2]/40 hover:bg-[#1877F2]/5 dark:hover:bg-[#1877F2]/10"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1877F2] text-white shadow-sm">
               <Facebook className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900 font-sans">
+              <p className="text-xs font-semibold text-slate-900 dark:text-white font-sans">
                 Join our Facebook community
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600 font-sans">
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 font-sans">
                 Discuss questions, get tips & stay motivated.
               </p>
             </div>
@@ -512,16 +512,16 @@ export default function Sidebar() {
             href="https://youtube.com/c/gmatclub"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-r from-[#FF0000]/5 via-white to-white px-3 py-2.5 transition-all hover:-translate-y-[1px] hover:border-[#FF0000]/40 hover:bg-[#FF0000]/5"
+            className="group flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-gradient-to-r from-[#FF0000]/5 via-white to-white dark:from-[#FF0000]/10 dark:via-slate-900 dark:to-slate-900 px-3 py-2.5 transition-all hover:-translate-y-[1px] hover:border-[#FF0000]/40 dark:hover:border-[#FF0000]/40 hover:bg-[#FF0000]/5 dark:hover:bg-[#FF0000]/10"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF0000] text-white shadow-sm">
               <Youtube className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900 font-sans">
+              <p className="text-xs font-semibold text-slate-900 dark:text-white font-sans">
                 Subscribe on YouTube
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 group-hover:text-slate-600 font-sans">
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 font-sans">
                 Watch video lessons, explanations & strategy.
               </p>
             </div>

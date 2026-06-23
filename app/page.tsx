@@ -52,7 +52,7 @@ function SectionSkeleton() {
 export default async function HomePage() {
   
   const supabaseServer = await createClient();
-  const [segmentsData, latestResources, latestNews, ebooksData, { data: { user } }] = await Promise.all([
+  const [segmentsData, latestResources, latestNews, ebooksData, { data: { user } }, latestForumThreads] = await Promise.all([
     supabaseServer.from("segments").select("*").order("id"),
     supabaseServer.from("resources")
       .select("*, subjects ( title, groups ( segments ( id, title, slug ) ) )")
@@ -63,13 +63,28 @@ export default async function HomePage() {
       .select("id, title, author, cover_url, created_at, category")
       .limit(5)
       .order("created_at", { ascending: false }),
-    supabaseServer.auth.getUser()
+    supabaseServer.auth.getUser(),
+    supabaseServer.from("forum_threads")
+      .select(`
+        id,
+        title,
+        created_at,
+        upvotes,
+        views,
+        difficulty,
+        segment:segments(id, title),
+        author:profiles!forum_threads_author_id_fkey(id, full_name, gamification_rank),
+        forum_comments(id)
+      `)
+      .order("views", { ascending: false })
+      .limit(3)
   ]);
 
   const segments = segmentsData.data || [];
   const resources = latestResources.data || [];
   const news = latestNews.data || [];
   const ebooks = ebooksData.data || [];
+  const threads = latestForumThreads?.data || [];
 
   const getQuestionText = (slug: string) => {
     const s = slug.toLowerCase();
@@ -137,15 +152,15 @@ export default async function HomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 sm:divide-x divide-slate-100 dark:divide-slate-800/50">
                   <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">12k+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Materials verified</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Materials verified</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">5k+</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Daily students</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Daily students</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
                       <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">Live</h3>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Active updates</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Active updates</p>
                   </div>
               </div>
           </div>
@@ -234,6 +249,85 @@ export default async function HomePage() {
       {/* 6. LECTURE SHEET SYSTEM */}
       <LectureSheetShowcase isLoggedIn={!!user} />
 
+      {/* 6.5 COMMUNITY FORUM FEED */}
+      <ScrollReveal>
+        <section className="py-20 md:py-32 bg-slate-50 dark:bg-slate-900/10 border-b border-slate-100 dark:border-white/5">
+          <div className="max-w-7xl mx-auto px-5 md:px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-6">
+              <div>
+                <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-4 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                  NextPrepBD Community Hub
+                </span>
+                <h2 className="text-3xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+                  Join our active <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">discussion forum</span>.
+                </h2>
+                <p className="mt-4 text-slate-550 dark:text-slate-400 max-w-xl text-sm md:text-base font-medium">
+                  Learn with fellow students, solve hard questions together, and share expert study strategies.
+                </p>
+              </div>
+              <Link href="/forum" className="group inline-flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-xs md:text-sm transition-all shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/30 active:scale-95 duration-300">
+                Go to Forum <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {threads.map((thread: any, idx: number) => {
+                const commentCount = thread.forum_comments?.length || 0;
+                return (
+                  <ScrollReveal key={thread.id} delay={idx * 100}>
+                    <Link href={`/forum/thread/${thread.id}`} className="group relative block h-full">
+                      <div className="h-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 hover:border-indigo-500/30 p-6 md:p-8 rounded-3xl hover:shadow-xl dark:hover:shadow-indigo-950/20 transition-all duration-300 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-3 mb-5">
+                            {thread.segment && (
+                              <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg">
+                                {thread.segment.title}
+                              </span>
+                            )}
+                            {thread.difficulty && (
+                              <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded capitalize ${
+                                thread.difficulty === 'hard' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                                thread.difficulty === 'medium' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' :
+                                'bg-green-500/10 text-green-600 dark:text-green-400'
+                              }`}>
+                                {thread.difficulty}
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-base md:text-lg font-bold text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-3 mb-6">
+                            {thread.title}
+                          </h4>
+                        </div>
+
+                        <div className="border-t border-slate-100 dark:border-slate-850 pt-4 mt-4">
+                          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            <span className="truncate max-w-[120px]">
+                              By <span className="font-semibold text-slate-700 dark:text-slate-300">{thread.author?.full_name || 'Anonymous'}</span>
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span className="flex items-center gap-1">
+                                <Zap className="w-3.5 h-3.5 text-indigo-505 fill-indigo-505" />
+                                {thread.upvotes}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                {commentCount} {commentCount === 1 ? 'reply' : 'replies'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </ScrollReveal>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
       {/* 7. MAIN CONTENT AREA */}
       <section className="pt-24 pb-32 max-w-7xl mx-auto px-6">
         <div className="mb-16">
@@ -249,14 +343,14 @@ export default async function HomePage() {
                             <Zap className="w-8 h-8 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">Academic Resources</h2>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-widest">Latest additions & strategic updates</p>
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">Study Materials & Notes</h2>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Recently added notes and updates</p>
                         </div>
                     </div>
                     <div>
                         <span className="inline-flex items-center gap-2.5 px-5 py-2 bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 text-xs font-bold tracking-wide rounded-xl animate-pulse border border-green-100 dark:border-green-800/30">
                             <span className="w-2 h-2 bg-green-600 rounded-full shadow-glow-green"></span>
-                            Live Updates
+                            Recently Added
                         </span>
                     </div>
                 </div>
@@ -287,11 +381,11 @@ export default async function HomePage() {
                               <h3 className="text-4xl font-bold text-white leading-[0.9] mb-6 tracking-tight">Learn with <br/><span className="text-indigo-400">Expert Mentors.</span></h3>
                               <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed">Engage in personalized 1-on-1 sessions for Physics, Math & Admission coaching.</p>
                               <Link href="/find-tutor" className="mt-auto">
-                                  <button className="w-full bg-white text-slate-950 py-5 rounded-2xl font-bold text-[11px] tracking-widest transition-all flex items-center justify-center gap-4 shadow-2xl hover:bg-indigo-500 hover:text-white active:scale-95 duration-500 group-hover:shadow-indigo-500/20">
-                                      Find a Mentor <ArrowRight className="w-5 h-5" />
+                                  <button className="w-full bg-white text-slate-950 py-5 rounded-2xl font-bold text-[11px] transition-all flex items-center justify-center gap-4 shadow-2xl hover:bg-indigo-500 hover:text-white active:scale-95 duration-500 group-hover:shadow-indigo-500/20">
+                                      Find a mentor <ArrowRight className="w-5 h-5" />
                                   </button>
                               </Link>
-                              <p className="text-center text-[9px] text-slate-600 mt-6 font-bold tracking-widest">Verified Top-Tier Educators</p>
+                              <p className="text-center text-[9px] text-slate-655 mt-6 font-bold">Verified top-tier educators</p>
                           </div>
                       </div>
                   </div>
@@ -319,22 +413,22 @@ export default async function HomePage() {
                 {/* NOTICE BOARD */}
                 <ScrollReveal direction="right" delay={200}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl dark:shadow-indigo-900/5">
-                       <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-[10px] tracking-widest"><Bell className="w-4 h-4 text-indigo-600" /> Latest Updates</h3>
+                       <div className="p-8 border-b border-slate-50 dark:border-slate-805 flex items-center justify-between">
+                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-xs"><Bell className="w-4 h-4 text-indigo-600" /> Latest updates</h3>
                           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-glow-red"></div>
                       </div>
                       <div className="p-4 max-h-[400px] overflow-y-auto hide-scrollbar custom-scrollbar">
                           {news.map((n: any) => (
                               <Link href={`/news/${n.id}`} key={n.id} className="block p-5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-500 group border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
                                   <div className="flex items-center gap-3 mb-3">
-                                      <span className="text-[8px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-lg tracking-widest border border-indigo-100 dark:border-indigo-800/50">{n.category || 'Update'}</span>
-                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest">{new Date(n.created_at).toLocaleDateString()}</span>
+                                      <span className="text-[8px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/50">{n.category || 'Update'}</span>
+                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold">{new Date(n.created_at).toLocaleDateString()}</span>
                                   </div>
                                   <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 leading-snug tracking-tight line-clamp-2">{n.title}</h4>
                               </Link>
                           ))}
                       </div>
-                      <Link href="/news" className="block text-center py-6 bg-slate-50 dark:bg-slate-800/50 text-[9px] font-bold text-slate-500 dark:text-slate-400 hover:bg-indigo-600 hover:text-white transition-all tracking-widest border-t border-slate-50 dark:border-slate-800">View Full Feed</Link>
+                      <Link href="/news" className="block text-center py-6 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-indigo-600 hover:text-white transition-all border-t border-slate-50 dark:border-slate-800">View full feed</Link>
                   </div>
                 </ScrollReveal>
 
@@ -342,7 +436,7 @@ export default async function HomePage() {
                 <ScrollReveal direction="right" delay={300}>
                   <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl dark:shadow-indigo-900/5">
                        <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-[10px] tracking-widest"><BookOpen className="w-4 h-4 text-purple-600" /> Digital Resources</h3>
+                          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-4 text-xs"><BookOpen className="w-4 h-4 text-purple-600" /> Digital Library</h3>
                       </div>
                       <div className="p-4">
                           {ebooks.map((book: any) => (
@@ -353,14 +447,14 @@ export default async function HomePage() {
                                       </div>
                                       <div className="min-w-0">
                                           <h4 className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">{book.title}</h4>
-                                          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-widest mt-1">{book.category}</p>
+                                          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold mt-1">{book.category}</p>
                                       </div>
                                   </div>
                                   <span className="p-2.5 text-slate-300 dark:text-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"><Download className="w-5 h-5" /></span>
                               </Link>
                           ))}
                       </div>
-                      <Link href="/ebooks" className="block text-center py-6 bg-purple-50 dark:bg-purple-900/20 text-[9px] font-bold text-purple-600 dark:text-purple-400 hover:bg-indigo-600 hover:text-white transition-all tracking-widest duration-500">Access Library</Link>
+                      <Link href="/ebooks" className="block text-center py-6 bg-purple-50 dark:bg-purple-900/20 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-indigo-600 hover:text-white transition-all duration-500">Access library</Link>
                   </div>
                 </ScrollReveal>
 

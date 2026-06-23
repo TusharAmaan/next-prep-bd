@@ -303,7 +303,7 @@ export default async function ForumThreadPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">
+      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-6">
         <Link href="/forum" className="hover:text-blue-600 transition-colors">Forum</Link>
         {thread.segment && <span className="text-slate-400">/ {thread.segment.title}</span>}
         {thread.group && <span className="text-slate-400">/ {thread.group.title}</span>}
@@ -347,7 +347,7 @@ export default async function ForumThreadPage({ params }: Props) {
                           Q{idx + 1}
                         </span>
                         <div 
-                          className="prose dark:prose-invert font-semibold text-slate-850 dark:text-slate-100 text-base leading-relaxed"
+                          className="prose dark:prose-invert font-semibold text-slate-800 dark:text-slate-100 text-base leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: q.question_text }}
                         />
                       </div>
@@ -357,7 +357,7 @@ export default async function ForumThreadPage({ params }: Props) {
                           {q.options && q.options.length > 0 && (
                             <div className="space-y-2.5 mt-3 mb-5 pl-4 border-l-2 border-slate-200 dark:border-slate-800">
                               {q.options.map((opt: any, optIdx: number) => (
-                                <div key={opt.id} className="text-slate-750 dark:text-slate-350 text-sm font-semibold flex items-start gap-2">
+                                <div key={opt.id} className="text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-start gap-2">
                                   <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
                                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'][optIdx] || ''}.
                                   </span>
@@ -402,43 +402,43 @@ export default async function ForumThreadPage({ params }: Props) {
           
           {/* Prep Toolkit Widget */}
           <div className="bg-white dark:bg-[#1C1F26] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2 pb-3 border-b border-slate-150 dark:border-slate-800">
+            <h3 className="text-xs font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
               <span className="w-1.5 h-4 bg-blue-600 rounded-full"></span>
               Prep Toolkit
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <Link href="/forum" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-150 dark:border-slate-850 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
+              <Link href="/forum" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
                 <ClipboardList className="w-5 h-5 text-blue-500 mb-1.5 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Forum Quiz</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-sans">Forum Quiz</span>
               </Link>
-              <Link href="/exams" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-150 dark:border-slate-850 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
+              <Link href="/exams" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
                 <Timer className="w-5 h-5 text-indigo-500 mb-1.5 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Practice Tests</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-sans">Practice Tests</span>
               </Link>
-              <Link href="/student/dashboard" className="flex flex-col items-center justify-center p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-150 dark:border-slate-850 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group col-span-2 flex-row gap-3">
+              <Link href="/student/dashboard" className="flex flex-col items-center justify-center p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group col-span-2 flex-row gap-3">
                 <BarChart3 className="w-5 h-5 text-purple-500" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Open Error Log / Analytics</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-sans">Open Error Log / Analytics</span>
               </Link>
-              <Link href="/profile" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-150 dark:border-slate-850 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
+              <Link href="/profile" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
                 <User className="w-5 h-5 text-violet-500 mb-1.5 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">My Profile</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-sans">My Profile</span>
               </Link>
-              <Link href="/forum" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-150 dark:border-slate-850 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
+              <Link href="/forum" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/40 dark:hover:bg-blue-900/10 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/30 text-center transition-all group">
                 <Flame className="w-5 h-5 text-orange-500 mb-1.5 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Hot Topics</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-sans">Hot Topics</span>
               </Link>
             </div>
           </div>
 
           {/* Performance Overview Widget */}
           <div className="bg-white dark:bg-[#1C1F26] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2 pb-3 border-b border-slate-150 dark:border-slate-800">
+            <h3 className="text-xs font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
               <span className="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
               Your Performance Overview
             </h3>
             {user ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-150 dark:border-slate-850">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <Target className="w-5 h-5 text-blue-500" />
                     <div className="flex flex-col text-left">
@@ -448,7 +448,7 @@ export default async function ForumThreadPage({ params }: Props) {
                   </div>
                   <span className="text-sm font-extrabold text-slate-900 dark:text-white">{userStats.attemptsCount}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-150 dark:border-slate-850">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     <div className="flex flex-col text-left">
@@ -458,7 +458,7 @@ export default async function ForumThreadPage({ params }: Props) {
                   </div>
                   <span className={`text-sm font-extrabold ${userStats.accuracyRate >= 70 ? 'text-green-600' : 'text-yellow-600'}`}>{userStats.accuracyRate}%</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-150 dark:border-slate-850">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <Zap className="w-5 h-5 text-orange-500" />
                     <div className="flex flex-col text-left">
@@ -471,7 +471,7 @@ export default async function ForumThreadPage({ params }: Props) {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-slate-505 dark:text-slate-405 font-semibold mb-3">Log in to track your questions accuracy, daily study streaks, and error log.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-3">Log in to track your questions accuracy, daily study streaks, and error log.</p>
                 <Link href="/login" className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95">Sign In</Link>
               </div>
             )}
@@ -482,7 +482,7 @@ export default async function ForumThreadPage({ params }: Props) {
             <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 opacity-10">
               <BookOpen className="w-28 h-28 text-white" />
             </div>
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-2">NextPrepBD updates</h3>
+            <h3 className="text-[10px] font-black text-indigo-200 mb-2">NextPrepBD updates</h3>
             <h4 className="text-base font-extrabold mb-3 leading-snug">GMAT & MBA Strategy Sessions every Wednesday!</h4>
             <p className="text-xs text-indigo-100 font-semibold leading-relaxed mb-4">Join our expert tutors live to solve complex Quantitative and Verbal reasoning questions and analyze exam shortcuts.</p>
             <Link href="/curriculum" className="inline-flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-95">

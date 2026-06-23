@@ -24,20 +24,20 @@ export default function SinglePostContent({
   return (
     <div className={`w-full ${bengaliFontClass || ""}`}>
       {/* === ACCESSIBLE BREADCRUMBS & ACTIONS === */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 px-2 md:px-0">
-        <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 px-2 md:px-0">
+        <nav className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500 flex-wrap">
           <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link> 
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight className="w-3.5 h-3.5" />
           <span>Resources</span> 
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
             {post.subjects?.groups?.segments?.title || post.segments?.title || "Perspective"}
           </span>
         </nav>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <LikeButton resourceId={post.id} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 shadow-sm hover:shadow-md transition-all">
             <BookmarkButton
               itemType="post"
               itemId={post.id}
@@ -48,26 +48,26 @@ export default function SinglePostContent({
       </div>
 
       {/* === PREMIUM CONTENT CARD === */}
-      <article className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800/60 overflow-hidden transition-colors duration-300">
+      <article className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden transition-colors duration-300">
         
         {/* POST HEADER */}
-        <header className="p-8 sm:p-12 md:p-16 border-b border-slate-50 dark:border-slate-800/40">
-          <h1 className="text-[clamp(1.875rem,5vw,2.75rem)] font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter leading-[1.1] transition-all">
+        <header className="p-6 sm:p-10 md:p-12 border-b border-slate-50 dark:border-slate-800/40">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-snug transition-all">
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-8 text-[11px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2.5 group">
-              <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
-                <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-500 dark:text-slate-450">
+            <div className="flex items-center gap-2 group">
+              <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <span>{formattedDate}</span>
             </div>
             
             {readTime && readTime > 0 && (
-              <div className="flex items-center gap-2.5 group">
-                <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl group-hover:bg-amber-100 dark:group-hover:bg-amber-900/40 transition-colors">
-                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <div className="flex items-center gap-2 group">
+                <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900/40 transition-colors">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <span>{readTime} min read</span>
               </div>
@@ -76,7 +76,7 @@ export default function SinglePostContent({
         </header>
 
         {/* CONTENT BODY */}
-        <div className="p-8 sm:p-12 md:p-16">
+        <div className="p-6 sm:p-10 md:p-12">
           <div className="single-post-body text-slate-800 dark:text-slate-200">
              <BlogContent 
                content={post.content_body || post.content || ""} 
@@ -86,14 +86,14 @@ export default function SinglePostContent({
         </div>
 
         {/* PREMIUM FOOTER DECOR */}
-        <footer className="px-16 py-10 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center flex-wrap gap-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <footer className="px-10 py-6 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center flex-wrap gap-4">
+            <p className="text-xs text-slate-400 dark:text-slate-500">
                 © NextPrepBD Education System
             </p>
-            <div className="flex gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-500/20" />
-                <div className="w-2 h-2 rounded-full bg-indigo-500/40" />
-                <div className="w-2 h-2 rounded-full bg-indigo-500/60" />
+            <div className="flex gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/40" />
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/60" />
             </div>
         </footer>
       </article>

@@ -78,7 +78,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
           onClick={() => { setEditingBadge(null); setIsEditorOpen(true); }}
           className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95"
         >
-          <Plus size={20} /> CREATE NEW BADGE
+          <Plus size={20} /> Create new badge
         </button>
       </div>
 
@@ -113,7 +113,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
             
             <div className="mt-8 pt-6 border-t dark:border-slate-800 flex justify-between items-center">
                 <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">criteria</p>
+                   <p className="text-[10px] font-black text-slate-400 tracking-wider leading-none mb-1">Criteria</p>
                    <p className="text-xs font-black text-indigo-600">{badge.criteria_value} {badge.criteria_type?.replace('_', ' ')}</p>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
@@ -140,7 +140,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
 
               <div className="space-y-6">
                 <div>
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Badge Name</label>
+                  <label className="text-xs font-black text-slate-400 tracking-wider mb-2 block">Badge name</label>
                   <input 
                     name="name"
                     defaultValue={editingBadge?.name}
@@ -151,7 +151,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
                 </div>
 
                 <div>
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Icon Key</label>
+                    <label className="text-xs font-black text-slate-400 tracking-wider mb-2 block">Icon key</label>
                     <div className="grid grid-cols-5 gap-3">
                         {['Trophy', 'Star', 'Shield', 'Zap', 'Target'].map((icon) => (
                             <button type="button" key={icon} className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 border-2 border-transparent hover:border-indigo-600 transition-all">
@@ -163,7 +163,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Reward Description</label>
+                  <label className="text-xs font-black text-slate-400 tracking-wider mb-2 block">Badge description</label>
                   <textarea 
                     name="description"
                     defaultValue={editingBadge?.description}
@@ -174,7 +174,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
 
                 <div className="flex gap-4">
                     <div className="flex-1">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Criteria Type</label>
+                        <label className="text-xs font-black text-slate-400 tracking-wider mb-2 block">Criteria type</label>
                         <select name="criteria_type" defaultValue={editingBadge?.criteria_type || 'exam_count'} className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl py-4 px-6 font-bold outline-none">
                             <option value="exam_count">Exams taken</option>
                             <option value="avg_score">Avg Score</option>
@@ -182,7 +182,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
                         </select>
                     </div>
                     <div className="w-1/3">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Value</label>
+                        <label className="text-xs font-black text-slate-400 tracking-wider mb-2 block">Target value</label>
                         <input name="criteria_value" type="number" defaultValue={editingBadge?.criteria_value} className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl py-4 px-6 font-bold outline-none"/>
                     </div>
                 </div>
@@ -191,7 +191,7 @@ export default function BadgeManager({ darkMode = false }: { darkMode?: boolean 
                   type="submit"
                   className="w-full bg-indigo-600 text-white py-5 rounded-[20px] font-black text-sm shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"
                 >
-                  {editingBadge ? 'UPDATE REGISTRY' : 'LEGALIZE BADGE'}
+                  {editingBadge ? 'Save badge changes' : 'Create badge'}
                 </button>
               </div>
             </form>

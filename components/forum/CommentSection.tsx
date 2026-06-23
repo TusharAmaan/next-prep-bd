@@ -172,7 +172,7 @@ export default function CommentSection({
                   onKeyDown={handleKeyDown}
                   placeholder={capitalizeEachWord('type your comment here...')}
                   rows={1}
-                  className="w-full px-4 py-3 text-sm bg-transparent border-none outline-none resize-none focus:ring-0 text-slate-850 dark:text-slate-100 font-semibold transition-all shadow-sm"
+                  className="w-full px-4 py-3 text-sm bg-transparent border-none outline-none resize-none focus:ring-0 text-slate-800 dark:text-slate-100 font-semibold transition-all shadow-sm"
                 />
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function CommentSection({
           </div>
         </form>
       ) : (
-        <div className="mb-6 p-6 text-center bg-slate-50 dark:bg-[#1C1F26] rounded-xl border border-slate-200/55 dark:border-slate-850">
+        <div className="mb-6 p-6 text-center bg-slate-50 dark:bg-[#1C1F26] rounded-xl border border-slate-200/55 dark:border-slate-800">
           <p className="text-slate-600 dark:text-slate-400 font-medium mb-3">
             {capitalizeEachWord('you must be logged in to join the discussion.')}
           </p>
@@ -355,7 +355,7 @@ function CommentThread({
           <div className="flex flex-col items-start">
             <div className="inline-block bg-slate-100 dark:bg-slate-800/80 border border-transparent dark:border-slate-800/40 rounded-2xl p-2.5 px-4 max-w-[90%] text-left">
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="font-extrabold text-slate-850 dark:text-slate-200 text-xs hover:underline cursor-pointer">
+                <span className="font-extrabold text-slate-800 dark:text-slate-200 text-xs hover:underline cursor-pointer">
                   {capitalizeEachWord(comment.author?.full_name || 'anonymous')}
                 </span>
                 {comment.is_expert_reply && (
@@ -368,7 +368,7 @@ function CommentThread({
                 {capitalizeEachWord(comment.author?.gamification_rank || 'novice')} • {new Date(comment.created_at).toLocaleDateString()}
               </div>
               <div 
-                className="prose dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-250 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words"
+                className="prose dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words"
                 dangerouslySetInnerHTML={{ __html: comment.content }}
               />
             </div>
@@ -440,7 +440,7 @@ function CommentThread({
                   {currentUserProfile?.full_name?.charAt(0).toUpperCase() || 'Y'}
                 </div>
                 <div className="flex-1">
-                  <div className="bg-white dark:bg-[#1C1F26] border border-slate-250 dark:border-slate-700 rounded-xl p-2.5 px-3 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+                  <div className="bg-white dark:bg-[#1C1F26] border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 px-3 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
                     <textarea
                       ref={threadReplyTextareaRef}
                       value={replyContent}
@@ -448,7 +448,7 @@ function CommentThread({
                       onKeyDown={handleKeyDown}
                       placeholder={capitalizeEachWord('type your reply...')}
                       rows={1}
-                      className="w-full bg-transparent outline-none resize-none text-slate-755 dark:text-slate-200 placeholder:text-slate-400 text-xs py-1 transition-all"
+                      className="w-full bg-transparent outline-none resize-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 text-xs py-1 transition-all"
                     />
                   </div>
                 </div>

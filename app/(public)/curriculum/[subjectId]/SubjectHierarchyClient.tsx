@@ -132,33 +132,33 @@ export default function SubjectHierarchyClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsAllBooksOpen(false)}></div>
            <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
-             <div className="flex justify-between items-center mb-6 shrink-0 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                  <Book className="w-6 h-6 text-indigo-500" /> Books & Resources
-                </h3>
-                <button onClick={() => setIsAllBooksOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
-             </div>
-             
-             <div className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar">
-                {relatedBooks.map(book => (
-                  <a key={book.id} href={book.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 group p-5 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-indigo-500/30 transition-all shadow-sm">
-                     <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center shrink-0 group-hover:border-indigo-500 transition-colors shadow-inner">
-                        <BookOpen className="w-6 h-6 text-indigo-500 group-hover:text-indigo-400 transition-colors" />
+              <div className="flex justify-between items-center mb-6 shrink-0 border-b border-slate-100 dark:border-slate-800 pb-4">
+                 <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                   <Book className="w-6 h-6 text-indigo-500" /> Reference books
+                 </h3>
+                 <button onClick={() => setIsAllBooksOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar">
+                 {relatedBooks.map(book => (
+                   <a key={book.id} href={book.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 group p-5 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-indigo-500/30 transition-all shadow-sm">
+                      <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center shrink-0 group-hover:border-indigo-500 transition-colors shadow-inner">
+                         <BookOpen className="w-6 h-6 text-indigo-500 group-hover:text-indigo-400 transition-colors" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                         <p className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate tracking-tight">{book.title}</p>
+                         {book.subtitle && <p className="text-[11px] text-slate-500 mt-1 tracking-wider font-bold truncate">{book.subtitle}</p>}
+                      </div>
+                      <ExternalLink className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-all shrink-0" />
+                   </a>
+                 ))}
+                 {relatedBooks.length === 0 && (
+                     <div className="py-20 text-center opacity-40 grayscale flex flex-col items-center gap-4">
+                         <BookOpen size={48} />
+                         <p className="text-xs font-bold tracking-widest text-slate-500">No reference books mapped</p>
                      </div>
-                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate tracking-tight">{book.title}</p>
-                        {book.subtitle && <p className="text-[11px] text-slate-500 mt-1 tracking-widest font-bold truncate">{book.subtitle}</p>}
-                     </div>
-                     <ExternalLink className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-all shrink-0" />
-                  </a>
-                ))}
-                {relatedBooks.length === 0 && (
-                    <div className="py-20 text-center opacity-40 grayscale flex flex-col items-center gap-4">
-                        <BookOpen size={48} />
-                        <p className="text-xs font-bold tracking-widest text-slate-500">No assets mapped</p>
-                    </div>
-                )}
-             </div>
+                 )}
+              </div>
            </div>
         </div>
       )}
@@ -220,7 +220,7 @@ export default function SubjectHierarchyClient({
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-600 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Search for topics in the syllabus..." 
+                placeholder="Search topics in this syllabus..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-6 py-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-indigo-600/20 dark:focus:ring-indigo-500/20 font-medium text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm"
@@ -233,61 +233,72 @@ export default function SubjectHierarchyClient({
                 [1,2,3,4].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 animate-pulse"></div>)
               ) : (
                 filteredUnits.map((unit) => (
-                  <div key={unit.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-md transition-all group shadow-sm">
+                  <div key={unit.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
                      <button 
                       onClick={() => toggleUnit(unit.id)}
-                      className="w-full px-5 py-5 sm:px-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left"
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left"
                      >
-                       <div className="flex items-center gap-4 sm:gap-6">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-inner border ${expandedUnits[unit.id] ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'}`}>
-                             <BookOpen className="w-5 h-5" />
+                       <div className="flex items-center gap-4">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${expandedUnits[unit.id] ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
+                             <BookOpen className="w-4 h-4" />
                           </div>
                           <div>
-                             <p className="text-xs font-semibold text-slate-500 mb-0.5 group-hover:text-indigo-500 transition-colors">Unit {unit.order_index || 'X'}</p>
-                             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">{unit.title}</h3>
+                             <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Unit {unit.order_index || 'X'}</p>
+                             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">{unit.title}</h3>
                           </div>
                        </div>
-                       <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 transition-transform duration-300 ${expandedUnits[unit.id] ? 'bg-slate-900 dark:bg-white border-transparent text-white dark:text-slate-900 rotate-180' : 'border-slate-100 dark:border-slate-800 text-slate-300'}`}>
-                          <ChevronDown className="w-5 h-5" />
+                       <div className={`w-7 h-7 rounded-full border flex items-center justify-center shrink-0 transition-transform duration-300 ${expandedUnits[unit.id] ? 'bg-slate-900 dark:bg-slate-800 border-transparent text-white dark:text-slate-200 rotate-180' : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-550'}`}>
+                          <ChevronDown className="w-4 h-4" />
                        </div>
                      </button>
 
                      {expandedUnits[unit.id] && (
-                       <div className="px-5 pb-6 sm:px-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                          {unit.lesson_plan_lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => {
-                            const contents = lesson.lesson_plan_contents?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
-                            
-                            return (
-                              <div key={lesson.id} className="bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 rounded-xl p-5 hover:border-indigo-500/30 transition-all relative overflow-hidden shadow-inner group/lesson">
-                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 border-b border-slate-100 dark:border-slate-700/50 pb-4">
-                                    <div className="flex items-center gap-3">
-                                       <div className="w-3 h-3 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover/lesson:bg-indigo-600 transition-colors"><div className="w-1.5 h-1.5 bg-indigo-600 group-hover/lesson:bg-white rounded-full"></div></div>
-                                       <h4 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">{lesson.title}</h4>
-                                    </div>
-                                    <span className="text-xs font-semibold text-slate-500">{contents.length} Items</span>
-                                 </div>
-                                 
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {contents.map((content: any) => (
-                                      <Link 
-                                        key={content.id} 
-                                        href={`/curriculum/${subjectId}/${content.id}`}
-                                        className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg hover:border-indigo-500 hover:shadow-md transition-all group/item shadow-sm"
-                                      >
-                                         <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-inner group-hover/item:bg-indigo-600 transition-colors duration-300">
-                                            {content.type === 'passage' ? <FileText className="w-4 h-4 text-emerald-500 group-hover/item:text-white" /> : (content.type === 'exercise' ? <HelpCircle className="w-4 h-4 text-amber-500 group-hover/item:text-white" /> : <LinkIcon className="w-4 h-4 text-indigo-500 group-hover/item:text-white" />)}
-                                         </div>
-                                         <div className="flex-1 min-w-0">
-                                            <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate block">{content.title}</span>
-                                            <span className="text-[11px] font-medium text-slate-500 block mt-0.5 capitalize">{content.type}</span>
-                                         </div>
-                                         <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-1 transition-all text-indigo-500" />
-                                      </Link>
-                                    ))}
-                                 </div>
-                              </div>
-                            );
-                          })}
+                       <div className="px-4 pb-4 space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                          <div className="pl-2 border-l-2 border-slate-100 dark:border-slate-800 space-y-4">
+                            {unit.lesson_plan_lessons?.sort((a: any, b: any) => a.order_index - b.order_index).map((lesson: any) => {
+                              const contents = lesson.lesson_plan_contents?.sort((a: any, b: any) => a.order_index - b.order_index) || [];
+                              
+                              return (
+                                <div key={lesson.id} className="relative pl-6 space-y-2 group/lesson">
+                                   {/* Horizontal connector line */}
+                                   <div className="absolute left-0 top-3.5 w-4 h-0.5 bg-slate-100 dark:bg-slate-800 group-hover/lesson:bg-indigo-500/30 transition-colors" />
+                                   {/* Bullet point */}
+                                   <div className="absolute left-3 top-2.5 w-2 h-2 rounded-full border border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-900 group-hover/lesson:border-indigo-500 transition-colors" />
+                                   
+                                   <div className="flex items-center justify-between gap-3">
+                                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">{lesson.title}</h4>
+                                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800">{contents.length} {contents.length === 1 ? 'item' : 'items'}</span>
+                                   </div>
+                                   
+                                   <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {contents.map((content: any) => (
+                                        <Link 
+                                          key={content.id} 
+                                          href={`/curriculum/${subjectId}/${content.id}`}
+                                          className="flex items-center gap-2.5 p-2 bg-slate-50/50 hover:bg-white dark:bg-slate-900/30 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-805 hover:border-indigo-500/30 dark:hover:border-indigo-500/30 rounded-xl hover:shadow-sm transition-all group/item"
+                                        >
+                                           <div className="w-6 h-6 rounded bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-800 group-hover/item:bg-indigo-600 transition-all duration-300">
+                                              {content.type === 'passage' ? (
+                                                 <FileText className="w-3 h-3 text-emerald-500 group-hover/item:text-white" />
+                                              ) : content.type === 'exercise' ? (
+                                                 <HelpCircle className="w-3 h-3 text-amber-500 group-hover/item:text-white" />
+                                              ) : (
+                                                 <LinkIcon className="w-3 h-3 text-indigo-500 group-hover/item:text-white" />
+                                              )}
+                                           </div>
+                                           <div className="flex-1 min-w-0">
+                                              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate block">{content.title}</span>
+                                           </div>
+                                           <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded capitalize group-hover/item:bg-indigo-50 dark:group-hover/item:bg-indigo-950/20 group-hover/item:text-indigo-600 transition-colors shrink-0">
+                                              {content.type}
+                                           </span>
+                                        </Link>
+                                      ))}
+                                   </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                        </div>
                      )}
                   </div>
@@ -313,7 +324,7 @@ export default function SubjectHierarchyClient({
            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors">
               <div className="flex justify-between items-center mb-6 border-b border-slate-50 dark:border-slate-800 pb-4">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                   <Book className="w-4 h-4 text-indigo-500" /> Reference Assets
+                   <Book className="w-4 h-4 text-indigo-500" /> Reference books
                 </h3>
                 {relatedBooks.length > 3 && (
                   <button onClick={() => setIsAllBooksOpen(true)} className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg">View All</button>
@@ -334,7 +345,7 @@ export default function SubjectHierarchyClient({
                  {relatedBooks.length === 0 && (
                     <div className="py-8 text-center flex flex-col items-center gap-3">
                         <BookOpen className="w-8 h-8 text-slate-300" />
-                        <p className="text-xs font-medium text-slate-500">No assets mapped</p>
+                        <p className="text-xs font-medium text-slate-500">No reference books mapped</p>
                     </div>
                  )}
               </div>
@@ -364,7 +375,7 @@ export default function SubjectHierarchyClient({
            {otherSubjects.length > 0 && (
              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-6 border-b border-slate-50 dark:border-slate-800 pb-4 flex items-center gap-2">
-                   <Layers className="w-4 h-4 text-indigo-500" /> Lateral Modules
+                   <Layers className="w-4 h-4 text-indigo-500" /> Other subjects in this category
                 </h3>
                 <div className="space-y-2">
                    {otherSubjects.map(sub => (
@@ -384,7 +395,7 @@ export default function SubjectHierarchyClient({
            {/* Community Promo */}
            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors group">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-6 border-b border-slate-50 dark:border-slate-800 pb-4 flex items-center gap-2">
-                 <Share2 className="w-4 h-4 text-indigo-500" /> Public Discourse
+                 <Share2 className="w-4 h-4 text-indigo-500" /> Join our channels
               </h3>
               <div className="grid grid-cols-2 gap-3">
                  <a href="#" className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/fb">
@@ -402,30 +413,30 @@ export default function SubjectHierarchyClient({
            <div className="bg-slate-900 rounded-2xl p-6 shadow-lg relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-bl-full -mr-6 -mt-6 pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2 relative z-10">
-                 <MessageSquare className="w-4 h-4 text-indigo-400" /> Intelligence Query
+                 <MessageSquare className="w-4 h-4 text-indigo-400" /> Report an issue / feedback
               </h3>
-              <p className="text-xs text-slate-300 font-medium mb-6 relative z-10 opacity-90">Contribute to the ecosystem. Encountered an anomaly in {subject?.title} syllabus?</p>
+              <p className="text-xs text-slate-300 font-medium mb-6 relative z-10 opacity-90">Need help or noticed a mistake in the {subject?.title} syllabus? Let us know.</p>
               
               <form onSubmit={handleFeedbackSubmit} className="space-y-3 relative z-10">
                  <input 
                    value={feedbackEmail}
                    onChange={(e) => setFeedbackEmail(e.target.value)}
                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all text-white placeholder:text-slate-500 placeholder:font-normal" 
-                   placeholder="Identity / Student ID" 
+                   placeholder="Your email / name" 
                  />
                  <textarea 
                    required
                    value={feedbackMessage}
                    onChange={(e) => setFeedbackMessage(e.target.value)}
                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all min-h-[100px] text-white placeholder:text-slate-500 placeholder:font-normal resize-none" 
-                   placeholder="Intelligence Report..."
+                   placeholder="Describe your issue or feedback here..."
                  ></textarea>
                  <button 
                    disabled={isSubmitting}
                    type="submit" 
                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-500 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group"
                  >
-                   {isSubmitting ? 'Relaying...' : <><span className="group-hover:translate-x-1 transition-transform">Relay Payload</span> <ArrowRight className="w-4 h-4" /></>}
+                   {isSubmitting ? 'Sending...' : <><span className="group-hover:translate-x-1 transition-transform">Send feedback</span> <ArrowRight className="w-4 h-4" /></>}
                  </button>
               </form>
            </div>

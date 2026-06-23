@@ -116,10 +116,10 @@ export default function MCQInteractiveWrapper({
       {/* Control Dashboard Header */}
       <div className="bg-slate-100/70 dark:bg-slate-800/40 p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-black text-slate-850 dark:text-slate-250 uppercase tracking-widest bg-blue-100 dark:bg-blue-900/30 text-blue-650 dark:text-blue-400 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+          <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
             <Timer className="w-3.5 h-3.5" /> Timer
           </span>
-          <div className="flex items-center gap-1.5 font-mono text-base font-extrabold text-slate-850 dark:text-slate-100">
+          <div className="flex items-center gap-1.5 font-mono text-base font-extrabold text-slate-800 dark:text-slate-100">
             <span>{formatTime(timeSpent)}</span>
             {!hasAnswered && (
               <button
@@ -138,7 +138,7 @@ export default function MCQInteractiveWrapper({
             <>
               <button
                 onClick={() => setShowExplanation(!showExplanation)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-650 dark:text-slate-300 transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 {showExplanation ? 'Hide Answer' : 'Show Answer'}
@@ -192,7 +192,7 @@ export default function MCQInteractiveWrapper({
                       transition={{ duration: 0.3 }}
                       className={`w-12 h-12 rounded-full border-2 font-black text-sm flex items-center justify-center transition-colors shadow-sm ${hasAnswered
                           ? ''
-                          : 'bg-white dark:bg-[#1C1F26] border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 text-slate-750 dark:text-slate-300 hover:text-blue-650'
+                          : 'bg-white dark:bg-[#1C1F26] border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 text-slate-700 dark:text-slate-300 hover:text-blue-600'
                         }`}
                       title={hasAnswered ? `Answer choice ${letter}` : `Select ${letter}`}
                     >
@@ -200,7 +200,7 @@ export default function MCQInteractiveWrapper({
                     </motion.button>
 
                     {showMetrics && (
-                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-[#1C1F26] px-1.5 py-0.5 rounded border border-slate-150 dark:border-slate-800 shadow-sm font-mono">
+                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-[#1C1F26] px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 shadow-sm font-mono">
                         {pct}%
                       </span>
                     )}
@@ -212,7 +212,7 @@ export default function MCQInteractiveWrapper({
         )}
 
         {options.length > 0 && (
-          <div className="flex flex-col gap-3 mt-4 animate-in fade-in duration-205">
+          <div className="flex flex-col gap-3 mt-4 animate-in fade-in duration-200">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -225,25 +225,25 @@ export default function MCQInteractiveWrapper({
                   setShowAnswerManual(newShow);
                   setShowExplanation(newShow);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-blue-650 dark:text-blue-400 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5"
               >
                 <span>{showAnswerManual ? 'Hide Answer' : 'Show Answer'}</span>
               </button>
 
               {showAnswerManual && isLoggedIn && (
                 <div className="flex items-center gap-2 animate-in zoom-in-95 duration-150">
-                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-850 dark:text-slate-200 rounded-xl text-xs font-extrabold shadow-sm font-mono">
+                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-extrabold shadow-sm font-mono">
                     Correct Option: <span className="text-emerald-600 dark:text-emerald-400">{getCorrectOptionLetter()}</span>
                   </div>
-                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-750 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold shadow-sm font-mono">
-                    Time Taken: <span className="text-slate-800 dark:text-slate-250 font-black">{formatTime(timeSpent)}</span>
+                  <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold shadow-sm font-mono">
+                    Time Taken: <span className="text-slate-800 dark:text-slate-200 font-black">{formatTime(timeSpent)}</span>
                   </div>
                 </div>
               )}
             </div>
 
             {nonLoggedInClicked && (
-              <div className="text-xs font-bold text-rose-500 bg-rose-500/10 dark:bg-rose-950/20 px-4 py-2 border border-rose-500/20 rounded-xl flex items-center gap-1.5 w-fit animate-in slide-in-from-top-2 duration-205">
+              <div className="text-xs font-bold text-rose-500 bg-rose-500/10 dark:bg-rose-950/20 px-4 py-2 border border-rose-500/20 rounded-xl flex items-center gap-1.5 w-fit animate-in slide-in-from-top-2 duration-200">
                 <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
                 <span>Log in to see the answer.</span>
               </div>
@@ -266,7 +266,7 @@ export default function MCQInteractiveWrapper({
           <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
             Correct Option: <span className="text-green-600 dark:text-green-400 font-extrabold">Option {getCorrectOptionLetter()}</span>
           </div>
-          <p className="text-xs text-slate-750 dark:text-slate-300 leading-relaxed font-medium">
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
             You selected option <span className="font-bold uppercase text-slate-900 dark:text-white">{selectedOption ? OPTION_LETTERS[options.findIndex(o => o.id === selectedOption)] : ''}</span>.
             GMAT timer captured a total time spent of <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{formatTime(timeSpent)}</span>.
           </p>

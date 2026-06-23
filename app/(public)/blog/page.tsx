@@ -79,19 +79,19 @@ export default async function BlogListPage() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
         
         {/* HERO SECTION */}
-        <div className="bg-slate-900 text-white pt-32 md:pt-40 pb-20 md:pb-32 px-4 md:px-6 relative overflow-hidden border-b border-white/5">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[150px] pointer-events-none -mr-40 -mt-20"></div>
+        <div className="relative overflow-hidden bg-slate-900 text-white pt-32 md:pt-40 pb-20 md:pb-28 px-4 md:px-6 border-b border-slate-800">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none -mr-40 -mt-20"></div>
+          <div className="absolute -left-10 bottom-0 w-[300px] h-[300px] bg-cyan-600/5 rounded-full blur-[100px] pointer-events-none"></div>
           <div className="max-w-7xl mx-auto relative z-10">
               <div className="max-w-3xl">
-                  <div className="flex items-center gap-2 md:gap-3 text-[9px] md:text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-6 md:mb-8 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full w-fit">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Knowledge Repository
+                  <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300 mb-6 bg-indigo-950/60 border border-indigo-800/40 px-4 py-1.5 rounded-full w-fit">
+                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                      Knowledge repository
                   </div>
-                  <h1 className="text-4xl sm:text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[1] md:leading-[0.9] mb-6 md:mb-8">
-                      Academic <br className="hidden md:block"/>
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Journals</span>
+                  <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-none mb-6">
+                      Academic <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">journals & articles</span>
                   </h1>
-                  <p className="text-base md:text-xl text-slate-400 font-medium leading-relaxed opacity-80">
+                  <p className="text-base md:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl">
                       Explore high-quality educational insights, exam strategies, and structured learning material curated for excellence.
                   </p>
               </div>
