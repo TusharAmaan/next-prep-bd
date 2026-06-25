@@ -1,17 +1,17 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabaseServer";
 import { headers } from 'next/headers';
 import Discussion from "@/components/shared/Discussion";
-import BookmarkButton from "@/components/shared/BookmarkButton";
-import { Metadata } from 'next';
-import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import TypographyScaler from "@/components/shared/TypographyScaler";
-import { Calendar, Clock, Share2, ChevronLeft, Eye } from "lucide-react";
-import NewsSidebar from "@/components/news/NewsSidebar";
+import PostPageShell from "@/components/post/PostPageShell";
+import PostHeader from "@/components/post/PostHeader";
+import PostRightRail from "@/components/post/PostRightRail";
+import BlogContent from "@/components/BlogContent";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
-import ShareButtons from "@/components/news/ShareButtons";
-import SinglePostContent from "@/components/public/SinglePostContent";
+import { Metadata } from 'next';
+import Link from "next/link";
+import ProseStyles from "@/components/post/ProseStyles";
+import { ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +40,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: news.seo_title || news.title,
     description: news.seo_description || `Read the latest news: ${news.title}`,
     keywords: Array.isArray(news.tags) ? news.tags : [],
+    alternates: {
+      canonical: `/news/${id}`,
+    },
     openGraph: {
       title: news.seo_title || news.title,
       description: news.seo_description || `Read the latest news: ${news.title}`,
@@ -55,101 +58,158 @@ export default async function SingleNewsPage({ params }: { params: Promise<{ id:
   const column = getQueryColumn(id);
 
   const supabase = await createClient();
-  // 1. DATA FETCHING
+
+  // Fetch the news post
   const { data: newsItems } = await supabase
     .from("news")
-    .select("id, title, slug, content, image_url, category, created_at, seo_title, seo_description, tags")
+    .select("id, title, slug, content, image_url, category, created_at, seo_title, seo_description, tags, views, author_id")
     .eq(column, id)
     .limit(1);
 
-  const post = newsItems && newsItems.length > 0 ? { ...newsItems[0], id: newsItems[0].id.toString() } : null;
+  const rawPost = newsItems && newsItems.length > 0 ? newsItems[0] : null;
+  if (!rawPost) return notFound();
 
-  if (!post) return notFound();
+  const post = { ...rawPost, id: rawPost.id.toString() };
 
-  // Sidebar Data
+  // Author name (from profiles if available)
+  let authorName = "NextPrepBD";
+  if (rawPost.author_id) {
+    const { data: authorProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", rawPost.author_id)
+      .single();
+    if (authorProfile?.full_name) authorName = authorProfile.full_name;
+  }
+
+  // Recent news for sidebar
   const { data: recentPostsRaw } = await supabase
     .from("news")
-    .select("id, title, image_url, created_at")
+    .select("id, title, slug, image_url, created_at, category")
+    .neq("id", rawPost.id)
     .order("created_at", { ascending: false })
     .limit(5);
-  const recentPosts = (recentPostsRaw || []).map(p => ({ ...p, id: p.id.toString() }));
 
-  const { data: distinctCategories } = await supabase
-    .from("news")
-    .select("category")
-    .not("category", "is", null)
-    .limit(100);
-  const categoriesList = ["All", ...Array.from(new Set((distinctCategories || []).map((item) => item?.category).filter(Boolean))).sort()];
+  const relatedNotes = (recentPostsRaw || []).map(p => ({
+    title: p.title,
+    meta: `${p.category || "General"} · ${new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    href: `/news/${p.slug || p.id}`,
+  }));
 
-  const getReadTime = (text: string | null) => {
-    if (!text) return "1 min read";
-    const wpm = 200;
-    const words = text.split(/\s+/).length;
-    return `${Math.ceil(words / wpm)} min read`;
-  };
+  // Word count & read time
+  const wordCount = rawPost.content ? rawPost.content.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
+  const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return "";
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-  };
+  // Breadcrumbs
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "News", href: "/news" },
+    ...(rawPost.category ? [{ label: rawPost.category }] : []),
+    { label: rawPost.title },
+  ];
 
-  const hrList = await headers();
-  const host = hrList.get("host") || "";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const absoluteUrl = `${protocol}://${host}/news/${id}`;
+  // Tags
+  const tags = [
+    { label: "News", variant: "rose" as const },
+    ...(rawPost.category && rawPost.category !== "General" ? [{ label: rawPost.category, variant: "blue" as const }] : []),
+  ];
+
+  // Right rail stats
+  const stats = [
+    { value: `${readTime} min`, label: "Read time" },
+    { value: (rawPost.views || 0).toLocaleString(), label: "Views" },
+    { value: wordCount.toLocaleString(), label: "Words" },
+    { value: rawPost.category || "General", label: "Category" },
+  ];
+
+  const quickLinks = [
+    { label: "All news", href: "/news" },
+    { label: "Resources", href: "/resources" },
+    { label: "Forum", href: "/forum" },
+    { label: "Lesson plans", href: "/curriculum" },
+  ];
+
+  const rightRail = (
+    <PostRightRail
+      stats={stats}
+      quickLinks={quickLinks}
+      relatedNotes={relatedNotes}
+    >
+      {/* CTA card */}
+      <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12" />
+        <h4 className="text-lg font-bold mb-2 leading-snug">Prepare better for your exams</h4>
+        <p className="text-emerald-100 text-xs mb-5 font-medium leading-relaxed">
+          Access thousands of lecture sheets, suggestions and question banks.
+        </p>
+        <Link 
+          href="/resources/ssc" 
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white text-emerald-700 rounded-xl text-xs font-bold shadow-md hover:bg-emerald-50 transition-all"
+        >
+          Get started <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+    </PostRightRail>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-28">
+    <div>
       <TypographyScaler />
+      <PostPageShell rightRail={rightRail}>
+        {/* Post header */}
+        <PostHeader
+          breadcrumbs={breadcrumbs}
+          tags={tags}
+          title={rawPost.title}
+          authorName={authorName}
+          date={rawPost.created_at}
+          readTime={readTime}
+          viewCount={rawPost.views}
+          postId={post.id}
+          postType="news"
+          coverUrl={rawPost.image_url}
+          isLoggedIn={true}
+        />
 
-      <div className="max-w-7xl mx-auto px-6">
-
-        <div className="flex flex-col lg:flex-row gap-12">
-          <main className="flex-1 min-w-0">
-            <SinglePostContent 
-                post={post}
-                formattedDate={formatDate(post.created_at)}
-                readTime={parseInt(getReadTime(post.content))}
-                isLoggedIn={true} // News is usually public but we pass true to ensure actions work
-            />
-
-            <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 md:p-12 mt-12 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-              <h4 className="text-xl font-black text-slate-800 dark:text-white mb-8 pb-4 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-3 uppercase tracking-tighter">
-                <Share2 className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                Community Discussion
-              </h4>
-              <Discussion itemType="news" itemId={post.id.toString()} />
+        {/* Content body */}
+        <article className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden transition-colors">
+          <div className="p-5 sm:p-8 md:p-10">
+            <div className="single-post-body text-slate-800 dark:text-slate-200">
+              <BlogContent 
+                content={rawPost.content || ""} 
+                className="single-post-prose" 
+              />
             </div>
-          </main>
-
-          <div className="w-full lg:w-80 shrink-0">
-            <NewsSidebar
-              categories={categoriesList}
-              recentPosts={recentPosts}
-              activeCategory={post.category}
-            />
-
-            <div className="sticky top-24 mt-10">
-              <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                <h4 className="text-2xl font-black mb-4 leading-tight">Prepare better for your exams.</h4>
-                <p className="text-indigo-100 text-sm mb-6 font-medium leading-relaxed">Access thousands of lecture sheets, sugerstions and question banks.</p>
-                <Link href="/resources/ssc" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-indigo-50 transition-all">
-                  Get Started <ChevronLeft className="w-4 h-4 rotate-180" />
-                </Link>
-              </div>
+          </div>
+          <footer className="px-8 py-4 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              © NextPrepBD News
+            </p>
+            <div className="flex gap-1">
+              <div className="w-1 h-1 rounded-full bg-emerald-500/30" />
+              <div className="w-1 h-1 rounded-full bg-emerald-500/50" />
+              <div className="w-1 h-1 rounded-full bg-emerald-500/70" />
             </div>
+          </footer>
+        </article>
+
+        {/* Discussion */}
+        <div className="mt-10 md:mt-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 md:p-8 shadow-sm transition-colors">
+          <h3 className="text-base md:text-lg font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2.5">
+            <span className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">💬</span>
+            Community discussion
+          </h3>
+          <div className="w-full bg-slate-50 dark:bg-slate-950/40 rounded-xl p-4 md:p-5 min-h-[80px] flex justify-center border border-slate-100 dark:border-slate-800/60">
+            <Discussion itemType="news" itemId={post.id.toString()} />
           </div>
         </div>
 
-        <div className="mt-20">
-           <ProfessionalAppBanner />
+        {/* App banner */}
+        <div className="mt-12">
+          <ProfessionalAppBanner />
         </div>
-      </div>
-
+      </PostPageShell>
+      <ProseStyles />
     </div>
   );
 }

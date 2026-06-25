@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Milestone College — Pretest Syllabus | NextPrepBD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        /* ═══════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════ */
+        :root {
+            --brand: #1a7a5e;
+            --brand-light: #e8f5f0;
+            --brand-mid: #2d9e7a;
+            --brand-dark: #125c44;
+            --accent: #f0a500;
+            --accent-light: #fff8e6;
+
+            --bg: #f5f6f8;
+            --surface: #ffffff;
+            --surface-2: #f9fafb;
+            --surface-3: #f0f2f5;
+
+            --text-1: #0d1117;
+            --text-2: #3d4451;
+            --text-3: #6b7280;
+            --text-4: #9ca3af;
+
+            --border: #e4e7ec;
+            --border-2: #d1d5db;
+
+            --sidebar-w: 248px;
+            --rail-w: 264px;
+            --topbar-h: 56px;
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, .08), 0 2px 4px rgba(0, 0, 0, .04);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, .10), 0 2px 8px rgba(0, 0, 0, .06);
+
+            --ease-out: cubic-bezier(.22, .68, 0, 1.2);
+            --ease-std: cubic-bezier(.4, 0, .2, 1);
+        }
+
+        /* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+
+        ul,
+        ol {
+            list-style: none;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* ═══════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════ */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--topbar-h);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+            animation: slideDown .35s var(--ease-std) both;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .topbar-brand .logo-mark {
+            width: 32px;
+            height: 32px;
+            background: var(--brand);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+        }
+
+        .topbar-brand .brand-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            letter-spacing: -.3px;
+        }
+
+        .topbar-brand .brand-name span {
+            color: var(--brand);
+        }
+
+        .topbar-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .topbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .topbar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            transition: background .15s, color .15s;
+            white-space: nowrap;
+        }
+
+        .topbar-nav a:hover {
+            background: var(--surface-3);
+            color: var(--text-1);
+        }
+
+        .topbar-nav a.active {
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .topbar-nav a i {
+            font-size: 13px;
+            opacity: .7;
+        }
+
+        .topbar-search {
+            display: flex;
+            align-items: center;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0 12px;
+            gap: 8px;
+            height: 34px;
+            width: 200px;
+            transition: border-color .2s, box-shadow .2s, width .3s var(--ease-std);
+        }
+
+        .topbar-search:focus-within {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(26, 122, 94, .1);
+            width: 260px;
+        }
+
+        .topbar-search i {
+            font-size: 12px;
+            color: var(--text-4);
+        }
+
+        .topbar-search input {
+            border: none;
+            background: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-1);
+            width: 100%;
+        }
+
+        .topbar-search input::placeholder {
+            color: var(--text-4);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .btn-ghost {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--text-2);
+            transition: background .15s, color .15s;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-3);
+            color: var(--text-1);
+        }
+
+        .btn-primary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            background: var(--brand);
+            color: #fff;
+            transition: background .15s, transform .1s;
+            box-shadow: 0 1px 3px rgba(26, 122, 94, .3);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .topbar-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--brand-light);
+            border: 1.5px solid var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--brand);
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+
+        .topbar-avatar:hover {
+            box-shadow: 0 0 0 3px rgba(26, 122, 94, .15);
+        }
+
+        /* sidebar toggle for mobile */
+        .sidebar-toggle {
+            display: none;
+            width: 34px;
+            height: 34px;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            color: var(--text-2);
+            transition: background .15s;
+            font-size: 15px;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--surface-3);
+        }
+
+        /* ═══════════════════════════════════════════════
+   SHELL  (sidebar + main + right-rail)
+═══════════════════════════════════════════════ */
+        .shell {
+            display: grid;
+            grid-template-columns: var(--sidebar-w) 1fr var(--rail-w);
+            grid-template-rows: 1fr;
+            min-height: 100vh;
+            padding-top: var(--topbar-h);
+        }
+
+        /* ═══════════════════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════════════════ */
+        .sidebar {
+            position: fixed;
+            top: var(--topbar-h);
+            left: 0;
+            width: var(--sidebar-w);
+            height: calc(100vh - var(--topbar-h));
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 0 24px;
+            transition: transform .3s var(--ease-std);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .sidebar-section {
+            padding: 0 12px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-4);
+            padding: 0 8px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            position: relative;
+            user-select: none;
+        }
+
+        .sidebar-item:hover {
+            background: var(--surface-3);
+            color: var(--text-1);
+        }
+
+        .sidebar-item.active {
+            background: var(--brand-light);
+            color: var(--brand);
+            font-weight: 600;
+        }
+
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            background: var(--brand);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sidebar-item i {
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-item .badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 20px;
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .sidebar-item .badge.new {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .sidebar-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 16px;
+        }
+
+        /* Expandable sidebar group */
+        .sidebar-group-header {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            user-select: none;
+        }
+
+        .sidebar-group-header:hover {
+            background: var(--surface-3);
+            color: var(--text-1);
+        }
+
+        .sidebar-group-header i.main-icon {
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-group-header .chevron {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform .25s;
+            color: var(--text-4);
+        }
+
+        .sidebar-group-header.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-group-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s var(--ease-std);
+        }
+
+        .sidebar-group-body.open {
+            max-height: 400px;
+        }
+
+        .sidebar-sub-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px 6px 28px;
+            font-size: 12.5px;
+            color: var(--text-3);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background .12s, color .12s;
+        }
+
+        .sidebar-sub-item:hover {
+            background: var(--surface-3);
+            color: var(--text-1);
+        }
+
+        .sidebar-sub-item.active {
+            color: var(--brand);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════ */
+        .main {
+            grid-column: 2;
+            min-width: 0;
+            padding: 28px 32px 60px;
+            animation: fadeIn .4s .1s var(--ease-std) both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ── BREADCRUMB ── */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-4);
+            margin-bottom: 20px;
+            animation: slideUp .35s .15s var(--ease-std) both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .breadcrumb a {
+            color: var(--text-4);
+            transition: color .15s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--brand);
+        }
+
+        .breadcrumb .sep {
+            color: var(--border-2);
+        }
+
+        .breadcrumb .current {
+            color: var(--text-2);
+            font-weight: 500;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            margin-bottom: 28px;
+            animation: slideUp .35s .2s var(--ease-std) both;
+        }
+
+        .post-eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            letter-spacing: .03em;
+        }
+
+        .tag-chip.syllabus {
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .tag-chip.new {
+            background: var(--accent-light);
+            color: #a16207;
+        }
+
+        .tag-chip.ssc {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .post-title {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 28px;
+            font-weight: 400;
+            line-height: 1.2;
+            color: var(--text-1);
+            letter-spacing: -.3px;
+            margin-bottom: 14px;
+        }
+
+        .post-title em {
+            font-style: italic;
+            color: var(--brand);
+        }
+
+        .post-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            font-size: 12.5px;
+            color: var(--text-3);
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .post-meta-row .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .post-meta-row i {
+            font-size: 12px;
+        }
+
+        .meta-author {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .meta-author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ede9fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: #5b21b6;
+        }
+
+        /* ── POST ACTIONS ── */
+        .post-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            animation: slideUp .35s .25s var(--ease-std) both;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            background: var(--surface);
+            transition: border-color .15s, background .15s, color .15s, box-shadow .15s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--border-2);
+            background: var(--surface-2);
+            color: var(--text-1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .action-btn i {
+            font-size: 12px;
+        }
+
+        .action-btn.save:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+        }
+
+        .action-btn.share:hover {
+            border-color: #3b82f6;
+            color: #2563eb;
+        }
+
+        /* ── CONTENT CARD ── */
+        .content-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            animation: slideUp .4s var(--ease-std) both;
+        }
+
+        .content-card:nth-child(1) {
+            animation-delay: .28s;
+        }
+
+        .content-card:nth-child(2) {
+            animation-delay: .34s;
+        }
+
+        .content-card:nth-child(3) {
+            animation-delay: .40s;
+        }
+
+        .content-card:nth-child(4) {
+            animation-delay: .46s;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+            transition: background .15s, border-color .15s;
+            position: relative;
+        }
+
+        .content-card.open .card-header {
+            border-bottom-color: var(--border);
+        }
+
+        .card-header:hover {
+            background: var(--surface-2);
+        }
+
+        .card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.green {
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .card-icon.purple {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .card-icon.amber {
+            background: var(--accent-light);
+            color: #a16207;
+        }
+
+        .card-icon.blue {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .card-title-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-subtitle {
+            font-size: 11.5px;
+            color: var(--text-3);
+            margin-top: 1px;
+        }
+
+        .card-mark-badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+
+        .card-mark-badge.green {
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .card-mark-badge.purple {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .card-chevron {
+            font-size: 12px;
+            color: var(--text-4);
+            transition: transform .28s var(--ease-std);
+            margin-left: 4px;
+        }
+
+        .content-card.open .card-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Accordion body */
+        .card-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .5s var(--ease-std);
+        }
+
+        .content-card.open .card-body {
+            max-height: 9999px;
+        }
+
+        .card-body-inner {
+            padding: 20px 18px;
+        }
+
+        /* ── SECTION DIVIDER ── */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0 12px;
+        }
+
+        .section-divider-label {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-4);
+            white-space: nowrap;
+        }
+
+        .section-divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .section-divider-count {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: var(--surface-3);
+            color: var(--text-4);
+        }
+
+        /* ── MARKS TABLE ── */
+        .marks-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .marks-table thead tr {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .marks-table th {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-4);
+            padding: 8px 10px;
+            text-align: left;
+        }
+
+        .marks-table th:last-child {
+            text-align: right;
+        }
+
+        .marks-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-2);
+            vertical-align: middle;
+        }
+
+        .marks-table td:first-child {
+            font-size: 11px;
+            color: var(--text-4);
+            font-weight: 600;
+            width: 28px;
+        }
+
+        .marks-table td.marks-val {
+            text-align: right;
+            font-weight: 700;
+            color: var(--brand);
+            white-space: nowrap;
+        }
+
+        .marks-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .marks-table .part-row td {
+            background: var(--surface-3);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 6px 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .marks-table .total-row td {
+            background: var(--brand-light);
+            font-weight: 700;
+            color: var(--brand-dark);
+            border-top: 2px solid var(--brand);
+        }
+
+        .marks-table .total-row td.marks-val {
+            color: var(--brand);
+        }
+
+        .marks-table .subcol {
+            font-size: 11px;
+            color: var(--text-4);
+            display: block;
+            margin-top: 1px;
+        }
+
+        /* ── TOPIC GRID ── */
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .topic-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            color: var(--text-2);
+            line-height: 1.4;
+            background: var(--surface);
+            transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+            cursor: default;
+        }
+
+        .topic-item:hover {
+            border-color: var(--brand);
+            background: var(--brand-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topic-item:hover .topic-num {
+            color: var(--brand);
+        }
+
+        .topic-num {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--text-4);
+            min-width: 18px;
+            margin-top: 1px;
+            flex-shrink: 0;
+        }
+
+        .topic-item a {
+            color: var(--brand);
+            font-weight: 500;
+            transition: text-decoration .1s;
+        }
+
+        .topic-item a:hover {
+            text-decoration: underline;
+        }
+
+        .topic-sub {
+            font-size: 10.5px;
+            color: var(--text-4);
+            display: block;
+            margin-top: 1px;
+        }
+
+        /* Alt note block */
+        .alt-note {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--brand);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 12px;
+            color: var(--text-3);
+            line-height: 1.5;
+        }
+
+        .alt-note strong {
+            color: var(--text-2);
+            font-weight: 600;
+        }
+
+        /* ── EXAMINER FOOTER ── */
+        .examiner-strip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            background: var(--surface-2);
+            border-top: 1px solid var(--border);
+            margin-top: 4px;
+        }
+
+        .examiner-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ede9fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #5b21b6;
+            flex-shrink: 0;
+        }
+
+        .examiner-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .examiner-role {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 1px;
+        }
+
+        .examiner-dept {
+            font-size: 11px;
+            color: var(--text-4);
+        }
+
+        /* ── COMMENTS SECTION ── */
+        .comments-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            animation: slideUp .4s .5s var(--ease-std) both;
+        }
+
+        .comments-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comments-title .count {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: var(--surface-3);
+            color: var(--text-4);
+        }
+
+        .comment-composer {
+            display: flex;
+            gap: 10px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .comment-composer-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--brand-light);
+            border: 1.5px solid var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--brand);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .comment-input {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 9px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-1);
+            resize: none;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            background: var(--surface);
+            min-height: 42px;
+            max-height: 120px;
+        }
+
+        .comment-input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(26, 122, 94, .1);
+        }
+
+        .comment-input::placeholder {
+            color: var(--text-4);
+        }
+
+        .empty-comments {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-4);
+            font-size: 13px;
+        }
+
+        .empty-comments i {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 8px;
+            opacity: .4;
+        }
+
+        .empty-comments a {
+            color: var(--brand);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════════
+   RIGHT RAIL
+═══════════════════════════════════════════════ */
+        .right-rail {
+            position: sticky;
+            top: calc(var(--topbar-h) + 20px);
+            align-self: start;
+            padding: 28px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeIn .4s .3s var(--ease-std) both;
+        }
+
+        .rail-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .rail-card-header {
+            padding: 12px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-4);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rail-card-header i {
+            font-size: 11px;
+        }
+
+        /* Stat grid */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .stat-cell {
+            background: var(--surface);
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--brand);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 10.5px;
+            color: var(--text-4);
+            margin-top: 3px;
+        }
+
+        /* Progress items */
+        .progress-list {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .progress-item-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: var(--text-2);
+            font-weight: 500;
+        }
+
+        .progress-item-label span {
+            color: var(--text-4);
+            font-weight: 400;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background: var(--surface-3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--brand);
+            border-radius: 4px;
+            width: 0;
+            transition: width 1.2s .8s var(--ease-std);
+        }
+
+        .progress-fill.purple {
+            background: #7c3aed;
+        }
+
+        .progress-fill.amber {
+            background: var(--accent);
+        }
+
+        /* Quick links */
+        .quick-links {
+            padding: 6px 8px;
+        }
+
+        .quick-link-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 6px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-2);
+            transition: background .13s, color .13s;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .quick-link-item:last-child {
+            border-bottom: none;
+        }
+
+        .quick-link-item:hover {
+            background: var(--surface-2);
+            color: var(--brand);
+        }
+
+        .quick-link-item i {
+            font-size: 13px;
+            width: 18px;
+            text-align: center;
+            color: var(--text-4);
+        }
+
+        .quick-link-item:hover i {
+            color: var(--brand);
+        }
+
+        /* Related notes */
+        .note-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            transition: background .13s;
+            cursor: pointer;
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-item:hover {
+            background: var(--surface-2);
+        }
+
+        .note-title {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-1);
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .note-meta {
+            font-size: 11px;
+            color: var(--text-4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .note-meta .dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--border-2);
+        }
+
+        /* Social / follow */
+        .follow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 10px 10px;
+        }
+
+        .follow-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 0;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            transition: border-color .15s, background .15s, color .15s;
+        }
+
+        .follow-btn:hover {
+            border-color: var(--brand);
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        .follow-btn i {
+            font-size: 13px;
+        }
+
+        .follow-btn.fb:hover {
+            border-color: #1877f2;
+            background: #eff6ff;
+            color: #1877f2;
+        }
+
+        .follow-btn.yt:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        /* ═══════════════════════════════════════════════
+   SCROLL PROGRESS BAR
+═══════════════════════════════════════════════ */
+        .scroll-progress {
+            position: fixed;
+            top: var(--topbar-h);
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 99;
+        }
+
+        .scroll-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand), var(--brand-mid));
+            width: 0%;
+            transition: width .08s linear;
+        }
+
+        /* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text-1);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transition: transform .3s var(--ease-out), opacity .3s;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* ═══════════════════════════════════════════════
+   FLOATING TOC BUTTON (mobile)
+═══════════════════════════════════════════════ */
+        .toc-fab {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            background: var(--brand);
+            color: #fff;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: var(--shadow-md);
+            z-index: 90;
+            transition: transform .15s, box-shadow .15s;
+        }
+
+        .toc-fab:hover {
+            transform: scale(1.08);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+        @media (max-width: 1280px) {
+            :root {
+                --rail-w: 220px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .shell {
+                grid-template-columns: var(--sidebar-w) 1fr;
+            }
+
+            .right-rail {
+                display: none;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 80;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .35);
+                z-index: 79;
+            }
+
+            .sidebar.open~.sidebar-overlay {
+                display: block;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+            }
+
+            .main {
+                padding: 20px 16px 48px;
+            }
+
+            .topbar-nav {
+                display: none;
+            }
+
+            .topbar-search {
+                width: 160px;
+            }
+
+            .toc-fab {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .post-title {
+                font-size: 22px;
+            }
+
+            .topic-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar-search {
+                display: none;
+            }
+        }
+
+        /* ─── MISC UTILITIES ─── */
+        .mt-0 {
+            margin-top: 0;
+        }
+
+        .mt-16 {
+            margin-top: 16px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── SCROLL PROGRESS ─── -->
+    <div class="scroll-progress">
+        <div class="scroll-progress-fill" id="scrollBar"></div>
+    </div>
+
+    <!-- ─── TOAST ─── -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ══════════════════════════════════════════════════
+     TOP BAR
+══════════════════════════════════════════════════ -->
+    <header class="topbar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="topbar-brand">
+            <div class="logo-mark">NP</div>
+            <div class="brand-name">Next<span>Prep</span>BD</div>
+        </div>
+
+        <div class="topbar-divider"></div>
+
+        <nav class="topbar-nav">
+            <a href="#"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="#"><i class="fa-solid fa-list-check"></i> Lesson Plans</a>
+            <a href="#" class="active"><i class="fa-solid fa-box-archive"></i> Resources</a>
+            <a href="#"><i class="fa-solid fa-comments"></i> Forum</a>
+            <a href="#"><i class="fa-solid fa-book-open"></i> eBooks</a>
+            <a href="#"><i class="fa-solid fa-graduation-cap"></i> Courses</a>
+        </nav>
+
+        <div class="topbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search resources…" />
+        </div>
+
+        <div class="topbar-actions">
+            <button class="btn-ghost"><i class="fa-regular fa-bell"></i></button>
+            <a href="#" class="btn-ghost">Log in</a>
+            <a href="#" class="btn-primary"><i class="fa-solid fa-bolt"></i> Get Started</a>
+            <div class="topbar-avatar" title="Account">U</div>
+        </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════
+     SHELL
+══════════════════════════════════════════════════ -->
+    <div class="shell">
+
+        <!-- ─── LEFT SIDEBAR ─── -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navigation</div>
+                <div class="sidebar-item"><i class="fa-solid fa-house"></i> Home</div>
+                <div class="sidebar-item"><i class="fa-solid fa-list-check"></i> Lesson Plans</div>
+                <div class="sidebar-item"><i class="fa-solid fa-comments"></i> Forum</div>
+            </div>
+
+            <div class="sidebar-sep"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Exam Resources</div>
+
+                <div class="sidebar-group-header open" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-circle-check main-icon"></i>
+                    SSC Preparation
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <div class="sidebar-group-body open">
+                    <div class="sidebar-sub-item active"><i class="fa-regular fa-circle-dot"></i> Updates &amp; Syllabi
+                    </div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Question Bank</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Model Tests</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> English</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Bangla</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Mathematics</div>
+                </div>
+
+                <div class="sidebar-group-header" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-building-columns main-icon"></i>
+                    HSC Preparation
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <div class="sidebar-group-body">
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Updates &amp; Syllabi</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Question Bank</div>
+                </div>
+
+                <div class="sidebar-group-header" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-flask main-icon"></i>
+                    University Admission
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <div class="sidebar-group-body">
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Medical Admission</div>
+                    <div class="sidebar-sub-item"><i class="fa-regular fa-circle"></i> Engineering</div>
+                </div>
+
+                <div class="sidebar-item"><i class="fa-solid fa-briefcase"></i> Job Preparation <span
+                        class="badge new">New</span></div>
+                <div class="sidebar-item"><i class="fa-solid fa-chart-line"></i> MBA / IBA</div>
+            </div>
+
+            <div class="sidebar-sep"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">More</div>
+                <div class="sidebar-item"><i class="fa-regular fa-newspaper"></i> Blog <span class="badge">24</span>
+                </div>
+                <div class="sidebar-item"><i class="fa-solid fa-book"></i> Free eBooks</div>
+                <div class="sidebar-item"><i class="fa-solid fa-user-plus"></i> Find a Tutor</div>
+                <div class="sidebar-item"><i class="fa-solid fa-info-circle"></i> About Us</div>
+            </div>
+
+        </aside>
+        <!-- sidebar overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- ─── MAIN CONTENT ─── -->
+        <main class="main">
+
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb">
+                <a href="#">Resources</a>
+                <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+                <a href="#">SSC</a>
+                <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+                <a href="#">Updates</a>
+                <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+                <span class="current">Milestone College Pretest</span>
+            </nav>
+
+            <!-- Post header -->
+            <div class="post-header">
+                <div class="post-eyebrow">
+                    <span class="tag-chip ssc"><i class="fa-solid fa-circle-check"></i> SSC 2027</span>
+                    <span class="tag-chip syllabus"><i class="fa-solid fa-file-lines"></i> Pretest Syllabus</span>
+                    <span class="tag-chip new"><i class="fa-solid fa-sparkles"></i> New</span>
+                </div>
+                <h1 class="post-title">
+                    Milestone College — <em>Class X Pretest</em><br>English Syllabus 2026
+                </h1>
+                <div class="post-meta-row">
+                    <div class="meta-author">
+                        <div class="meta-author-avatar">RI</div>
+                        <span>Rumana Islam</span>
+                    </div>
+                    <div class="meta-item"><i class="fa-regular fa-calendar"></i> June 11, 2026</div>
+                    <div class="meta-item"><i class="fa-regular fa-eye"></i> 1,240 views</div>
+                    <div class="meta-item"><i class="fa-regular fa-bookmark"></i> 87 saved</div>
+                    <div class="meta-item" style="margin-left:auto">
+                        <i class="fa-solid fa-building-columns"></i> Milestone College
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post actions -->
+            <div class="post-actions">
+                <button class="action-btn save" onclick="showToast('Saved to your list ✓')">
+                    <i class="fa-regular fa-bookmark"></i> Save
+                </button>
+                <button class="action-btn share" onclick="showToast('Link copied to clipboard ✓')">
+                    <i class="fa-solid fa-link"></i> Share
+                </button>
+                <button class="action-btn" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+                <button class="action-btn" onclick="showToast('Download started…')">
+                    <i class="fa-solid fa-download"></i> PDF
+                </button>
+            </div>
+
+            <!-- ══ CARD: English 1st Paper ══ -->
+            <div class="content-card open" id="card-p1">
+                <div class="card-header" onclick="toggleCard('card-p1')">
+                    <div class="card-icon green"><i class="fa-solid fa-book"></i></div>
+                    <div class="card-title-group">
+                        <div class="card-title">English 1st Paper</div>
+                        <div class="card-subtitle">Units: 2, 3, 4, 5, 6, 7, 8, 10, 12 &amp; 14 — English for Today</div>
+                    </div>
+                    <span class="card-mark-badge green">100 Marks</span>
+                    <i class="fa-solid fa-chevron-down card-chevron"></i>
+                </div>
+                <div class="card-body">
+                    <div class="card-body-inner">
+
+                        <!-- Marks Table -->
+                        <table class="marks-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Item</th>
+                                    <th>Type</th>
+                                    <th>Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="part-row">
+                                    <td colspan="4">Part A — Reading (70)</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>MCQ</td>
+                                    <td><span class="subcol">Seen Comprehension</span></td>
+                                    <td class="marks-val">7</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Answering questions</td>
+                                    <td><span class="subcol">Seen Comprehension · 2×5</span></td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Gap filling</td>
+                                    <td><span class="subcol">Seen Comprehension · 1×5</span></td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Information Transfer</td>
+                                    <td><span class="subcol">Unseen Passage · 1×5</span></td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>Writing summary</td>
+                                    <td><span class="subcol">Unseen Passage</span></td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>Matching</td>
+                                    <td><span class="subcol">Unseen Passage · 1×5</span></td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>Re-arranging sentences</td>
+                                    <td><span class="subcol">Unseen Passage · 1×8</span></td>
+                                    <td class="marks-val">8</td>
+                                </tr>
+                                <tr>
+                                    <td>8</td>
+                                    <td>Questions from poems <span class="subcol">(any 5 out of 8)</span></td>
+                                    <td><span class="subcol">Literature · 2×5</span></td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>9</td>
+                                    <td>Questions from stories <span class="subcol">(any 5 out of 8)</span></td>
+                                    <td><span class="subcol">Literature · 2×5</span></td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr class="part-row">
+                                    <td colspan="4">Part B — Writing (30)</td>
+                                </tr>
+                                <tr>
+                                    <td>10</td>
+                                    <td>Completing story</td>
+                                    <td></td>
+                                    <td class="marks-val">15</td>
+                                </tr>
+                                <tr>
+                                    <td>11</td>
+                                    <td>Writing dialogue</td>
+                                    <td></td>
+                                    <td class="marks-val">15</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="3"><strong>Total</strong></td>
+                                    <td class="marks-val">100</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Poems -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-feather"></i> &nbsp;Poems — Q.8
+                            </div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">5 poems</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/37" target="_blank">O Me! O Life! —
+                                        Walt Whitman</a><span class="topic-sub">Unit 1, Lesson 3A</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">2</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/82" target="_blank">Books — Eleanor
+                                        Farjeon</a><span class="topic-sub">Unit 11, Lesson 1</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">3</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/84" target="_blank">The Sands of Dee
+                                        — Charles Kingsley</a><span class="topic-sub">Unit 11, Lesson 3</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">4</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/85" target="_blank">Time, You Old
+                                        Gypsy Man — R. Hodgson</a><span class="topic-sub">Unit 11, Lesson 4</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">5</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/86" target="_blank">Stopping By Woods
+                                        — Robert Frost</a><span class="topic-sub">Unit 11, Lesson 5B</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Stories -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-bookmark"></i> &nbsp;Stories — Q.9
+                            </div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">5 stories</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/35" target="_blank">Mr. Moti</a><span
+                                        class="topic-sub">Unit 1, Lesson 1</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">2</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/87" target="_blank">The Purple
+                                        Jar</a><span class="topic-sub">Unit 11, Lesson 6–8</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">3</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/90" target="_blank">A Pound of
+                                        Flesh</a><span class="topic-sub">Unit 11, Lesson 9</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">4</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/91" target="_blank">The Three
+                                        Caskets</a><span class="topic-sub">Unit 11, Lesson 10</span></div>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">5</span>
+                                <div><a href="https://nextprepbd.com/curriculum/20/92" target="_blank">The
+                                        Trial</a><span class="topic-sub">Unit 11, Lesson 11</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Completing Story -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-pen-nib"></i> &nbsp;Completing
+                                Story — Q.10 (15 Marks)</div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">10 topics</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>An Honest Woodcutter</div>
+                            <div class="topic-item"><span class="topic-num">2</span>Bayzid's Devotion to His Mother
+                            </div>
+                            <div class="topic-item"><span class="topic-num">3</span>Thirsty Crow</div>
+                            <div class="topic-item"><span class="topic-num">4</span>A Liar Cowboy</div>
+                            <div class="topic-item"><span class="topic-num">5</span><a
+                                    href="https://nextprepbd.com/curriculum/20/205" target="_blank">Who is to Bell the
+                                    Cat?</a></div>
+                            <div class="topic-item"><span class="topic-num">6</span>Failure is the Pillar of Success
+                                (Robert Bruce)</div>
+                            <div class="topic-item"><span class="topic-num">7</span>An Ant and A Dove</div>
+                            <div class="topic-item"><span class="topic-num">8</span>Two Friends and a Bear</div>
+                            <div class="topic-item"><span class="topic-num">9</span>Grasp All, Lose All (Goose)</div>
+                            <div class="topic-item"><span class="topic-num">10</span>Cruelty of A House Mistress</div>
+                        </div>
+
+                        <!-- Dialogue Writing -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-comments"></i> &nbsp;Dialogue
+                                Writing — Q.11 (15 Marks)</div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">10 topics</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>Benefits of Early Rising / Morning
+                                Walk / Games &amp; Sports</div>
+                            <div class="topic-item"><span class="topic-num">2</span>Importance of Reading Newspaper
+                            </div>
+                            <div class="topic-item"><span class="topic-num">3</span><a
+                                    href="https://nextprepbd.com/curriculum/20/217" target="_blank">Uses and Abuses of
+                                    Mobile Phone / Facebook</a></div>
+                            <div class="topic-item"><span class="topic-num">4</span>Necessity of Tree Plantation</div>
+                            <div class="topic-item"><span class="topic-num">5</span><a
+                                    href="https://nextprepbd.com/curriculum/20/193" target="_blank">Importance of
+                                    Learning English</a></div>
+                            <div class="topic-item"><span class="topic-num">6</span><a
+                                    href="https://nextprepbd.com/curriculum/20/215" target="_blank">Village Life vs City
+                                    Life</a></div>
+                            <div class="topic-item"><span class="topic-num">7</span>Causes and Remedies of Road
+                                Accidents</div>
+                            <div class="topic-item"><span class="topic-num">8</span><a
+                                    href="https://nextprepbd.com/curriculum/20/192" target="_blank">Eradicating
+                                    Illiteracy</a></div>
+                            <div class="topic-item"><span class="topic-num">9</span>Doctor and Patient (Dengue)</div>
+                            <div class="topic-item"><span class="topic-num">10</span><a
+                                    href="https://nextprepbd.com/curriculum/20/219" target="_blank">Bad Effects of
+                                    Smoking / Drugs</a></div>
+                        </div>
+
+                    </div>
+                    <div class="examiner-strip">
+                        <div class="examiner-avatar">RI</div>
+                        <div>
+                            <div class="examiner-name">Rumana Islam</div>
+                            <div class="examiner-role">Associate Professor &amp; Head</div>
+                            <div class="examiner-dept">Department of English, Milestone College</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ CARD: English 2nd Paper ══ -->
+            <div class="content-card" id="card-p2">
+                <div class="card-header" onclick="toggleCard('card-p2')">
+                    <div class="card-icon purple"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="card-title-group">
+                        <div class="card-title">English 2nd Paper</div>
+                        <div class="card-subtitle">Grammar (60) + Writing (40)</div>
+                    </div>
+                    <span class="card-mark-badge purple">100 Marks</span>
+                    <i class="fa-solid fa-chevron-down card-chevron"></i>
+                </div>
+                <div class="card-body">
+                    <div class="card-body-inner">
+
+                        <table class="marks-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Item</th>
+                                    <th>Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="part-row">
+                                    <td colspan="3">Part A — Grammar (60)</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Gap filling with clues</td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Substitution table</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Right form of verbs</td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Changing sentences <span class="subcol">Affirmative→Negative ·
+                                            Assertive→Interrogative / Exclamatory · Simple↔Complex↔Compound</span></td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>Tag questions</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>Suffixes and prefixes</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>Preposition</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>8</td>
+                                    <td>Connectors / Linking words</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr>
+                                    <td>9</td>
+                                    <td>Punctuation and capitalization</td>
+                                    <td class="marks-val">5</td>
+                                </tr>
+                                <tr class="part-row">
+                                    <td colspan="3">Part B — Writing (40)</td>
+                                </tr>
+                                <tr>
+                                    <td>10</td>
+                                    <td>Writing paragraph</td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>11</td>
+                                    <td>Writing e-mail / letter / application</td>
+                                    <td class="marks-val">10</td>
+                                </tr>
+                                <tr>
+                                    <td>12</td>
+                                    <td>Writing short composition</td>
+                                    <td class="marks-val">20</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="2"><strong>Total</strong></td>
+                                    <td class="marks-val">100</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Paragraphs -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-align-left"></i> &nbsp;Paragraph —
+                                Q.10 (10 Marks)</div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">10 topics</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>Earthquake</div>
+                            <div class="topic-item"><span class="topic-num">2</span><a
+                                    href="https://nextprepbd.com/curriculum/21/207" target="_blank">Tree Plantation</a>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">3</span>Deforestation</div>
+                            <div class="topic-item"><span class="topic-num">4</span><a
+                                    href="https://nextprepbd.com/curriculum/21/196" target="_blank">A Book Fair</a>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">5</span><a
+                                    href="https://nextprepbd.com/curriculum/21/213" target="_blank">Traffic Jam</a>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">6</span>Our National Flag</div>
+                            <div class="topic-item"><span class="topic-num">7</span>Importance of Learning English</div>
+                            <div class="topic-item"><span class="topic-num">8</span>A School Library</div>
+                            <div class="topic-item"><span class="topic-num">9</span>A Tea Stall</div>
+                            <div class="topic-item"><span class="topic-num">10</span>Air Pollution / Environment
+                                Pollution</div>
+                        </div>
+
+                        <!-- Application / Letter -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-regular fa-envelope"></i> &nbsp;E-mail /
+                                Letter / Application — Q.11 (10 Marks)</div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">10 topics</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span>Permission for study tour</div>
+                            <div class="topic-item"><span class="topic-num">2</span>Application for full free
+                                studentship / financial help</div>
+                            <div class="topic-item"><span class="topic-num">3</span><a
+                                    href="https://nextprepbd.com/curriculum/21/209" target="_blank">Increasing library /
+                                    common room facilities</a></div>
+                            <div class="topic-item"><span class="topic-num">4</span><a
+                                    href="https://nextprepbd.com/curriculum/21/208" target="_blank">Relief goods for
+                                    flood affected people</a></div>
+                            <div class="topic-item"><span class="topic-num">5</span>Setting up a canteen in school</div>
+                            <div class="topic-item"><span class="topic-num">6</span>Setting up a Debating / Language /
+                                Computer Lab</div>
+                            <div class="topic-item"><span class="topic-num">7</span>Transfer Certificate / Admission on
+                                TC</div>
+                            <div class="topic-item"><span class="topic-num">8</span>Repairing damaged roads /
+                                constructing a bridge</div>
+                            <div class="topic-item"><span class="topic-num">9</span>Permission to stage a drama</div>
+                            <div class="topic-item"><span class="topic-num">10</span>Testimonial</div>
+                        </div>
+                        <div class="alt-note">
+                            <strong>Or (Email/Letter):</strong> Co-curricular activities of your school · Congratulating
+                            a friend on brilliant success · Thanking for hospitality or a nice gift · Letter about plans
+                            after SSC exam · Email to take steps against anti-social activities
+                        </div>
+
+                        <!-- Short Composition -->
+                        <div class="section-divider mt-20">
+                            <div class="section-divider-label"><i class="fa-solid fa-file-pen"></i> &nbsp;Short
+                                Composition — Q.12 (20 Marks)</div>
+                            <div class="section-divider-line"></div>
+                            <div class="section-divider-count">10 topics</div>
+                        </div>
+                        <div class="topic-grid">
+                            <div class="topic-item"><span class="topic-num">1</span><a
+                                    href="https://nextprepbd.com/curriculum/21/221" target="_blank">Your Future Plan of
+                                    Life / Aim in Life</a></div>
+                            <div class="topic-item"><span class="topic-num">2</span><a
+                                    href="https://nextprepbd.com/curriculum/21/222" target="_blank">Duties of a
+                                    Student</a></div>
+                            <div class="topic-item"><span class="topic-num">3</span><a
+                                    href="https://nextprepbd.com/curriculum/21/223" target="_blank">Wonder of Modern
+                                    Science</a></div>
+                            <div class="topic-item"><span class="topic-num">4</span><a
+                                    href="https://nextprepbd.com/curriculum/21/224" target="_blank">Physical
+                                    Exercise</a></div>
+                            <div class="topic-item"><span class="topic-num">5</span><a
+                                    href="https://nextprepbd.com/curriculum/21/225" target="_blank">Your Hobby</a></div>
+                            <div class="topic-item"><span class="topic-num">6</span><a
+                                    href="https://nextprepbd.com/curriculum/21/226" target="_blank">Tree Plantation</a>
+                            </div>
+                            <div class="topic-item"><span class="topic-num">7</span><a
+                                    href="https://nextprepbd.com/curriculum/21/227" target="_blank">The Season You Like
+                                    Most</a></div>
+                            <div class="topic-item"><span class="topic-num">8</span><a
+                                    href="https://nextprepbd.com/curriculum/21/228" target="_blank">Childhood
+                                    Memories</a></div>
+                            <div class="topic-item"><span class="topic-num">9</span><a
+                                    href="https://nextprepbd.com/curriculum/21/229" target="_blank">The Use of Computers
+                                    in Everyday Life</a></div>
+                            <div class="topic-item"><span class="topic-num">10</span><a
+                                    href="https://nextprepbd.com/curriculum/21/230" target="_blank">Importance of
+                                    Reading Newspapers</a></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ COMMENTS ══ -->
+            <div class="comments-section">
+                <div class="comments-title">
+                    Discussion <span class="count">0 comments</span>
+                </div>
+                <div class="comment-composer">
+                    <div class="comment-composer-avatar">U</div>
+                    <textarea class="comment-input" rows="1"
+                        placeholder="Share a thought or ask a question…"></textarea>
+                </div>
+                <div class="empty-comments">
+                    <i class="fa-regular fa-comment-dots"></i>
+                    No comments yet. <a href="#">Sign in</a> to start the conversation.
+                </div>
+            </div>
+
+        </main><!-- /main -->
+
+        <!-- ─── RIGHT RAIL ─── -->
+        <aside class="right-rail">
+
+            <!-- At a glance stats -->
+            <div class="rail-card">
+                <div class="rail-card-header"><i class="fa-solid fa-chart-pie"></i> At a glance</div>
+                <div class="stat-grid">
+                    <div class="stat-cell">
+                        <div class="stat-val">200</div>
+                        <div class="stat-label">Total marks</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-val">2</div>
+                        <div class="stat-label">Papers</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-val">30+</div>
+                        <div class="stat-label">Topics</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-val">X</div>
+                        <div class="stat-label">SSC 2027</div>
+                    </div>
+                </div>
+                <div class="progress-list">
+                    <div>
+                        <div class="progress-item-label">English 1st Paper <span>100 marks</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="--w:70" data-width="70"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="progress-item-label">Reading (P1) <span>70</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="--w:70" data-width="70"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="progress-item-label">Writing (P1) <span>30</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill purple" data-width="30"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="progress-item-label">Grammar (P2) <span>60</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill amber" data-width="60"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="progress-item-label">Writing (P2) <span>40</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill purple" data-width="40"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick links -->
+            <div class="rail-card">
+                <div class="rail-card-header"><i class="fa-solid fa-bolt"></i> Quick links</div>
+                <div class="quick-links">
+                    <div class="quick-link-item"><i class="fa-solid fa-circle-check"></i> SSC Preparation Guide</div>
+                    <div class="quick-link-item"><i class="fa-solid fa-list-check"></i> Lesson Plans</div>
+                    <div class="quick-link-item"><i class="fa-solid fa-book"></i> Free eBooks</div>
+                    <div class="quick-link-item"><i class="fa-solid fa-comments"></i> Forum</div>
+                    <div class="quick-link-item"><i class="fa-solid fa-user-graduate"></i> Find a Tutor</div>
+                </div>
+            </div>
+
+            <!-- Related notes -->
+            <div class="rail-card">
+                <div class="rail-card-header"><i class="fa-solid fa-file-lines"></i> Recent notes</div>
+                <div class="note-item">
+                    <div class="note-title">DNCC Model Pretest — Bangla 1st Paper</div>
+                    <div class="note-meta"><span>SSC 2027</span><span class="dot"></span><span>June 10</span></div>
+                </div>
+                <div class="note-item">
+                    <div class="note-title">Viqarunnisa SSC 2027 — Full Syllabus</div>
+                    <div class="note-meta"><span>SSC 2027</span><span class="dot"></span><span>June 9</span></div>
+                </div>
+                <div class="note-item">
+                    <div class="note-title">English 2nd Paper — Full Grammar Review</div>
+                    <div class="note-meta"><span>SSC 2027</span><span class="dot"></span><span>June 8</span></div>
+                </div>
+                <div class="note-item">
+                    <div class="note-title">Model Test — English 1st Paper 2026</div>
+                    <div class="note-meta"><span>Model Test</span><span class="dot"></span><span>June 6</span></div>
+                </div>
+            </div>
+
+            <!-- Stay connected -->
+            <div class="rail-card">
+                <div class="rail-card-header"><i class="fa-solid fa-satellite-dish"></i> Stay connected</div>
+                <div class="follow-grid">
+                    <button class="follow-btn fb"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
+                    <button class="follow-btn yt"><i class="fa-brands fa-youtube"></i> YouTube</button>
+                </div>
+            </div>
+
+        </aside>
+
+    </div><!-- /shell -->
+
+    <!-- FAB for mobile -->
+    <button class="toc-fab" onclick="toggleSidebar()" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- ══════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════ -->
+    <script>
+        /* ─ Sidebar toggle ─ */
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('open');
+        }
+
+        /* ─ Sidebar group accordion ─ */
+        function toggleGroup(header) {
+            header.classList.toggle('open');
+            const body = header.nextElementSibling;
+            body.classList.toggle('open');
+        }
+
+        /* ─ Content card accordion ─ */
+        function toggleCard(id) {
+            const card = document.getElementById(id);
+            card.classList.toggle('open');
+        }
+
+        /* ─ Scroll progress bar ─ */
+        window.addEventListener('scroll', () => {
+            const doc = document.documentElement;
+            const scrolled = doc.scrollTop / (doc.scrollHeight - doc.clientHeight);
+            document.getElementById('scrollBar').style.width = (scrolled * 100) + '%';
+        }, { passive: true });
+
+        /* ─ Progress bars on scroll into view ─ */
+        const progressFills = document.querySelectorAll('.progress-fill');
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    const w = e.target.dataset.width;
+                    e.target.style.width = w + '%';
+                    io.unobserve(e.target);
+                }
+            });
+        }, { threshold: .2 });
+        progressFills.forEach(el => io.observe(el));
+
+        /* ─ Toast ─ */
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        /* ─ Comment textarea auto-resize ─ */
+        const textarea = document.querySelector('.comment-input');
+        if (textarea) {
+            textarea.addEventListener('input', () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            });
+        }
+
+        /* ─ Animate cards into view on scroll ─ */
+        const cards = document.querySelectorAll('.content-card, .comments-section');
+        const cardIO = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'translateY(0)';
+                    cardIO.unobserve(e.target);
+                }
+            });
+        }, { threshold: .05 });
+        cards.forEach(c => {
+            c.style.transition = 'opacity .4s ease, transform .4s ease';
+            cardIO.observe(c);
+        });
+
+        /* ─ Topbar shrink on scroll ─ */
+        let lastY = 0;
+        const topbar = document.querySelector('.topbar');
+        window.addEventListener('scroll', () => {
+            const y = window.scrollY;
+            if (y > 60) {
+                topbar.style.boxShadow = '0 2px 16px rgba(0,0,0,.1)';
+            } else {
+                topbar.style.boxShadow = '';
+            }
+            lastY = y;
+        }, { passive: true });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSC Preparation Hub | NextPrepBD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        /* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+        :root {
+            --brand: #1a7a5e;
+            --brand-light: #e8f5f0;
+            --brand-mid: #2d9e7a;
+            --brand-dark: #125c44;
+            --brand-glow: rgba(26, 122, 94, .12);
+
+            --accent: #f0a500;
+            --accent-light: #fff8e6;
+            --accent-dark: #a16207;
+
+            --purple: #6d28d9;
+            --purple-light: #ede9fe;
+            --blue: #1d4ed8;
+            --blue-light: #dbeafe;
+            --rose: #be185d;
+            --rose-light: #fce7f3;
+            --sky: #0369a1;
+            --sky-light: #e0f2fe;
+            --orange: #c2410c;
+            --orange-light: #ffedd5;
+
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --surface-2: #f9fafb;
+            --surface-3: #f0f2f5;
+
+            --text-1: #0d1117;
+            --text-2: #3d4451;
+            --text-3: #6b7280;
+            --text-4: #9ca3af;
+
+            --border: #e4e7ec;
+            --border-2: #d1d5db;
+
+            --sidebar-w: 248px;
+            --rail-w: 268px;
+            --topbar-h: 56px;
+
+            --r-sm: 6px;
+            --r-md: 10px;
+            --r-lg: 14px;
+            --r-xl: 20px;
+
+            --sh-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+            --sh-md: 0 4px 12px rgba(0, 0, 0, .08), 0 2px 4px rgba(0, 0, 0, .04);
+            --sh-lg: 0 8px 28px rgba(0, 0, 0, .10), 0 2px 8px rgba(0, 0, 0, .06);
+
+            --ease-out: cubic-bezier(.22, .68, 0, 1.2);
+            --ease-std: cubic-bezier(.4, 0, .2, 1);
+        }
+
+        /* ═══════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit
+        }
+
+        ul,
+        ol {
+            list-style: none
+        }
+
+        img {
+            display: block;
+            max-width: 100%
+        }
+
+        /* ═══════════════════════════════════════════
+   SCROLL PROGRESS
+═══════════════════════════════════════════ */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            z-index: 200
+        }
+
+        .scroll-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--brand), var(--brand-mid));
+            transition: width .08s linear
+        }
+
+        /* ═══════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════ */
+        .topbar {
+            position: fixed;
+            top: 2px;
+            left: 0;
+            right: 0;
+            height: var(--topbar-h);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 14px;
+            z-index: 100;
+            box-shadow: var(--sh-sm);
+            animation: slideDown .35s var(--ease-std) both;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .tb-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-shrink: 0;
+            margin-right: 4px
+        }
+
+        .tb-logomark {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-sm);
+            background: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+        }
+
+        .tb-name {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: -.3px
+        }
+
+        .tb-name span {
+            color: var(--brand)
+        }
+
+        .tb-div {
+            width: 1px;
+            height: 22px;
+            background: var(--border);
+            flex-shrink: 0
+        }
+
+        .tb-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1
+        }
+
+        .tb-nav a {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            padding: 5px 10px;
+            border-radius: var(--r-sm);
+            transition: background .15s, color .15s;
+            white-space: nowrap;
+        }
+
+        .tb-nav a:hover {
+            background: var(--surface-3);
+            color: var(--text-1)
+        }
+
+        .tb-nav a.active {
+            background: var(--brand-light);
+            color: var(--brand)
+        }
+
+        .tb-nav a i {
+            font-size: 12px;
+            opacity: .7
+        }
+
+        .tb-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 0 12px;
+            height: 34px;
+            width: 200px;
+            transition: border-color .2s, box-shadow .2s, width .3s var(--ease-std);
+        }
+
+        .tb-search:focus-within {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-glow);
+            width: 250px
+        }
+
+        .tb-search i {
+            font-size: 11px;
+            color: var(--text-4)
+        }
+
+        .tb-search input {
+            border: none;
+            background: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-1);
+            width: 100%
+        }
+
+        .tb-search input::placeholder {
+            color: var(--text-4)
+        }
+
+        .tb-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0
+        }
+
+        .btn-ghost {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--r-sm);
+            color: var(--text-2);
+            transition: background .15s, color .15s
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-3);
+            color: var(--text-1)
+        }
+
+        .btn-primary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--r-sm);
+            background: var(--brand);
+            color: #fff;
+            transition: background .15s, transform .1s;
+            box-shadow: 0 1px 3px rgba(26, 122, 94, .3)
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-dark);
+            transform: translateY(-1px)
+        }
+
+        .tb-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--brand-light);
+            border: 1.5px solid var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--brand);
+            cursor: pointer;
+            transition: box-shadow .15s
+        }
+
+        .tb-avatar:hover {
+            box-shadow: 0 0 0 3px var(--brand-glow)
+        }
+
+        .tb-menu-btn {
+            display: none;
+            width: 34px;
+            height: 34px;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--r-sm);
+            color: var(--text-2);
+            transition: background .15s;
+            font-size: 15px
+        }
+
+        .tb-menu-btn:hover {
+            background: var(--surface-3)
+        }
+
+        /* ═══════════════════════════════════════════
+   SHELL
+═══════════════════════════════════════════ */
+        .shell {
+            display: grid;
+            grid-template-columns: var(--sidebar-w) 1fr var(--rail-w);
+            min-height: 100vh;
+            padding-top: calc(var(--topbar-h) + 2px);
+        }
+
+        /* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+        .sidebar {
+            position: fixed;
+            top: calc(var(--topbar-h)+2px);
+            left: 0;
+            width: var(--sidebar-w);
+            height: calc(100vh - var(--topbar-h) - 2px);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 0 28px;
+            transition: transform .3s var(--ease-std);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px
+        }
+
+        .sb-section {
+            padding: 0 12px;
+            margin-bottom: 18px
+        }
+
+        .sb-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-4);
+            padding: 0 8px;
+            margin-bottom: 6px
+        }
+
+        .sb-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 8px;
+            border-radius: var(--r-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            position: relative;
+            user-select: none;
+        }
+
+        .sb-item:hover {
+            background: var(--surface-3);
+            color: var(--text-1)
+        }
+
+        .sb-item.active {
+            background: var(--brand-light);
+            color: var(--brand);
+            font-weight: 600
+        }
+
+        .sb-item.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            background: var(--brand);
+            border-radius: 0 3px 3px 0
+        }
+
+        .sb-item i {
+            font-size: 13px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .sb-item .sb-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 20px;
+            background: var(--brand-light);
+            color: var(--brand)
+        }
+
+        .sb-item .sb-badge.new {
+            background: #fef3c7;
+            color: #92400e
+        }
+
+        .sb-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 16px
+        }
+
+        .sb-group-hdr {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 8px;
+            border-radius: var(--r-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            user-select: none;
+        }
+
+        .sb-group-hdr:hover {
+            background: var(--surface-3);
+            color: var(--text-1)
+        }
+
+        .sb-group-hdr i.ico {
+            font-size: 13px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .sb-group-hdr .chev {
+            margin-left: auto;
+            font-size: 10px;
+            color: var(--text-4);
+            transition: transform .25s
+        }
+
+        .sb-group-hdr.open .chev {
+            transform: rotate(180deg)
+        }
+
+        .sb-group-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s var(--ease-std)
+        }
+
+        .sb-group-body.open {
+            max-height: 400px
+        }
+
+        .sb-sub {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px 6px 28px;
+            font-size: 12.5px;
+            color: var(--text-3);
+            border-radius: var(--r-sm);
+            cursor: pointer;
+            transition: background .12s, color .12s;
+        }
+
+        .sb-sub:hover {
+            background: var(--surface-3);
+            color: var(--text-1)
+        }
+
+        .sb-sub.active {
+            color: var(--brand);
+            font-weight: 500
+        }
+
+        /* ═══════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════ */
+        .main {
+            grid-column: 2;
+            min-width: 0;
+            padding: 0 0 72px
+        }
+
+        /* ─── HERO BAND ─── */
+        .hero {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 32px 32px 0;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn .4s .1s var(--ease-std) both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .hero-bg-pattern {
+            position: absolute;
+            top: -60px;
+            right: -80px;
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle at 70% 30%, rgba(26, 122, 94, .07) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .hero-bg-dots {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            width: 300px;
+            height: 200px;
+            background-image: radial-gradient(var(--border) 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            opacity: .6;
+            pointer-events: none;
+        }
+
+        .hero-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-4);
+            margin-bottom: 16px;
+            animation: slideUp .35s .15s var(--ease-std) both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .hero-breadcrumb a {
+            color: var(--text-4);
+            transition: color .15s
+        }
+
+        .hero-breadcrumb a:hover {
+            color: var(--brand)
+        }
+
+        .hero-breadcrumb .sep {
+            color: var(--border-2)
+        }
+
+        .hero-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            margin-bottom: 24px;
+            animation: slideUp .35s .2s var(--ease-std) both;
+        }
+
+        .hero-icon-wrap {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--r-lg);
+            background: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(26, 122, 94, .35);
+        }
+
+        .hero-text-wrap {
+            flex: 1
+        }
+
+        .hero-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--brand);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-title {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 30px;
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--text-1);
+            letter-spacing: -.4px;
+            margin-bottom: 8px;
+        }
+
+        .hero-title em {
+            font-style: italic;
+            color: var(--brand)
+        }
+
+        .hero-desc {
+            font-size: 14px;
+            color: var(--text-3);
+            line-height: 1.65;
+            max-width: 520px
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 4px;
+            animation: slideUp .35s .25s var(--ease-std) both;
+        }
+
+        .hero-stat {
+            text-align: center
+        }
+
+        .hero-stat-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--brand);
+            line-height: 1
+        }
+
+        .hero-stat-label {
+            font-size: 11px;
+            color: var(--text-4);
+            margin-top: 2px
+        }
+
+        /* ─── EXAM TABS ─── */
+        .exam-tabs {
+            display: flex;
+            gap: 2px;
+            border-top: 1px solid var(--border);
+            margin: 0 -32px;
+            padding: 0 32px;
+            animation: slideUp .35s .28s var(--ease-std) both;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .exam-tabs::-webkit-scrollbar {
+            display: none
+        }
+
+        .exam-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-3);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: color .15s, border-color .15s;
+            white-space: nowrap;
+            margin-bottom: -1px;
+        }
+
+        .exam-tab:hover {
+            color: var(--text-1)
+        }
+
+        .exam-tab.active {
+            color: var(--brand);
+            border-bottom-color: var(--brand);
+            font-weight: 600
+        }
+
+        .exam-tab i {
+            font-size: 12px
+        }
+
+        /* ─── PAGE CONTENT AREA ─── */
+        .page-content {
+            padding: 28px 32px
+        }
+
+        /* ─── SECTION HEADER ─── */
+        .section-hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-hdr-left {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .section-hdr-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--r-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-1)
+        }
+
+        .section-sub {
+            font-size: 12px;
+            color: var(--text-4);
+            margin-top: 1px
+        }
+
+        .section-link {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: gap .15s;
+        }
+
+        .section-link:hover {
+            gap: 8px
+        }
+
+        /* ─── SEGMENT CARDS ─── */
+        .segments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .seg-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 18px 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color .18s, transform .18s, box-shadow .18s;
+            box-shadow: var(--sh-sm);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        .seg-card.vis {
+            animation: cardIn .4s var(--ease-std) forwards
+        }
+
+        @keyframes cardIn {
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .seg-card:hover {
+            border-color: var(--brand);
+            transform: translateY(-3px);
+            box-shadow: var(--sh-md)
+        }
+
+        .seg-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--r-lg);
+            background: linear-gradient(135deg, transparent 60%, rgba(26, 122, 94, .04));
+            pointer-events: none;
+        }
+
+        .seg-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--r-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+
+        .seg-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            line-height: 1.3
+        }
+
+        .seg-meta {
+            font-size: 11.5px;
+            color: var(--text-4);
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        .seg-arrow {
+            margin-left: auto;
+            margin-top: auto;
+            align-self: flex-end;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--surface-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-3);
+            transition: background .15s, color .15s;
+        }
+
+        .seg-card:hover .seg-arrow {
+            background: var(--brand);
+            color: #fff
+        }
+
+        /* ─── FILTER PILL ROW ─── */
+        .filter-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 18px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+
+        .filter-row::-webkit-scrollbar {
+            display: none
+        }
+
+        .filter-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-2);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color .15s, background .15s, color .15s;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--border-2);
+            background: var(--surface-2)
+        }
+
+        .filter-pill.active {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff
+        }
+
+        .filter-pill i {
+            font-size: 11px
+        }
+
+        /* ─── DIVIDER ─── */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 28px 0
+        }
+
+        /* ─── QUESTION BANK ─── */
+        .qbank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 32px
+        }
+
+        .q-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: var(--sh-sm);
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+
+        .q-item.vis {
+            animation: slideInLeft .35s var(--ease-std) forwards
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        .q-item:hover {
+            border-color: var(--brand);
+            box-shadow: var(--sh-md);
+            transform: translateX(3px)
+        }
+
+        .q-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--r-sm);
+            background: var(--blue-light);
+            color: var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            flex-shrink: 0;
+            font-family: monospace;
+        }
+
+        .q-body {
+            flex: 1;
+            min-width: 0
+        }
+
+        .q-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px
+        }
+
+        .q-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            color: var(--text-4)
+        }
+
+        .q-tag {
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 10.5px;
+            font-weight: 600;
+        }
+
+        .q-tag.english {
+            background: var(--sky-light);
+            color: var(--sky)
+        }
+
+        .q-tag.board {
+            background: var(--orange-light);
+            color: var(--orange)
+        }
+
+        .q-date {
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .q-arrow {
+            font-size: 12px;
+            color: var(--text-4);
+            flex-shrink: 0;
+            transition: color .15s, transform .15s
+        }
+
+        .q-item:hover .q-arrow {
+            color: var(--brand);
+            transform: translateX(3px)
+        }
+
+        /* ─── INSIGHTS (BLOG) ─── */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .insight-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color .18s, transform .18s, box-shadow .18s;
+            box-shadow: var(--sh-sm);
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        .insight-card.vis {
+            animation: cardIn .4s var(--ease-std) forwards
+        }
+
+        .insight-card:hover {
+            border-color: var(--brand-mid);
+            transform: translateY(-3px);
+            box-shadow: var(--sh-md)
+        }
+
+        .insight-top {
+            padding: 14px 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 10px;
+        }
+
+        .insight-cat {
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: var(--brand-light);
+            color: var(--brand);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .insight-date {
+            font-size: 11px;
+            color: var(--text-4);
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .insight-body {
+            padding: 0 14px 14px
+        }
+
+        .insight-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-1);
+            line-height: 1.4;
+            margin-bottom: 6px
+        }
+
+        .insight-footer {
+            border-top: 1px solid var(--border);
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            color: var(--text-4);
+        }
+
+        .insight-footer i {
+            font-size: 11px
+        }
+
+        /* ─── STUDY VAULT EMPTY ─── */
+        .vault-empty {
+            background: var(--surface);
+            border: 1px dashed var(--border-2);
+            border-radius: var(--r-lg);
+            padding: 40px 24px;
+            text-align: center;
+            color: var(--text-4);
+            margin-bottom: 32px;
+        }
+
+        .vault-empty i {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 12px;
+            opacity: .3
+        }
+
+        .vault-empty p {
+            font-size: 13.5px;
+            margin-bottom: 4px;
+            color: var(--text-3)
+        }
+
+        .vault-empty span {
+            font-size: 12px
+        }
+
+        /* ═══════════════════════════════════════════
+   RIGHT RAIL
+═══════════════════════════════════════════ */
+        .right-rail {
+            position: sticky;
+            top: calc(var(--topbar-h)+20px);
+            align-self: start;
+            padding: 28px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeIn .4s .35s var(--ease-std) both;
+        }
+
+        .rail-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            box-shadow: var(--sh-sm);
+        }
+
+        .rail-hdr {
+            padding: 11px 14px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-4);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rail-hdr i {
+            font-size: 11px
+        }
+
+        /* Stage selector */
+        .stage-list {
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .stage-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: var(--r-md);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: border-color .15s, background .15s;
+        }
+
+        .stage-item:hover {
+            background: var(--surface-2);
+            border-color: var(--border)
+        }
+
+        .stage-item.active {
+            background: var(--brand-light);
+            border-color: rgba(26, 122, 94, .25)
+        }
+
+        .stage-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid currentColor;
+        }
+
+        .stage-dot.active-dot {
+            background: var(--brand);
+            border-color: var(--brand)
+        }
+
+        .stage-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2)
+        }
+
+        .stage-item.active .stage-label {
+            color: var(--brand);
+            font-weight: 600
+        }
+
+        /* Quick links */
+        .quick-links {
+            padding: 6px 8px
+        }
+
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 7px;
+            border-radius: var(--r-sm);
+            font-size: 13px;
+            color: var(--text-2);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background .12s, color .12s;
+        }
+
+        .quick-link:last-child {
+            border-bottom: none
+        }
+
+        .quick-link:hover {
+            background: var(--surface-2);
+            color: var(--brand)
+        }
+
+        .quick-link i {
+            font-size: 12px;
+            width: 16px;
+            text-align: center;
+            color: var(--text-4)
+        }
+
+        .quick-link:hover i {
+            color: var(--brand)
+        }
+
+        /* Social follow */
+        .follow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 10px
+        }
+
+        .follow-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 0;
+            border-radius: var(--r-sm);
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            transition: border-color .15s, background .15s, color .15s;
+        }
+
+        .follow-btn:hover {
+            border-color: var(--brand);
+            background: var(--brand-light);
+            color: var(--brand)
+        }
+
+        .follow-btn.fb:hover {
+            border-color: #1877f2;
+            background: #eff6ff;
+            color: #1877f2
+        }
+
+        .follow-btn.yt:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #ef4444
+        }
+
+        .follow-btn i {
+            font-size: 13px
+        }
+
+        /* Mini stat row */
+        .mini-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border)
+        }
+
+        .mini-stat {
+            background: var(--surface);
+            padding: 12px;
+            text-align: center;
+        }
+
+        .mini-stat-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand);
+            line-height: 1
+        }
+
+        .mini-stat-label {
+            font-size: 10.5px;
+            color: var(--text-4);
+            margin-top: 3px
+        }
+
+        /* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(70px);
+            background: var(--text-1);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: var(--r-md);
+            box-shadow: var(--sh-lg);
+            opacity: 0;
+            transition: transform .3s var(--ease-out), opacity .3s;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1
+        }
+
+        /* ═══════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════ */
+        .fab {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            width: 46px;
+            height: 46px;
+            background: var(--brand);
+            color: #fff;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: var(--sh-md);
+            z-index: 90;
+            transition: transform .15s, box-shadow .15s;
+        }
+
+        .fab:hover {
+            transform: scale(1.08);
+            box-shadow: var(--sh-lg)
+        }
+
+        /* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+        @media(max-width:1280px) {
+            :root {
+                --rail-w: 230px
+            }
+        }
+
+        @media(max-width:1100px) {
+            .shell {
+                grid-template-columns: var(--sidebar-w) 1fr
+            }
+
+            .right-rail {
+                display: none
+            }
+        }
+
+        @media(max-width:860px) {
+            .shell {
+                grid-template-columns: 1fr
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 80
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: var(--sh-lg)
+            }
+
+            .sb-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .35);
+                z-index: 79
+            }
+
+            .sidebar.open~.sb-overlay {
+                display: block
+            }
+
+            .tb-menu-btn {
+                display: flex
+            }
+
+            .tb-nav {
+                display: none
+            }
+
+            .tb-search {
+                width: 150px
+            }
+
+            .hero {
+                padding: 24px 18px 0
+            }
+
+            .page-content {
+                padding: 20px 18px
+            }
+
+            .exam-tabs {
+                padding: 0 18px;
+                margin: 0 -18px
+            }
+
+            .fab {
+                display: flex
+            }
+        }
+
+        @media(max-width:540px) {
+            .hero-title {
+                font-size: 24px
+            }
+
+            .hero-stats {
+                gap: 16px
+            }
+
+            .segments-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .insights-grid {
+                grid-template-columns: 1fr
+            }
+
+            .tb-search {
+                display: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SCROLL PROGRESS -->
+    <div class="scroll-progress">
+        <div class="scroll-fill" id="scrollFill"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════════════ TOPBAR ═══════════════════ -->
+    <header class="topbar">
+        <button class="tb-menu-btn" onclick="toggleSidebar()" aria-label="Menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="tb-brand">
+            <div class="tb-logomark">NP</div>
+            <div class="tb-name">Next<span>Prep</span>BD</div>
+        </div>
+
+        <div class="tb-div"></div>
+
+        <nav class="tb-nav">
+            <a href="#"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="#"><i class="fa-solid fa-list-check"></i> Lesson Plans</a>
+            <a href="#" class="active"><i class="fa-solid fa-box-archive"></i> Resources</a>
+            <a href="#"><i class="fa-solid fa-comments"></i> Forum</a>
+            <a href="#"><i class="fa-solid fa-book-open"></i> eBooks</a>
+            <a href="#"><i class="fa-solid fa-graduation-cap"></i> Courses</a>
+        </nav>
+
+        <div class="tb-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search resources…" />
+        </div>
+
+        <div class="tb-actions">
+            <button class="btn-ghost"><i class="fa-regular fa-bell"></i></button>
+            <a href="#" class="btn-ghost">Log in</a>
+            <a href="#" class="btn-primary"><i class="fa-solid fa-bolt"></i> Get Started</a>
+            <div class="tb-avatar">U</div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════ SHELL ═══════════════════ -->
+    <div class="shell">
+
+        <!-- ─── SIDEBAR ─── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sb-section">
+                <div class="sb-label">Navigation</div>
+                <div class="sb-item"><i class="fa-solid fa-house"></i> Home</div>
+                <div class="sb-item"><i class="fa-solid fa-list-check"></i> Lesson Plans</div>
+                <div class="sb-item"><i class="fa-solid fa-comments"></i> Forum</div>
+            </div>
+
+            <div class="sb-sep"></div>
+
+            <div class="sb-section">
+                <div class="sb-label">Exam Resources</div>
+
+                <div class="sb-group-hdr open" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-circle-check ico"></i> SSC Preparation
+                    <i class="fa-solid fa-chevron-down chev"></i>
+                </div>
+                <div class="sb-group-body open">
+                    <div class="sb-sub active"><i class="fa-regular fa-circle-dot"></i> Overview</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Science</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Business Studies</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Humanities</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Common Subjects</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Question Bank</div>
+                </div>
+
+                <div class="sb-group-hdr" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-building-columns ico"></i> HSC Preparation
+                    <i class="fa-solid fa-chevron-down chev"></i>
+                </div>
+                <div class="sb-group-body">
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Overview</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Question Bank</div>
+                </div>
+
+                <div class="sb-group-hdr" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-flask ico"></i> University Admission
+                    <i class="fa-solid fa-chevron-down chev"></i>
+                </div>
+                <div class="sb-group-body">
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Medical Admission</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Engineering</div>
+                </div>
+
+                <div class="sb-group-hdr" onclick="toggleGroup(this)">
+                    <i class="fa-solid fa-chart-line ico"></i> MBA / IBA
+                    <i class="fa-solid fa-chevron-down chev"></i>
+                </div>
+                <div class="sb-group-body">
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> IBA Dhaka</div>
+                    <div class="sb-sub"><i class="fa-regular fa-circle"></i> Practice Sets</div>
+                </div>
+
+                <div class="sb-item"><i class="fa-solid fa-briefcase"></i> Job Preparation <span
+                        class="sb-badge new">New</span></div>
+            </div>
+
+            <div class="sb-sep"></div>
+
+            <div class="sb-section">
+                <div class="sb-label">Discover</div>
+                <div class="sb-item"><i class="fa-regular fa-newspaper"></i> Blog <span class="sb-badge">24</span></div>
+                <div class="sb-item"><i class="fa-solid fa-book"></i> Free eBooks</div>
+                <div class="sb-item"><i class="fa-solid fa-user-plus"></i> Find a Tutor</div>
+                <div class="sb-item"><i class="fa-solid fa-circle-info"></i> About Us</div>
+                <div class="sb-item"><i class="fa-solid fa-hand-holding-heart"></i> Donate</div>
+            </div>
+        </aside>
+        <div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- ─── MAIN ─── -->
+        <main class="main">
+
+            <!-- ══ HERO ══ -->
+            <section class="hero">
+                <div class="hero-bg-pattern"></div>
+                <div class="hero-bg-dots"></div>
+
+                <nav class="hero-breadcrumb">
+                    <a href="#">Home</a>
+                    <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+                    <a href="#">Resources</a>
+                    <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+                    <span style="color:var(--text-2);font-weight:500">SSC</span>
+                </nav>
+
+                <div class="hero-body">
+                    <div class="hero-icon-wrap">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="hero-text-wrap">
+                        <div class="hero-eyebrow">
+                            <i class="fa-solid fa-star"></i> Bangladesh Secondary Certificate
+                        </div>
+                        <h1 class="hero-title">SSC <em>Preparation</em> Hub</h1>
+                        <p class="hero-desc">Centralized resources, real-time updates, and verified study materials —
+                            tailored for SSC success across all boards and subject groups.</p>
+                    </div>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">4</div>
+                        <div class="hero-stat-label">Subject groups</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">12+</div>
+                        <div class="hero-stat-label">Board questions</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">30+</div>
+                        <div class="hero-stat-label">Insights & blogs</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">2027</div>
+                        <div class="hero-stat-label">Batch supported</div>
+                    </div>
+                </div>
+
+                <!-- Top-level exam tab bar -->
+                <div class="exam-tabs" id="examTabs">
+                    <div class="exam-tab active" onclick="setExamTab(this)"><i class="fa-solid fa-circle-check"></i> SSC
+                    </div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-building-columns"></i> HSC
+                    </div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-briefcase"></i> Job Prep
+                    </div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-flask"></i> University
+                        Admission</div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-microscope"></i> Specialized
+                        Exams</div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-chart-line"></i> Master's
+                        Admission</div>
+                    <div class="exam-tab" onclick="setExamTab(this)"><i class="fa-solid fa-tools"></i> Skill Development
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE CONTENT ══ -->
+            <div class="page-content">
+
+                <!-- ── Academic Segments ── -->
+                <div class="section-hdr">
+                    <div class="section-hdr-left">
+                        <div class="section-hdr-icon" style="background:var(--brand-light);color:var(--brand)">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <div class="section-title">Academic Segments</div>
+                            <div class="section-sub">Choose your subject group to access the full library</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="segments-grid">
+                    <div class="seg-card" onclick="showToast('Opening Science library…')">
+                        <div class="seg-icon" style="background:var(--blue-light);color:var(--blue)"><i
+                                class="fa-solid fa-flask"></i></div>
+                        <div>
+                            <div class="seg-title">Science</div>
+                            <div class="seg-meta"><i class="fa-regular fa-folder-open"></i> Library available</div>
+                        </div>
+                        <div class="seg-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    </div>
+
+                    <div class="seg-card" onclick="showToast('Opening Business Studies library…')">
+                        <div class="seg-icon" style="background:var(--accent-light);color:var(--accent-dark)"><i
+                                class="fa-solid fa-chart-pie"></i></div>
+                        <div>
+                            <div class="seg-title">Business Studies</div>
+                            <div class="seg-meta"><i class="fa-regular fa-folder-open"></i> Library available</div>
+                        </div>
+                        <div class="seg-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    </div>
+
+                    <div class="seg-card" onclick="showToast('Opening Humanities library…')">
+                        <div class="seg-icon" style="background:var(--rose-light);color:var(--rose)"><i
+                                class="fa-solid fa-landmark"></i></div>
+                        <div>
+                            <div class="seg-title">Humanities</div>
+                            <div class="seg-meta"><i class="fa-regular fa-folder-open"></i> Library available</div>
+                        </div>
+                        <div class="seg-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    </div>
+
+                    <div class="seg-card" onclick="showToast('Opening Common Subjects library…')">
+                        <div class="seg-icon" style="background:var(--purple-light);color:var(--purple)"><i
+                                class="fa-solid fa-book-open-reader"></i></div>
+                        <div>
+                            <div class="seg-title">Common Subjects</div>
+                            <div class="seg-meta"><i class="fa-regular fa-folder-open"></i> Library available</div>
+                        </div>
+                        <div class="seg-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    </div>
+                </div>
+
+                <!-- ── Quick Updates Filter ── -->
+                <div class="section-hdr">
+                    <div class="section-hdr-left">
+                        <div class="section-hdr-icon" style="background:var(--orange-light);color:var(--orange)">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <div class="section-title">Quick Updates</div>
+                            <div class="section-sub">Routines, syllabi, and board results</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="filter-pill active" onclick="setFilter(this)"><i class="fa-solid fa-th-large"></i> All
+                    </div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-regular fa-calendar"></i> Exam
+                        Routine</div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-solid fa-file-lines"></i> Full
+                        Syllabus</div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-solid fa-trophy"></i> Board Results
+                    </div>
+                </div>
+
+                <!-- update cards placeholder -->
+                <div
+                    style="background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:36px 24px;text-align:center;color:var(--text-4);margin-bottom:32px">
+                    <i class="fa-solid fa-rss" style="font-size:30px;display:block;margin-bottom:12px;opacity:.3"></i>
+                    <p style="font-size:13.5px;color:var(--text-3);margin-bottom:4px">Updates load dynamically from the
+                        database</p>
+                    <span style="font-size:12px">Routines, syllabi, and results appear here when published</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- ── Question Bank ── -->
+                <div class="section-hdr">
+                    <div class="section-hdr-left">
+                        <div class="section-hdr-icon" style="background:var(--blue-light);color:var(--blue)">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div>
+                            <div class="section-title">Question Bank</div>
+                            <div class="section-sub">Institutional archives · Board questions</div>
+                        </div>
+                    </div>
+                    <a href="#" class="section-link">Browse all <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <div class="filter-row">
+                    <div class="filter-pill active" onclick="setFilter(this)"><i class="fa-solid fa-th-large"></i> All
+                    </div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-regular fa-building-columns"></i>
+                        Board Question</div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-solid fa-school"></i> School
+                        Question</div>
+                    <div class="filter-pill" onclick="setFilter(this)"><i class="fa-solid fa-file-circle-check"></i>
+                        Model Test</div>
+                </div>
+
+                <div class="qbank-list">
+                    <div class="q-item" onclick="showToast('Opening question paper…')">
+                        <div class="q-icon">Q</div>
+                        <div class="q-body">
+                            <div class="q-title">SSC 2026 English 1st Paper Question | Dhaka Board Full Paper</div>
+                            <div class="q-meta">
+                                <span class="q-tag english">English 1st Paper</span>
+                                <span class="q-tag board">Board Question</span>
+                                <span class="q-date"><i class="fa-regular fa-calendar"></i> May 7, 2026</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right q-arrow"></i>
+                    </div>
+
+                    <div class="q-item" onclick="showToast('Opening question paper…')">
+                        <div class="q-icon">Q</div>
+                        <div class="q-body">
+                            <div class="q-title">SSC 2026 English 2nd Paper Question | Rajshahi Board Full Paper</div>
+                            <div class="q-meta">
+                                <span class="q-tag english">English 2nd Paper</span>
+                                <span class="q-tag board">Board Question</span>
+                                <span class="q-date"><i class="fa-regular fa-calendar"></i> May 7, 2026</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right q-arrow"></i>
+                    </div>
+
+                    <div class="q-item" onclick="showToast('Opening question paper…')">
+                        <div class="q-icon">Q</div>
+                        <div class="q-body">
+                            <div class="q-title">SSC 2026 English 2nd Paper Question | Dhaka Board Full Paper</div>
+                            <div class="q-meta">
+                                <span class="q-tag english">English 2nd Paper</span>
+                                <span class="q-tag board">Board Question</span>
+                                <span class="q-date"><i class="fa-regular fa-calendar"></i> May 7, 2026</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right q-arrow"></i>
+                    </div>
+
+                    <div class="q-item" onclick="showToast('Opening question paper…')">
+                        <div class="q-icon">Q</div>
+                        <div class="q-body">
+                            <div class="q-title">Rajshahi Board 2025 English 1st Paper Full Question and Solution</div>
+                            <div class="q-meta">
+                                <span class="q-tag english">English 1st Paper</span>
+                                <span class="q-tag board">Board Question</span>
+                                <span class="q-date"><i class="fa-regular fa-calendar"></i> Mar 23, 2026</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right q-arrow"></i>
+                    </div>
+
+                    <div class="q-item" onclick="showToast('Opening question paper…')">
+                        <div class="q-icon">Q</div>
+                        <div class="q-body">
+                            <div class="q-title">Dhaka Board 2025 English 1st Paper Full Question and Solution</div>
+                            <div class="q-meta">
+                                <span class="q-tag english">English 1st Paper</span>
+                                <span class="q-tag board">Board Question</span>
+                                <span class="q-date"><i class="fa-regular fa-calendar"></i> Jan 8, 2026</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right q-arrow"></i>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- ── Study Vault ── -->
+                <div class="section-hdr">
+                    <div class="section-hdr-left">
+                        <div class="section-hdr-icon" style="background:var(--purple-light);color:var(--purple)">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                        <div>
+                            <div class="section-title">Study Vault</div>
+                            <div class="section-sub">PDFs, notes, and downloadable materials</div>
+                        </div>
+                    </div>
+                    <a href="#" class="section-link">View all <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <div class="vault-empty">
+                    <i class="fa-solid fa-file-circle-exclamation"></i>
+                    <p>Material library is empty right now</p>
+                    <span>PDFs and notes will appear here as they're added by instructors</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- ── Expert Insights ── -->
+                <div class="section-hdr">
+                    <div class="section-hdr-left">
+                        <div class="section-hdr-icon" style="background:var(--brand-light);color:var(--brand)">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </div>
+                        <div>
+                            <div class="section-title">Expert Insights</div>
+                            <div class="section-sub">Mentorship, strategy, and writing guides</div>
+                        </div>
+                    </div>
+                    <a href="#" class="section-link">Explore blog <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <div class="insights-grid">
+                    <div class="insight-card" onclick="showToast('Opening article…')">
+                        <div class="insight-top">
+                            <span class="insight-cat">Mentorship</span>
+                            <span class="insight-date"><i class="fa-regular fa-calendar"></i> Mar 23, 2026</span>
+                        </div>
+                        <div class="insight-body">
+                            <div class="insight-title">রেওয়ামিল করার সহজ নিয়ম ও গাণিতিক সমাধান | SSC Accounting Trial
+                                Balance</div>
+                        </div>
+                        <div class="insight-footer">
+                            <i class="fa-solid fa-tag"></i> Accounting · SSC
+                            <span style="margin-left:auto;display:flex;align-items:center;gap:4px"><i
+                                    class="fa-regular fa-clock"></i> 5 min</span>
+                        </div>
+                    </div>
+
+                    <div class="insight-card" onclick="showToast('Opening article…')">
+                        <div class="insight-top">
+                            <span class="insight-cat">Mentorship</span>
+                            <span class="insight-date"><i class="fa-regular fa-calendar"></i> Mar 8, 2026</span>
+                        </div>
+                        <div class="insight-body">
+                            <div class="insight-title">Application for Changing Elective Subject (Class 9–10) | Simple
+                                Application Format</div>
+                        </div>
+                        <div class="insight-footer">
+                            <i class="fa-solid fa-tag"></i> English · Application
+                            <span style="margin-left:auto;display:flex;align-items:center;gap:4px"><i
+                                    class="fa-regular fa-clock"></i> 3 min</span>
+                        </div>
+                    </div>
+
+                    <div class="insight-card" onclick="showToast('Opening article…')">
+                        <div class="insight-top">
+                            <span class="insight-cat">Mentorship</span>
+                            <span class="insight-date"><i class="fa-regular fa-calendar"></i> Feb 5, 2026</span>
+                        </div>
+                        <div class="insight-body">
+                            <div class="insight-title">Letter to your friend about the co-curricular activities of your
+                                school</div>
+                        </div>
+                        <div class="insight-footer">
+                            <i class="fa-solid fa-tag"></i> English · Letter
+                            <span style="margin-left:auto;display:flex;align-items:center;gap:4px"><i
+                                    class="fa-regular fa-clock"></i> 4 min</span>
+                        </div>
+                    </div>
+
+                    <div class="insight-card" onclick="showToast('Opening article…')">
+                        <div class="insight-top">
+                            <span class="insight-cat">Mentorship</span>
+                            <span class="insight-date"><i class="fa-regular fa-calendar"></i> Feb 5, 2026</span>
+                        </div>
+                        <div class="insight-body">
+                            <div class="insight-title">An application for setting up a multimedia classroom</div>
+                        </div>
+                        <div class="insight-footer">
+                            <i class="fa-solid fa-tag"></i> English · Application
+                            <span style="margin-left:auto;display:flex;align-items:center;gap:4px"><i
+                                    class="fa-regular fa-clock"></i> 3 min</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /page-content -->
+        </main>
+
+        <!-- ─── RIGHT RAIL ─── -->
+        <aside class="right-rail">
+
+            <div class="rail-card">
+                <div class="rail-hdr"><i class="fa-solid fa-chart-pie"></i> Hub overview</div>
+                <div class="mini-stats">
+                    <div class="mini-stat">
+                        <div class="mini-stat-val">4</div>
+                        <div class="mini-stat-label">Segments</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-val">12+</div>
+                        <div class="mini-stat-label">Questions</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-val">30+</div>
+                        <div class="mini-stat-label">Blogs</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-val">2027</div>
+                        <div class="mini-stat-label">Batch</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-card">
+                <div class="rail-hdr"><i class="fa-solid fa-sliders"></i> Choose stage</div>
+                <div class="stage-list">
+                    <div class="stage-item active">
+                        <div class="stage-dot active-dot"></div>
+                        <div class="stage-label">SSC 2027</div>
+                    </div>
+                    <div class="stage-item">
+                        <div class="stage-dot" style="border-color:var(--border-2)"></div>
+                        <div class="stage-label">SSC 2026</div>
+                    </div>
+                    <div class="stage-item">
+                        <div class="stage-dot" style="border-color:var(--border-2)"></div>
+                        <div class="stage-label">SSC 2025</div>
+                    </div>
+                    <div class="stage-item">
+                        <div class="stage-dot" style="border-color:var(--border-2)"></div>
+                        <div class="stage-label">HSC 2027</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-card">
+                <div class="rail-hdr"><i class="fa-solid fa-bolt"></i> Quick links</div>
+                <div class="quick-links">
+                    <div class="quick-link"><i class="fa-solid fa-file-lines"></i> Full Syllabus</div>
+                    <div class="quick-link"><i class="fa-regular fa-calendar"></i> Exam Routine</div>
+                    <div class="quick-link"><i class="fa-solid fa-trophy"></i> Board Results</div>
+                    <div class="quick-link"><i class="fa-solid fa-database"></i> Question Bank</div>
+                    <div class="quick-link"><i class="fa-solid fa-vault"></i> Study Vault</div>
+                    <div class="quick-link"><i class="fa-solid fa-user-tie"></i> Find a Tutor</div>
+                </div>
+            </div>
+
+            <div class="rail-card">
+                <div class="rail-hdr"><i class="fa-solid fa-satellite-dish"></i> Stay connected</div>
+                <div class="follow-grid">
+                    <button class="follow-btn fb"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
+                    <button class="follow-btn yt"><i class="fa-brands fa-youtube"></i> YouTube</button>
+                </div>
+            </div>
+
+            <div class="rail-card" style="border-left:3px solid var(--brand)">
+                <div style="padding:14px">
+                    <div
+                        style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--brand);margin-bottom:6px">
+                        <i class="fa-solid fa-mobile-screen"></i> NextPrepBD App
+                    </div>
+                    <p style="font-size:12.5px;color:var(--text-3);line-height:1.5;margin-bottom:10px">Get real-time
+                        updates, question alerts, and revision tools on the go.</p>
+                    <button onclick="showToast('Redirecting to app store…')"
+                        style="width:100%;padding:7px;border-radius:var(--r-sm);background:var(--brand);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:background .15s"
+                        onmouseover="this.style.background='var(--brand-dark)'"
+                        onmouseout="this.style.background='var(--brand)'">
+                        <i class="fa-solid fa-download"></i> Download App
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+    </div><!-- /shell -->
+
+    <!-- FAB -->
+    <button class="fab" onclick="toggleSidebar()" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- ═══════════════════ JS ═══════════════════ -->
+    <script>
+        /* Sidebar toggle */
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        /* Sidebar group expand */
+        function toggleGroup(hdr) {
+            hdr.classList.toggle('open');
+            hdr.nextElementSibling.classList.toggle('open');
+        }
+
+        /* Exam tabs */
+        function setExamTab(el) {
+            document.querySelectorAll('.exam-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        /* Filter pills */
+        function setFilter(el) {
+            el.closest('.filter-row').querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        /* Toast */
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        /* Scroll progress */
+        window.addEventListener('scroll', () => {
+            const d = document.documentElement;
+            document.getElementById('scrollFill').style.width = (d.scrollTop / (d.scrollHeight - d.clientHeight) * 100) + '%';
+        }, { passive: true });
+
+        /* Topbar shadow on scroll */
+        const topbar = document.querySelector('.topbar');
+        window.addEventListener('scroll', () => {
+            topbar.style.boxShadow = window.scrollY > 40 ? '0 2px 16px rgba(0,0,0,.1)' : '';
+        }, { passive: true });
+
+        /* IntersectionObserver for segment + insight cards */
+        const segCards = document.querySelectorAll('.seg-card');
+        const segIO = new IntersectionObserver(entries => {
+            entries.forEach((e, i) => {
+                if (e.isIntersecting) {
+                    setTimeout(() => e.target.classList.add('vis'), i * 70);
+                    segIO.unobserve(e.target);
+                }
+            });
+        }, { threshold: .1 });
+        segCards.forEach(c => segIO.observe(c));
+
+        const insightCards = document.querySelectorAll('.insight-card');
+        const insIO = new IntersectionObserver(entries => {
+            entries.forEach((e, i) => {
+                if (e.isIntersecting) {
+                    setTimeout(() => e.target.classList.add('vis'), i * 80);
+                    insIO.unobserve(e.target);
+                }
+            });
+        }, { threshold: .1 });
+        insightCards.forEach(c => insIO.observe(c));
+
+        const qItems = document.querySelectorAll('.q-item');
+        const qIO = new IntersectionObserver(entries => {
+            entries.forEach((e, i) => {
+                if (e.isIntersecting) {
+                    setTimeout(() => e.target.classList.add('vis'), i * 60);
+                    qIO.unobserve(e.target);
+                }
+            });
+        }, { threshold: .1 });
+        qItems.forEach(c => qIO.observe(c));
+
+        /* Stage selector */
+        document.querySelectorAll('.stage-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.stage-item').forEach(i => {
+                    i.classList.remove('active');
+                    i.querySelector('.stage-dot').classList.remove('active-dot');
+                });
+                this.classList.add('active');
+                this.querySelector('.stage-dot').classList.add('active-dot');
+                showToast('Switched to ' + this.querySelector('.stage-label').textContent);
+            });
+        });
+    </script>
+</body>
+
+</html>

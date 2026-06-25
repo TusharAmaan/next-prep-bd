@@ -102,13 +102,13 @@ export default async function CategoryListPage({ params, searchParams }: Props) 
               <div className="flex-1">
                   {/* Page Header */}
                   <div className="mb-10">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider mb-3">
                           <Link href="/" className="hover:text-indigo-600 transition">Home</Link> / 
                           <Link href={`/resources/${segment_slug}`} className="hover:text-indigo-600 transition">{segmentData.title}</Link> / 
                           <span>{formatType(type)}</span>
                       </div>
                       
-                      <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tight uppercase">
+                      <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
                             {formatType(type)} Archive
                       </h1>
                       <p className="text-slate-500 dark:text-slate-400 font-medium">
@@ -132,10 +132,10 @@ export default async function CategoryListPage({ params, searchParams }: Props) 
 
                                   {/* Content */}
                                   <div className="flex-1 min-w-0 py-1">
-                                      <h3 className="text-xl font-black text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate uppercase tracking-tight leading-tight">
+                                      <h3 className="text-xl font-black text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate tracking-tight leading-tight">
                                           {post.title}
                                       </h3>
-                                      <div className="flex items-center gap-4 mt-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                      <div className="flex items-center gap-4 mt-3 text-[10px] font-black text-slate-400 dark:text-slate-500 tracking-widest">
                                           <span className="flex items-center gap-1.5">
                                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                               {new Date(post.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -157,8 +157,8 @@ export default async function CategoryListPage({ params, searchParams }: Props) 
                   ) : (
                       <div className="bg-white dark:bg-slate-900 p-20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center mb-16 shadow-inner">
                           <div className="text-5xl mb-6 opacity-30 grayscale">📂</div>
-                          <h3 className="text-xl font-black text-slate-700 dark:text-white uppercase tracking-tight">No documents found</h3>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-black uppercase tracking-widest">There are no updates in this category yet.</p>
+                          <h3 className="text-xl font-black text-slate-700 dark:text-white tracking-tight">No documents found</h3>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-black tracking-widest">There are no updates in this category yet.</p>
                       </div>
                   )}
 
@@ -167,14 +167,14 @@ export default async function CategoryListPage({ params, searchParams }: Props) 
                       <div className="flex justify-center items-center gap-6 mb-16">
                           <Link 
                               href={`/resources/${segment_slug}/category/${type}?page=${currentPage - 1}`}
-                              className={`px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${currentPage <= 1 ? 'opacity-30 pointer-events-none bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-sm'}`}
+                              className={`px-6 py-3 rounded-xl border text-[10px] font-black tracking-widest transition-all ${currentPage <= 1 ? 'opacity-30 pointer-events-none bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-sm'}`}
                           >
                               ← Prev
                           </Link>
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Page {currentPage} of {totalPages}</span>
+                          <span className="text-[10px] font-black text-slate-500 tracking-[0.2em]">Page {currentPage} of {totalPages}</span>
                           <Link 
                               href={`/resources/${segment_slug}/category/${type}?page=${currentPage + 1}`}
-                              className={`px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${currentPage >= totalPages ? 'opacity-30 pointer-events-none bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-sm'}`}
+                              className={`px-6 py-3 rounded-xl border text-[10px] font-black tracking-widest transition-all ${currentPage >= totalPages ? 'opacity-30 pointer-events-none bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-sm'}`}
                           >
                               Next →
                           </Link>

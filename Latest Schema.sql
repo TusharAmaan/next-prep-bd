@@ -1163,3 +1163,17 @@ CREATE TABLE public.forum_upvotes (
   CONSTRAINT forum_upvotes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.forum_comments(id),
   CONSTRAINT forum_upvotes_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.forum_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  reporter_id uuid NOT NULL,
+  thread_id uuid,
+  comment_id uuid,
+  reason text NOT NULL,
+  details text,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'reviewed'::text, 'resolved'::text, 'dismissed'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT forum_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT forum_reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id),
+  CONSTRAINT forum_reports_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.forum_threads(id),
+  CONSTRAINT forum_reports_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.forum_comments(id)
+);

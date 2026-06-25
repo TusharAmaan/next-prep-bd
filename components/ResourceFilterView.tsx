@@ -3,7 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Search, Filter, FileText, PlayCircle, HelpCircle, 
-  ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X, ArrowRight 
+  ChevronRight, BookOpen, Clock, Calendar, Bell, Download, ExternalLink, X, ArrowRight,
+  LayoutGrid, Trophy
 } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import Pagination from "@/components/shared/Pagination";
@@ -154,19 +155,31 @@ export default function ResourceFilterView({
         {categories.length > 1 && (
           <div className="flex items-center gap-2">
             <div className="flex-1 overflow-x-auto hide-scrollbar flex items-center gap-2 pb-1 -ml-1 pl-1">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-5 py-2 rounded-xl text-[9px] md:text-[10px] whitespace-nowrap font-bold uppercase tracking-widest transition-all border shrink-0 ${
-                    activeCategory === cat 
-                    ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 shadow-lg shadow-indigo-600/20' 
-                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+              {categories.map(cat => {
+                const getCategoryIcon = (category: string) => {
+                  const c = category.toLowerCase();
+                  if (c === "all") return <LayoutGrid className="w-3.5 h-3.5" />;
+                  if (c.includes("routine")) return <Calendar className="w-3.5 h-3.5" />;
+                  if (c.includes("syllabus")) return <FileText className="w-3.5 h-3.5" />;
+                  if (c.includes("result")) return <Trophy className="w-3.5 h-3.5" />;
+                  return <FileText className="w-3.5 h-3.5" />;
+                };
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-5 py-2 rounded-xl text-[9px] md:text-[10px] whitespace-nowrap font-bold tracking-widest transition-all border shrink-0 flex items-center gap-1.5 ${
+                      activeCategory === cat 
+                      ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 shadow-lg shadow-indigo-600/20' 
+                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    {getCategoryIcon(cat)}
+                    <span>{cat}</span>
+                  </button>
+                );
+              })}
             </div>
             {(activeCategory !== 'All' || search || activeSubject !== 'All') && (
                <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} className="p-2.5 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 transition-colors shrink-0" title="Reset">
@@ -198,16 +211,16 @@ export default function ResourceFilterView({
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-3">
                      {!isUpdatePage && (item.subjects) && (
-                       <span className="text-[9px] font-bold text-white bg-indigo-600 px-3 py-1 rounded-lg shadow-lg shadow-indigo-600/20 uppercase tracking-widest">
+                       <span className="text-[9px] font-bold text-white bg-indigo-600 px-3 py-1 rounded-lg shadow-lg shadow-indigo-600/20 tracking-widest">
                           {Array.isArray(item.subjects) ? item.subjects[0]?.title : item.subjects?.title}
                        </span>
                      )}
                      {item.category && !isUpdatePage && (
-                       <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 uppercase tracking-widest">
+                       <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 tracking-widest">
                           {item.category}
                        </span>
                      )}
-                     <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                     <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2 tracking-widest">
                         <Clock className="w-3.5 h-3.5 text-indigo-500" /> {new Date(item.created_at).toLocaleDateString()}
                      </span>
                   </div>
@@ -228,7 +241,7 @@ export default function ResourceFilterView({
 
                 {/* Action */}
                 <div className="shrink-0 self-end md:self-center">
-                   <div className="flex items-center gap-2.5 px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-bold uppercase tracking-widest rounded-lg md:rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                   <div className="flex items-center gap-2.5 px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[9px] md:text-[10px] font-bold tracking-widest rounded-lg md:rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
                       {label} <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"/>
                    </div>
                 </div>
@@ -244,7 +257,7 @@ export default function ResourceFilterView({
              <p className="text-slate-500 dark:text-slate-400 mt-4 max-w-md mx-auto font-medium">Try adjusting your filters or search keywords to find what you're looking for.</p>
              <button 
                 onClick={() => {setSearch(""); setActiveCategory("All"); setActiveSubject("All")}} 
-                className="mt-10 px-10 py-5 bg-slate-900 dark:bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20"
+                className="mt-10 px-10 py-5 bg-slate-900 dark:bg-indigo-600 text-white text-[10px] font-bold tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20"
              >
                 Reset All Filters
              </button>

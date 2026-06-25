@@ -1,25 +1,25 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { supabase } from "@/lib/supabaseClient";
-import BlogTOC from "@/components/BlogTOC"; 
-import BlogContentWrapper from "@/components/public/BlogContentWrapper"; 
+import BlogTOC from "@/components/BlogTOC";
+import BlogContent from "@/components/BlogContent";
 import Discussion from "@/components/shared/Discussion";
 import TypographyScaler from "@/components/shared/TypographyScaler";
 import PostPageShell from "@/components/post/PostPageShell";
 import PostHeader from "@/components/post/PostHeader";
 import PostRightRail from "@/components/post/PostRightRail";
-import Sidebar from "@/components/Sidebar";
 import { headers } from 'next/headers';
-import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
 import { getBreadcrumbSchema, getArticleSchema } from "@/lib/seo-utils";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const bengaliFont = Noto_Serif_Bengali({ 
+const bengaliFont = Noto_Serif_Bengali({
   subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"], 
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -38,25 +38,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq(column, id)
     .single();
 
-  if (!post) return { title: 'Post Not Found' };
+  if (!post) return { title: 'Update Not Found' };
 
   return {
-    title: post.seo_title || post.title, 
-    description: post.seo_description,
+    title: post.seo_title || post.title,
+    description: post.seo_description || `Latest update: ${post.title}`,
     keywords: post.tags,
     alternates: {
-      canonical: `/blog/${id}`,
+      canonical: `/update/${id}`,
     },
     openGraph: {
       title: post.seo_title || post.title,
-      description: post.seo_description,
+      description: post.seo_description || `Segment update: ${post.title}`,
       images: post.content_url ? [post.content_url] : [],
       type: 'article',
     },
   };
 }
 
-export default async function SingleBlogPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SingleUpdatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const column = getQueryColumn(id);
 
@@ -70,36 +70,17 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
     .eq(column, id)
     .single();
 
-  if (!post || post.type !== 'blog') return notFound();
+  if (!post) return notFound();
 
-  const { data: linkedQuestions } = await supabase
-    .from('resource_questions')
-    .select(`
-      order_index,
-      question:question_bank!question_id (
-        id, question_text, question_type, marks, explanation,
-        options:question_options(option_text, is_correct),
-        sub_questions:question_bank!parent_id(
-           id, question_text, question_type, marks, explanation,
-           options:question_options(option_text, is_correct)
-        )
-      )
-    `)
-    .eq('resource_id', post.id)
-    .order('order_index');
-
-  const questions = linkedQuestions?.map(lq => lq.question).filter(q => q !== null) || [];
-
-  // Related posts from same subject
-  const { data: relatedPosts } = await supabase
+  // Related updates from same segment
+  const { data: relatedUpdates } = await supabase
     .from('resources')
-    .select('id, title, slug, created_at, type')
-    .eq('subject_id', post.subject_id)
-    .eq('type', 'blog')
+    .select('id, title, slug, created_at, type, category')
+    .eq('segment_id', post.segment_id)
     .eq('status', 'approved')
     .neq('id', post.id)
     .order('created_at', { ascending: false })
-    .limit(4);
+    .limit(5);
 
   const wordCount = post.content_body ? post.content_body.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
@@ -107,55 +88,47 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
   const headersList = await headers();
   const host = headersList.get("host") || "";
   const protocol = host.includes("localhost") ? "http" : "https";
-  const currentUrl = `${protocol}://${host}/blog/${id}`;
+  const currentUrl = `${protocol}://${host}/update/${id}`;
 
   // Author info
   const authorName = post.author?.full_name || "NextPrepBD";
-  const authorInstitution = post.author?.institution;
 
   // Breadcrumb hierarchy
-  const segmentTitle = post.subjects?.groups?.segments?.title;
+  const segmentTitle = post.subjects?.groups?.segments?.title || "Updates";
   const segmentSlug = post.subjects?.groups?.segments?.slug;
-  const groupTitle = post.subjects?.groups?.title;
-  const groupSlug = post.subjects?.groups?.slug;
-  const subjectTitle = post.subjects?.title;
-  const subjectSlug = post.subjects?.slug;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: "Resources", href: "/resources" },
-    ...(segmentTitle && segmentSlug ? [{ label: segmentTitle, href: `/resources/${segmentSlug}` }] : []),
-    ...(groupTitle && groupSlug && segmentSlug ? [{ label: groupTitle, href: `/resources/${segmentSlug}/${groupSlug}` }] : []),
-    ...(subjectTitle && subjectSlug && groupSlug && segmentSlug ? [{ label: subjectTitle, href: `/resources/${segmentSlug}/${groupSlug}/${subjectSlug}` }] : []),
+    ...(segmentSlug ? [{ label: segmentTitle, href: `/resources/${segmentSlug}` }] : []),
     { label: post.title },
   ];
 
   // Tags
   const tags = [
-    ...(segmentTitle ? [{ label: segmentTitle, variant: "purple" as const }] : []),
-    { label: "Blog", variant: "green" as const },
+    { label: "Update", variant: "amber" as const },
+    ...(segmentTitle !== "Updates" ? [{ label: segmentTitle, variant: "purple" as const }] : []),
     ...(post.category ? [{ label: post.category, variant: "blue" as const }] : []),
   ];
 
-  // Right rail config
+  // Right rail
   const stats = [
-    { value: wordCount.toLocaleString(), label: "Words" },
     { value: `${readTime} min`, label: "Read time" },
-    { value: questions.length, label: "Questions" },
-    ...(segmentTitle ? [{ value: segmentTitle, label: "Segment" }] : []),
+    { value: wordCount.toLocaleString(), label: "Words" },
+    ...(segmentTitle !== "Updates" ? [{ value: segmentTitle, label: "Segment" }] : []),
   ];
 
   const quickLinks = [
-    ...(segmentSlug ? [{ label: `${segmentTitle} resources`, href: `/resources/${segmentSlug}` }] : []),
+    ...(segmentSlug ? [{ label: `All ${segmentTitle} resources`, href: `/resources/${segmentSlug}` }] : []),
+    { label: "Latest news", href: "/news" },
     { label: "Lesson plans", href: "/curriculum" },
-    { label: "Question bank", href: "/resources" },
     { label: "Forum", href: "/forum" },
   ];
 
-  const relatedNotes = (relatedPosts || []).map(p => ({
+  const relatedNotes = (relatedUpdates || []).map(p => ({
     title: p.title,
-    meta: new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    href: `/blog/${p.slug || p.id}`,
+    meta: `${p.type} · ${new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    href: p.type === 'blog' ? `/blog/${p.slug || p.id}` : `/update/${p.slug || p.id}`,
   }));
 
   // SEO schemas
@@ -177,18 +150,35 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
       stats={stats}
       quickLinks={quickLinks}
       relatedNotes={relatedNotes}
-    />
+    >
+      {/* Segment CTA */}
+      {segmentSlug && (
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12" />
+          <h4 className="text-lg font-bold mb-2 leading-snug">Explore {segmentTitle}</h4>
+          <p className="text-amber-100 text-xs mb-5 font-medium leading-relaxed">
+            Find study materials, question banks and more for {segmentTitle}.
+          </p>
+          <Link
+            href={`/resources/${segmentSlug}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white text-amber-700 rounded-xl text-xs font-bold shadow-md hover:bg-amber-50 transition-all"
+          >
+            Browse resources <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+    </PostRightRail>
   );
 
-  const tocContent = (
+  const tocContent = post.content_body ? (
     <div>
       <div className="mb-5 flex items-center gap-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3">
         <span className="w-6 h-px bg-slate-200 dark:bg-slate-800" />
         Navigation
       </div>
-      <BlogTOC content={post.content_body || ""} />
+      <BlogTOC content={post.content_body} />
     </div>
-  );
+  ) : undefined;
 
   return (
     <>
@@ -212,20 +202,32 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
             date={post.created_at}
             readTime={readTime}
             postId={post.id}
-            postType="blog"
+            postType="update"
             coverUrl={post.cover_url || post.content_url}
             isLoggedIn={isLoggedIn}
           />
 
-          {/* Main content with article/quiz tabs */}
-          <BlogContentWrapper 
-            post={post}
-            questions={questions}
-            formattedDate={new Date(post.created_at).toLocaleDateString()}
-            readTime={readTime}
-            bengaliFontClass={bengaliFont.className}
-            isLoggedIn={isLoggedIn}
-          />
+          {/* Content body */}
+          <article className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden transition-colors">
+            <div className="p-5 sm:p-8 md:p-10">
+              <div className="single-post-body text-slate-800 dark:text-slate-200">
+                <BlogContent
+                  content={post.content_body || ""}
+                  className="single-post-prose"
+                />
+              </div>
+            </div>
+            <footer className="px-8 py-4 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                © NextPrepBD Updates
+              </p>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-amber-500/30" />
+                <div className="w-1 h-1 rounded-full bg-amber-500/50" />
+                <div className="w-1 h-1 rounded-full bg-amber-500/70" />
+              </div>
+            </footer>
+          </article>
 
           {/* Discussion */}
           <div className="mt-10 md:mt-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 md:p-8 shadow-sm transition-colors">
@@ -239,11 +241,36 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ id:
           </div>
 
           {/* Mobile TOC */}
-          <div className="xl:hidden mt-8">
-            <BlogTOC content={post.content_body || ""} />
-          </div>
+          {post.content_body && (
+            <div className="xl:hidden mt-8">
+              <BlogTOC content={post.content_body} />
+            </div>
+          )}
         </PostPageShell>
       </div>
+
+      <style jsx global>{`
+        .single-post-prose {
+          font-size: clamp(1.0625rem, 0.5vw + 1rem, 1.25rem) !important;
+          line-height: 1.8 !important;
+        }
+        .single-post-prose h2, .single-post-prose h3, .single-post-prose h4 {
+          margin-top: 2rem !important;
+          margin-bottom: 1rem !important;
+          letter-spacing: -0.02em !important;
+          line-height: 1.3 !important;
+        }
+        .single-post-prose p { margin-bottom: 1.5rem !important; }
+        .single-post-prose h2 { font-size: clamp(1.5rem, 3vw, 2rem) !important; font-weight: 800 !important; }
+        .single-post-prose h3 { font-size: clamp(1.25rem, 2vw, 1.75rem) !important; font-weight: 700 !important; }
+        .single-post-prose img {
+          border-radius: 1rem !important;
+          margin: 2rem auto !important;
+          box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08) !important;
+        }
+        .dark .single-post-prose h2, .dark .single-post-prose h3, .dark .single-post-prose h4, .dark .single-post-prose strong { color: #ffffff !important; }
+        .dark .single-post-prose p, .dark .single-post-prose li, .dark .single-post-prose span:not(.katex):not(.katex *) { color: #cbd5e1 !important; }
+      `}</style>
     </>
   );
 }

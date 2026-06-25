@@ -23,40 +23,16 @@ export default function SinglePostContent({
 }: SinglePostContentProps) {
   return (
     <div className={`w-full ${bengaliFontClass || ""}`}>
-      {/* === ACCESSIBLE BREADCRUMBS & ACTIONS === */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 px-2 md:px-0">
-        <nav className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500 flex-wrap">
-          <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link> 
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span>Resources</span> 
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
-            {post.subjects?.groups?.segments?.title || post.segments?.title || "Perspective"}
-          </span>
-        </nav>
-        
-        <div className="flex items-center gap-3">
-          <LikeButton resourceId={post.id} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 shadow-sm hover:shadow-md transition-all">
-            <BookmarkButton
-              itemType="post"
-              itemId={post.id}
-              metadata={{ title: post.title, thumbnail_url: post.image_url || post.cover_url || post.attachment_url }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* === PREMIUM CONTENT CARD === */}
       <article className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden transition-colors duration-300">
         
         {/* POST HEADER */}
-        <header className="p-6 sm:p-10 md:p-12 border-b border-slate-50 dark:border-slate-800/40">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-snug transition-all">
+        <header className="p-5 sm:p-8 md:p-10 border-b border-slate-50 dark:border-slate-800/40">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-5 tracking-tight leading-snug transition-all">
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-500 dark:text-slate-450">
+          <div className="flex flex-wrap items-center gap-5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2 group">
               <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
                 <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
@@ -76,7 +52,7 @@ export default function SinglePostContent({
         </header>
 
         {/* CONTENT BODY */}
-        <div className="p-6 sm:p-10 md:p-12">
+        <div className="p-5 sm:p-8 md:p-10">
           <div className="single-post-body text-slate-800 dark:text-slate-200">
              <BlogContent 
                content={post.content_body || post.content || ""} 
@@ -85,15 +61,15 @@ export default function SinglePostContent({
           </div>
         </div>
 
-        {/* PREMIUM FOOTER DECOR */}
-        <footer className="px-10 py-6 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center flex-wrap gap-4">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+        {/* FOOTER */}
+        <footer className="px-8 py-4 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center flex-wrap gap-3">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">
                 © NextPrepBD Education System
             </p>
-            <div className="flex gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/20" />
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/40" />
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-550/60" />
+            <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-indigo-500/20" />
+                <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
+                <div className="w-1 h-1 rounded-full bg-indigo-500/60" />
             </div>
         </footer>
       </article>
@@ -104,7 +80,6 @@ export default function SinglePostContent({
           line-height: 1.8 !important;
         }
         
-        /* Remove unnecessary default line spaces */
         .single-post-prose h2, 
         .single-post-prose h3, 
         .single-post-prose h4 {
@@ -122,9 +97,36 @@ export default function SinglePostContent({
         .single-post-prose h3 { font-size: clamp(1.25rem, 2vw, 1.75rem) !important; font-weight: 700 !important; }
         
         .single-post-prose img {
-            border-radius: 2rem !important;
-            margin: 3rem auto !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+            border-radius: 1rem !important;
+            margin: 2rem auto !important;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .single-post-prose blockquote {
+            border-left: 3px solid #10b981 !important;
+            padding-left: 1rem !important;
+            margin: 1.5rem 0 !important;
+            color: #475569 !important;
+            font-style: italic !important;
+        }
+
+        .single-post-prose table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 1.5rem 0 !important;
+            font-size: 0.875rem !important;
+        }
+
+        .single-post-prose table th,
+        .single-post-prose table td {
+            padding: 0.625rem 0.75rem !important;
+            border: 1px solid #e2e8f0 !important;
+            text-align: left !important;
+        }
+
+        .single-post-prose table th {
+            background: #f8fafc !important;
+            font-weight: 600 !important;
         }
 
         .dark .single-post-prose h2,
@@ -138,6 +140,20 @@ export default function SinglePostContent({
         .dark .single-post-prose li,
         .dark .single-post-prose span:not(.katex):not(.katex *) {
             color: #cbd5e1 !important;
+        }
+
+        .dark .single-post-prose blockquote {
+            border-left-color: #059669 !important;
+            color: #94a3b8 !important;
+        }
+
+        .dark .single-post-prose table th,
+        .dark .single-post-prose table td {
+            border-color: #1e293b !important;
+        }
+
+        .dark .single-post-prose table th {
+            background: #0f172a !important;
         }
       `}</style>
     </div>
