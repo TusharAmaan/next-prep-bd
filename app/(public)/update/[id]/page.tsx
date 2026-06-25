@@ -249,7 +249,7 @@ export default async function SingleUpdatePage({ params }: { params: Promise<{ i
         </PostPageShell>
       </div>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .single-post-prose {
           font-size: clamp(1.0625rem, 0.5vw + 1rem, 1.25rem) !important;
           line-height: 1.8 !important;
@@ -270,7 +270,7 @@ export default async function SingleUpdatePage({ params }: { params: Promise<{ i
         }
         .dark .single-post-prose h2, .dark .single-post-prose h3, .dark .single-post-prose h4, .dark .single-post-prose strong { color: #ffffff !important; }
         .dark .single-post-prose p, .dark .single-post-prose li, .dark .single-post-prose span:not(.katex):not(.katex *) { color: #cbd5e1 !important; }
-      `}</style>
+      `}} />
     </>
   );
 }
