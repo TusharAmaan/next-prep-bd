@@ -15,7 +15,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { getOrganizationSchema } from "@/lib/seo-utils";
 import MathRenderer from "@/components/shared/MathRenderer";
@@ -127,12 +127,7 @@ export default function RootLayout({
             }
           } catch(e) {}
         `}} />
-        {/* Global Math Rendering (KaTeX CSS) */}
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css"
-          crossOrigin="anonymous"
-        />
+        {/* Global Math Rendering (KaTeX CSS imported at top) */}
       </head>
       <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`} suppressHydrationWarning>
         <ThemeProvider>

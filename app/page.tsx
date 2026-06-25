@@ -34,7 +34,7 @@ import { createClient } from "@/lib/supabaseServer";
 import CurriculumShowcase from "@/components/homepage/CurriculumShowcase";
 import LectureSheetShowcase from "@/components/homepage/LectureSheetShowcase";
 
-export const revalidate = 0; 
+export const revalidate = 300; 
 
 function SectionSkeleton() {
   return (
@@ -151,15 +151,15 @@ export default async function HomePage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 dark:shadow-slate-950 p-8 md:p-12 border border-slate-100 dark:border-slate-800">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 sm:divide-x divide-slate-100 dark:divide-slate-800/50">
                   <div className="flex flex-col items-center text-center group">
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">12k+</h3>
+                      <div className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">12k+</div>
                       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Materials verified</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">5k+</h3>
+                      <div className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">5k+</div>
                       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Daily students</p>
                   </div>
                   <div className="flex flex-col items-center text-center group">
-                      <h3 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">Live</h3>
+                      <div className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tighter mb-2 md:mb-3">Live</div>
                       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">Active updates</p>
                   </div>
               </div>
@@ -398,11 +398,11 @@ export default async function HomePage() {
                           <Zap className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" /> Join the Community
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                          <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
+                          <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" aria-label="Visit our Facebook page" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Facebook className="w-8 h-8 mb-3 text-blue-600 group-hover:text-white transition-transform group-hover:scale-125" />
                               <span className="text-[9px] font-bold tracking-widest">Facebook</span>
                           </a>
-                          <a href="https://youtube.com/@nextprepbd" target="_blank" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 hover:bg-red-600 dark:hover:bg-red-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
+                          <a href="https://youtube.com/@nextprepbd" target="_blank" aria-label="Visit our YouTube channel" className="flex flex-col items-center justify-center p-6 rounded-[2rem] bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 hover:bg-red-600 dark:hover:bg-red-600 hover:text-white transition-all duration-500 hover:-translate-y-2 group">
                               <Youtube className="w-8 h-8 mb-3 text-red-600 group-hover:text-white transition-transform group-hover:scale-125" />
                               <span className="text-xs font-bold tracking-wide">YouTube</span>
                           </a>
