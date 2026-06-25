@@ -14,7 +14,7 @@ import { headers } from 'next/headers';
 import 'katex/dist/katex.min.css'; 
 import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
-import { getBreadcrumbSchema, getArticleSchema } from "@/lib/seo-utils";
+import { getBreadcrumbSchema, getQAPageSchema } from "@/lib/seo-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -167,13 +167,11 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
   // SEO schemas
   const breadcrumbItems = breadcrumbs.filter(b => b.href).map(b => ({ name: b.label, item: b.href! }));
   const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
-  const articleSchema = getArticleSchema({
+  const qaSchema = getQAPageSchema({
     title: post.title,
-    description: post.seo_description || post.title.substring(0, 160),
-    image: post.content_url || "https://nextprepbd.com/og-image.png",
+    text: post.content_body || post.seo_description || post.title,
     authorName,
     datePublished: post.created_at,
-    dateModified: post.updated_at || post.created_at,
     url: currentUrl
   });
 
@@ -204,7 +202,7 @@ export default async function SingleQuestionPage({ params }: { params: Promise<{
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(qaSchema) }}
       />
       <div className={bengaliFont.className}>
         <TypographyScaler />

@@ -8,7 +8,7 @@ import { Metadata } from 'next';
 import { checkEnrollmentStatus } from "@/app/actions/enrollment";
 import EnrollmentButton from "@/components/courses/EnrollmentButton";
 import CurriculumView from "@/components/courses/CurriculumView";
-
+import { getCourseSchema } from "@/lib/seo-utils";
 export const dynamic = "force-dynamic";
 
 // --- HELPER: Detect ID vs Slug ---
@@ -75,8 +75,20 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
   const protocol = host.includes("localhost") ? "http" : "https";
   const absoluteUrl = `${protocol}://${host}/courses/${id}`;
 
+  const courseSchema = getCourseSchema({
+    name: course.title,
+    description: course.seo_description || "A comprehensive course on NextPrepBD.",
+    providerName: course.instructor || "NextPrepBD",
+    url: absoluteUrl,
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+      />
+      <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       {/* HERO SECTION */}
       <div className="bg-gray-900 text-white py-12 md:py-16 px-6">
         <div className="max-w-7xl mx-auto md:flex gap-10 items-center">
@@ -195,5 +207,6 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
         </div>
       </div>
     </div>
+    </>
   );
 }

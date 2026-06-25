@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import Discussion from "@/components/shared/Discussion";
 import { BookOpen, User, Calendar, Download, Eye, ChevronRight, Share2, Info } from "lucide-react";
-import { getBreadcrumbSchema, getProductSchema } from "@/lib/seo-utils";
+import { getBreadcrumbSchema, getBookSchema } from "@/lib/seo-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -60,13 +60,11 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
   ];
 
   const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
-  const productSchema = getProductSchema({
+  const bookSchema = getBookSchema({
     name: book.title,
     description: book.seo_description || book.title,
     image: book.cover_url || "https://nextprepbd.com/og-image.png",
-    sku: `EB-${book.id}`,
-    brandName: "NextPrepBD",
-    category: book.category,
+    authorName: book.author || "NextPrepBD",
     url: currentUrl
   });
 
@@ -78,7 +76,7 @@ export default async function EbookDetailPage({ params }: { params: Promise<{ id
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(bookSchema) }}
       />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pt-32 pb-20 transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-6">

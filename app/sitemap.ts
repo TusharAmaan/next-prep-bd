@@ -10,27 +10,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 1. Fetch Parallel Data for Maximum Efficiency
     const [
       { data: blogs, error: blogsError },
+      { data: questions, error: questionsError },
       { data: news, error: newsError },
       { data: updates, error: updatesError },
       { data: segments, error: segmentsError },
       { data: curriculumSubjects, error: subjectsError },
-      { data: curriculumContents, error: contentsError }
+      { data: curriculumContents, error: contentsError },
+      { data: courses, error: coursesError },
+      { data: ebooks, error: ebooksError },
+      { data: forumThreads, error: forumThreadsError }
     ] = await Promise.all([
       supabase.from('resources').select('id, updated_at').eq('type', 'blog'),
+      supabase.from('resources').select('id, updated_at').eq('type', 'question').eq('status', 'approved'),
       supabase.from('news').select('id, created_at'),
       supabase.from('segment_updates').select('id, created_at'),
       supabase.from('segments').select('slug'),
       supabase.from('subjects').select('id'),
-      supabase.from('lesson_plan_contents').select('id, lesson_plan_lessons(subject_id), updated_at')
+      supabase.from('lesson_plan_contents').select('id, lesson_plan_lessons(subject_id), updated_at'),
+      supabase.from('courses').select('id, updated_at'),
+      supabase.from('ebooks').select('id, updated_at'),
+      supabase.from('forum_threads').select('id, created_at')
     ]);
 
     // Log internal errors for debugging without crashing the sitemap
     if (blogsError) console.error('Sitemap: Blogs error:', blogsError);
+    if (questionsError) console.error('Sitemap: Questions error:', questionsError);
     if (newsError) console.error('Sitemap: News error:', newsError);
     if (updatesError) console.error('Sitemap: Updates error:', updatesError);
     if (segmentsError) console.error('Sitemap: Segments error:', segmentsError);
     if (subjectsError) console.error('Sitemap: Subjects error:', subjectsError);
     if (contentsError) console.error('Sitemap: Contents error:', contentsError);
+    if (coursesError) console.error('Sitemap: Courses error:', coursesError);
+    if (ebooksError) console.error('Sitemap: Ebooks error:', ebooksError);
+    if (forumThreadsError) console.error('Sitemap: Forum threads error:', forumThreadsError);
 
     // --- BUILD URLS ---
 
@@ -48,7 +60,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       '/curriculum',
       '/privacy-policy',
       '/terms',
-      '/refund-policy'
+      '/refund-policy',
+      '/forum'
     ].map((route) => ({
       url: `${BASE_URL}${route}`,
       lastModified: new Date(),
@@ -61,6 +74,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/blog/${post.id}`,
       lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
       changeFrequency: 'daily',
+      priority: 0.8,
+    }));
+
+    // Question URLs (Priority: 0.8)
+    const questionRoutes: MetadataRoute.Sitemap = (questions || []).map((post) => ({
+      url: `${BASE_URL}/question/${post.id}`,
+      lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+      changeFrequency: 'weekly',
       priority: 0.8,
     }));
 
@@ -107,8 +128,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Update URLs (Priority: 0.7)
     const updateRoutes: MetadataRoute.Sitemap = (updates || []).map((item) => ({
-      url: `${BASE_URL}/updates/${item.id}`,
+      url: `${BASE_URL}/update/${item.id}`,
       lastModified: item.created_at ? new Date(item.created_at) : new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    }));
+
+    // Course URLs (Priority: 0.8)
+    const courseRoutes: MetadataRoute.Sitemap = (courses || []).map((course) => ({
+      url: `${BASE_URL}/courses/${course.id}`,
+      lastModified: course.updated_at ? new Date(course.updated_at) : new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+
+    // Ebook URLs (Priority: 0.8)
+    const ebookRoutes: MetadataRoute.Sitemap = (ebooks || []).map((book) => ({
+      url: `${BASE_URL}/ebooks/${book.id}`,
+      lastModified: book.updated_at ? new Date(book.updated_at) : new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+
+    // Forum Thread URLs (Priority: 0.7)
+    const forumThreadRoutes: MetadataRoute.Sitemap = (forumThreads || []).map((thread) => ({
+      url: `${BASE_URL}/forum/thread/${thread.id}`,
+      lastModified: thread.created_at ? new Date(thread.created_at) : new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     }));
@@ -120,8 +165,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...curriculumSubjectRoutes,
       ...curriculumContentRoutes,
       ...blogRoutes,
+      ...questionRoutes,
       ...newsRoutes,
       ...updateRoutes,
+      ...courseRoutes,
+      ...ebookRoutes,
+      ...forumThreadRoutes,
     ];
   } catch (error) {
     console.error('CRITICAL Error generating sitemap:', error);
@@ -131,6 +180,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${BASE_URL}/curriculum`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
       { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
       { url: `${BASE_URL}/news`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${BASE_URL}/forum`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${BASE_URL}/courses`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${BASE_URL}/ebooks`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     ];
   }
 }

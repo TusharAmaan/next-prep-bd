@@ -8,6 +8,7 @@ import MCQInteractiveWrapper from '@/components/forum/MCQInteractiveWrapper';
 import DescriptiveRevealWrapper from '@/components/forum/DescriptiveRevealWrapper';
 import CommentSection from '@/components/forum/CommentSection';
 import { ClipboardList, Timer, BarChart3, User, Flame, Target, TrendingUp, Zap, BookOpen, AlertCircle } from 'lucide-react';
+import { getDiscussionForumPostingSchema } from '@/lib/seo-utils';
 
 // Note: Revalidation depends on app routing caching strategy
 export const revalidate = 60; 
@@ -270,24 +271,14 @@ export default async function ForumThreadPage({ params }: Props) {
     });
   }
 
-  // JSON-LD Schema (QAPage)
-  const expertReply = comments.find((c: any) => c.is_expert_reply);
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'QAPage',
-    mainEntity: {
-      '@type': 'Question',
-      name: thread.title,
-      text: thread.content,
-      answerCount: comments.length,
-      acceptedAnswer: expertReply ? {
-        '@type': 'Answer',
-        text: expertReply.content,
-        upvoteCount: expertReply.upvotes,
-        url: `https://nextprepbd.com/forum/thread/${thread.id}#comment-${expertReply.id}`
-      } : undefined
-    }
-  };
+  // JSON-LD Schema (DiscussionForumPosting)
+  const jsonLd = getDiscussionForumPostingSchema({
+    title: thread.title,
+    text: thread.content,
+    authorName: thread.author?.full_name || "NextPrepBD User",
+    datePublished: thread.created_at,
+    url: `https://nextprepbd.com/forum/thread/${thread.id}`
+  });
 
   // Convert flat comments to tree if parent_id is used
   const rootComments = comments.filter((c: any) => !c.parent_id);

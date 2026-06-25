@@ -130,3 +130,114 @@ export function getProductSchema(product: {
     }
   };
 }
+
+/**
+ * Generate Course JSON-LD Schema
+ */
+export function getCourseSchema(course: {
+  name: string;
+  description: string;
+  providerName?: string;
+  url: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": course.name,
+    "description": course.description,
+    "provider": {
+      "@type": "Organization",
+      "name": course.providerName || siteConfig.name,
+      "sameAs": siteConfig.url
+    }
+  };
+}
+
+/**
+ * Generate Book JSON-LD Schema
+ */
+export function getBookSchema(book: {
+  name: string;
+  description: string;
+  authorName?: string;
+  url: string;
+  image?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    "name": book.name,
+    "description": book.description,
+    "author": {
+      "@type": "Person",
+      "name": book.authorName || siteConfig.name
+    },
+    "url": book.url,
+    "image": book.image || siteConfig.ogImage
+  };
+}
+
+/**
+ * Generate DiscussionForumPosting JSON-LD Schema
+ */
+export function getDiscussionForumPostingSchema(post: {
+  title: string;
+  text: string;
+  authorName: string;
+  datePublished: string;
+  url: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    "headline": post.title,
+    "text": post.text,
+    "author": {
+      "@type": "Person",
+      "name": post.authorName
+    },
+    "datePublished": post.datePublished,
+    "url": post.url
+  };
+}
+
+/**
+ * Generate QAPage JSON-LD Schema
+ */
+export function getQAPageSchema(qa: {
+  title: string;
+  text: string;
+  authorName: string;
+  datePublished: string;
+  url: string;
+  acceptedAnswerText?: string;
+}) {
+  const schema: any = {
+    "@context": "https://schema.org",
+    "@type": "QAPage",
+    "mainEntity": {
+      "@type": "Question",
+      "name": qa.title,
+      "text": qa.text,
+      "dateCreated": qa.datePublished,
+      "author": {
+        "@type": "Person",
+        "name": qa.authorName
+      }
+    }
+  };
+  
+  if (qa.acceptedAnswerText) {
+    schema.mainEntity.acceptedAnswer = {
+      "@type": "Answer",
+      "text": qa.acceptedAnswerText,
+      "dateCreated": qa.datePublished,
+      "author": {
+        "@type": "Organization",
+        "name": siteConfig.name
+      }
+    };
+  }
+  
+  return schema;
+}
