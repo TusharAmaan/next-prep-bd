@@ -11,7 +11,7 @@ import PostRightRail from "@/components/post/PostRightRail";
 import Sidebar from "@/components/Sidebar";
 import ScrollToTop from "@/components/ScrollToTop";
 import { headers } from 'next/headers';
-import 'katex/dist/katex.min.css'; 
+
 import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
 import { getBreadcrumbSchema, getQAPageSchema } from "@/lib/seo-utils";
