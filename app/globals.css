@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-@import 'katex/dist/katex.min.css'; /* MUST BE LINE 1 */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -476,44 +476,6 @@ blockquote strong {
   color: #e0e7ff;
 }
 
-/* ==========================================================================
-   KATEX & HTML MATH RENDERING FIXES (Tailwind Prose Alignment Reset)
-   ========================================================================== */
-
-/* Prevent Tailwind preflight/typography from overriding KaTeX internal formatting */
-.prose .katex,
-.single-post-prose .katex {
-  font-family: KaTeX_Main, 'Times New Roman', serif !important;
-  font-size: inherit;
-  line-height: 1.2 !important;
-  text-indent: 0;
-  white-space: nowrap;
-}
-
-.prose .katex *,
-.single-post-prose .katex * {
-  font-family: inherit;
-  box-sizing: content-box !important; /* KaTeX layout requires content-box */
-  line-height: 1.2 !important;
-}
-
-/* Ensure display equations render centered as blocks */
-.prose .katex-display,
-.single-post-prose .katex-display {
-  display: block !important;
-  width: 100% !important;
-  text-align: center !important;
-  margin: 1.25em 0 !important;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-/* Prevent Tailwind's preflight from overriding KaTeX internal formatting */
-.katex,
-.katex * {
-  box-sizing: content-box !important; /* KaTeX layout requires content-box */
-  line-height: 1.2 !important;
-}
 
 /* Fix standard HTML sup and sub elements inside prose to prevent vertical layout shifts */
 .prose sup,

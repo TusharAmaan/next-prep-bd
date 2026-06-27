@@ -4,10 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ThumbsUp, MessageSquare, Flag, Quote as QuoteIcon, Loader2 } from 'lucide-react';
 import { toggleForumUpvote, createForumComment } from '@/app/actions/forumActions';
-import MathRenderer from '../shared/MathRenderer';
+import RichTextDisplay from '../shared/RichTextDisplay';
 import ReportModal from './ReportModal';
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
 import { capitalizeEachWord } from '@/utils/stringUtils';
 
 interface Comment {
@@ -49,24 +47,7 @@ export default function CommentSection({
     setComments(initialComments);
   }, [initialComments]);
 
-  // Re-run KaTeX math auto-render whenever the comments list updates
-  useEffect(() => {
-    if (commentsContainerRef.current) {
-      try {
-        renderMathInElement(commentsContainerRef.current, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true }
-          ],
-          throwOnError: false
-        });
-      } catch (err) {
-        console.error("KaTeX comments render error:", err);
-      }
-    }
-  }, [comments]);
+  // Math rendering is now handled by RichTextDisplay within each CommentThread
 
   const adjustHeight = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
@@ -224,8 +205,7 @@ export default function CommentSection({
         ))}
       </div>
       
-      {/* Fallback MathRenderer just in case */}
-      <MathRenderer />
+
     </div>
   );
 }
@@ -367,9 +347,9 @@ function CommentThread({
               <div className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">
                 {capitalizeEachWord(comment.author?.gamification_rank || 'novice')} • {new Date(comment.created_at).toLocaleDateString()}
               </div>
-              <div 
+              <RichTextDisplay 
+                content={comment.content}
                 className="prose dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words"
-                dangerouslySetInnerHTML={{ __html: comment.content }}
               />
             </div>
           </div>

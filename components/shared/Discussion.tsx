@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { MessageSquare, Trash2, Send, CornerDownRight, Loader2, ThumbsUp } from 'lucide-react';
 import { toast } from 'sonner';
 import ConfirmModal from './ConfirmModal';
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
+import RichTextDisplay from './RichTextDisplay';
 import { capitalizeEachWord } from '@/utils/stringUtils';
 
 interface DiscussionProps {
@@ -75,24 +74,7 @@ export default function Discussion({ itemType, itemId }: DiscussionProps) {
     if (itemId) fetchComments();
   }, [itemId]);
 
-  // Dynamically trigger KaTeX math rendering whenever comments list or replying state updates
-  useEffect(() => {
-    if (commentsContainerRef.current) {
-      try {
-        renderMathInElement(commentsContainerRef.current, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true }
-          ],
-          throwOnError: false
-        });
-      } catch (err) {
-        console.error("KaTeX comments render error:", err);
-      }
-    }
-  }, [comments, replyingTo, loading]);
+  // Math rendering is now handled by RichTextDisplay
 
   const adjustHeight = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
@@ -366,9 +348,10 @@ function CommentItem({
               <span className="block font-bold text-slate-900 dark:text-white text-xs hover:underline cursor-pointer mb-0.5">
                 {getName(comment)}
               </span>
-              <p className="text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words">
-                {comment.content}
-              </p>
+              <RichTextDisplay 
+                className="text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words"
+                content={comment.content} 
+              />
             </div>
           </div>
 
@@ -457,10 +440,10 @@ function CommentItem({
                           <span className="block font-bold text-slate-900 dark:text-white text-[11px] hover:underline cursor-pointer mb-0.5">
                             {getName(reply)}
                           </span>
-                          <p className="text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words">
+                          <div className="text-slate-700 dark:text-slate-200 text-[13px] leading-relaxed font-normal whitespace-pre-line break-words">
                             <span className="text-indigo-600 dark:text-indigo-450 text-xs font-semibold mr-1.5">@{getName(comment)}</span>
-                            {reply.content}
-                          </p>
+                            <RichTextDisplay content={reply.content} className="inline" />
+                          </div>
                         </div>
                       </div>
                       

@@ -155,6 +155,8 @@ export default function SinglePostContent({
         .dark .single-post-prose table th {
             background: #0f172a !important;
         }
+
+
       `}</style>
     </div>
   );

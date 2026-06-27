@@ -6,8 +6,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
+import RichTextDisplay from "../shared/RichTextDisplay";
 
 interface Option {
   option_text: string;
@@ -38,21 +37,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
   const componentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (componentRef.current) {
-      try {
-        renderMathInElement(componentRef.current, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true },
-          ],
-          throwOnError: false,
-        });
-      } catch (err) {
-        console.error("QuizView KaTeX render error:", err);
-      }
-    }
+
   }, [questions, revealed, printMode]); // Re-render math when questions or visibility state changes
 
   const handlePrint = useReactToPrint({
@@ -95,10 +80,10 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
             
             <div className="w-full min-w-0">
               <div className="overflow-x-auto">
-                 <h3 
+                 <RichTextDisplay 
                    className="text-base md:text-lg font-bold text-slate-800 leading-relaxed print:text-black print:text-[11pt] print:leading-tight [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-300 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto" 
-                   dangerouslySetInnerHTML={{ __html: q.question_text }}
-                 ></h3>
+                   content={q.question_text}
+                 />
               </div>
               
               <div className="flex gap-2 mt-2 print:hidden flex-wrap">
@@ -158,7 +143,7 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
                       onClick={() => handleOptionClick(q.id, i)}
                       className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all flex justify-between items-center ${styleClass} print:p-1.5 print:border print:rounded-md print:text-[10pt] print:break-inside-avoid`}
                     >
-                       <span className="flex-1">{opt.option_text}</span>
+                       <RichTextDisplay className="flex-1" content={opt.option_text} />
                        
                        {/* Icons for PDF (Black) and Web (Colored) */}
                        {showAnswer && isCorrect && <CheckCircle className="w-5 h-5 text-green-600 print:text-black flex-shrink-0 ml-2" />}
@@ -179,9 +164,9 @@ export default function QuizView({ questions, isLoggedIn, title }: QuizViewProps
                  
                  {isLoggedIn ? (
                     <div className="overflow-x-auto">
-                       <div 
+                       <RichTextDisplay 
                           className="text-sm text-slate-700 leading-relaxed print:text-black [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-300 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto"
-                          dangerouslySetInnerHTML={{ __html: q.explanation || "No explanation provided." }}
+                          content={q.explanation || "No explanation provided."}
                        />
                     </div>
                  ) : (

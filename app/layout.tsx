@@ -1,6 +1,5 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import "katex/dist/katex.min.css";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import Header from "@/components/Header";
@@ -15,10 +14,11 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
+// @ts-expect-error - IDE type resolution issue with Vercel Analytics package
 import { Analytics } from "@vercel/analytics/react"
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import MathJaxProvider from "@/components/shared/MathJaxProvider";
 import { getOrganizationSchema } from "@/lib/seo-utils";
-import MathRenderer from "@/components/shared/MathRenderer";
 
 const bangla = Noto_Serif_Bengali({
   subsets: ["bengali"],
@@ -127,7 +127,7 @@ export default function RootLayout({
             }
           } catch(e) {}
         `}} />
-        {/* Global Math Rendering (KaTeX CSS imported at top) */}
+
       </head>
       <body className={`${GeistSans.className} antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`} suppressHydrationWarning>
         <ThemeProvider>
@@ -142,7 +142,9 @@ export default function RootLayout({
 
           <Header />
           <main className="min-h-screen">
-             {children}
+             <MathJaxProvider>
+               {children}
+             </MathJaxProvider>
           </main>
           <Toaster position="top-right" />
           <Footer />
@@ -151,7 +153,6 @@ export default function RootLayout({
           <ScrollToTop />
           <GoogleAnalytics gaId="G-9BGK82JB2D" />
 
-          <MathRenderer />
         </ThemeProvider>
       </body>
     </html>

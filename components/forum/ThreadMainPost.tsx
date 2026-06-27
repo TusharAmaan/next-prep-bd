@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ThumbsUp, Eye, Flag, Bookmark } from 'lucide-react';
-import MathRenderer from '../shared/MathRenderer';
+import RichTextDisplay from '../shared/RichTextDisplay';
 import { toggleForumUpvote, toggleForumBookmark } from '@/app/actions/forumActions';
 import ReportModal from './ReportModal';
 import MCQInteractiveWrapper from './MCQInteractiveWrapper';
@@ -153,10 +153,10 @@ export default function ThreadMainPost({
         </div>
       </div>
 
-      {/* TinyMCE Content */}
-      <div 
+      {/* Content */}
+      <RichTextDisplay 
+        content={thread.content}
         className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 text-base leading-relaxed mb-6 font-medium"
-        dangerouslySetInnerHTML={{ __html: thread.content }}
       />
 
       {/* MCQ option boxes placed below post content */}
@@ -196,9 +196,6 @@ export default function ThreadMainPost({
           })}
         </div>
       )}
-      
-      {/* Initialize KaTeX */}
-      <MathRenderer />
       
       {/* Footer Details */}
       <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">

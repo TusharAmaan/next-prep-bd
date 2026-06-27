@@ -10,7 +10,6 @@ import {
   Edit, PlusCircle, Save, X 
 } from "lucide-react";
 import RichTextEditor from "@/components/admin/sections/RichTextEditor";
-import MathRenderer from "@/components/shared/MathRenderer";
 
 export default function ForumManager({ darkMode = false }: { darkMode?: boolean }) {
   const supabase = createClient();
@@ -1641,7 +1640,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         </div>
       )}
 
-      <MathRenderer />
+      
     </div>
   );
 }

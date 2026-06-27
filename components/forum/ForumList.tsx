@@ -19,7 +19,6 @@ import {
   ArrowUp,
   ArrowDown
 } from "lucide-react";
-import MathRenderer from "../shared/MathRenderer";
 import ReportModal from "./ReportModal";
 
 interface ForumListProps {
@@ -608,7 +607,6 @@ export default function ForumList({
         <MessageSquare className="h-6 w-6" />
       </button>
 
-      <MathRenderer />
     </>
   );
 }

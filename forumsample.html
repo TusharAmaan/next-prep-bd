@@ -1,2365 +1,888 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextPrepBD Forum — Community Discussion</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+    <title>NextPrepBD — Complete Smart Exam Architecture</title>
+    <!-- Premium Editorial & Utility Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <!-- FontAwesome Elements -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind Engine -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            deep: '#0F172A',
+                            primary: '#2563EB',
+                            accent: '#F59E0B',
+                            surface: '#F8FAFC',
+                            card: '#FFFFFF',
+                            border: '#E2E8F0'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
         }
 
-        :root {
-            --navy: #0F1F3D;
-            --navy-light: #1A3057;
-            --indigo: #5B4BDB;
-            --indigo-light: #EEF0FD;
-            --indigo-mid: #7C6EE8;
-            --amber: #F59E0B;
-            --amber-light: #FFFBEB;
-            --green: #10B981;
-            --green-light: #ECFDF5;
-            --red: #EF4444;
-            --red-light: #FEF2F2;
-            --slate: #6B7280;
-            --slate-light: #F9FAFB;
-            --border: #E5E7EB;
-            --border-hover: #D1D5DB;
-            --white: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #4B5563;
-            --text-muted: #9CA3AF;
-            --bg-page: #F3F4F6;
-            --radius: 10px;
-            --radius-sm: 6px;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            --transition: 0.18s ease;
+        .bento-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        html {
-            scroll-behavior: smooth;
+        .bento-hover:hover {
+            transform: translateY(-4px);
+            border-color: #CBD5E1;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-page);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ─── TOP NAV ─── */
-        .topnav {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: var(--navy);
-            height: 56px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            margin-right: 32px;
-            flex-shrink: 0;
-        }
-
-        .nav-logo-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--indigo);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-logo-icon svg {
-            display: block;
-        }
-
-        .nav-logo-text {
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 700;
-            font-size: 17px;
-            color: #fff;
-            letter-spacing: -0.3px;
-        }
-
-        .nav-logo-text span {
-            color: #A5B4FC;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .nav-link {
-            color: #CBD5E1;
-            text-decoration: none;
-            font-size: 13.5px;
-            font-weight: 500;
-            padding: 6px 12px;
-            border-radius: var(--radius-sm);
-            transition: background var(--transition), color var(--transition);
-            white-space: nowrap;
-        }
-
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-        }
-
-        .nav-link.active {
-            background: var(--indigo);
-            color: #fff;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .nav-search-bar {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 8px;
-            padding: 0 12px;
-            gap: 8px;
-            height: 34px;
-            width: 220px;
-            transition: background var(--transition), border-color var(--transition);
-            cursor: text;
-        }
-
-        .nav-search-bar:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.22);
-        }
-
-        .nav-search-bar input {
-            background: none;
-            border: none;
-            outline: none;
-            font-size: 13px;
-            color: #fff;
-            flex: 1;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .nav-search-bar input::placeholder {
-            color: rgba(255, 255, 255, 0.42);
-        }
-
-        .nav-search-bar svg {
-            flex-shrink: 0;
-        }
-
-        .nav-btn {
-            height: 34px;
-            padding: 0 14px;
-            border-radius: 8px;
-            border: none;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: opacity var(--transition);
-        }
-
-        .nav-btn:hover {
-            opacity: 0.9;
-        }
-
-        .nav-btn.ghost {
-            background: rgba(255, 255, 255, 0.10);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .nav-btn.primary {
-            background: var(--indigo);
-            color: #fff;
-        }
-
-        .avatar-circle {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: var(--indigo-mid);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 13px;
-            color: #fff;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        /* ─── FORUM SUBHEADER ─── */
-        .forum-header {
-            background: var(--white);
-            border-bottom: 1px solid var(--border);
-            padding: 0 20px;
-        }
-
-        .forum-header-inner {
-            max-width: 1440px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 52px;
-            gap: 16px;
-        }
-
-        .forum-breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        .forum-breadcrumb a {
-            color: var(--indigo);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .forum-breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .forum-breadcrumb .sep {
-            color: var(--border-hover);
-        }
-
-        .forum-tabs {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .forum-tab {
-            padding: 6px 14px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-family: 'Inter', sans-serif;
-            transition: background var(--transition), color var(--transition);
-            white-space: nowrap;
-        }
-
-        .forum-tab:hover {
-            background: var(--slate-light);
-            color: var(--text-primary);
-        }
-
-        .forum-tab.active {
-            background: var(--indigo-light);
-            color: var(--indigo);
-            font-weight: 600;
-        }
-
-        .post-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0 16px;
-            height: 36px;
-            background: var(--indigo);
-            color: #fff;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: background var(--transition);
-            flex-shrink: 0;
-        }
-
-        .post-btn:hover {
-            background: var(--indigo-mid);
-        }
-
-        .post-btn svg {
-            flex-shrink: 0;
-        }
-
-        /* ─── MAIN LAYOUT ─── */
-        .main-wrap {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 248px 1fr 268px;
-            gap: 18px;
-            align-items: start;
-        }
-
-        /* ─── SHARED CARD ─── */
-        .card {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-title {
-            font-size: 12.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--text-muted);
-        }
-
-        .card-action {
-            font-size: 12px;
-            color: var(--indigo);
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .card-action:hover {
-            text-decoration: underline;
-        }
-
-        /* ─── LEFT SIDEBAR ─── */
-        .sidebar-left {
-            position: sticky;
-            top: 72px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .segment-list {
-            padding: 6px 0;
-        }
-
-        .seg-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 9px 16px;
-            cursor: pointer;
-            transition: background var(--transition);
-            border-left: 3px solid transparent;
-        }
-
-        .seg-item:hover {
-            background: var(--slate-light);
-        }
-
-        .seg-item.active {
-            background: var(--indigo-light);
-            border-left-color: var(--indigo);
-        }
-
-        .seg-item-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .seg-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .seg-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .seg-item.active .seg-name {
-            color: var(--indigo);
-            font-weight: 600;
-        }
-
-        .seg-badge {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: var(--bg-page);
-            padding: 2px 7px;
-            border-radius: 20px;
-        }
-
-        .seg-item.active .seg-badge {
-            background: var(--indigo);
-            color: #fff;
-        }
-
-        .group-list {
-            padding: 8px 0;
-        }
-
-        .group-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 16px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text-secondary);
-            transition: background var(--transition), color var(--transition);
-            border-radius: 0;
-        }
-
-        .group-item:hover {
-            background: var(--slate-light);
-            color: var(--text-primary);
-        }
-
-        .group-item.active {
-            color: var(--indigo);
-            font-weight: 600;
-        }
-
-        .group-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--border-hover);
-            flex-shrink: 0;
-            transition: background var(--transition);
-        }
-
-        .group-item.active .group-dot {
-            background: var(--indigo);
-        }
-
-        .filter-section {
-            padding: 12px 16px 8px;
-        }
-
-        .filter-label {
-            font-size: 11.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .filter-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .chip {
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition);
-            background: var(--white);
-            color: var(--text-secondary);
-        }
-
-        .chip:hover {
-            border-color: var(--indigo);
-            color: var(--indigo);
-            background: var(--indigo-light);
-        }
-
-        .chip.active {
-            background: var(--indigo);
-            color: #fff;
-            border-color: var(--indigo);
-        }
-
-        .divider-line {
-            height: 1px;
-            background: var(--border);
-            margin: 4px 0;
-        }
-
-        .my-stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1px;
-            background: var(--border);
-        }
-
-        .stat-cell {
-            background: var(--white);
-            padding: 14px 12px;
-            text-align: center;
-        }
-
-        .stat-cell .num {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        .stat-cell .lbl {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .stat-cell .num.indigo {
-            color: var(--indigo);
-        }
-
-        .stat-cell .num.amber {
-            color: var(--amber);
-        }
-
-        .stat-cell .num.green {
-            color: var(--green);
-        }
-
-        /* ─── THREAD FEED ─── */
-        .feed-area {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .feed-controls {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .feed-search {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0 12px;
-            height: 36px;
-            flex: 1;
-            max-width: 360px;
-            transition: border-color var(--transition);
-        }
-
-        .feed-search:hover,
-        .feed-search:focus-within {
-            border-color: var(--indigo);
-        }
-
-        .feed-search input {
-            background: none;
-            border: none;
-            outline: none;
-            font-size: 13px;
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-        }
-
-        .feed-search input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .sort-group {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .sort-btn {
-            padding: 6px 12px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            font-size: 12.5px;
-            font-weight: 500;
-            cursor: pointer;
-            background: var(--white);
-            color: var(--text-secondary);
-            font-family: 'Inter', sans-serif;
-            transition: all var(--transition);
-            white-space: nowrap;
-        }
-
-        .sort-btn:hover {
-            border-color: var(--indigo);
-            color: var(--indigo);
-        }
-
-        .sort-btn.active {
-            background: var(--indigo);
-            border-color: var(--indigo);
-            color: #fff;
-        }
-
-        /* Thread card */
-        .thread-card {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
-            cursor: pointer;
-            animation: fadeSlideIn 0.3s ease both;
-        }
-
-        .thread-card:hover {
-            border-color: var(--indigo-mid);
-            box-shadow: 0 4px 16px rgba(91, 75, 219, 0.10);
-            transform: translateY(-1px);
-        }
-
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .thread-card:nth-child(1) {
-            animation-delay: 0.05s;
-        }
-
-        .thread-card:nth-child(2) {
-            animation-delay: 0.10s;
-        }
-
-        .thread-card:nth-child(3) {
-            animation-delay: 0.15s;
-        }
-
-        .thread-card:nth-child(4) {
-            animation-delay: 0.20s;
-        }
-
-        .thread-card:nth-child(5) {
-            animation-delay: 0.25s;
-        }
-
-        .thread-card:nth-child(6) {
-            animation-delay: 0.30s;
-        }
-
-        .thread-card.pinned {
-            border-left: 3px solid var(--amber);
-        }
-
-        .thread-inner {
-            display: flex;
-            gap: 0;
-        }
-
-        /* Vote column */
-        .vote-col {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 16px 14px 16px 16px;
-            gap: 2px;
-            flex-shrink: 0;
-        }
-
-        .vote-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all var(--transition);
-            color: var(--text-muted);
-        }
-
-        .vote-btn:hover {
-            border-color: var(--indigo);
-            color: var(--indigo);
-            background: var(--indigo-light);
-        }
-
-        .vote-btn.upvoted {
-            background: var(--indigo);
-            border-color: var(--indigo);
-            color: #fff;
-        }
-
-        .vote-count {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-family: 'DM Sans', sans-serif;
-            min-width: 28px;
-            text-align: center;
-            line-height: 1.2;
-            padding: 2px 0;
-        }
-
-        /* Thread body */
-        .thread-body {
-            flex: 1;
-            padding: 14px 16px 14px 0;
-            min-width: 0;
-        }
-
-        .thread-hierarchy {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            margin-bottom: 9px;
-            flex-wrap: wrap;
-            row-gap: 4px;
-        }
-
-        .hier-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-        }
-
-        .hier-pill.segment {
-            background: #EEF0FD;
-            color: #5B4BDB;
-        }
-
-        .hier-pill.group {
-            background: #FFF7ED;
-            color: #D97706;
-        }
-
-        .hier-pill.subject {
-            background: #ECFDF5;
-            color: #059669;
-        }
-
-        .hier-arrow {
-            font-size: 10px;
-            color: var(--text-muted);
-            padding: 0 3px;
-        }
-
-        .thread-type-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 6px;
-        }
-
-        .type-question {
-            background: #EEF2FF;
-            color: #4338CA;
-        }
-
-        .type-strategy {
-            background: #FDF2F8;
-            color: #9D174D;
-        }
-
-        .type-discussion {
-            background: #F0FDF4;
-            color: #166534;
-        }
-
-        .type-reading {
-            background: #FFFBEB;
-            color: #92400E;
-        }
-
-        .thread-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            line-height: 1.45;
-            margin-bottom: 6px;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-        }
-
-        .thread-title:hover {
-            color: var(--indigo);
-        }
-
-        .thread-excerpt {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.55;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .thread-meta {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            row-gap: 4px;
-        }
-
-        .meta-author {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12.5px;
-            color: var(--text-secondary);
-        }
-
-        .meta-avatar {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            font-size: 10px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .meta-author strong {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .meta-rank-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 20px;
-            background: var(--amber-light);
-            color: #92400E;
-            border: 1px solid #FCD34D;
-        }
-
-        .meta-sep {
-            color: var(--border-hover);
-            font-size: 12px;
-        }
-
-        .meta-stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .meta-stat svg {
-            flex-shrink: 0;
-        }
-
-        .meta-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .thread-tags {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .tag {
-            padding: 2px 8px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            font-size: 11px;
-            color: var(--text-secondary);
-            background: var(--white);
-            transition: all var(--transition);
-            cursor: pointer;
-        }
-
-        .tag:hover {
-            border-color: var(--indigo);
-            color: var(--indigo);
-            background: var(--indigo-light);
-        }
-
-        /* Expert reply indicator */
-        .expert-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px 8px 58px;
-            background: var(--green-light);
-            border-top: 1px solid #A7F3D0;
-            font-size: 12px;
-            color: #065F46;
-            font-weight: 500;
-        }
-
-        .expert-bar svg {
-            flex-shrink: 0;
-        }
-
-        /* Pinned notice */
-        .pinned-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 16px;
-            background: var(--amber-light);
-            border-bottom: 1px solid #FCD34D;
-            font-size: 11.5px;
-            color: #92400E;
-            font-weight: 500;
-        }
-
-        /* ─── RIGHT SIDEBAR ─── */
-        .sidebar-right {
-            position: sticky;
-            top: 72px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        /* Leaderboard */
-        .leader-list {
-            padding: 6px 0 8px;
-        }
-
-        .leader-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 16px;
-            transition: background var(--transition);
-            cursor: pointer;
-        }
-
-        .leader-item:hover {
-            background: var(--slate-light);
-        }
-
-        .rank-num {
-            width: 22px;
-            font-size: 12.5px;
-            font-weight: 700;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .rank-num.gold {
-            color: #D97706;
-        }
-
-        .rank-num.silver {
-            color: #6B7280;
-        }
-
-        .rank-num.bronze {
-            color: #92400E;
-        }
-
-        .rank-num.plain {
-            color: var(--text-muted);
-        }
-
-        .leader-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .leader-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .leader-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .leader-sub {
-            font-size: 11.5px;
-            color: var(--text-muted);
-        }
-
-        .leader-pts {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--indigo);
-            font-family: 'DM Sans', sans-serif;
-            flex-shrink: 0;
-        }
-
-        /* Activity feed */
-        .activity-list {
-            padding: 6px 0 10px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 9px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-top: 5px;
-            flex-shrink: 0;
-        }
-
-        .activity-text {
-            font-size: 12.5px;
-            color: var(--text-secondary);
-            line-height: 1.45;
-        }
-
-        .activity-text strong {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .activity-time {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        /* Trending */
-        .trending-list {
-            padding: 6px 0 8px;
-        }
-
-        .trending-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 16px;
-            cursor: pointer;
-            transition: background var(--transition);
-        }
-
-        .trending-item:hover {
-            background: var(--slate-light);
-        }
-
-        .trending-num {
-            width: 20px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--indigo);
-            font-family: 'DM Sans', sans-serif;
-            flex-shrink: 0;
-            text-align: center;
-        }
-
-        .trending-title {
-            font-size: 13px;
-            color: var(--text-primary);
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        .trending-meta {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        /* Exam segment progress block */
-        .progress-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .progress-item:last-child {
-            border-bottom: none;
-        }
-
-        .progress-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .progress-name {
-            font-size: 12.5px;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .progress-bar-wrap {
-            height: 4px;
-            background: var(--border);
-            border-radius: 2px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .progress-pct {
-            font-size: 12px;
-            font-weight: 700;
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 8px 0 4px;
-        }
-
-        .page-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            background: var(--white);
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-            transition: all var(--transition);
-        }
-
-        .page-btn:hover {
-            border-color: var(--indigo);
-            color: var(--indigo);
-            background: var(--indigo-light);
-        }
-
-        .page-btn.active {
-            background: var(--indigo);
-            border-color: var(--indigo);
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .page-btn:disabled {
-            opacity: 0.38;
-            cursor: not-allowed;
-        }
-
-        /* ─── MOBILE ─── */
-        .mobile-menu-btn {
+        /* Hide default scrollbars for smooth interface components */
+        .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
 
-        .mobile-fab {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 200;
-            width: 52px;
-            height: 52px;
-            background: var(--indigo);
-            color: #fff;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 4px 16px rgba(91, 75, 219, 0.38);
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            font-family: sans-serif;
-            transition: background var(--transition), transform var(--transition);
-        }
-
-        .mobile-fab:hover {
-            background: var(--indigo-mid);
-            transform: scale(1.08);
-        }
-
-        @media (max-width: 1100px) {
-            .main-wrap {
-                grid-template-columns: 220px 1fr 0;
-            }
-
-            .sidebar-right {
-                display: none;
-            }
-        }
-
-        @media (max-width: 800px) {
-            .main-wrap {
-                grid-template-columns: 1fr;
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .sidebar-left {
-                position: static;
-                display: none;
-            }
-
-            .sidebar-left.open {
-                display: flex;
-            }
-
-            .topnav {
-                padding: 0 14px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .nav-search-bar {
-                display: none;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-            }
-
-            .mobile-fab {
-                display: flex;
-            }
-
-            .forum-header-inner {
-                flex-wrap: wrap;
-                height: auto;
-                padding: 10px 0;
-                gap: 8px;
-            }
-
-            .forum-tabs {
-                overflow-x: auto;
-                padding-bottom: 2px;
-            }
-
-            .thread-hierarchy {
-                flex-wrap: wrap;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .topnav {
-                gap: 8px;
-            }
-
-            .feed-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .sort-group {
-                overflow-x: auto;
-                padding-bottom: 2px;
-            }
-
-            .thread-body {
-                padding: 12px 12px 12px 0;
-            }
-
-            .vote-col {
-                padding: 12px 10px 12px 12px;
-            }
-        }
-
-        /* Utility */
-        .scroll-hint {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 12px 0 4px;
-        }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 48px 24px;
-            color: var(--text-muted);
-            text-align: center;
-            gap: 12px;
-        }
-
-        .empty-state svg {
-            opacity: 0.3;
-        }
-
-        .empty-state p {
-            font-size: 14px;
-        }
-
-        /* Skeleton shimmer */
-        @keyframes shimmer {
-            0% {
-                background-position: -600px 0;
-            }
-
-            100% {
-                background-position: 600px 0;
-            }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
 
-<body>
+<body
+    class="bg-brand-surface font-sans text-brand-deep antialiased selection:bg-brand-primary/10 selection:text-brand-primary">
 
-    <!-- TOP NAV -->
-    <nav class="topnav">
-        <a class="nav-logo" href="#">
-            <div class="nav-logo-icon">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 13.5L9 4.5L15 13.5H3Z" fill="white" fill-opacity="0.9" />
-                    <circle cx="9" cy="9" r="2.5" fill="white" />
-                </svg>
-            </div>
-            <span class="nav-logo-text">NextPrep<span>BD</span></span>
-        </a>
-        <div class="nav-links">
-            <a class="nav-link" href="#">Home</a>
-            <a class="nav-link active" href="#">Forum</a>
-            <a class="nav-link" href="#">Resources</a>
-            <a class="nav-link" href="#">Exams</a>
-            <a class="nav-link" href="#">Courses</a>
-            <a class="nav-link" href="#">eBooks</a>
-            <a class="nav-link" href="#">News</a>
-        </div>
-        <div class="nav-right">
-            <div class="nav-search-bar">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,0.5)"
-                    stroke-width="1.6">
-                    <circle cx="7" cy="7" r="5" />
-                    <path d="M12 12l2.5 2.5" />
-                </svg>
-                <input type="text" placeholder="Search threads…">
-            </div>
-            <button class="nav-btn ghost">Sign in</button>
-            <button class="nav-btn primary">Join Free</button>
-            <div class="avatar-circle">TR</div>
-        </div>
-        <button class="mobile-menu-btn nav-btn ghost" onclick="toggleSidebar()"
-            style="padding:0 10px; margin-left:auto;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M2 4h14M2 9h14M2 14h14" />
-            </svg>
-        </button>
-    </nav>
-
-    <!-- FORUM SUBHEADER -->
-    <div class="forum-header">
-        <div class="forum-header-inner">
-            <div class="forum-breadcrumb">
-                <a href="#">Home</a>
-                <span class="sep">›</span>
-                <span>Forum</span>
-            </div>
-            <div class="forum-tabs">
-                <button class="forum-tab active">All Threads</button>
-                <button class="forum-tab">Questions</button>
-                <button class="forum-tab">Study Strategy</button>
-                <button class="forum-tab">Reading</button>
-                <button class="forum-tab">My Posts</button>
-            </div>
-            <button class="post-btn">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M8 2v12M2 8h12" />
-                </svg>
-                New Thread
-            </button>
-        </div>
+    <!-- TOP ANNOUNCEMENT TICKER -->
+    <div
+        class="w-full bg-brand-deep text-white text-xs font-600 py-2 px-4 text-center border-b border-white/10 flex justify-center items-center gap-2">
+        <span class="bg-brand-accent text-brand-deep font-800 px-1.5 py-0.5 rounded text-[10px]">LIVE NOW</span>
+        <span>Dhaka University 'A' Unit Central Trial Board Mock #14 is running. 2,491 candidates actively
+            participating.</span>
+        <a href="#live-arena" class="underline hover:text-brand-accent ml-1">Enter Arena &rarr;</a>
     </div>
 
-    <!-- MAIN -->
-    <div class="main-wrap">
-
-        <!-- LEFT SIDEBAR -->
-        <aside class="sidebar-left" id="sidebarLeft">
-
-            <!-- Segment filter -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Exam Segments</span>
-                    <a class="card-action" href="#">All</a>
-                </div>
-                <div class="segment-list">
-                    <div class="seg-item active">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#EEF0FD;">🎓</div>
-                            <span class="seg-name">HSC</span>
-                        </div>
-                        <span class="seg-badge">1.2k</span>
-                    </div>
-                    <div class="seg-item">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#FFF7ED;">📋</div>
-                            <span class="seg-name">SSC</span>
-                        </div>
-                        <span class="seg-badge">867</span>
-                    </div>
-                    <div class="seg-item">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#ECFDF5;">🏦</div>
-                            <span class="seg-name">Bank PO</span>
-                        </div>
-                        <span class="seg-badge">643</span>
-                    </div>
-                    <div class="seg-item">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#FDF2F8;">⚖️</div>
-                            <span class="seg-name">BCS</span>
-                        </div>
-                        <span class="seg-badge">512</span>
-                    </div>
-                    <div class="seg-item">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#F0FDF4;">🎯</div>
-                            <span class="seg-name">Admission</span>
-                        </div>
-                        <span class="seg-badge">398</span>
-                    </div>
-                    <div class="seg-item">
-                        <div class="seg-item-left">
-                            <div class="seg-icon" style="background:#FFFBEB;">🏛️</div>
-                            <span class="seg-name">NTRCA</span>
-                        </div>
-                        <span class="seg-badge">215</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Groups under HSC -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">HSC Groups</span>
-                </div>
-                <div class="group-list">
-                    <div class="group-item active">
-                        <div class="group-dot"></div>
-                        <span>Science</span>
-                    </div>
-                    <div class="group-item">
-                        <div class="group-dot"></div>
-                        <span>Humanities</span>
-                    </div>
-                    <div class="group-item">
-                        <div class="group-dot"></div>
-                        <span>Commerce</span>
-                    </div>
-                    <div class="group-item">
-                        <div class="group-dot"></div>
-                        <span>General</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Difficulty filter -->
-            <div class="card">
-                <div style="padding: 12px 16px 4px;">
-                    <div class="filter-label">Difficulty</div>
-                    <div class="filter-chips">
-                        <span class="chip active">All</span>
-                        <span class="chip">Easy</span>
-                        <span class="chip">Medium</span>
-                        <span class="chip">Hard</span>
-                    </div>
-                </div>
-                <div style="height: 10px;"></div>
-                <div class="divider-line" style="margin: 0 16px;"></div>
-                <div style="padding: 10px 16px 4px;">
-                    <div class="filter-label">Thread type</div>
-                    <div class="filter-chips">
-                        <span class="chip active">All</span>
-                        <span class="chip">MCQ</span>
-                        <span class="chip">Descriptive</span>
-                        <span class="chip">Reading</span>
-                        <span class="chip">Strategy</span>
-                    </div>
-                </div>
-                <div style="height: 12px;"></div>
-            </div>
-
-            <!-- My stats -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">My Activity</span>
-                    <a class="card-action" href="#">Profile</a>
-                </div>
-                <div class="my-stats-grid">
-                    <div class="stat-cell">
-                        <div class="num indigo">47</div>
-                        <div class="lbl">Threads</div>
-                    </div>
-                    <div class="stat-cell">
-                        <div class="num amber">312</div>
-                        <div class="lbl">Points</div>
-                    </div>
-                    <div class="stat-cell">
-                        <div class="num green">89%</div>
-                        <div class="lbl">Accuracy</div>
-                    </div>
-                    <div class="stat-cell">
-                        <div class="num" style="color:#EC4899;">18</div>
-                        <div class="lbl">Bookmarks</div>
-                    </div>
-                </div>
-            </div>
-
-        </aside>
-
-        <!-- THREAD FEED -->
-        <main class="feed-area">
-
-            <!-- Controls -->
-            <div class="feed-controls">
-                <div class="feed-search">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#9CA3AF" stroke-width="1.6">
-                        <circle cx="7" cy="7" r="5" />
-                        <path d="M12 12l2.5 2.5" />
-                    </svg>
-                    <input type="text" placeholder="Search within HSC › Science threads…">
-                </div>
-                <div class="sort-group">
-                    <button class="sort-btn active">Hot</button>
-                    <button class="sort-btn">Latest</button>
-                    <button class="sort-btn">Unanswered</button>
-                    <button class="sort-btn">Expert Replied</button>
-                </div>
-            </div>
-
-            <!-- Thread 1 — pinned -->
-            <div class="thread-card pinned">
-                <div class="pinned-bar">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M10 2L14 6L8 8L6 14L4 8L0 6L6 4L8 0Z" />
-                    </svg>
-                    Pinned by moderator
-                </div>
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn upvoted" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">142</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">HSC</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">Science</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">Physics 1st Paper</span>
-                            <span class="thread-type-badge type-strategy">Study Strategy</span>
-                        </div>
-                        <div class="thread-title">Complete guide to scoring A+ in HSC Physics — time allocation, must-do
-                            chapters, and past paper patterns</div>
-                        <div class="thread-excerpt">After analyzing 6 years of board questions and coaching 200+
-                            students, here's what actually matters. Optics and waves account for 38% of marks — spend
-                            disproportionate time here. Simple harmonic motion questions always have a derivation
-                            trap...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#5B4BDB;">SR</div>
-                                <strong>Sakib Rahman</strong>
-                                <span class="meta-rank-badge">⭐ Expert</span>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>89 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>4.2k views</span>
-                            </div>
-                            <span class="meta-time">3 days ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#physics</span>
-                            <span class="tag">#strategy</span>
-                            <span class="tag">#optics</span>
-                            <span class="tag">#hsc2025</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="expert-bar">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="#059669">
-                        <path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z" />
-                    </svg>
-                    Expert reply available — last response by <strong style="margin-left:3px;">Prof. Abir
-                        Hossain</strong>
-                </div>
-            </div>
-
-            <!-- Thread 2 -->
-            <div class="thread-card">
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">67</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">HSC</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">Science</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">Chemistry 2nd Paper</span>
-                            <span class="thread-type-badge type-question">MCQ Question</span>
-                        </div>
-                        <div class="thread-title">Why does the pH of a buffer solution not change significantly upon
-                            adding a small amount of strong acid or base?</div>
-                        <div class="thread-excerpt">I understand the Henderson-Hasselbalch equation, but conceptually
-                            I'm struggling with the buffer capacity limit. At what point does a buffer "break"? The
-                            textbook doesn't explain this well...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#EC4899;">NI</div>
-                                <strong>Nadia Islam</strong>
-                                <span class="meta-rank-badge">🏅 Contributor</span>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>23 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>891 views</span>
-                            </div>
-                            <span class="meta-time">5 hours ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#buffer</span>
-                            <span class="tag">#acid-base</span>
-                            <span class="tag">#pH</span>
-                            <span class="tag">#chemistry2</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Thread 3 -->
-            <div class="thread-card">
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">54</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">BCS</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">Preliminary</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">Bangla Literature</span>
-                            <span class="thread-type-badge type-reading">Reading Comprehension</span>
-                        </div>
-                        <div class="thread-title">Passage analysis: Rabindranath Tagore's "Sonar Tori" — structure,
-                            metaphor, and the thematic treatment of transience</div>
-                        <div class="thread-excerpt">Sharing my full breakdown of this poem after seeing it appear in BCS
-                            prelim 3 times. The harvest metaphor is consistently misread. The boat is not salvation — it
-                            represents cultural transmission across generations, not personal redemption...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#10B981;">MH</div>
-                                <strong>Mehedi Hassan</strong>
-                                <span class="meta-rank-badge">📚 Scholar</span>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>41 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>2.1k views</span>
-                            </div>
-                            <span class="meta-time">1 day ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#tagore</span>
-                            <span class="tag">#bcs-bangla</span>
-                            <span class="tag">#poetry</span>
-                            <span class="tag">#prelim</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="expert-bar">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="#059669">
-                        <path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z" />
-                    </svg>
-                    Expert reply available — last response by <strong style="margin-left:3px;">Dr. Farzana
-                        Begum</strong>
-                </div>
-            </div>
-
-            <!-- Thread 4 -->
-            <div class="thread-card">
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">38</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">Bank PO</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">Quantitative</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">Arithmetic</span>
-                            <span class="thread-type-badge type-question">MCQ Question</span>
-                        </div>
-                        <div class="thread-title">A train 150m long crosses a bridge in 30 seconds at 72 km/h — why is
-                            the standard approach giving me the wrong answer?</div>
-                        <div class="thread-excerpt">I consistently get these time-distance-speed questions wrong. When
-                            speed is given in km/h and time in seconds, do I always convert speed to m/s first? What if
-                            the question mixes units? Please show the step-by-step...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#F59E0B;">RA</div>
-                                <strong>Rashed Ahmed</strong>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>17 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>734 views</span>
-                            </div>
-                            <span class="meta-time">2 hours ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#speed-distance</span>
-                            <span class="tag">#bankpo</span>
-                            <span class="tag">#maths</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Thread 5 -->
-            <div class="thread-card">
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">29</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">HSC</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">Science</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">Biology 2nd Paper</span>
-                            <span class="thread-type-badge type-discussion">Discussion</span>
-                        </div>
-                        <div class="thread-title">Is there a conceptual trick to memorizing the steps of mitosis vs
-                            meiosis — specifically where students lose marks?</div>
-                        <div class="thread-excerpt">I tutored 40 students through last year's HSC. Meiosis II is where
-                            90% lose marks — they confuse it with mitosis. Here's a visual memory method that worked for
-                            38 of them...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#8B5CF6;">TK</div>
-                                <strong>Tania Khatun</strong>
-                                <span class="meta-rank-badge">🎯 Tutor</span>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>56 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>1.8k views</span>
-                            </div>
-                            <span class="meta-time">6 hours ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#biology</span>
-                            <span class="tag">#mitosis</span>
-                            <span class="tag">#meiosis</span>
-                            <span class="tag">#cell-division</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Thread 6 -->
-            <div class="thread-card">
-                <div class="thread-inner">
-                    <div class="vote-col">
-                        <button class="vote-btn" onclick="toggleVote(this)">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 2L15 13H1Z" />
-                            </svg>
-                        </button>
-                        <span class="vote-count">22</span>
-                        <button class="vote-btn" onclick="toggleVote(this, 'down')">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 14L1 3H15Z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="thread-body">
-                        <div class="thread-hierarchy">
-                            <span class="hier-pill segment">Admission</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill group">University Admission</span>
-                            <span class="hier-arrow">›</span>
-                            <span class="hier-pill subject">English</span>
-                            <span class="thread-type-badge type-reading">Reading Comprehension</span>
-                        </div>
-                        <div class="thread-title">DU A-unit 2023 English passage on "digital identity" — full
-                            sentence-by-sentence breakdown and vocab list</div>
-                        <div class="thread-excerpt">This passage tripped up a lot of applicants. The question on
-                            "authentic self" in paragraph 3 maps to option C not D — here is why the wording is
-                            deliberately deceptive in the question stem...</div>
-                        <div class="thread-meta">
-                            <div class="meta-author">
-                                <div class="meta-avatar" style="background:#14B8A6;">JA</div>
-                                <strong>Jannatul Adiba</strong>
-                                <span class="meta-rank-badge">📖 Reader</span>
-                            </div>
-                            <span class="meta-sep">·</span>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8l-3-2H3a1 1 0 01-1-1z" />
-                                </svg>
-                                <span>31 replies</span>
-                            </div>
-                            <div class="meta-stat">
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path d="M1 8s3-6 7-6 7 6 7 6-3 6-7 6-7-6-7-6z" />
-                                    <circle cx="8" cy="8" r="2" />
-                                </svg>
-                                <span>1.1k views</span>
-                            </div>
-                            <span class="meta-time">1 day ago</span>
-                        </div>
-                        <div class="thread-tags">
-                            <span class="tag">#du-aunit</span>
-                            <span class="tag">#english</span>
-                            <span class="tag">#2023</span>
-                            <span class="tag">#comprehension</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination">
-                <button class="page-btn" disabled>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 4L6 8l4 4" />
-                    </svg>
-                </button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <span style="font-size:13px; color:var(--text-muted); padding: 0 4px;">…</span>
-                <button class="page-btn">18</button>
-                <button class="page-btn">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 4l4 4-4 4" />
-                    </svg>
-                </button>
-            </div>
-
-        </main>
-
-        <!-- RIGHT SIDEBAR -->
-        <aside class="sidebar-right">
-
-            <!-- Leaderboard -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Top Contributors</span>
-                    <a class="card-action" href="#">Full board</a>
-                </div>
-                <div class="leader-list">
-                    <div class="leader-item">
-                        <span class="rank-num gold">1</span>
-                        <div class="leader-avatar" style="background:#5B4BDB;">SR</div>
-                        <div class="leader-info">
-                            <div class="leader-name">Sakib Rahman</div>
-                            <div class="leader-sub">HSC · Physics</div>
-                        </div>
-                        <span class="leader-pts">3,241</span>
-                    </div>
-                    <div class="leader-item">
-                        <span class="rank-num silver">2</span>
-                        <div class="leader-avatar" style="background:#10B981;">MH</div>
-                        <div class="leader-info">
-                            <div class="leader-name">Mehedi Hassan</div>
-                            <div class="leader-sub">BCS · Bangla</div>
-                        </div>
-                        <span class="leader-pts">2,890</span>
-                    </div>
-                    <div class="leader-item">
-                        <span class="rank-num bronze">3</span>
-                        <div class="leader-avatar" style="background:#8B5CF6;">TK</div>
-                        <div class="leader-info">
-                            <div class="leader-name">Tania Khatun</div>
-                            <div class="leader-sub">HSC · Biology</div>
-                        </div>
-                        <span class="leader-pts">2,614</span>
-                    </div>
-                    <div class="leader-item">
-                        <span class="rank-num plain">4</span>
-                        <div class="leader-avatar" style="background:#EC4899;">NI</div>
-                        <div class="leader-info">
-                            <div class="leader-name">Nadia Islam</div>
-                            <div class="leader-sub">HSC · Chemistry</div>
-                        </div>
-                        <span class="leader-pts">1,987</span>
-                    </div>
-                    <div class="leader-item">
-                        <span class="rank-num plain">5</span>
-                        <div class="leader-avatar" style="background:#14B8A6;">JA</div>
-                        <div class="leader-info">
-                            <div class="leader-name">Jannatul Adiba</div>
-                            <div class="leader-sub">Admission · Eng</div>
-                        </div>
-                        <span class="leader-pts">1,755</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trending topics -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Trending This Week</span>
-                </div>
-                <div class="trending-list">
-                    <div class="trending-item">
-                        <span class="trending-num">1</span>
-                        <div>
-                            <div class="trending-title">SHM equation derivation shortcuts for board</div>
-                            <div class="trending-meta">HSC · Physics · 318 views today</div>
-                        </div>
-                    </div>
-                    <div class="trending-item">
-                        <span class="trending-num">2</span>
-                        <div>
-                            <div class="trending-title">BCS 45th written — expected English translation topics</div>
-                            <div class="trending-meta">BCS · Written · 274 views today</div>
-                        </div>
-                    </div>
-                    <div class="trending-item">
-                        <span class="trending-num">3</span>
-                        <div>
-                            <div class="trending-title">Bank PO 2025 circular — eligibility criteria changes</div>
-                            <div class="trending-meta">Bank PO · 201 views today</div>
-                        </div>
-                    </div>
-                    <div class="trending-item">
-                        <span class="trending-num">4</span>
-                        <div>
-                            <div class="trending-title">Organic chemistry reaction chains — mind map</div>
-                            <div class="trending-meta">HSC · Chemistry · 185 views today</div>
-                        </div>
-                    </div>
-                    <div class="trending-item">
-                        <span class="trending-num">5</span>
-                        <div>
-                            <div class="trending-title">DU Kha unit — biology MCQ patterns from 2019–2024</div>
-                            <div class="trending-meta">Admission · 162 views today</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- My exam progress -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">My Exam Prep</span>
-                    <a class="card-action" href="#">Manage</a>
-                </div>
-                <div style="padding-bottom: 4px;">
-                    <div class="progress-item">
-                        <div class="progress-info">
-                            <div class="progress-name">HSC Physics 1st Paper</div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:72%; background: var(--indigo);"></div>
-                            </div>
-                        </div>
-                        <span class="progress-pct" style="color: var(--indigo);">72%</span>
-                    </div>
-                    <div class="progress-item">
-                        <div class="progress-info">
-                            <div class="progress-name">Chemistry 2nd Paper</div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:55%; background: var(--amber);"></div>
-                            </div>
-                        </div>
-                        <span class="progress-pct" style="color: var(--amber);">55%</span>
-                    </div>
-                    <div class="progress-item">
-                        <div class="progress-info">
-                            <div class="progress-name">Biology 1st Paper</div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:88%; background: var(--green);"></div>
-                            </div>
-                        </div>
-                        <span class="progress-pct" style="color: var(--green);">88%</span>
-                    </div>
-                    <div class="progress-item">
-                        <div class="progress-info">
-                            <div class="progress-name">Higher Math 2nd Paper</div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:34%; background: var(--red);"></div>
-                            </div>
-                        </div>
-                        <span class="progress-pct" style="color: var(--red);">34%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Live activity -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Live Activity</span>
-                    <span
-                        style="display:flex; align-items:center; gap:5px; font-size:11.5px; color: var(--green); font-weight:600;">
+    <!-- MAIN INTERACTIVE NAVIGATION -->
+    <header class="sticky top-0 z-50 w-full border-b border-brand-border glass-header transition-all duration-300">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-20 items-center justify-between">
+                <!-- Brand Identity -->
+                <div class="flex items-center gap-8">
+                    <a href="#" class="text-2xl font-800 tracking-tight text-brand-deep flex items-center gap-1.5">
                         <span
-                            style="width:6px; height:6px; border-radius:50%; background: var(--green); display:inline-block; animation: pulse 2s infinite;"></span>
-                        47 online
-                    </span>
+                            class="bg-gradient-to-r from-brand-primary to-blue-600 bg-clip-text text-transparent">NextPrep</span><span
+                            class="text-brand-accent">BD</span>
+                    </a>
+                    <!-- Quick Segment Jump Anchors -->
+                    <nav
+                        class="hidden lg:flex items-center space-x-6 border-l border-slate-200 pl-6 text-xs font-700 uppercase tracking-wider text-slate-500">
+                        <a href="#live-arena" class="hover:text-brand-primary">Live Schedule</a>
+                        <a href="#feature-matrix" class="hover:text-brand-primary">Core Modules</a>
+                        <a href="#subject-hubs" class="hover:text-brand-primary">Subject Trackers</a>
+                        <a href="#leaderboard" class="hover:text-brand-primary">Leaderboard</a>
+                        <a href="#vault" class="hover:text-brand-primary">Resource Vault</a>
+                    </nav>
                 </div>
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-dot" style="background: var(--indigo);"></div>
-                        <div>
-                            <div class="activity-text"><strong>Sakib</strong> replied in HSC Physics thread</div>
-                            <div class="activity-time">just now</div>
+
+                <!-- Desktop Operational CTA Group -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#" class="text-sm font-600 text-slate-600 hover:text-brand-primary px-3 py-2">Dashboard
+                        Link</a>
+                    <a href="#"
+                        class="inline-flex items-center justify-center rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-600 text-white shadow-sm hover:bg-brand-deep transition-all">
+                        Launch Free Simulator
+                    </a>
+                </div>
+
+                <!-- Mobile Action Toggle -->
+                <div class="flex lg:hidden">
+                    <button id="menu-toggle-btn" type="button"
+                        class="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+                        aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars text-xl" id="menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Collapsible Navigation Drawer -->
+        <div id="mobile-nav-drawer" class="hidden border-b border-brand-border bg-white px-4 py-6 lg:hidden">
+            <div class="space-y-3 font-600 text-slate-700">
+                <a href="#live-arena" class="block py-2 border-b border-slate-50 hover:text-brand-primary">Live
+                    Schedule</a>
+                <a href="#feature-matrix" class="block py-2 border-b border-slate-50 hover:text-brand-primary">Core
+                    Modules</a>
+                <a href="#subject-hubs" class="block py-2 border-b border-slate-50 hover:text-brand-primary">Subject
+                    Trackers</a>
+                <a href="#leaderboard"
+                    class="block py-2 border-b border-slate-50 hover:text-brand-primary">Leaderboard</a>
+                <a href="#vault" class="block py-2 hover:text-brand-primary">Resource Vault</a>
+                <div class="pt-4 flex flex-col gap-2">
+                    <a href="#" class="text-center py-2.5 rounded-xl border border-slate-200 text-sm font-700">Sign
+                        In</a>
+                    <a href="#"
+                        class="text-center py-2.5 rounded-xl bg-brand-primary text-white text-sm font-700 shadow-sm">Launch
+                        Free Simulator</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- SYSTEM HERO ANCHOR -->
+        <section class="relative overflow-hidden py-16 lg:py-24 bg-gradient-to-b from-white to-brand-surface">
+            <div
+                class="absolute inset-0 opacity-5 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]">
+            </div>
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+                    <div class="lg:col-span-6 text-center lg:text-left">
+                        <div
+                            class="inline-flex items-center gap-2 rounded-full bg-brand-primary/5 px-4 py-1.5 text-xs font-700 text-brand-primary mb-6 border border-brand-primary/10">
+                            🚀 LOW LATENCY SIMULATOR NODE
+                        </div>
+                        <h1 class="text-4xl sm:text-5xl font-800 tracking-tight text-brand-deep leading-[1.12] mb-6">
+                            The precise, zero-friction path to your <span
+                                class="bg-gradient-to-r from-brand-primary to-indigo-600 bg-clip-text text-transparent">Target
+                                University & Career</span>.
+                        </h1>
+                        <p class="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                            Cluttered ed-tech portals slow you down. NextPrepBD matches intense local examination
+                            frameworks (DU, BCS, Medical, Engineering) with high-density accuracy mapping, an automated
+                            error tracker, and instantaneous loads.
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                            <a href="#live-arena"
+                                class="inline-flex items-center justify-center rounded-xl bg-brand-primary px-7 py-3.5 text-sm font-700 text-white shadow-md hover:bg-brand-deep hover:-translate-y-0.5 transition-all">
+                                Take Today's Mock Test <i class="fa-solid fa-bolt ml-2 text-xs text-brand-accent"></i>
+                            </a>
+                            <a href="#feature-matrix"
+                                class="inline-flex items-center justify-center rounded-xl bg-white border border-brand-border px-7 py-3.5 text-sm font-700 text-slate-700 hover:bg-slate-50 transition-all">
+                                Review Platform Features
+                            </a>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-dot" style="background: var(--green);"></div>
-                        <div>
-                            <div class="activity-text"><strong>Nadia</strong> posted a new question in Chemistry</div>
-                            <div class="activity-time">2 min ago</div>
+
+                    <!-- Right interactive system metric teaser card -->
+                    <div class="lg:col-span-6">
+                        <div class="bg-white border border-brand-border rounded-2xl shadow-xl p-5 sm:p-6 space-y-4">
+                            <div
+                                class="flex justify-between items-center text-xs font-700 text-slate-400 uppercase tracking-wider">
+                                <span>⚡ Active Performance telemetry</span>
+                                <span
+                                    class="text-emerald-600 lowercase bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">●
+                                    ping: 14ms</span>
+                            </div>
+                            <div
+                                class="bg-brand-surface rounded-xl p-4 border border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-blue-50 text-brand-primary flex items-center justify-center">
+                                        <i class="fa-solid fa-graduation-cap"></i></div>
+                                    <div>
+                                        <h4 class="text-sm font-700 text-brand-deep">Dhaka University 'A' Unit</h4>
+                                        <p class="text-[11px] text-slate-400 font-500">Live Diagnostic Test Bank</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-700 text-brand-primary bg-blue-50 px-2.5 py-1 rounded-md">45
+                                    Sets Available</span>
+                            </div>
+                            <div
+                                class="bg-brand-surface rounded-xl p-4 border border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-amber-50 text-brand-accent flex items-center justify-center">
+                                        <i class="fa-solid fa-briefcase"></i></div>
+                                    <div>
+                                        <h4 class="text-sm font-700 text-brand-deep">46th BCS Preliminary Track</h4>
+                                        <p class="text-[11px] text-slate-400 font-500">10-Subject Comprehensive Drill
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-700 text-brand-accent bg-amber-50 px-2.5 py-1 rounded-md">80
+                                    Sets Available</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-dot" style="background: var(--amber);"></div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE FEATURE 1: THE LIVE EXAMINATION SCHEDULER ARENA -->
+        <section id="live-arena" class="py-16 bg-white border-t border-brand-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+                    <div>
+                        <span class="text-xs font-700 text-brand-primary uppercase tracking-widest block mb-2">//
+                            EXAMINATION MANAGEMENT ARENA</span>
+                        <h2 class="text-2xl sm:text-3xl font-800 tracking-tight text-brand-deep">Live Central Board
+                            Schedules</h2>
+                        <p class="text-sm sm:text-base text-slate-500 mt-1">Jump into time-restricted trial simulations
+                            with weighted negative marks matching real exam conditions.</p>
+                    </div>
+                    <!-- Tab controller components -->
+                    <div class="mt-4 md:mt-0 flex gap-2 border-b border-slate-100 pb-1 overflow-x-auto no-scrollbar">
+                        <button
+                            class="px-4 py-2 text-xs font-700 border-b-2 border-brand-primary text-brand-primary whitespace-nowrap">Active
+                            & Upcoming Mocks</button>
+                        <button
+                            class="px-4 py-2 text-xs font-600 text-slate-400 hover:text-slate-600 whitespace-nowrap">Archived/Past
+                            Solutions</button>
+                    </div>
+                </div>
+
+                <!-- Schedule Board Elements -->
+                <div class="space-y-4">
+
+                    <!-- Row Item 1 (Active) -->
+                    <div
+                        class="bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-blue-300 transition-all">
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-blue-600 text-white flex flex-col items-center justify-center font-800 shrink-0 shadow-sm shadow-blue-500/20">
+                                <span class="text-xs leading-none">JUN</span>
+                                <span class="text-lg font-900 leading-none mt-0.5">28</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-base font-700 text-brand-deep">DU A-Unit Physics Complete Paper II
+                                        Model</h4>
+                                    <span
+                                        class="bg-blue-100 text-brand-primary font-700 text-[10px] uppercase px-2 py-0.5 rounded">Active
+                                        Live</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-500 mt-1">
+                                    <span class="mr-3"><i class="fa-regular fa-clock mr-1"></i> Window Open: 09:00 PM -
+                                        11:30 PM</span>
+                                    <span class="mr-3"><i class="fa-regular fa-circle-question mr-1"></i> 60 Questions
+                                        (MCQ + Written Segment)</span>
+                                    <span><i class="fa-solid fa-user-pen mr-1"></i> Negative Marks: 0.25</span>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="#"
+                            class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-700 px-5 py-2.5 rounded-lg text-center transition shadow-sm">
+                            Enter Exam Space
+                        </a>
+                    </div>
+
+                    <!-- Row Item 2 (Upcoming) -->
+                    <div
+                        class="bg-white border border-brand-border rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-300 transition-all">
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex flex-col items-center justify-center font-800 shrink-0">
+                                <span class="text-xs leading-none">JUN</span>
+                                <span class="text-lg font-900 leading-none mt-0.5">29</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-base font-700 text-brand-deep">46th BCS Preliminary Mini-Mock:
+                                        International Affairs & Ethics</h4>
+                                    <span
+                                        class="bg-slate-100 text-slate-600 font-600 text-[10px] uppercase px-2 py-0.5 rounded">Upcoming</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-500 mt-1">
+                                    <span class="mr-3"><i class="fa-regular fa-clock mr-1"></i> Window Opens: Tomorrow
+                                        04:00 PM</span>
+                                    <span class="mr-3"><i class="fa-regular fa-circle-question mr-1"></i> 100
+                                        Questions</span>
+                                    <span><i class="fa-solid fa-user-pen mr-1"></i> Negative Marks: 0.50</span>
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full md:w-auto bg-brand-surface text-slate-600 border border-slate-200 text-xs font-700 px-5 py-2.5 rounded-lg text-center hover:bg-slate-50 transition">
+                            Set Alert Reminder
+                        </button>
+                    </div>
+
+                    <!-- Row Item 3 (Upcoming) -->
+                    <div
+                        class="bg-white border border-brand-border rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-300 transition-all">
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex flex-col items-center justify-center font-800 shrink-0">
+                                <span class="text-xs leading-none">JUL</span>
+                                <span class="text-lg font-900 leading-none mt-0.5">01</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-base font-700 text-brand-deep">Medical Central High-Yield Biology
+                                        Module: Genetics & Evolution</h4>
+                                    <span
+                                        class="bg-slate-100 text-slate-600 font-600 text-[10px] uppercase px-2 py-0.5 rounded">Upcoming</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-500 mt-1">
+                                    <span class="mr-3"><i class="fa-regular fa-clock mr-1"></i> Window Opens: July 01,
+                                        10:00 AM</span>
+                                    <span class="mr-3"><i class="fa-regular fa-circle-question mr-1"></i> 50
+                                        Questions</span>
+                                    <span><i class="fa-solid fa-user-pen mr-1"></i> Negative Marks: 0.25</span>
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full md:w-auto bg-brand-surface text-slate-600 border border-slate-200 text-xs font-700 px-5 py-2.5 rounded-lg text-center hover:bg-slate-50 transition">
+                            Set Alert Reminder
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE FEATURE 2: EXTENSIVE CORE CAPABILITY BENTO MATRIX -->
+        <section id="feature-matrix" class="py-16 bg-brand-surface border-t border-brand-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <span class="text-xs font-700 text-brand-accent uppercase tracking-widest block mb-2">// ADVANCED
+                        PLATFORM DEPLOYMENTS</span>
+                    <h2 class="text-3xl font-800 tracking-tight text-brand-deep">Every operational module you need to
+                        win</h2>
+                    <p class="text-sm sm:text-base text-slate-500 mt-2">We built dedicated learning tools designed
+                        around modern cognitive retention parameters. No fluff, just pure architectural utility.</p>
+                </div>
+
+                <!-- Comprehensive 6-Grid Feature Architecture -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    <!-- Card 1: The Mistake Notebook -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
                         <div>
-                            <div class="activity-text"><strong>Rashed</strong> earned <strong>+25 pts</strong> for
-                                accepted answer</div>
-                            <div class="activity-time">5 min ago</div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-book-bookmark text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Automated Mistake Notebook</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">Every exam question you mark incorrectly
+                                or skip is auto-routed to a custom error vault. Re-test yourself exclusively on past
+                                mistakes until your vulnerability vector drops to absolute zero.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">Open Error
+                            Vault Demo &rarr;</span>
+                    </div>
+
+                    <!-- Card 2: Speed vs Accuracy Heatmap -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-blue-50 text-brand-primary flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-gauge-high text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Time Allocation Per Question</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">Knowing the answer is only half the
+                                battle. Our compiler maps exactly how many seconds you spend on specific chemistry
+                                equations or grammar options versus national averages to isolate pacing problems.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">View Speed
+                            Analytics Samples &rarr;</span>
+                    </div>
+
+                    <!-- Card 3: Adaptive Question Engines -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-shuffle text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Adaptive Sectional Drills</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">When you constantly fail a topic like
+                                Synonyms or Organic Reactions, the system algorithm shifts difficulty parameters,
+                                generating custom localized practice questions until mastery is acquired.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">Try
+                            Adaptive Drill Engine &rarr;</span>
+                    </div>
+
+                    <!-- Card 4: Dynamic Leaderboard Analytics -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-amber-50 text-brand-accent flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-trophy text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Real-Time Instant Leaderboards</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">No 24-hour delays for results. The moment
+                                an active board window closes, instantly view your exact negative marks, national
+                                percentile rankings, and demographic position maps.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">Explore
+                            Board Ranks &rarr;</span>
+                    </div>
+
+                    <!-- Card 5: Professional Written Evaluation Structures -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-pen-nib text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Written Segment Script Evaluators</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">Built specialized portal frameworks to
+                                accommodate written exam patterns for DU A/B Units and BCS. Input your descriptive
+                                outlines cleanly via secure photo upload or markup boards.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">See
+                            Evaluator Workflows &rarr;</span>
+                    </div>
+
+                    <!-- Card 6: Peer-to-Peer Syllabus Battles -->
+                    <div
+                        class="bg-white border border-brand-border p-6 rounded-2xl bento-hover flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-5">
+                                <i class="fa-solid fa-user-group text-base"></i></div>
+                            <h3 class="text-lg font-700 text-brand-deep mb-2">Live Room Challenge Duels</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">Create isolated, secure exam lobbies
+                                instantly. Invite friends or batch-mates to run real-time competitive timed battles
+                                using randomized sets from our certified query databanks.</p>
+                        </div>
+                        <span class="text-xs font-700 text-brand-primary mt-6 inline-flex items-center gap-1">Launch
+                            Custom Lobbies &rarr;</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE FEATURE 3: SUBJECT-WISE HUB & MASTERY TRACKER -->
+        <section id="subject-hubs" class="py-16 bg-white border-t border-brand-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="max-w-2xl mb-10">
+                    <span class="text-xs font-700 text-brand-primary uppercase tracking-widest block mb-2">// HIGH
+                        INTENSITY CONTENT MATRIX</span>
+                    <h2 class="text-2xl sm:text-3xl font-800 tracking-tight text-brand-deep">Syllabus-Mapped Subject
+                        Channels</h2>
+                    <p class="text-sm text-slate-500 mt-1">Don't study blindly. Deep-dive into structured topic nodes
+                        designed around verified textbook metrics and historic patterns.</p>
+                </div>
+
+                <!-- Vertical Grid mapping out subjects -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                    <!-- Subject Module: English -->
+                    <div
+                        class="border border-brand-border bg-brand-surface rounded-xl p-5 hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <span
+                                class="text-[10px] font-700 tracking-wider text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded">Language
+                                Hub</span>
+                            <span class="text-xs font-600 text-slate-400">1,200 Questions</span>
+                        </div>
+                        <h4 class="text-base font-700 text-brand-deep">English Language & Syntax</h4>
+                        <p class="text-xs text-slate-500 mt-2 line-clamp-2">Master Subject-Verb agreement, modifiers,
+                            inversion mechanisms, and high-yield vocabulary parameters.</p>
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-600">
+                            <span class="text-slate-400">Progress: <strong class="text-brand-deep">84%</strong></span>
+                            <a href="#" class="text-brand-primary">Open Track &rarr;</a>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-dot" style="background: var(--indigo-mid);"></div>
-                        <div>
-                            <div class="activity-text"><strong>Jannatul</strong> bookmarked DU English thread</div>
-                            <div class="activity-time">8 min ago</div>
+
+                    <!-- Subject Module: Physics -->
+                    <div
+                        class="border border-brand-border bg-brand-surface rounded-xl p-5 hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <span
+                                class="text-[10px] font-700 tracking-wider text-purple-600 uppercase bg-purple-50 px-2 py-0.5 rounded">Core
+                                Science</span>
+                            <span class="text-xs font-600 text-slate-400">950 Questions</span>
                         </div>
+                        <h4 class="text-base font-700 text-brand-deep">Physics (Paper I & II)</h4>
+                        <p class="text-xs text-slate-500 mt-2 line-clamp-2">Thermodynamics proofs, physical optics
+                            vectors, vector calculations, and electricity mathematical parameters.</p>
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-600">
+                            <span class="text-slate-400">Progress: <strong class="text-brand-deep">42%</strong></span>
+                            <a href="#" class="text-brand-primary">Open Track &rarr;</a>
+                        </div>
+                    </div>
+
+                    <!-- Subject Module: Mathematics -->
+                    <div
+                        class="border border-brand-border bg-brand-surface rounded-xl p-5 hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <span
+                                class="text-[10px] font-700 tracking-wider text-emerald-600 uppercase bg-emerald-50 px-2 py-0.5 rounded">Analytical</span>
+                            <span class="text-xs font-600 text-slate-400">1,800 Questions</span>
+                        </div>
+                        <h4 class="text-base font-700 text-brand-deep">Higher Mathematics</h4>
+                        <p class="text-xs text-slate-500 mt-2 line-clamp-2">Calculus boundaries, complex numbers,
+                            matrices optimization, coordinate geometry shortcuts, and trig values.</p>
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-600">
+                            <span class="text-slate-400">Progress: <strong class="text-brand-deep">12%</strong></span>
+                            <a href="#" class="text-brand-primary">Open Track &rarr;</a>
+                        </div>
+                    </div>
+
+                    <!-- Subject Module: GK -->
+                    <div
+                        class="border border-brand-border bg-brand-surface rounded-xl p-5 hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <span
+                                class="text-[10px] font-700 tracking-wider text-amber-600 uppercase bg-amber-50 px-2 py-0.5 rounded">General
+                                Knowledge</span>
+                            <span class="text-xs font-600 text-slate-400">3,400 Questions</span>
+                        </div>
+                        <h4 class="text-base font-700 text-brand-deep">Bangladesh & Global Affairs</h4>
+                        <p class="text-xs text-slate-500 mt-2 line-clamp-2">Constitutional articles, climate dynamics,
+                            geographic border indicators, and contemporary macro-economics updates.</p>
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-600">
+                            <span class="text-slate-400">Progress: <strong class="text-brand-deep">68%</strong></span>
+                            <a href="#" class="text-brand-primary">Open Track &rarr;</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE FEATURE 4: LIVE SIMULATED RE-ESTIMATION LEADERBOARD -->
+        <section id="leaderboard" class="py-16 bg-brand-surface border-t border-brand-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+                    <div class="lg:col-span-5">
+                        <span class="text-xs font-700 text-brand-primary uppercase tracking-widest block mb-2">//
+                            INTRA-NATIONAL STANDINGS</span>
+                        <h2 class="text-2xl sm:text-3xl font-800 tracking-tight text-brand-deep">National Performance
+                            Leaderboard</h2>
+                        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+                            Compete openly with active aspirants nationwide. Real positions filter down through dynamic
+                            daily score arrays based on accuracy coefficients and execution swiftness metrics.
+                        </p>
+                        <div class="mt-6 p-4 rounded-xl border border-slate-200/60 bg-white space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-600 text-slate-600">
+                                <i class="fa-solid fa-fire-flame-curved text-orange-500"></i>
+                                <span>Top 5% candidates maintain a daily streak above 12 days.</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs font-600 text-slate-600">
+                                <i class="fa-solid fa-award text-blue-500"></i>
+                                <span>Weekly board winners secure access to custom peer consultation channels.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Leaderboard Mock Component -->
+                    <div
+                        class="lg:col-span-7 bg-white border border-brand-border rounded-2xl shadow-md overflow-hidden">
+                        <div class="p-4 bg-slate-50 border-b border-brand-border flex justify-between items-center">
+                            <span class="text-xs font-700 text-brand-deep uppercase">Live Batch Leaderboard —
+                                Today</span>
+                            <span
+                                class="text-[11px] bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded font-600">Auto-Refreshed</span>
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            <!-- User Rank 1 -->
+                            <div class="p-4 flex items-center justify-between hover:bg-slate-50/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 text-center font-800 text-sm text-amber-500"><i
+                                            class="fa-solid fa-crown"></i></span>
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-700 text-xs text-slate-700">
+                                        AN</div>
+                                    <div>
+                                        <h5 class="text-xs font-700 text-brand-deep">Asif Nawrose</h5>
+                                        <p class="text-[10px] text-slate-400 font-500">Target Segment: BUET /
+                                            Engineering</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-800 text-brand-deep block">98.25 / 100</span>
+                                    <span class="text-[10px] text-slate-400 font-500">Time Used: 18m 42s</span>
+                                </div>
+                            </div>
+                            <!-- User Rank 2 -->
+                            <div class="p-4 flex items-center justify-between hover:bg-slate-50/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 text-center font-800 text-sm text-slate-400">2</span>
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-700 text-xs text-slate-700">
+                                        SR</div>
+                                    <div>
+                                        <h5 class="text-xs font-700 text-brand-deep">Sumaiya Rahman</h5>
+                                        <p class="text-[10px] text-slate-400 font-500">Target Segment: DU 'A' Unit</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-800 text-brand-deep block">96.50 / 100</span>
+                                    <span class="text-[10px] text-slate-400 font-500">Time Used: 21m 05s</span>
+                                </div>
+                            </div>
+                            <!-- User Rank 3 -->
+                            <div class="p-4 flex items-center justify-between hover:bg-slate-50/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 text-center font-800 text-sm text-amber-700">3</span>
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-700 text-xs text-slate-700">
+                                        TA</div>
+                                    <div>
+                                        <h5 class="text-xs font-700 text-brand-deep">Tushar Aman</h5>
+                                        <p class="text-[10px] text-slate-400 font-500">Target Segment: 46th BCS Prelims
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-800 text-brand-deep block">94.00 / 100</span>
+                                    <span class="text-[10px] text-slate-400 font-500">Time Used: 19m 58s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE FEATURE 5: TEXT/PDF RESOURCE LECTURE VAULT -->
+        <section id="vault" class="py-16 bg-white border-t border-brand-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-10">
+                    <div>
+                        <span class="text-xs font-700 text-brand-accent uppercase tracking-widest block mb-2">//
+                            KNOWLEDGE STORAGE REPOSITORY</span>
+                        <h2 class="text-2xl sm:text-3xl font-800 tracking-tight text-brand-deep">Syllabus Handbooks &
+                            PDF Vault</h2>
+                        <p class="text-sm text-slate-500 mt-1">Instant, structured access to analytical reference
+                            lecture blueprints, handwritten equation tracking sheets, and verified answers logs.</p>
+                    </div>
+                    <a href="#"
+                        class="text-xs font-700 text-brand-primary mt-3 sm:mt-0 whitespace-nowrap hover:underline">Explore
+                        Entire Repository &rarr;</a>
+                </div>
+
+                <!-- Document Grid Component -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Doc Item 1 -->
+                    <div
+                        class="border border-brand-border p-5 rounded-xl flex items-start gap-4 hover:bg-brand-surface/50 transition-all">
+                        <div
+                            class="text-2xl text-red-500 bg-red-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-file-pdf"></i></div>
+                        <div>
+                            <span class="text-[9px] font-700 tracking-wider text-slate-400 uppercase">Physics
+                                Sheet</span>
+                            <h4 class="text-sm font-700 text-brand-deep mt-0.5">High-Yield Optics Equation Sheet</h4>
+                            <p class="text-xs text-slate-400 font-500 mt-1">Includes core geometric formulation
+                                breakdowns and shortcuts for quick evaluations.</p>
+                            <a href="#" class="text-xs font-700 text-brand-primary inline-block mt-3"><i
+                                    class="fa-solid fa-download mr-1"></i> Download PDF (3.4 MB)</a>
+                        </div>
+                    </div>
+
+                    <!-- Doc Item 2 -->
+                    <div
+                        class="border border-brand-border p-5 rounded-xl flex items-start gap-4 hover:bg-brand-surface/50 transition-all">
+                        <div
+                            class="text-2xl text-blue-500 bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-file-pdf"></i></div>
+                        <div>
+                            <span class="text-[9px] font-700 tracking-wider text-slate-400 uppercase">English
+                                Resource</span>
+                            <h4 class="text-sm font-700 text-brand-deep mt-0.5">The Subjunctive Mood Mastery Atlas</h4>
+                            <p class="text-xs text-slate-400 font-500 mt-1">Comprehensive structural layouts breaking
+                                down high-frequency competitive exception syntax.</p>
+                            <a href="#" class="text-xs font-700 text-brand-primary inline-block mt-3"><i
+                                    class="fa-solid fa-download mr-1"></i> Download PDF (1.8 MB)</a>
+                        </div>
+                    </div>
+
+                    <!-- Doc Item 3 -->
+                    <div
+                        class="border border-brand-border p-5 rounded-xl flex items-start gap-4 hover:bg-brand-surface/50 transition-all">
+                        <div
+                            class="text-2xl text-amber-500 bg-amber-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-file-pdf"></i></div>
+                        <div>
+                            <span class="text-[9px] font-700 tracking-wider text-slate-400 uppercase">BCS Guide
+                                Matrix</span>
+                            <h4 class="text-sm font-700 text-brand-deep mt-0.5">International Treatise & Borders Map
+                            </h4>
+                            <p class="text-xs text-slate-400 font-500 mt-1">Visual summaries of crucial geopolitical
+                                changes compiled from historical question profiles.</p>
+                            <a href="#" class="text-xs font-700 text-brand-primary inline-block mt-3"><i
+                                    class="fa-solid fa-download mr-1"></i> Download PDF (5.2 MB)</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- FREQUENTLY ASKED SYSTEM CLARITY (FAQ Accordion Section) -->
+        <section class="py-16 bg-brand-surface border-t border-brand-border">
+            <div class="mx-auto max-w-4xl px-4 sm:px-6">
+                <div class="text-center mb-10">
+                    <h2 class="text-2xl sm:text-3xl font-800 text-brand-deep">Structural Architecture FAQ</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Got specific functional questions about our
+                        diagnostic ecosystem? Everything you need to know.</p>
+                </div>
+
+                <div class="space-y-3">
+
+                    <!-- FAQ Question 1 -->
+                    <div class="bg-white border border-brand-border rounded-xl overflow-hidden">
+                        <button type="button"
+                            class="w-full text-left p-5 text-sm font-700 text-brand-deep flex justify-between items-center focus:outline-none"
+                            onclick="toggleFaq(this)">
+                            <span>How exactly does the Negative Marking calculations match original institution
+                                guidelines?</span>
+                            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div
+                            class="hidden px-5 pb-5 text-xs text-slate-500 leading-relaxed border-t border-slate-50 pt-3">
+                            NextPrepBD builds unique calculation metrics dynamically depending on your portal tier. If
+                            you register for a Dhaka University 'A' Unit mock, the script locks a 0.25 negative
+                            coefficient on errors. If you switch to a BCS exam, the algorithm shifts the negative
+                            weights automatically to 0.50.
+                        </div>
+                    </div>
+
+                    <!-- FAQ Question 2 -->
+                    <div class="bg-white border border-brand-border rounded-xl overflow-hidden">
+                        <button type="button"
+                            class="w-full text-left p-5 text-sm font-700 text-brand-deep flex justify-between items-center focus:outline-none"
+                            onclick="toggleFaq(this)">
+                            <span>Can I practice using the Mistake Notebook offline or save items to custom
+                                collections?</span>
+                            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div
+                            class="hidden px-5 pb-5 text-xs text-slate-500 leading-relaxed border-t border-slate-50 pt-3">
+                            The error data structures sync cleanly to your centralized Supabase cloud ledger. This
+                            allows you to log custom bookmarks, request alternate algorithmic explanations, or generate
+                            randomized challenge sets on the fly across multiple screen sizes.
+                        </div>
+                    </div>
+
+                    <!-- FAQ Question 3 -->
+                    <div class="bg-white border border-brand-border rounded-xl overflow-hidden">
+                        <button type="button"
+                            class="w-full text-left p-5 text-sm font-700 text-brand-deep flex justify-between items-center focus:outline-none"
+                            onclick="toggleFaq(this)">
+                            <span>Why is NextPrepBD faster than standard educational blogs and video panels?</span>
+                            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div
+                            class="hidden px-5 pb-5 text-xs text-slate-500 leading-relaxed border-t border-slate-50 pt-3">
+                            We deploy our applications straight onto lightweight Vercel global edge networks while
+                            maintaining efficient database relationships. By replacing heavy tracking pixels, slow font
+                            chains, and generic layouts with pure structural rendering, pages populate sub-seconds
+                            across mobile networks.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- DEEP ACTION FOOTER FRAMEWORK -->
+        <footer class="bg-white border-t border-brand-border py-12 text-xs text-slate-500">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+
+                    <div class="md:col-span-4 space-y-4">
+                        <a href="#" class="text-xl font-800 text-brand-deep flex items-center gap-1">
+                            <span class="text-brand-primary">NextPrep</span><span class="text-brand-accent">BD</span>
+                        </a>
+                        <p class="text-xs text-slate-400 max-w-xs leading-relaxed">
+                            An ultra-clean, humanistic testing architecture built with low latency nodes for Bangladeshi
+                            competitive examinees.
+                        </p>
+                    </div>
+
+                    <div class="md:col-span-3 space-y-2">
+                        <h6 class="font-700 text-brand-deep uppercase text-[10px] tracking-wider">Exam Clusters</h6>
+                        <ul class="space-y-1.5 font-500">
+                            <li><a href="#" class="hover:text-brand-primary">University Matriculation Tracks</a></li>
+                            <li><a href="#" class="hover:text-brand-primary">Medical Admission Simulators</a></li>
+                            <li><a href="#" class="hover:text-brand-primary">BCS Career Preparation Portals</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2 space-y-2">
+                        <h6 class="font-700 text-brand-deep uppercase text-[10px] tracking-wider">System Nodes</h6>
+                        <ul class="space-y-1.5 font-500">
+                            <li><a href="#" class="hover:text-brand-primary">Database Sync Status</a></li>
+                            <li><a href="#" class="hover:text-brand-primary">Latency Logs</a></li>
+                            <li><a href="#" class="hover:text-brand-primary">Open-Source Engine</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-3 space-y-2">
+                        <h6 class="font-700 text-brand-deep uppercase text-[10px] tracking-wider">Edge Deployment Node
+                        </h6>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">Optimized to operate smoothly on local
+                            mobile data pipelines without viewport canvas shifts.</p>
+                        <div
+                            class="text-[11px] font-600 text-emerald-600 bg-emerald-50 p-2.5 rounded-lg inline-block border border-emerald-100">
+                            ● Central database connection active
+                        </div>
+                    </div>
+
+                </div>
+
+                <div
+                    class="mt-12 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-400 font-500">
+                    <p>&copy; 2026 NextPrepBD. Engineered with professional performance metrics. All rights reserved.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="hover:text-brand-primary">Vercel Logs</a>
+                        <span>&middot;</span>
+                        <a href="#" class="hover:text-brand-primary">Supabase Storage Rules</a>
                     </div>
                 </div>
             </div>
+        </footer>
+    </main>
 
-        </aside>
-    </div>
-
-    <!-- Mobile FAB -->
-    <button class="mobile-fab" onclick="newThread()">+</button>
-
-    <style>
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.6;
-                transform: scale(1.3);
-            }
-        }
-    </style>
-
+    <!-- NAVIGATION AND ACCORDION INTERACTIVITY LOGIC -->
     <script>
-        function toggleVote(btn, dir) {
-            const card = btn.closest('.vote-col');
-            const countEl = card.querySelector('.vote-count');
-            const upBtn = card.querySelectorAll('.vote-btn')[0];
-            let count = parseInt(countEl.textContent);
+        // Hamburger Drawer Component Control
+        const toggleBtn = document.getElementById('menu-toggle-btn');
+        const drawer = document.getElementById('mobile-nav-drawer');
+        const icon = document.getElementById('menu-icon');
 
-            if (dir === 'down') {
-                if (upBtn.classList.contains('upvoted')) {
-                    upBtn.classList.remove('upvoted');
-                    countEl.textContent = count - 1;
-                }
-                return;
-            }
-
-            if (upBtn.classList.contains('upvoted')) {
-                upBtn.classList.remove('upvoted');
-                countEl.textContent = count - 1;
+        toggleBtn.addEventListener('click', () => {
+            drawer.classList.toggle('hidden');
+            if (drawer.classList.contains('hidden')) {
+                icon.className = 'fa-solid fa-bars text-xl';
             } else {
-                upBtn.classList.add('upvoted');
-                countEl.textContent = count + 1;
+                icon.className = 'fa-solid fa-xmark text-xl';
+            }
+        });
+
+        // FAQ Layout Collapsible Animation Management
+        function toggleFaq(button) {
+            const content = button.nextElementSibling;
+            const chevron = button.querySelector('.fa-chevron-down');
+
+            content.classList.toggle('hidden');
+            if (content.classList.contains('hidden')) {
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                chevron.style.transform = 'rotate(180deg)';
             }
         }
-
-        function toggleSidebar() {
-            const s = document.getElementById('sidebarLeft');
-            s.classList.toggle('open');
-        }
-
-        function newThread() {
-            alert('Open new thread modal');
-        }
-
-        // Forum tabs interactivity
-        document.querySelectorAll('.forum-tab').forEach(tab => {
-            tab.addEventListener('click', function () {
-                document.querySelectorAll('.forum-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Sort buttons
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Segment items
-        document.querySelectorAll('.seg-item').forEach(item => {
-            item.addEventListener('click', function () {
-                document.querySelectorAll('.seg-item').forEach(s => s.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Group items
-        document.querySelectorAll('.group-item').forEach(item => {
-            item.addEventListener('click', function () {
-                document.querySelectorAll('.group-item').forEach(g => g.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Chips
-        document.querySelectorAll('.chip').forEach(chip => {
-            chip.addEventListener('click', function () {
-                const group = this.closest('.filter-chips');
-                group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Animate progress bars on load
-        window.addEventListener('load', () => {
-            document.querySelectorAll('.progress-bar-fill').forEach(bar => {
-                const width = bar.style.width;
-                bar.style.width = '0';
-                setTimeout(() => { bar.style.width = width; }, 300);
-            });
-        });
     </script>
 </body>
 

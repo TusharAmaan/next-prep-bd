@@ -30,8 +30,7 @@ import {
 } from "lucide-react";
 import Link from 'next/link';
 import { toast } from 'sonner';
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
+import RichTextDisplay from '@/components/shared/RichTextDisplay';
 import Discussion from '@/components/shared/Discussion';
 import TypographyScaler from '@/components/shared/TypographyScaler';
 import { useTheme } from '@/components/shared/ThemeProvider';
@@ -69,24 +68,7 @@ export default function CurriculumContentClient({
   const loaderRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<HTMLElement>(null);
 
-  // KaTeX Auto-render
-  useEffect(() => {
-    if (articleRef.current) {
-      try {
-        renderMathInElement(articleRef.current, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true },
-          ],
-          throwOnError: false,
-        });
-      } catch (err) {
-        // KaTeX error handled silently or with a fallback
-      }
-    }
-  }, [loadedContents, isDark]);
+  // Math rendering is now handled by RichTextDisplay
 
   const flatContentIndex = useMemo(() => {
      let flat: any[] = [];
@@ -323,9 +305,9 @@ export default function CurriculumContentClient({
                              <Link href="/login" className="inline-flex items-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-2xl font-bold text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20">Sign In Now <Zap size={14} /></Link>
                           </div>
                        ) : (
-                          <div 
+                          <RichTextDisplay 
                            className={`prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:font-medium prose-p:leading-relaxed lg:prose-xl ${proseClass} ${isBengali ? 'font-bangla' : 'font-sans'}`}
-                           dangerouslySetInnerHTML={{ __html: parseHashtagsToHTML(htmlBody) }}
+                           content={parseHashtagsToHTML(htmlBody)}
                          />
                        )}
 
