@@ -14,7 +14,6 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Noto_Serif_Bengali } from "next/font/google";
 
-// @ts-expect-error - IDE type resolution issue with Vercel Analytics package
 import { Analytics } from "@vercel/analytics/react"
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import MathJaxProvider from "@/components/shared/MathJaxProvider";
