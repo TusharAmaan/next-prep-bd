@@ -3,6 +3,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import BubbleMenu from './BubbleMenu';
+import TopToolbar from './TopToolbar';
+import MenuBar from './MenuBar';
+import TableToolbar from './TableToolbar';
 import MathNode from './MathNode';
 import { toast } from 'sonner';
 
@@ -162,7 +165,10 @@ export default function NextPrepEditor({ initialValue = '', onChange, darkMode =
   };
 
   return (
-    <div className={`relative w-full rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-900 ${darkMode ? 'dark' : ''}`}>
+    <div className={`relative w-full rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-900 flex flex-col ${darkMode ? 'dark' : ''}`}>
+      <MenuBar editorRef={editorRef} onInsertMath={insertMath} />
+      <TopToolbar editorRef={editorRef} onInsertMath={insertMath} />
+      <TableToolbar editorRef={editorRef} />
       <BubbleMenu editorRef={editorRef} onInsertMath={insertMath} />
       
       <div

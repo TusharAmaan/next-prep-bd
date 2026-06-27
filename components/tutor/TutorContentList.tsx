@@ -116,8 +116,19 @@ export default function TutorContentList() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this post?")) return;
+    
+    // Manually delete related records first because Supabase doesn't have ON DELETE CASCADE configured
+    await supabase.from('likes').delete().eq('resource_id', id);
+    await supabase.from('bookmarks').delete().eq('resource_id', id);
+    await supabase.from('comments').delete().eq('resource_id', id);
+    
     const { error } = await supabase.from('resources').delete().eq('id', id);
-    if (!error) setItems(prev => prev.filter(item => item.id !== id));
+    
+    if (!error) {
+      setItems(prev => prev.filter(item => item.id !== id));
+    } else {
+      alert(`Failed to delete: ${error.message}`);
+    }
   };
 
   // --- HIERARCHY HELPERS ---
