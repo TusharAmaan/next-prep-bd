@@ -96,7 +96,7 @@ export default function HeroCTA() {
                           className="group flex flex-col items-center justify-center p-5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md text-center"
                         >
                           <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition-all duration-300 mb-3 shadow-inner group-hover:-translate-y-1">
-                            {React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5" })}
+                            {React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5" })}
                           </div>
                           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight">
                             {seg.title}
