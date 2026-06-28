@@ -18,24 +18,26 @@ import PlatformInsights from "@/components/admin/dashboard/PlatformInsights";
 import VersionNote from "@/components/admin/dashboard/VersionNote";
 import AdminHeader from "@/components/admin/AdminHeader"; 
 
-import UserManagement from "@/components/UserManagement";
-import HierarchyManager from "@/components/admin/sections/HierarchyManager";
-import CategoryManager from "@/components/admin/sections/CategoryManager";
-import ContentManager from "@/components/admin/sections/ContentManager";
-import QotDManager from "@/components/admin/sections/QotDManager";
-import BadgeManager from "@/components/admin/sections/BadgeManager";
-import Discussion from "@/components/shared/Discussion";
-import PendingManager from "@/components/admin/sections/PendingManager";
-import QuestionBankManager from "@/components/admin/sections/QuestionBankManager"; 
-import FeedbackManager from "@/components/admin/sections/FeedbackManager";
-import LectureSheetManager from "@/components/admin/sections/LectureSheetManager";
-import LessonPlanManager from "@/components/admin/sections/LessonPlanManager";
-import CourseManager from "@/components/admin/sections/CourseManager";
-import CertificateDesigner from "@/components/admin/sections/CertificateDesigner";
-import DonationManager from "@/components/admin/sections/DonationManager";
-import NewsletterManager from "@/components/admin/sections/NewsletterManager";
-import ExamManager from "@/components/admin/sections/ExamManager";
-import ForumManager from "@/components/admin/sections/ForumManager";
+import dynamic from "next/dynamic";
+
+const UserManagement = dynamic(() => import("@/components/UserManagement"), { ssr: false });
+const HierarchyManager = dynamic(() => import("@/components/admin/sections/HierarchyManager"), { ssr: false });
+const CategoryManager = dynamic(() => import("@/components/admin/sections/CategoryManager"), { ssr: false });
+const ContentManager = dynamic(() => import("@/components/admin/sections/ContentManager"), { ssr: false });
+const QotDManager = dynamic(() => import("@/components/admin/sections/QotDManager"), { ssr: false });
+const BadgeManager = dynamic(() => import("@/components/admin/sections/BadgeManager"), { ssr: false });
+const Discussion = dynamic(() => import("@/components/shared/Discussion"), { ssr: false });
+const PendingManager = dynamic(() => import("@/components/admin/sections/PendingManager"), { ssr: false });
+const QuestionBankManager = dynamic(() => import("@/components/admin/sections/QuestionBankManager"), { ssr: false });
+const FeedbackManager = dynamic(() => import("@/components/admin/sections/FeedbackManager"), { ssr: false });
+const LectureSheetManager = dynamic(() => import("@/components/admin/sections/LectureSheetManager"), { ssr: false });
+const LessonPlanManager = dynamic(() => import("@/components/admin/sections/LessonPlanManager"), { ssr: false });
+const CourseManager = dynamic(() => import("@/components/admin/sections/CourseManager"), { ssr: false });
+const CertificateDesigner = dynamic(() => import("@/components/admin/sections/CertificateDesigner"), { ssr: false });
+const DonationManager = dynamic(() => import("@/components/admin/sections/DonationManager"), { ssr: false });
+const NewsletterManager = dynamic(() => import("@/components/admin/sections/NewsletterManager"), { ssr: false });
+const ExamManager = dynamic(() => import("@/components/admin/sections/ExamManager"), { ssr: false });
+const ForumManager = dynamic(() => import("@/components/admin/sections/ForumManager"), { ssr: false });
 
 
 const getMonthRanges = () => {
