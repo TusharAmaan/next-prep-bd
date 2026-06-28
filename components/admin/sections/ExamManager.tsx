@@ -256,9 +256,9 @@ export default function ExamManager({
         {activeView === 'exams' && (
           <button 
             onClick={() => { resetForm(); setIsModalOpen(true); }}
-            className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95"
+            className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95"
           >
-            <Plus size={20} /> CREATE NEW EXAM
+            <Plus size={20} /> Create new exam
           </button>
         )}
       </div>
@@ -270,10 +270,10 @@ export default function ExamManager({
             <button 
                 key={status}
                 onClick={() => setActiveStatus(status)}
-                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold capitalize tracking-wide transition-all ${
                     activeStatus === status 
                     ? "bg-indigo-600 text-white" 
-                    : "bg-white dark:bg-slate-900 text-slate-400 border border-slate-200 dark:border-slate-800"
+                    : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
                 }`}
             >
                 {status}
@@ -284,10 +284,10 @@ export default function ExamManager({
             <button 
                 key={status}
                 onClick={() => setActiveRequestStatus(status)}
-                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold capitalize tracking-wide transition-all ${
                     activeRequestStatus === status 
                     ? "bg-indigo-600 text-white" 
-                    : "bg-white dark:bg-slate-900 text-slate-400 border border-slate-200 dark:border-slate-800"
+                    : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
                 }`}
             >
                 {status}
@@ -314,10 +314,10 @@ export default function ExamManager({
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b dark:border-slate-700">
                   <tr>
-                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Exam Details</th>
-                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Type & Category</th>
-                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                    <th className="px-10 py-6 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    <th className="px-10 py-6 text-xs font-bold text-slate-500 capitalize tracking-wide">Exam Details</th>
+                    <th className="px-10 py-6 text-xs font-bold text-slate-500 capitalize tracking-wide">Type & Category</th>
+                    <th className="px-10 py-6 text-xs font-bold text-slate-500 capitalize tracking-wide">Status</th>
+                    <th className="px-10 py-6 text-xs font-bold text-slate-500 capitalize tracking-wide text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -344,7 +344,7 @@ export default function ExamManager({
                           </div>
                       </td>
                       <td className="px-10 py-8">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize tracking-wide ${
                               exam.status === 'published' ? 'bg-green-100 text-green-700' :
                               exam.status === 'scheduled' ? 'bg-amber-100 text-amber-700' :
                               'bg-slate-100 text-slate-600'
@@ -445,19 +445,19 @@ export default function ExamManager({
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="p-8 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">{editingExam ? 'Edit' : 'Create'} Professional Exam</h3>
-                    <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white dark:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-500"><X size={24} /></button>
+            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{editingExam ? 'Edit' : 'Create'} professional exam</h3>
+                    <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-400 hover:text-rose-500"><X size={20} /></button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-6">
+                <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-5">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Exam Title</label>
+                                <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Exam title</label>
                                 <input 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                     placeholder="e.g. Higher Math 1st Paper Final Model Test"
                                     value={formData.title}
                                     onChange={e => setFormData({...formData, title: e.target.value})}
@@ -465,22 +465,22 @@ export default function ExamManager({
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Type</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Type</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.exam_type}
                                         onChange={e => setFormData({...formData, exam_type: e.target.value})}
                                     >
-                                        <option value="topic">Topic Test</option>
-                                        <option value="subject">Subject Test</option>
-                                        <option value="model_test">Model Test</option>
-                                        <option value="past_question">Past Question</option>
+                                        <option value="topic">Topic test</option>
+                                        <option value="subject">Subject test</option>
+                                        <option value="model_test">Model test</option>
+                                        <option value="past_question">Past question</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Status</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Status</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.status}
                                         onChange={e => setFormData({...formData, status: e.target.value})}
                                     >
@@ -493,22 +493,22 @@ export default function ExamManager({
                             </div>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Duration (min)</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Duration (min)</label>
                                     <input 
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.duration_minutes}
                                         onChange={e => setFormData({...formData, duration_minutes: Number(e.target.value)})}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Total Marks</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Total marks</label>
                                     <input 
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.total_marks}
                                         onChange={e => setFormData({...formData, total_marks: Number(e.target.value)})}
                                     />
@@ -516,39 +516,39 @@ export default function ExamManager({
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Segment</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Segment</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.segment_id}
                                         onChange={e => setFormData({...formData, segment_id: e.target.value, group_id: "", subject_id: ""})}
                                     >
-                                        <option value="">Select Segment</option>
+                                        <option value="">Select segment</option>
                                         {segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Group</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Group</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.group_id}
                                         onChange={e => setFormData({...formData, group_id: e.target.value, subject_id: ""})}
                                         disabled={!formData.segment_id}
                                     >
-                                        <option value="">No Group</option>
+                                        <option value="">No group</option>
                                         {groups.filter(g => g.segment_id === Number(formData.segment_id)).map(g => (
                                             <option key={g.id} value={g.id}>{g.title}</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Subject</label>
+                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Subject</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.subject_id}
                                         onChange={e => setFormData({...formData, subject_id: e.target.value})}
                                         disabled={!formData.segment_id}
                                     >
-                                        <option value="">General (No Subject)</option>
+                                        <option value="">General (no subject)</option>
                                         {subjects.filter(s => {
                                             const matchesSegment = s.segment_id === Number(formData.segment_id);
                                             const matchesGroup = formData.group_id ? s.group_id === Number(formData.group_id) : true;
@@ -563,21 +563,21 @@ export default function ExamManager({
                     </div>
 
                     {formData.status === 'scheduled' && (
-                        <div className="p-8 bg-amber-50 dark:bg-amber-900/10 rounded-[32px] border-2 border-amber-100 dark:border-amber-900/30 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-200 dark:border-amber-900/30 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-2 block">Window Starts</label>
+                                <label className="text-sm font-semibold text-amber-700 dark:text-amber-500 mb-1.5 block">Window starts</label>
                                 <input 
                                     type="datetime-local" 
-                                    className="w-full bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-amber-500"
+                                    className="w-full bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                                     value={formData.start_time}
                                     onChange={e => setFormData({...formData, start_time: e.target.value})}
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-2 block">Window Ends</label>
+                                <label className="text-sm font-semibold text-amber-700 dark:text-amber-500 mb-1.5 block">Window ends</label>
                                 <input 
                                     type="datetime-local" 
-                                    className="w-full bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-slate-800 rounded-2xl px-6 py-4 font-bold text-slate-800 dark:text-white outline-none focus:border-amber-500"
+                                    className="w-full bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                                     value={formData.end_time}
                                     onChange={e => setFormData({...formData, end_time: e.target.value})}
                                 />
@@ -585,21 +585,21 @@ export default function ExamManager({
                         </div>
                     )}
 
-                    <div className="pt-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-black text-slate-900 dark:text-white">Exam Questions</h4>
-                            <span className="text-xs font-bold text-slate-500">{formData.questions?.length || 0} Questions Added</span>
+                    <div className="pt-4">
+                        <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Exam questions</h4>
+                            <span className="text-sm font-medium text-slate-500">{formData.questions?.length || 0} questions added</span>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-10 rounded-[32px] border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-                            <p className="text-slate-400 font-bold mb-4 italic text-sm">Question linking module will be available in the next version.</p>
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Saved exams use JSON format internally</span>
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                            <p className="text-slate-500 font-medium mb-2 text-sm">Question linking module will be available in the next version.</p>
+                            <span className="text-xs font-semibold text-slate-400">Saved exams use JSON format internally</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3">
-                    <button onClick={() => setIsModalOpen(false)} className="px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all">Cancel</button>
-                    <button onClick={handleSave} className="bg-indigo-600 text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all active:scale-95">Save Changes</button>
+                <div className="p-6 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3">
+                    <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-semibold text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all">Cancel</button>
+                    <button onClick={handleSave} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-sm hover:bg-indigo-700 transition-all active:scale-95">Save changes</button>
                 </div>
             </div>
         </div>

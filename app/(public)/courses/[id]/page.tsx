@@ -69,6 +69,18 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
 
   // 3. Check Enrollment Status
   const { enrolled } = await checkEnrollmentStatus(course.id);
+  
+  let progressPercentage = 0;
+  let isCompleted = false;
+
+  if (enrolled) {
+     const { getCourseProgress } = await import("@/app/actions/enrollment");
+     const progress = await getCourseProgress(course.id);
+     const totalItems = lessons.reduce((acc, l) => acc + (l.course_contents?.length || 0), 0);
+     const completedItemsCount = progress.filter(p => p.is_completed).length;
+     progressPercentage = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
+     isCompleted = totalItems > 0 && completedItemsCount === totalItems;
+  }
 
   const headersList = await headers();
   const host = headersList.get("host") || "";
@@ -90,26 +102,26 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
       />
       <div className="min-h-screen bg-gray-50 font-sans pt-24 pb-20">
       {/* HERO SECTION */}
-      <div className="bg-gray-900 text-white py-12 md:py-16 px-6">
+      <div className="bg-white border-b border-slate-200 py-12 md:py-20 px-6">
         <div className="max-w-7xl mx-auto md:flex gap-10 items-center">
             <div className="md:w-2/3">
-                <div className="inline-block bg-blue-600 text-[11px] font-bold tracking-widest px-4 py-1.5 rounded-full mb-6 text-white">
+                <div className="inline-block bg-indigo-50 text-indigo-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6 border border-indigo-100">
                     {course.duration || "Self-Paced"} Course
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
                     {course.title}
                 </h1>
-                <p className="text-gray-300 text-lg mb-8 max-w-2xl font-medium leading-relaxed">
-                    Master this subject with expert guidance. Comprehensive curriculum designed for exam success.
+                <p className="text-slate-600 text-lg md:text-xl mb-8 max-w-2xl font-medium leading-relaxed">
+                    Master this subject with expert guidance. A comprehensive curriculum designed for your success.
                 </p>
-                <div className="flex items-center gap-6 text-[11px] font-bold tracking-widest text-gray-400">
-                    <span className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+                <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-slate-500">
+                    <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <svg className="w-4 h-4 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
                         Instructor: {course.instructor || "NextPrep Team"}
                     </span>
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
                         <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
-                        Latest: {new Date(course.created_at).toLocaleDateString()}
+                        Updated: {new Date(course.created_at).toLocaleDateString()}
                     </span>
                 </div>
             </div>
@@ -132,7 +144,7 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                     <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Curriculum</h3>
                     <span className="text-[11px] font-bold text-slate-400 tracking-widest bg-slate-100 px-3 py-1 rounded-full">{lessons.length} Modules</span>
                 </div>
-                <CurriculumView lessons={lessons} />
+                <CurriculumView lessons={lessons} isEnrolled={enrolled} />
             </div>
 
             <div className="pt-8">
@@ -163,17 +175,28 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
 
                     <div className="p-8">
                         <div className="flex items-end gap-3 mb-8">
-                            <span className="text-4xl font-bold text-slate-900 tracking-tighter">
-                                {course.price === "0" || !course.price ? "FREE" : `$${course.price}`}
-                            </span>
-                            {course.discount_price && (
-                                <span className="text-slate-400 text-lg mb-1 line-through font-bold">${course.discount_price}</span>
+                            {course.discount_price ? (
+                                <>
+                                    <span className="text-4xl font-bold text-slate-900 tracking-tight">৳{course.discount_price}</span>
+                                    <span className="text-slate-400 text-lg mb-1 line-through font-bold">৳{course.price}</span>
+                                </>
+                            ) : (
+                                <span className="text-4xl font-bold text-slate-900 tracking-tight">
+                                    {course.price === "0" || !course.price ? "Free" : `৳${course.price}`}
+                                </span>
                             )}
                         </div>
 
-                        <div className="flex gap-4">
-                            <EnrollmentButton courseId={course.id} initialEnrolled={enrolled} />
-                            <div className="bg-slate-50 rounded-2xl p-1 border border-slate-100 flex items-center shadow-sm">
+                        <div className="flex gap-4 w-full">
+                            <EnrollmentButton 
+                               courseId={course.id} 
+                               courseName={course.title}
+                               price={course.discount_price || course.price}
+                               initialEnrolled={enrolled} 
+                               isCompleted={isCompleted}
+                               progressPercentage={progressPercentage}
+                            />
+                            <div className="bg-slate-50 rounded-xl p-1 border border-slate-100 flex items-center justify-center shrink-0 w-[60px]">
                                <BookmarkButton 
                                   itemType="course" 
                                   itemId={course.id} 

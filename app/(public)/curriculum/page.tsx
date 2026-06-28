@@ -44,14 +44,12 @@ export default async function CurriculumPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-32 pb-20 transition-colors duration-300">
-        <section className="max-w-7xl mx-auto px-6 lg:px-8">
-            <CurriculumClient 
-                initialSegments={segments}
-                initialGroups={groups}
-                initialSubjects={subjects}
-            />
-        </section>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        <CurriculumClient 
+            initialSegments={segments}
+            initialGroups={groups}
+            initialSubjects={subjects}
+        />
       </div>
     </>
   );

@@ -398,11 +398,11 @@ export default function SubjectHierarchyClient({
                  <Share2 className="w-4 h-4 text-indigo-500" /> Join our channels
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                 <a href="#" className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/fb">
+                 <a href="https://www.facebook.com/profile.php?id=61584943876571" target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/fb">
                     <Facebook className="w-5 h-5 mb-2 text-indigo-600 group-hover/fb:text-white transition-transform group-hover/fb:scale-110" />
                     <span className="text-xs font-semibold">Connect</span>
                  </a>
-                 <a href="#" className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-red-600 hover:text-white transition-all shadow-sm group/yt">
+                 <a href="https://www.youtube.com/channel/UCH5mIuxfWQEzXB1IiJqPigA" target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-red-600 hover:text-white transition-all shadow-sm group/yt">
                     <Youtube className="w-5 h-5 mb-2 text-red-600 group-hover/yt:text-white transition-transform group-hover/yt:scale-110" />
                     <span className="text-xs font-semibold">Watch</span>
                  </a>

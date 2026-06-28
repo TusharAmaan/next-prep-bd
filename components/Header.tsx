@@ -20,9 +20,6 @@ export default function Header() {
   const router = useRouter();
   const { isDark, toggleTheme } = useTheme();
 
-  // Hide on admin routes
-  if (pathname?.startsWith('/admin')) return null;
-
   // --- STATE ---
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -192,6 +189,9 @@ export default function Header() {
       <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-indigo-500 rounded-full transition-all duration-300 ${pathname === href ? 'w-full' : 'w-0 group-hover:w-full'}`} />
     </Link>
   );
+
+  // Hide on admin routes
+  if (pathname?.startsWith('/admin')) return null;
 
   return (
     <>

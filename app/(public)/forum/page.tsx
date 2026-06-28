@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import ProfessionalAppBanner from "@/components/ProfessionalAppBanner";
 import ForumList from "@/components/forum/ForumList";
+import CreatePostFAB from "@/components/forum/CreatePostFAB";
 import { MessageSquare } from "lucide-react";
 import { Metadata } from "next";
 
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ForumIndexPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Fetch threads with author, segment, group, subject, and comments relation for counting
   const { data: threads } = await supabase
@@ -28,6 +30,7 @@ export default async function ForumIndexPage() {
       subject:subjects(id, title),
       forum_comments(id)
     `)
+    .eq('status', 'approved')
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -93,6 +96,13 @@ export default async function ForumIndexPage() {
           </div>
         </div>
       </div>
+      
+      <CreatePostFAB 
+        segments={safeSegments} 
+        groups={safeGroups} 
+        subjects={safeSubjects} 
+        user={user} 
+      />
     </>
   );
 }

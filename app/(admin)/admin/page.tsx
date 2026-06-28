@@ -23,7 +23,6 @@ import HierarchyManager from "@/components/admin/sections/HierarchyManager";
 import CategoryManager from "@/components/admin/sections/CategoryManager";
 import ContentManager from "@/components/admin/sections/ContentManager";
 import QotDManager from "@/components/admin/sections/QotDManager";
-import AnalyticsSuite from "@/components/admin/sections/AnalyticsSuite";
 import BadgeManager from "@/components/admin/sections/BadgeManager";
 import Discussion from "@/components/shared/Discussion";
 import PendingManager from "@/components/admin/sections/PendingManager";
@@ -218,7 +217,6 @@ export default function AdminDashboard() {
         label: 'Dashboard & Insights',
         items: [
           { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-          { id: 'analytics', label: 'System Insights', icon: TrendingUp },
           { id: 'feedback', label: 'User Feedback', icon: MessageSquare },
         ]
       },
@@ -371,7 +369,7 @@ export default function AdminDashboard() {
                     notifications={notifications}
                 />
 
-                <div className="flex-1 p-4 sm:p-6 lg:p-10 xl:p-12 max-w-[1600px] mx-auto w-full">
+                <div className="flex-1 p-4 sm:p-6 w-full">
                     
                     {activeTab === 'overview' && (
                         <div className="space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -482,7 +480,6 @@ export default function AdminDashboard() {
                       {activeTab === 'newsletter' && <NewsletterManager darkMode={isDark} />}
                       {activeTab === 'question_bank' && <QuestionBankManager darkMode={isDark} />}
                       {activeTab === 'qotd' && <QotDManager darkMode={isDark} />}
-                      {activeTab === 'analytics' && <AnalyticsSuite darkMode={isDark} />}
                       {activeTab === 'badges' && <BadgeManager darkMode={isDark} />}
                       {activeTab === 'pending' && <PendingManager darkMode={isDark} />}
                       {activeTab === 'users' && <UserManagement onShowError={showError} onShowSuccess={showSuccess} darkMode={isDark} />}
