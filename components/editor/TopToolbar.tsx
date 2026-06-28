@@ -384,7 +384,7 @@ export default function TopToolbar({
     let listNode = getParentListNode(selection.anchorNode, isOrdered ? 'OL' : 'UL');
     if (!listNode) {
       document.execCommand(activeListCommand, false);
-      listNode = getParentListNode(window.getSelection()?.anchorNode, isOrdered ? 'OL' : 'UL');
+      listNode = getParentListNode(window.getSelection()?.anchorNode ?? null, isOrdered ? 'OL' : 'UL');
     }
     
     if (listNode) {
