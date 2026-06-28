@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   
   // --- LAYER 1: RATE LIMITING (Existing) ---
   const path = request.nextUrl.pathname;
-  if (path.startsWith('/api') || (path.startsWith('/admin') && !path.startsWith('/admin-preview'))) {
+  if (path.startsWith('/api') || path.startsWith('/admin')) {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     const now = Date.now();
     const record = ipCache.get(ip) || { count: 0, lastReset: now };
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
 
   // --- LAYER 3: ROUTE & ROLE PROTECTION (Updated) ---
   
-  const isAdminRoute = path.startsWith('/admin') && !path.startsWith('/admin-preview');
+  const isAdminRoute = path.startsWith('/admin');
   const isTutorRoute = path.startsWith('/tutor');
   const isEditorRoute = path.startsWith('/editor');
   const isAuthRoute = path.startsWith('/login') || path.startsWith('/register');
