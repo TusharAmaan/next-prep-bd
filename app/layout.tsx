@@ -101,6 +101,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
         
+        {/* Facebook Domain Verification */}
+        <meta name="facebook-domain-verification" content="80xbrtzpt047rtjzmhgep15umoyp0l" />
+
         {/* Combined SEO Structured Data */}
         <script
           type="application/ld+json"
