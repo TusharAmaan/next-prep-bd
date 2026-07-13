@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { enrollInCourse } from '@/app/actions/enrollment';
 import { toast } from 'sonner';
 import { Loader2, PlayCircle, Lock, Trophy } from 'lucide-react';
@@ -15,13 +15,35 @@ interface EnrollmentButtonProps {
   initialEnrolled: boolean;
   isCompleted?: boolean;
   progressPercentage?: number;
+  totalItems?: number;
 }
 
-export default function EnrollmentButton({ courseId, courseName = "Course", price, initialEnrolled, isCompleted = false, progressPercentage = 0 }: EnrollmentButtonProps) {
+export default function EnrollmentButton({ courseId, courseName = "Course", price, initialEnrolled, isCompleted = false, progressPercentage = 0, totalItems = 0 }: EnrollmentButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [isEnrolled, setIsEnrolled] = useState(initialEnrolled);
+  const [isCompletedState, setIsCompletedState] = useState(isCompleted);
+  const [progressState, setProgressState] = useState(progressPercentage);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const { checkEnrollmentStatus, getCourseProgress } = await import("@/app/actions/enrollment");
+        const { enrolled } = await checkEnrollmentStatus(courseId);
+        setIsEnrolled(enrolled);
+        if (enrolled) {
+           const progress = await getCourseProgress(courseId);
+           const completedItemsCount = progress.filter(p => p.is_completed).length;
+           setProgressState(totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0);
+           setIsCompletedState(totalItems > 0 && completedItemsCount === totalItems);
+        }
+      } catch (e) {}
+      setIsChecking(false);
+    }
+    checkStatus();
+  }, [courseId, totalItems]);
 
   const handleEnrollClick = () => {
     // If it has a price (and price is not '0'), show payment modal
@@ -64,8 +86,12 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
     }
   };
 
+  if (isChecking) {
+    return <div className="flex-1 bg-slate-200 animate-pulse h-[52px] rounded-xl"></div>;
+  }
+
   if (isEnrolled) {
-    if (isCompleted) {
+    if (isCompletedState) {
        return (
           <div className="flex-1 flex flex-col gap-3">
              <button 
@@ -98,12 +124,12 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
           <div className="w-full px-1">
              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest">
                 <span>Progress</span>
-                <span>{progressPercentage}%</span>
+                <span>{progressState}%</span>
              </div>
              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                 <div 
                    className="h-full bg-indigo-500 transition-all duration-1000" 
-                   style={{ width: `${progressPercentage}%` }}
+                   style={{ width: `${progressState}%` }}
                 />
              </div>
           </div>

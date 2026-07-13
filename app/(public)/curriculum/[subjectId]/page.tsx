@@ -1,15 +1,15 @@
-import { createClient } from "@/lib/supabaseServer";
+import { supabaseStatic } from "@/lib/supabaseStatic";
 import SubjectHierarchyClient from "./SubjectHierarchyClient";
 import { Metadata } from 'next';
 import { getBreadcrumbSchema } from "@/lib/seo-utils";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 export async function generateMetadata({ params }: { params: Promise<{ subjectId: string }> }): Promise<Metadata> {
   const { subjectId } = await params;
 
-  const supabase = await createClient();
+  const supabase = supabaseStatic;
   const { data: subData } = await supabase
     .from('subjects')
     .select('*, groups(title, segments(title))')
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ subjectId
 
 export default async function SubjectHierarchyPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
-  const supabase = await createClient();
+  const supabase = supabaseStatic;
 
   // 1. Fetch Subject Info
   const { data: subData } = await supabase
@@ -47,9 +47,7 @@ export default async function SubjectHierarchyPage({ params }: { params: Promise
   
   if (!subData) return notFound();
 
-  // Increment view count (Server-side)
-  await supabase.from('subjects').update({ view_count: (subData.view_count || 0) + 1 }).eq('id', subjectId);
-
+  // View count increment moved to client-side
   // 2. Fetch Initial Units (Bengali by default)
   const { data: unitsData } = await supabase
     .from('lesson_plan_units')

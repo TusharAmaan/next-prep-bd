@@ -90,6 +90,13 @@ export default function SubjectHierarchyClient({
     }
   }, [version, subjectId, initialUnits]);
 
+  useEffect(() => {
+    // Increment view count without blocking SSR
+    import('@/app/actions/subject').then(({ incrementSubjectView }) => {
+      incrementSubjectView(subjectId).catch(console.error);
+    });
+  }, [subjectId]);
+
   const toggleUnit = (id: number) => {
     setExpandedUnits(prev => ({ ...prev, [id]: !prev[id] }));
   };

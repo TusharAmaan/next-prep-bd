@@ -1,15 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, PlayCircle, BookOpen, CheckCircle2, Trophy, Clock } from 'lucide-react';
 
 interface CurriculumViewProps {
   lessons: any[];
-  isEnrolled?: boolean;
+  initialEnrolled?: boolean;
+  courseId: number;
 }
 
-export default function CurriculumView({ lessons, isEnrolled = false }: CurriculumViewProps) {
-  const [openLessons, setOpenLessons] = useState<string[]>(lessons.length > 0 && isEnrolled ? [lessons[0].id] : []);
+export default function CurriculumView({ lessons, initialEnrolled = false, courseId }: CurriculumViewProps) {
+  const [isEnrolled, setIsEnrolled] = useState(initialEnrolled);
+  const [openLessons, setOpenLessons] = useState<string[]>(lessons.length > 0 && initialEnrolled ? [lessons[0].id] : []);
+
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const { checkEnrollmentStatus } = await import("@/app/actions/enrollment");
+        const { enrolled } = await checkEnrollmentStatus(courseId);
+        setIsEnrolled(enrolled);
+        if (enrolled && lessons.length > 0) {
+           setOpenLessons(prev => prev.length === 0 ? [lessons[0].id] : prev);
+        }
+      } catch (e) {}
+    }
+    checkStatus();
+  }, [courseId, lessons]);
 
   const toggleLesson = (id: string) => {
     setOpenLessons(prev => 

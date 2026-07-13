@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 const ITEMS_PER_PAGE = 15;
 

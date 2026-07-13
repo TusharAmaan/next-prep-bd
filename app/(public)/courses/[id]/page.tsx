@@ -1,15 +1,15 @@
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseStatic as supabase } from "@/lib/supabaseStatic";
 import { parseHashtagsToHTML } from '@/utils/hashtagParser';
 import BookmarkButton from "@/components/shared/BookmarkButton";
 import Discussion from "@/components/shared/Discussion";
-import { headers } from 'next/headers';
+
 import { Metadata } from 'next';
-import { checkEnrollmentStatus } from "@/app/actions/enrollment";
+
 import EnrollmentButton from "@/components/courses/EnrollmentButton";
 import CurriculumView from "@/components/courses/CurriculumView";
 import { getCourseSchema } from "@/lib/seo-utils";
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 // --- HELPER: Detect ID vs Slug ---
 function getQueryColumn(param: string) {
@@ -67,25 +67,10 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
     course_contents: l.course_contents?.sort((a: any, b: any) => a.order_index - b.order_index)
   })) || [];
 
-  // 3. Check Enrollment Status
-  const { enrolled } = await checkEnrollmentStatus(course.id);
-  
-  let progressPercentage = 0;
-  let isCompleted = false;
+  // Check Enrollment Status moved to client-side
+  const totalItems = lessons.reduce((acc, l) => acc + (l.course_contents?.length || 0), 0);
 
-  if (enrolled) {
-     const { getCourseProgress } = await import("@/app/actions/enrollment");
-     const progress = await getCourseProgress(course.id);
-     const totalItems = lessons.reduce((acc, l) => acc + (l.course_contents?.length || 0), 0);
-     const completedItemsCount = progress.filter(p => p.is_completed).length;
-     progressPercentage = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
-     isCompleted = totalItems > 0 && completedItemsCount === totalItems;
-  }
-
-  const headersList = await headers();
-  const host = headersList.get("host") || "";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const absoluteUrl = `${protocol}://${host}/courses/${id}`;
+  const absoluteUrl = `https://nextprepbd.com/courses/${id}`;
 
   const courseSchema = getCourseSchema({
     name: course.title,
@@ -144,7 +129,7 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                     <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Curriculum</h3>
                     <span className="text-[11px] font-bold text-slate-400 tracking-widest bg-slate-100 px-3 py-1 rounded-full">{lessons.length} Modules</span>
                 </div>
-                <CurriculumView lessons={lessons} isEnrolled={enrolled} />
+                <CurriculumView lessons={lessons} initialEnrolled={false} courseId={course.id} />
             </div>
 
             <div className="pt-8">
@@ -192,9 +177,10 @@ export default async function SingleCoursePage({ params }: { params: Promise<{ i
                                courseId={course.id} 
                                courseName={course.title}
                                price={course.discount_price || course.price}
-                               initialEnrolled={enrolled} 
-                               isCompleted={isCompleted}
-                               progressPercentage={progressPercentage}
+                               initialEnrolled={false} 
+                               isCompleted={false}
+                               progressPercentage={0}
+                               totalItems={totalItems}
                             />
                             <div className="bg-slate-50 rounded-xl p-1 border border-slate-100 flex items-center justify-center shrink-0 w-[60px]">
                                <BookmarkButton 
