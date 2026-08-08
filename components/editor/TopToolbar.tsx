@@ -8,6 +8,7 @@ import {
   Paintbrush, CheckSquare, ArrowUpDown, Quote
 } from 'lucide-react';
 import PromptModal from '@/components/shared/PromptModal';
+import GoogleFontModal from './GoogleFontModal';
 
 interface TopToolbarProps {
   editorRef: React.RefObject<HTMLDivElement | null>;
@@ -20,10 +21,10 @@ interface TopToolbarProps {
 const DEFAULT_FONTS = [
   { name: 'Default', value: 'inherit' },
   { name: 'Arial', value: 'Arial, sans-serif' },
-  { name: 'Times New Roman', value: '"Times New Roman", serif' },
-  { name: 'Courier New', value: '"Courier New", monospace' },
+  { name: 'Times New Roman', value: "'Times New Roman', Times, serif" },
+  { name: 'Courier New', value: "'Courier New', Courier, monospace" },
   { name: 'Georgia', value: 'Georgia, serif' },
-  { name: 'Noto Serif Bengali', value: '"Noto Serif Bengali", serif' }
+  { name: 'Noto Serif Bengali', value: "'Noto Serif Bengali', serif" }
 ];
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 24, 30, 36, 48, 60, 72, 96];
@@ -319,9 +320,38 @@ export default function TopToolbar({
     editorRef.current?.focus();
   };
 
+  const [isGoogleFontModalOpen, setIsGoogleFontModalOpen] = useState(false);
+
+  const handleSelectGoogleFont = (fontName: string) => {
+    restoreSelection();
+    const fontValue = `'${fontName}', sans-serif`;
+    
+    // Inject CDN stylesheet into document head dynamically
+    const linkId = `google-font-${fontName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id = linkId;
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;600;700&display=swap`;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+
+    setCustomFonts(prev => {
+      if (prev.some(f => f.name === fontName)) return prev;
+      return [...prev, { name: fontName, value: fontValue }];
+    });
+    
+    applyStyleToSelection('fontFamily', fontValue);
+    setCurrentFont(fontName);
+    setActiveDropdown(null);
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  };
+
   const addGoogleFont = () => {
     saveSelection();
-    setModalConfig({ isOpen: true, type: 'addGoogleFont', title: 'Add Google Font', placeholder: "e.g. 'Roboto' or 'Outfit'" });
+    setIsGoogleFontModalOpen(true);
   };
 
   const handleCustomFontSize = (size: number) => {
@@ -397,24 +427,6 @@ export default function TopToolbar({
   };
 
   const isActive = (format: string) => activeFormats.includes(format);
-  
-  const ToolbarButton = ({ icon: Icon, command, value, active, tooltip, onClick }: any) => (
-    <button
-      onMouseDown={(e) => { 
-        e.preventDefault(); 
-        if (onClick) onClick();
-        else exec(command, value); 
-      }}
-      className={`p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center
-        ${active ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}
-      `}
-      title={tooltip}
-    >
-      <Icon size={16} />
-    </button>
-  );
-
-  const Divider = () => <div className="w-[1px] h-5 bg-slate-300 dark:bg-slate-700 mx-1 shrink-0"></div>;
   const allFonts = [...DEFAULT_FONTS, ...customFonts];
 
   return (
@@ -426,13 +438,20 @@ export default function TopToolbar({
         onClose={() => setModalConfig(null)}
         onSubmit={handleModalSubmit}
       />
+
+      <GoogleFontModal
+        isOpen={isGoogleFontModalOpen}
+        onClose={() => setIsGoogleFontModalOpen(false)}
+        onSelectFont={handleSelectGoogleFont}
+      />
+
       <div className={`sticky top-0 z-20 flex flex-wrap items-center gap-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700 ${!isPainting ? '' : 'ring-2 ring-blue-400'} text-sm shadow-sm w-full`}>
-      <ToolbarButton icon={Undo} command="undo" tooltip="Undo" />
-      <ToolbarButton icon={Redo} command="redo" tooltip="Redo" />
+      <ToolbarButton icon={Undo} exec={exec} command="undo" tooltip="Undo" />
+      <ToolbarButton icon={Redo} exec={exec} command="redo" tooltip="Redo" />
       <ToolbarButton icon={Printer} onClick={() => window.print()} tooltip="Print" />
       <ToolbarButton icon={Paintbrush} onClick={toggleFormatPainter} active={isPainting} tooltip="Format Painter" />
       
-      <div className="w-[1px] h-5 bg-slate-300 dark:bg-slate-700 mx-1 shrink-0"></div>
+      <Divider />
 
       {/* Headings / Block Format */}
       <div className="relative dropdown-container">
@@ -907,8 +926,28 @@ export default function TopToolbar({
 
       <Divider />
 
-      <ToolbarButton icon={RemoveFormatting} command="removeFormat" tooltip="Clear Formatting" />
+      <ToolbarButton icon={RemoveFormatting} exec={exec} command="removeFormat" tooltip="Clear Formatting" />
     </div>
     </>
   );
 }
+
+const ToolbarButton = ({ icon: Icon, command, value, active, tooltip, onClick, exec }: any) => (
+  <button
+    type="button"
+    onMouseDown={(e) => { 
+      e.preventDefault(); 
+      if (onClick) onClick();
+      else if (exec) exec(command, value); 
+    }}
+    className={`p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center
+      ${active ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}
+    `}
+    title={tooltip}
+  >
+    <Icon size={16} />
+  </button>
+);
+
+const Divider = () => <div className="w-[1px] h-5 bg-slate-300 dark:bg-slate-700 mx-1 shrink-0"></div>;
+

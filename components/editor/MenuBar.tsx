@@ -148,6 +148,7 @@ export default function MenuBar({
     return (
       <div className="relative">
         <button 
+          type="button"
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -182,6 +183,7 @@ export default function MenuBar({
                 }
                 return (
                   <button
+                    type="button"
                     key={idx}
                     onMouseEnter={() => {
                       if (activeSubmenu !== null) {
@@ -315,6 +317,7 @@ export default function MenuBar({
         }}
       >
         <button 
+          type="button"
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -396,6 +399,7 @@ export default function MenuBar({
                   />
                 </div>
                 <button
+                  type="button"
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

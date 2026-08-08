@@ -12,19 +12,24 @@ interface CurriculumViewProps {
 export default function CurriculumView({ lessons, initialEnrolled = false, courseId }: CurriculumViewProps) {
   const [isEnrolled, setIsEnrolled] = useState(initialEnrolled);
   const [openLessons, setOpenLessons] = useState<string[]>(lessons.length > 0 && initialEnrolled ? [lessons[0].id] : []);
+  const [hasResolved, setHasResolved] = useState(initialEnrolled);
 
   useEffect(() => {
+    let cancelled = false;
     async function checkStatus() {
       try {
         const { checkEnrollmentStatus } = await import("@/app/actions/enrollment");
         const { enrolled } = await checkEnrollmentStatus(courseId);
+        if (cancelled) return;
         setIsEnrolled(enrolled);
         if (enrolled && lessons.length > 0) {
            setOpenLessons(prev => prev.length === 0 ? [lessons[0].id] : prev);
         }
       } catch (e) {}
+      if (!cancelled) setHasResolved(true);
     }
     checkStatus();
+    return () => { cancelled = true; };
   }, [courseId, lessons]);
 
   const toggleLesson = (id: string) => {
@@ -67,21 +72,17 @@ export default function CurriculumView({ lessons, initialEnrolled = false, cours
                    <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
                      <PlayCircle size={14} className="text-slate-400" /> {lesson.course_contents?.length || 0} Lessons
                    </span>
-                   {!isEnrolled && (
-                     <>
-                       <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                       <span className="text-xs font-medium text-indigo-500">Enroll to unlock</span>
-                     </>
-                   )}
-                 </div>
-               </div>
-            </div>
-            {isEnrolled && (
-              <ChevronDown 
-                className={`text-slate-400 transition-transform duration-300 ${openLessons.includes(lesson.id) ? 'rotate-180 text-indigo-500' : 'group-hover:text-slate-600'}`} 
+                    <span className={`text-xs font-medium text-indigo-500 flex items-center gap-1.5 transition-all duration-300 ${!isEnrolled && hasResolved ? 'opacity-100' : isEnrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-50'}`}>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
+                      Enroll to unlock
+                    </span>
+                  </div>
+                </div>
+             </div>
+             <ChevronDown 
+                className={`text-slate-400 transition-all duration-300 shrink-0 ${isEnrolled ? 'opacity-100' : 'opacity-0 w-0'} ${openLessons.includes(lesson.id) ? 'rotate-180 text-indigo-500' : 'group-hover:text-slate-600'}`} 
                 size={20} 
-              />
-            )}
+             />
           </button>
 
           {/* LESSON CONTENTS */}

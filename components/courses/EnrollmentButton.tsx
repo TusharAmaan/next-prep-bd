@@ -24,7 +24,7 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
   const [isCompletedState, setIsCompletedState] = useState(isCompleted);
   const [progressState, setProgressState] = useState(progressPercentage);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const [hasChecked, setHasChecked] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
            setIsCompletedState(totalItems > 0 && completedItemsCount === totalItems);
         }
       } catch (e) {}
-      setIsChecking(false);
+      setHasChecked(true);
     }
     checkStatus();
   }, [courseId, totalItems]);
@@ -86,34 +86,32 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
     }
   };
 
-  if (isChecking) {
-    return <div className="flex-1 bg-slate-200 animate-pulse h-[52px] rounded-xl"></div>;
+  // Enrolled: Completed state
+  if (isEnrolled && isCompletedState) {
+    return (
+      <div className={`flex-1 flex flex-col gap-3 transition-opacity duration-300 ${hasChecked ? 'opacity-100' : 'opacity-0'}`}>
+         <button 
+            onClick={() => router.push(`/courses/${courseId}/learn`)}
+            className="w-full bg-white hover:bg-slate-50 border-2 border-indigo-600 text-indigo-700 text-center font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            <PlayCircle size={20} />
+            Restart Course
+          </button>
+          <button 
+            onClick={() => router.push(`/courses/${courseId}/certificate`)}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-center font-bold py-3.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+          >
+            <Trophy size={20} />
+            View Certificate
+          </button>
+      </div>
+    );
   }
 
+  // Enrolled: In-progress state
   if (isEnrolled) {
-    if (isCompletedState) {
-       return (
-          <div className="flex-1 flex flex-col gap-3">
-             <button 
-                onClick={() => router.push(`/courses/${courseId}/learn`)}
-                className="w-full bg-white hover:bg-slate-50 border-2 border-indigo-600 text-indigo-700 text-center font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <PlayCircle size={20} />
-                Restart Course
-              </button>
-              <button 
-                onClick={() => router.push(`/courses/${courseId}/certificate`)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-center font-bold py-3.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
-              >
-                <Trophy size={20} />
-                View Certificate
-              </button>
-          </div>
-       );
-    }
-
     return (
-      <div className="flex-1 flex flex-col gap-3">
+      <div className={`flex-1 flex flex-col gap-3 transition-opacity duration-300 ${hasChecked ? 'opacity-100' : 'opacity-0'}`}>
           <button 
             onClick={() => router.push(`/courses/${courseId}/learn`)}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
@@ -137,6 +135,7 @@ export default function EnrollmentButton({ courseId, courseName = "Course", pric
     );
   }
 
+  // Default: Not enrolled — shown immediately, no skeleton
   return (
     <>
       <button 
