@@ -24,7 +24,9 @@ import {
   Sparkles,
   Layers,
   Search,
-  Filter
+  Filter,
+  ArrowLeft,
+  AlertTriangle
 } from "lucide-react";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichTextDisplay from "@/components/shared/RichTextDisplay";
@@ -35,189 +37,10 @@ interface LessonPlanManagerProps {
   darkMode?: boolean;
 }
 
-interface ContentEditModalProps {
-  isOpen: boolean;
-  editingContent: any;
-  parentLesson: any;
-  onClose: () => void;
-  onSave: (data: { title: string; type: string; order_index: number; content_body: string }) => void;
-}
-
-// Dedicated Isolated Content Modal component so inner editor changes never re-render or close parent modal
-function ContentEditModal({ isOpen, editingContent, parentLesson, onClose, onSave }: ContentEditModalProps) {
-  const [title, setTitle] = useState(editingContent?.title || '');
-  const [type, setType] = useState(editingContent?.type || 'passage');
-  const [orderIndex, setOrderIndex] = useState<number>(editingContent?.order_index || 0);
-  const [body, setBody] = useState<string>(editingContent?.content_body || '');
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
-
-  useEffect(() => {
-    setTitle(editingContent?.title || '');
-    setType(editingContent?.type || 'passage');
-    setOrderIndex(editingContent?.order_index || 0);
-    setBody(editingContent?.content_body || '');
-  }, [editingContent, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      title,
-      type,
-      order_index: Number(orderIndex),
-      content_body: body
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col h-[90vh] overflow-hidden">
-        
-        {/* Header */}
-        <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/70 dark:bg-slate-900/70 shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                Lesson: {parentLesson?.title || 'Current Lesson'}
-              </span>
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {editingContent ? 'Edit Content Component' : 'Create New Content Component'}
-            </h3>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Tab Switcher */}
-            <div className="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setActiveTab('editor')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeTab === 'editor' 
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Edit className="w-3.5 h-3.5" /> Editor
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('preview')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeTab === 'preview' 
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Eye className="w-3.5 h-3.5" /> Student View
-              </button>
-            </div>
-
-            <button 
-              type="button"
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Content Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          
-          <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-            
-            {/* Meta Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Component Title</label>
-                <input 
-                  type="text"
-                  value={title} 
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Reading Passage 1: The Tiny Ant"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all" 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Component Type</label>
-                <select 
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                >
-                  <option value="passage">Passage / Content</option>
-                  <option value="exercise">Exercise / Question</option>
-                  <option value="link">Resource Link</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Order Index</label>
-                <input 
-                  type="number"
-                  value={orderIndex} 
-                  onChange={(e) => setOrderIndex(parseInt(e.target.value || '0'))}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all" 
-                  required 
-                />
-              </div>
-            </div>
-
-            {/* Tab View: Editor vs Student Live Preview */}
-            {activeTab === 'editor' ? (
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Content Body (Rich Editor)</label>
-                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-                  <RichTextEditor 
-                    initialValue={body} 
-                    onChange={setBody} 
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Student Live Rendering (MathJax + Google Fonts)</label>
-                <div className="p-8 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner min-h-[450px]">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">{title || 'Untitled Component'}</h2>
-                  <RichTextDisplay content={body} />
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* Footer Bar */}
-          <div className="px-8 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/70 shrink-0">
-            <span className="text-xs text-slate-400 font-medium">All content and formatting stay safely open inside popup</span>
-            <div className="flex gap-3">
-              <button 
-                type="button" 
-                onClick={onClose} 
-                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
-              >
-                <Save className="w-4 h-4" /> Save Component
-              </button>
-            </div>
-          </div>
-
-        </form>
-      </div>
-    </div>
-  );
-}
-
 export default function LessonPlanManager({ subjects: initialSubjects, darkMode = false }: LessonPlanManagerProps) {
+  // Navigation & View Mode ('explorer' | 'editor')
+  const [viewMode, setViewMode] = useState<'explorer' | 'editor'>('explorer');
+
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
@@ -230,6 +53,70 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
 
   const [units, setUnits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Modal states for Unit, Lesson, Book, Course, Clone
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  
+  // Selection for operations
+  const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [editingContent, setEditingContent] = useState<any>(null);
+  const [parentUnit, setParentUnit] = useState<any>(null);
+  const [parentLesson, setParentLesson] = useState<any>(null);
+
+  // Dedicated Full-Page Content Editor State
+  const [editorTitle, setEditorTitle] = useState('');
+  const [editorType, setEditorType] = useState('passage');
+  const [editorOrderIndex, setEditorOrderIndex] = useState<number>(0);
+  const [editorBody, setEditorBody] = useState('');
+  const [editorTab, setEditorTab] = useState<'editor' | 'preview'>('editor');
+  
+  // Unsaved Changes Protection State
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavAction, setPendingNavAction] = useState<(() => void) | null>(null);
+  
+  // Tree expanded state
+  const [expandedUnits, setExpandedUnits] = useState<Record<number, boolean>>({});
+  const [expandedLessons, setExpandedLessons] = useState<Record<number, boolean>>({});
+
+  // Related Books Modal
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [books, setBooks] = useState<any[]>([]);
+  const [isBooksLoading, setIsBooksLoading] = useState(false);
+  const [editingBook, setEditingBook] = useState<any>(null);
+
+  // Related Courses Modal
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [linkedCourses, setLinkedCourses] = useState<any[]>([]);
+  const [isCoursesLoading, setIsCoursesLoading] = useState(false);
+  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
+
+  // Version filter ('bn' or 'en')
+  const [versionFilter, setVersionFilter] = useState<'en' | 'bn'>('bn');
+
+  // Clone Modal
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [cloneSourceId, setCloneSourceId] = useState('');
+  const [allSubjects, setAllSubjects] = useState<any[]>([]);
+  const [cloneSourceUnits, setCloneSourceUnits] = useState<any[]>([]);
+  const [selectedUnitsToClone, setSelectedUnitsToClone] = useState<Record<number, boolean>>({});
+  const [isCloneFetching, setIsCloneFetching] = useState(false);
+
+  // Browser reload / tab close protection when isDirty === true
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes in your lesson plan content!';
+        return 'You have unsaved changes in your lesson plan content!';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   // Initial Fetch Segments
   useEffect(() => {
@@ -272,45 +159,6 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
     };
     fetchSubjects();
   }, [selectedGroupId]);
-
-  // Modal states
-  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
-  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
-  const [isContentModalOpen, setIsContentModalOpen] = useState(false);
-  
-  // Selection for operations
-  const [editingUnit, setEditingUnit] = useState<any>(null);
-  const [editingLesson, setEditingLesson] = useState<any>(null);
-  const [editingContent, setEditingContent] = useState<any>(null);
-  const [parentUnit, setParentUnit] = useState<any>(null);
-  const [parentLesson, setParentLesson] = useState<any>(null);
-  
-  // Tree expanded state
-  const [expandedUnits, setExpandedUnits] = useState<Record<number, boolean>>({});
-  const [expandedLessons, setExpandedLessons] = useState<Record<number, boolean>>({});
-
-  // Related Books Modal
-  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-  const [books, setBooks] = useState<any[]>([]);
-  const [isBooksLoading, setIsBooksLoading] = useState(false);
-  const [editingBook, setEditingBook] = useState<any>(null);
-
-  // Related Courses Modal
-  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
-  const [linkedCourses, setLinkedCourses] = useState<any[]>([]);
-  const [isCoursesLoading, setIsCoursesLoading] = useState(false);
-  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
-
-  // Version filter ('bn' or 'en')
-  const [versionFilter, setVersionFilter] = useState<'en' | 'bn'>('bn');
-
-  // Clone Modal
-  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
-  const [cloneSourceId, setCloneSourceId] = useState('');
-  const [allSubjects, setAllSubjects] = useState<any[]>([]);
-  const [cloneSourceUnits, setCloneSourceUnits] = useState<any[]>([]);
-  const [selectedUnitsToClone, setSelectedUnitsToClone] = useState<Record<number, boolean>>({});
-  const [isCloneFetching, setIsCloneFetching] = useState(false);
 
   useEffect(() => {
     if (isCloneModalOpen) {
@@ -396,6 +244,86 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
 
   const toggleLesson = (id: number) => {
     setExpandedLessons(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // --- Safe Navigation Helper ---
+  const handleProtectedAction = (action: () => void) => {
+    if (isDirty) {
+      setPendingNavAction(() => action);
+      setShowUnsavedModal(true);
+    } else {
+      action();
+    }
+  };
+
+  const confirmDiscardAndProceed = () => {
+    setIsDirty(false);
+    setShowUnsavedModal(false);
+    if (pendingNavAction) {
+      pendingNavAction();
+      setPendingNavAction(null);
+    } else {
+      setViewMode('explorer');
+    }
+  };
+
+  // --- Full-Page Content Editor Open Handler ---
+  const handleOpenFullPageContentEditor = (lesson: any, contentToEdit?: any) => {
+    handleProtectedAction(() => {
+      setParentLesson(lesson);
+      setEditingContent(contentToEdit || null);
+      setEditorTitle(contentToEdit?.title || '');
+      setEditorType(contentToEdit?.type || 'passage');
+      setEditorOrderIndex(contentToEdit?.order_index || 0);
+      setEditorBody(contentToEdit?.content_body || '');
+      setEditorTab('editor');
+      setIsDirty(false);
+      setViewMode('editor');
+    });
+  };
+
+  // --- Save Full Page Content Editor Handler ---
+  const handleSaveFullEditorContent = async () => {
+    if (!editorTitle.trim()) {
+      toast.error("Please enter a component title!");
+      return;
+    }
+
+    try {
+      if (editingContent) {
+        const { error } = await supabase
+          .from('lesson_plan_contents')
+          .update({ 
+            title: editorTitle, 
+            type: editorType, 
+            content_body: editorBody, 
+            order_index: editorOrderIndex 
+          })
+          .eq('id', editingContent.id);
+        if (error) throw error;
+        toast.success("Content updated successfully!");
+      } else {
+        const { error } = await supabase
+          .from('lesson_plan_contents')
+          .insert([{ 
+            title: editorTitle, 
+            type: editorType, 
+            content_body: editorBody, 
+            order_index: editorOrderIndex, 
+            lesson_id: parentLesson.id, 
+            version: versionFilter 
+          }]);
+        if (error) throw error;
+        toast.success("Content created successfully!");
+      }
+      
+      setIsDirty(false);
+      setViewMode('explorer');
+      fetchHierarchy();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save content");
+    }
   };
 
   // --- Handlers for Units ---
@@ -563,37 +491,6 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
     }
   };
 
-  // --- Handlers for Content ---
-  const handleSaveContentModal = async (data: { title: string; type: string; order_index: number; content_body: string }) => {
-    try {
-      if (editingContent) {
-        const { error } = await supabase
-          .from('lesson_plan_contents')
-          .update({ title: data.title, type: data.type, content_body: data.content_body, order_index: data.order_index })
-          .eq('id', editingContent.id);
-        if (error) throw error;
-        toast.success("Content updated");
-      } else {
-        const { error } = await supabase
-          .from('lesson_plan_contents')
-          .insert([{ 
-            title: data.title, 
-            type: data.type, 
-            content_body: data.content_body, 
-            order_index: data.order_index, 
-            lesson_id: parentLesson.id, 
-            version: versionFilter 
-          }]);
-        if (error) throw error;
-        toast.success("Content added");
-      }
-      setIsContentModalOpen(false);
-      fetchHierarchy();
-    } catch (error) {
-      toast.error("Operation failed");
-    }
-  };
-
   const handleDeleteContent = async (id: number) => {
     if (!confirm("Delete this content item?")) return;
     const { error } = await supabase.from('lesson_plan_contents').delete().eq('id', id);
@@ -734,7 +631,6 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
     }
   };
 
-  // Quick stats calculations
   const totalLessonsCount = useMemo(() => {
     return units.reduce((acc, u) => acc + (u.lesson_plan_lessons?.length || 0), 0);
   }, [units]);
@@ -745,6 +641,235 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
     }, 0);
   }, [units]);
 
+  // =========================================================================
+  // VIEW MODE: FULL-PAGE DYNAMIC CONTENT EDITOR WORKSPACE
+  // =========================================================================
+  if (viewMode === 'editor') {
+    return (
+      <div className="min-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-200">
+        
+        {/* Full-Page Top Control Header */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 flex flex-wrap items-center justify-between gap-4 shrink-0">
+          
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => handleProtectedAction(() => setViewMode('explorer'))}
+              className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Curriculum
+            </button>
+
+            <div>
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                <span>{selectedSubject?.title}</span>
+                <span>/</span>
+                <span>Lesson {parentLesson?.order_index}: {parentLesson?.title}</span>
+                <span>/</span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold">{editingContent ? 'Edit Component' : 'New Component'}</span>
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {editorTitle.trim() ? editorTitle : (editingContent ? 'Editing Content Component' : 'Creating New Component')}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Editor vs Student Preview Tabs */}
+            <div className="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setEditorTab('editor')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  editorTab === 'editor' 
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md font-extrabold' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Edit className="w-3.5 h-3.5" /> Full Editor Workspace
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorTab('preview')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  editorTab === 'preview' 
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md font-extrabold' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" /> Student View Live Render
+              </button>
+            </div>
+
+            {/* Save Button */}
+            <button
+              type="button"
+              onClick={handleSaveFullEditorContent}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" /> SAVE COMPONENT
+            </button>
+          </div>
+
+        </div>
+
+        {/* Content Details Meta Bar */}
+        <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
+          <div className="md:col-span-2 space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Component Title *
+            </label>
+            <input 
+              type="text"
+              value={editorTitle}
+              onChange={(e) => {
+                setEditorTitle(e.target.value);
+                setIsDirty(true);
+              }}
+              placeholder="e.g. Reading Passage: The Tiny Ant and the Kind Dove"
+              className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Component Type
+            </label>
+            <select
+              value={editorType}
+              onChange={(e) => {
+                setEditorType(e.target.value);
+                setIsDirty(true);
+              }}
+              className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            >
+              <option value="passage">Passage / Content</option>
+              <option value="exercise">Exercise / Question</option>
+              <option value="link">Resource Link</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Order Index
+            </label>
+            <input 
+              type="number"
+              value={editorOrderIndex}
+              onChange={(e) => {
+                setEditorOrderIndex(parseInt(e.target.value || '0'));
+                setIsDirty(true);
+              }}
+              className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Dynamic Workspace Container */}
+        <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
+          {editorTab === 'editor' ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                  Rich Text Content Editor Workspace
+                </label>
+                {isDirty && (
+                  <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                    ● Unsaved Changes
+                  </span>
+                )}
+              </div>
+
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <RichTextEditor
+                  initialValue={editorBody}
+                  onChange={(val) => {
+                    setEditorBody(val);
+                    setIsDirty(true);
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <label className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                  Student View Live Render (LaTeX MathJax + Google Fonts)
+                </label>
+              </div>
+
+              <div className="p-8 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner min-h-[500px]">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  {editorTitle || 'Untitled Component'}
+                </h1>
+                <RichTextDisplay content={editorBody} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dynamic Footer Status */}
+        <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 flex items-center justify-between text-xs text-slate-500 shrink-0">
+          <span>{isDirty ? 'Unsaved edits in progress...' : 'All changes saved.'}</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleProtectedAction(() => setViewMode('explorer'))}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all"
+            >
+              Cancel / Back
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveFullEditorContent}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-md shadow-indigo-500/20 transition-all flex items-center gap-1.5"
+            >
+              <Save className="w-4 h-4" /> Save Component
+            </button>
+          </div>
+        </div>
+
+        {/* Unsaved Changes Confirmation Modal */}
+        {showUnsavedModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4">
+              <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unsaved Changes</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                  You have unsaved changes in this post content. Are you sure you want to leave without saving?
+                </p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUnsavedModal(false)}
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Stay & Keep Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDiscardAndProceed}
+                  className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs shadow-md transition-colors"
+                >
+                  Leave Without Saving
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW MODE: CURRICULUM HIERARCHY EXPLORER VIEW
+  // =========================================================================
   return (
     <div className="space-y-6">
       
@@ -765,7 +890,7 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
             <button 
               type="button"
-              onClick={() => setVersionFilter('bn')}
+              onClick={() => handleProtectedAction(() => setVersionFilter('bn'))}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 versionFilter === 'bn' 
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md font-extrabold' 
@@ -776,7 +901,7 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
             </button>
             <button 
               type="button"
-              onClick={() => setVersionFilter('en')}
+              onClick={() => handleProtectedAction(() => setVersionFilter('en'))}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 versionFilter === 'en' 
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md font-extrabold' 
@@ -794,9 +919,12 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
             className="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 transition-all cursor-pointer"
             value={selectedSegmentId}
             onChange={(e) => {
-              setSelectedSegmentId(e.target.value);
-              setSelectedGroupId('');
-              setSelectedSubject(null);
+              const val = e.target.value;
+              handleProtectedAction(() => {
+                setSelectedSegmentId(val);
+                setSelectedGroupId('');
+                setSelectedSubject(null);
+              });
             }}
           >
             <option value="">-- Select Segment --</option>
@@ -809,8 +937,11 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
             className="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 transition-all cursor-pointer disabled:opacity-50"
             value={selectedGroupId}
             onChange={(e) => {
-              setSelectedGroupId(e.target.value);
-              setSelectedSubject(null);
+              const val = e.target.value;
+              handleProtectedAction(() => {
+                setSelectedGroupId(val);
+                setSelectedSubject(null);
+              });
             }}
             disabled={!selectedSegmentId}
           >
@@ -825,7 +956,9 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
             value={selectedSubject?.id || ''}
             onChange={(e) => {
               const sub = subjects.find(s => s.id.toString() === e.target.value);
-              setSelectedSubject(sub);
+              handleProtectedAction(() => {
+                setSelectedSubject(sub);
+              });
             }}
             disabled={!selectedGroupId || isHierarchyLoading}
           >
@@ -1002,11 +1135,7 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
                           <div className="flex items-center gap-1.5 opacity-90 group-hover/lesson:opacity-100 transition-all">
                              <button 
                                 type="button"
-                                onClick={() => { 
-                                  setParentLesson(lesson); 
-                                  setEditingContent(null); 
-                                  setIsContentModalOpen(true); 
-                                }}
+                                onClick={() => handleOpenFullPageContentEditor(lesson)}
                                 className="px-3 py-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 rounded-lg text-xs font-bold flex items-center gap-1 transition-all" 
                                 title="Add Content Component"
                              >
@@ -1055,17 +1184,13 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
                                         </span>
                                       </div>
 
-                                      {/* Quick Edit/Delete Actions */}
+                                      {/* Full-Page Edit / Delete Actions */}
                                       <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
                                          <button 
                                            type="button"
-                                           onClick={() => { 
-                                             setParentLesson(lesson);
-                                             setEditingContent(content); 
-                                             setIsContentModalOpen(true); 
-                                           }}
+                                           onClick={() => handleOpenFullPageContentEditor(lesson, content)}
                                            className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                                           title="Edit Component"
+                                           title="Edit Component in Full Page Workspace"
                                          >
                                             <Edit className="w-3.5 h-3.5" />
                                          </button>
@@ -1104,7 +1229,7 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
         </div>
       )}
 
-      {/* --- ISOLATED MODALS --- */}
+      {/* --- MODALS (Unit, Lesson, Book, Courses, Clone) --- */}
 
       {/* Unit Modal */}
       {isUnitModalOpen && (
@@ -1175,15 +1300,6 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
           </div>
         </div>
       )}
-
-      {/* ISOLATED CONTENT EDIT MODAL */}
-      <ContentEditModal
-        isOpen={isContentModalOpen}
-        editingContent={editingContent}
-        parentLesson={parentLesson}
-        onClose={() => setIsContentModalOpen(false)}
-        onSave={handleSaveContentModal}
-      />
 
       {/* Related Books Modal */}
       {isBookModalOpen && (
@@ -1327,6 +1443,39 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
                 <button type="submit" disabled={!cloneSourceId} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-500/20 disabled:opacity-50">Start Clone</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Protection Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Unsaved Changes</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                You have unsaved changes in this post content. Are you sure you want to leave without saving?
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowUnsavedModal(false)}
+                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Stay & Keep Editing
+              </button>
+              <button
+                type="button"
+                onClick={confirmDiscardAndProceed}
+                className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs shadow-md transition-colors"
+              >
+                Leave Without Saving
+              </button>
+            </div>
           </div>
         </div>
       )}
