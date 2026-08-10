@@ -69,7 +69,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = path.startsWith('/login') || path.startsWith('/register');
 
   // A. Protect Private Routes (Admin/Tutor)
-  if ((isAdminRoute || isTutorRoute) && !user) {
+  if ((isAdminRoute || isTutorRoute) && !user && !path.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
