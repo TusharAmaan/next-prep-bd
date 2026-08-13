@@ -37,7 +37,7 @@ interface Question {
 // --- 1. STABLE EDITOR (Prevents Cursor Jumping) ---
 const StableEditor = memo(({ initialContent, onChange, uniqueKey, darkMode }: { initialContent: string, onChange: (val: string) => void, uniqueKey: string, darkMode?: boolean }) => {
     return (
-        <div className="prose-editor-wrapper min-h-[140px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
+        <div className="prose-editor-wrapper min-h-[140px] bg-surf-1 border border-line rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
             <RichTextEditor 
                 key={uniqueKey} 
                 initialValue={initialContent} 
@@ -68,15 +68,15 @@ const MultiTagInput = ({ value, onChange, suggestions }: { value: string, onChan
 
     return (
         <div className="relative group w-full">
-            <div className={`flex flex-wrap items-center gap-2 border rounded-xl p-2.5 bg-white dark:bg-slate-900 transition-all ${isFocused ? 'ring-2 ring-indigo-100 border-indigo-300' : 'border-slate-200 dark:border-slate-700'}`}>
-                <Tag size={16} className="text-slate-400 dark:text-slate-500 mr-1"/>
+            <div className={`flex flex-wrap items-center gap-2 border rounded-xl p-2.5 bg-surf-1 transition-all ${isFocused ? 'ring-2 ring-indigo-100 border-indigo-300' : 'border-line'}`}>
+                <Tag size={16} className="text-ink-3 mr-1"/>
                 {tags.map(tag => (
                     <span key={tag} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 border border-indigo-100">
                         {tag} <button onClick={() => removeTag(tag)} className="hover:text-indigo-900 rounded-full hover:bg-indigo-200 p-0.5"><X size={10}/></button>
                     </span>
                 ))}
                 <input 
-                    className="flex-1 min-w-[100px] text-sm outline-none bg-transparent text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:text-slate-500"
+                    className="flex-1 min-w-[100px] text-sm outline-none bg-transparent text-ink-2 placeholder:text-ink-3"
                     placeholder={tags.length === 0 ? "Add tags..." : ""}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
@@ -86,12 +86,12 @@ const MultiTagInput = ({ value, onChange, suggestions }: { value: string, onChan
                 />
             </div>
             {isFocused && (filteredSuggestions.length > 0 || (inputValue && !tags.includes(inputValue))) && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50 py-1">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-surf-1 border border-line rounded-xl shadow-xl max-h-48 overflow-y-auto z-50 py-1">
                     {inputValue && !filteredSuggestions.includes(inputValue) && (
                         <button onMouseDown={(e) => { e.preventDefault(); addTag(inputValue); }} className="w-full text-left px-4 py-2 text-sm text-indigo-600 bg-indigo-50 font-bold hover:bg-indigo-100 flex items-center gap-2"><Plus size={14}/> Create "{inputValue}"</button>
                     )}
                     {filteredSuggestions.map(tag => (
-                        <button key={tag} onMouseDown={(e) => { e.preventDefault(); addTag(tag); }} className="w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">{tag}</button>
+                        <button key={tag} onMouseDown={(e) => { e.preventDefault(); addTag(tag); }} className="w-full text-left px-4 py-2 text-sm text-ink-2 dark:text-slate-500 hover:bg-surf-2/50 transition-colors">{tag}</button>
                     ))}
                 </div>
             )}
@@ -104,16 +104,16 @@ function CustomModal({ isOpen, type, message, onConfirm, onCancel }: any) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-white/20">
+      <div className="bg-surf-1 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-white/20">
         <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${type === 'success' ? 'bg-emerald-100 text-emerald-600' : type === 'error' ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
            {type === 'success' ? <CheckCircle size={24} /> : type === 'error' ? <AlertCircle size={24} /> : <HelpCircle size={24}/>}
         </div>
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Confirm'}</h3>
-        <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 text-sm">{message}</p>
+        <h3 className="text-lg font-bold text-ink-1 mb-2">{type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Confirm'}</h3>
+        <p className="text-ink-2 dark:text-slate-500 mb-6 text-sm">{message}</p>
         <div className="flex gap-3 justify-center">
           {type === 'confirm' ? (
             <>
-              <button onClick={onCancel} className="px-4 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50 dark:bg-slate-800/50">Cancel</button>
+              <button onClick={onCancel} className="px-4 py-2 border rounded-lg text-sm font-bold hover:bg-surf-2/50">Cancel</button>
               <button onClick={onConfirm} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Confirm</button>
             </>
           ) : (
@@ -653,26 +653,26 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
   };
 
   return (
-    <div className="flex flex-col h-full font-sans text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col h-full font-sans text-ink-1 bg-slate-50 dark:bg-slate-950">
        <CustomModal isOpen={modal.isOpen} type={modal.type} message={modal.message} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
        {/* HEADER */}
-       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 px-4 sm:px-6 pt-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 pb-4 gap-4">
+       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 px-4 sm:px-6 pt-6 bg-surf-1 border-b border-line pb-4 gap-4">
           <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">Question Manager</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mt-1">Create, edit, and organize question bank content.</p>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-ink-1">Question Manager</h2>
+              <p className="text-ink-3 text-[10px] sm:text-xs font-medium mt-1">Create, edit, and organize question bank content.</p>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
-               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mr-2">
+               <div className="flex bg-surf-2 border border-line p-1 rounded-xl mr-2">
                    <button 
                        onClick={() => setView('list')}
-                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'list' ? 'bg-surf-1 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                    >
                        Repository
                    </button>
                    <button 
                        onClick={() => setView('reports')}
-                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'reports' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${view === 'reports' ? 'bg-surf-1 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                    >
                        Reports {reports.filter(r => r.status === 'pending').length > 0 && <span className="ml-1 bg-rose-500 text-white text-[8px] px-1 rounded-full">{reports.filter(r => r.status === 'pending').length}</span>}
                    </button>
@@ -682,10 +682,10 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                       <button onClick={handleDownloadSample} className="flex items-center gap-2 px-3 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-[10px] font-bold transition-all">
                           <HelpCircle size={14} /> Sample CSV
                       </button>
-                      <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all">
+                      <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-ink-3 opacity-50 rounded-xl text-sm font-bold border border-line hover:bg-slate-50 transition-all">
                           <UploadCloud size={18} /> Export CSV
                       </button>
-                      <label className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
+                      <label className="flex items-center gap-2 px-4 py-2 bg-surf-2 border border-line text-slate-600 dark:text-ink-3 opacity-50 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-200 transition-all border border-line">
                           <FileUp size={18} /> 
                           <span className="hidden sm:inline">Import CSV</span>
                           <input type="file" accept=".csv" hidden onChange={handleImportCSV} />
@@ -696,7 +696,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                   </div>
               )}
               {view === 'create' && (
-                  <button onClick={() => setView('list')} className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold hover:text-slate-800 dark:text-slate-100 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
+                  <button onClick={() => setView('list')} className="text-ink-3 dark:text-slate-500 font-bold hover:text-ink-1 text-sm flex items-center gap-1"><ChevronLeft size={16}/> Back to List</button>
               )}
           </div>
        </div>
@@ -704,7 +704,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
         {/* === REPORTS VIEW === */}
         {view === 'reports' && (
             <div className="flex flex-col h-full overflow-hidden px-6 pb-6">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden h-full flex flex-col">
+                <div className="bg-surf-1 rounded-2xl border border-line shadow-sm overflow-hidden h-full flex flex-col">
                     {loading ? (
                         <div className="flex-1 flex items-center justify-center p-20">
                             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
@@ -717,7 +717,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                     ) : (
                         <div className="overflow-auto flex-1">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50 dark:bg-slate-800/50 sticky top-0 border-b dark:border-slate-700">
+                                <thead className="bg-surf-2/50 sticky top-0 border-b dark:border-slate-700">
                                     <tr>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400">Student & Question</th>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400">Issue / Reason</th>
@@ -738,12 +738,12 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                                         <p className="text-[10px] text-slate-500 font-bold">{report.profiles?.email}</p>
                                                     </div>
                                                 </div>
-                                                <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                    <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2" dangerouslySetInnerHTML={{__html: report.question?.question_text}}></p>
+                                                <div className="bg-surf-2 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                    <p className="text-[10px] font-medium text-ink-2 line-clamp-2" dangerouslySetInnerHTML={{__html: report.question?.question_text}}></p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-6">
-                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 italic">"{report.reason || 'No description provided'}"</p>
+                                                <p className="text-xs font-bold text-ink-2 italic">"{report.reason || 'No description provided'}"</p>
                                             </td>
                                             <td className="px-6 py-6">
                                                 <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
@@ -795,27 +795,27 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
            <div className="flex flex-col h-full overflow-hidden px-6 pb-6">
                
                {/* 1. METADATA HEADER */}
-               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+               <div className="bg-surf-1 p-5 rounded-2xl border border-line shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                    <div className="space-y-1">
-                       <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Segment</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
+                       <label className="text-[10px] font-bold text-ink-3 uppercase">Segment</label>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-surf-2 border-line text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.segment} onChange={e => { setMainForm(p => ({...p, segment: e.target.value})); loadGroups(e.target.value, false); }}>
                            <option value="">Select...</option>{dropdowns.segments.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                        </select>
                    </div>
                    <div className="space-y-1">
-                       <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Group</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.group} onChange={e => { setMainForm(p => ({...p, group: e.target.value})); loadSubjects(e.target.value, false); }} disabled={!mainForm.segment}>
+                       <label className="text-[10px] font-bold text-ink-3 uppercase">Group</label>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-surf-2 border-line text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.group} onChange={e => { setMainForm(p => ({...p, group: e.target.value})); loadSubjects(e.target.value, false); }} disabled={!mainForm.segment}>
                            <option value="">Select...</option>{createDropdowns.groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
                        </select>
                    </div>
                    <div className="space-y-1">
-                       <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Subject</label>
-                       <select className="w-full border p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.subject} onChange={e => setMainForm(p => ({...p, subject: e.target.value}))} disabled={!mainForm.group}>
+                       <label className="text-[10px] font-bold text-ink-3 uppercase">Subject</label>
+                       <select className="w-full border p-2 rounded-lg text-sm bg-surf-2 border-line text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" value={mainForm.subject} onChange={e => setMainForm(p => ({...p, subject: e.target.value}))} disabled={!mainForm.group}>
                            <option value="">Select...</option>{createDropdowns.subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                        </select>
                    </div>
                    <div className="space-y-1">
-                       <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Topic Tags</label>
+                       <label className="text-[10px] font-bold text-ink-3 uppercase">Topic Tags</label>
                        <MultiTagInput value={mainForm.tags} onChange={val => setMainForm(p => ({...p, tags: val}))} suggestions={dropdowns.tags} />
                    </div>
                </div>
@@ -824,41 +824,41 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                <div className={`flex flex-col md:flex-row gap-6 ${mainForm.type === 'passage' ? 'h-full overflow-hidden' : ''}`}>
                    
                    {/* LEFT COLUMN: MAIN CONTENT */}
-                   <div className={`flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col ${mainForm.type === 'passage' ? 'md:w-1/2' : 'w-full'}`}>
-                       <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50/50 rounded-t-2xl">
+                   <div className={`flex-1 bg-surf-1 rounded-2xl border border-line shadow-sm flex flex-col ${mainForm.type === 'passage' ? 'md:w-1/2' : 'w-full'}`}>
+                       <div className="p-4 border-b border-line/50 flex justify-between items-center bg-surf-2/50/50 rounded-t-2xl">
                            <div className="flex bg-slate-200 dark:bg-slate-700 p-1 rounded-lg">
                                {/* Only show 'Passage' button if not already in passage mode (to switch back) OR if editing */}
-                               <button onClick={() => setMainForm(p => ({...p, type: 'mcq'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'mcq' ? 'bg-white dark:bg-slate-900 shadow text-indigo-700' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>MCQ</button>
-                               <button onClick={() => setMainForm(p => ({...p, type: 'descriptive'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'descriptive' ? 'bg-white dark:bg-slate-900 shadow text-indigo-700' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>Descriptive</button>
-                               <button onClick={() => setMainForm(p => ({...p, type: 'passage'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'passage' ? 'bg-purple-600 text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>Passage</button>
+                               <button onClick={() => setMainForm(p => ({...p, type: 'mcq'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'mcq' ? 'bg-surf-1 shadow text-indigo-700' : 'text-ink-3 dark:text-slate-500 hover:text-ink-2'}`}>MCQ</button>
+                               <button onClick={() => setMainForm(p => ({...p, type: 'descriptive'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'descriptive' ? 'bg-surf-1 shadow text-indigo-700' : 'text-ink-3 dark:text-slate-500 hover:text-ink-2'}`}>Descriptive</button>
+                               <button onClick={() => setMainForm(p => ({...p, type: 'passage'}))} className={`px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${mainForm.type === 'passage' ? 'bg-purple-600 text-white' : 'text-ink-3 dark:text-slate-500 hover:text-ink-2'}`}>Passage</button>
                            </div>
                            {mainForm.type !== 'passage' && (
                                <div className="flex items-center gap-2">
-                                    <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Marks</label>
-                                    <input type="number" value={mainForm.marks} onChange={e => setMainForm(p => ({...p, marks: Number(e.target.value)}))} className="w-16 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg p-1.5 text-center font-bold text-sm outline-none focus:border-indigo-500"/>
+                                    <label className="text-xs font-bold uppercase text-ink-3">Marks</label>
+                                    <input type="number" value={mainForm.marks} onChange={e => setMainForm(p => ({...p, marks: Number(e.target.value)}))} className="w-16 border border-line bg-surf-1 text-slate-900 dark:text-slate-100 rounded-lg p-1.5 text-center font-bold text-sm outline-none focus:border-indigo-500"/>
                                </div>
                            )}
                        </div>
 
                        <div className="flex-1 p-6 overflow-y-auto space-y-6">
                            <div className="space-y-2">
-                               <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                               <label className="block text-xs font-bold text-ink-3 uppercase tracking-wide">
                                    {mainForm.type === 'passage' ? 'Passage / Stem Content' : 'Question Content'}
                                </label>
                                <StableEditor uniqueKey={editingId || 'main'} initialContent={mainForm.text} onChange={(val) => setMainForm(p => ({...p, text: val}))} />
                            </div>
 
                            {mainForm.type === 'mcq' && (
-                               <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-                                   <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Options</label>
+                               <div className="bg-surf-2/50 p-5 rounded-2xl border border-line space-y-3">
+                                   <label className="text-xs font-bold uppercase text-ink-3">Options</label>
                                    <div className="grid grid-cols-1 gap-3">
                                        {options.map((opt, i) => (
-                                          <div key={i} className="flex gap-3 items-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm group focus-within:border-indigo-300 transition-colors">
-                                             <button onClick={() => { const n = [...options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setOptions(n); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-300 hover:border-slate-300 dark:border-slate-600'}`}>
+                                          <div key={i} className="flex gap-3 items-center bg-surf-1 p-2 rounded-xl border border-line shadow-sm group focus-within:border-indigo-300 transition-colors">
+                                             <button onClick={() => { const n = [...options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setOptions(n); }} className={`p-2.5 rounded-lg border transition-all ${opt.is_correct ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-surf-1 border-line text-ink-3 opacity-50 hover:border-line-strong'}`}>
                                                 <CheckCircle size={18} />
                                              </button>
-                                             <input className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300" value={opt.option_text} onChange={e => { const n = [...options]; n[i].option_text = e.target.value; setOptions(n); }} placeholder={`Option ${i+1}`} />
-                                             <button onClick={() => { const n = [...options]; n.splice(i,1); setOptions(n); }} className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                                             <input className="flex-1 border-none outline-none bg-transparent text-sm font-medium text-ink-2 placeholder:text-ink-3 opacity-50" value={opt.option_text} onChange={e => { const n = [...options]; n[i].option_text = e.target.value; setOptions(n); }} placeholder={`Option ${i+1}`} />
+                                             <button onClick={() => { const n = [...options]; n.splice(i,1); setOptions(n); }} className="text-ink-3 opacity-50 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
                                           </div>
                                        ))}
                                    </div>
@@ -868,7 +868,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
 
                            {mainForm.type !== 'passage' && (
                                <div className="space-y-2">
-                                   <label className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Explanation</label>
+                                   <label className="text-xs font-bold uppercase text-ink-3">Explanation</label>
                                    <StableEditor uniqueKey="main-expl" initialContent={mainForm.explanation} onChange={(val) => setMainForm(p => ({...p, explanation: val}))} />
                                </div>
                            )}
@@ -877,9 +877,9 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
 
                    {/* RIGHT: SUB-QUESTIONS (ONLY FOR PASSAGE) */}
                    {mainForm.type === 'passage' && (
-                       <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner flex flex-col md:w-1/2 overflow-hidden">
-                           <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-                               <h3 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><Layers size={16}/> Questions ({subQuestions.length})</h3>
+                       <div className="flex-1 bg-surf-2 border border-line rounded-2xl border border-line shadow-inner flex flex-col md:w-1/2 overflow-hidden">
+                           <div className="p-4 border-b border-line flex justify-between items-center bg-surf-1">
+                               <h3 className="font-bold text-ink-2 flex items-center gap-2"><Layers size={16}/> Questions ({subQuestions.length})</h3>
                                {!subQForm.isOpen && (
                                    <button onClick={() => openSubForm()} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1">
                                        <Plus size={14}/> Add Question
@@ -890,51 +890,51 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                {/* List of Sub Questions */}
                                {!subQForm.isOpen && subQuestions.length === 0 && (
-                                   <div className="text-center p-10 text-slate-400 dark:text-slate-500 italic text-sm border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">No sub-questions added yet.</div>
+                                   <div className="text-center p-10 text-ink-3 italic text-sm border-2 border-dashed border-line rounded-xl">No sub-questions added yet.</div>
                                )}
                                
                                {!subQForm.isOpen && subQuestions.map((sq, i) => (
-                                   <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-indigo-200 transition-all group relative">
+                                   <div key={i} className="bg-surf-1 p-4 rounded-xl border border-line shadow-sm hover:border-indigo-200 transition-all group relative">
                                        <div className="flex justify-between items-start mb-2">
-                                           <span className="text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded">{sq.question_type} • {sq.marks} pts</span>
+                                           <span className="text-[10px] font-bold uppercase bg-surf-2 border border-line text-ink-2 dark:text-slate-500 px-2 py-0.5 rounded">{sq.question_type} • {sq.marks} pts</span>
                                            <div className="flex flex-wrap gap-2">
-                                               <button onClick={() => openSubForm(sq, i)} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600"><Edit3 size={14}/></button>
-                                               <button onClick={() => { const n = [...subQuestions]; n.splice(i, 1); setSubQuestions(n); }} className="text-slate-400 dark:text-slate-500 hover:text-red-600"><Trash2 size={14}/></button>
+                                               <button onClick={() => openSubForm(sq, i)} className="text-ink-3 hover:text-indigo-600"><Edit3 size={14}/></button>
+                                               <button onClick={() => { const n = [...subQuestions]; n.splice(i, 1); setSubQuestions(n); }} className="text-ink-3 hover:text-red-600"><Trash2 size={14}/></button>
                                            </div>
                                        </div>
-                                       <div className="text-sm text-slate-800 dark:text-slate-100 line-clamp-2" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
+                                       <div className="text-sm text-ink-1 line-clamp-2" dangerouslySetInnerHTML={{__html: sq.question_text}}></div>
                                    </div>
                                ))}
 
                                {/* SUB FORM OVERLAY */}
                                {subQForm.isOpen && (
-                                   <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border-2 border-indigo-100 shadow-lg animate-in slide-in-from-bottom-2">
+                                   <div className="bg-surf-1 p-5 rounded-xl border-2 border-indigo-100 shadow-lg animate-in slide-in-from-bottom-2">
                                        <div className="flex justify-between mb-4">
                                            <div className="flex flex-wrap gap-2">
-                                               <button onClick={() => setSubQForm(p => ({...p, type: 'mcq'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'mcq' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 dark:border-slate-700'}`}>MCQ</button>
-                                               <button onClick={() => setSubQForm(p => ({...p, type: 'descriptive'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'descriptive' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 dark:border-slate-700'}`}>Descriptive</button>
+                                               <button onClick={() => setSubQForm(p => ({...p, type: 'mcq'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'mcq' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-line'}`}>MCQ</button>
+                                               <button onClick={() => setSubQForm(p => ({...p, type: 'descriptive'}))} className={`px-3 py-1 text-xs font-bold rounded border ${subQForm.type === 'descriptive' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-line'}`}>Descriptive</button>
                                            </div>
-                                           <button onClick={() => setSubQForm(p => ({...p, isOpen: false}))}><X size={16} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:text-slate-500"/></button>
+                                           <button onClick={() => setSubQForm(p => ({...p, isOpen: false}))}><X size={16} className="text-ink-3 hover:text-ink-2 dark:text-slate-500"/></button>
                                        </div>
 
                                        <div className="space-y-2">
-                                           <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Question Text</label>
+                                           <label className="text-[10px] font-bold uppercase text-ink-3">Question Text</label>
                                            <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-edit-${subQForm.editIndex}` : 'sub-new'} initialContent={subQForm.text} onChange={val => setSubQForm(p => ({...p, text: val}))} />
                                        </div>
                                        
                                        <div className="mt-4 flex gap-4">
                                             <div className="flex-1">
-                                                <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Marks</label>
-                                                <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg p-2 text-sm font-bold mt-1 outline-none focus:ring-2 focus:ring-indigo-500"/>
+                                                <label className="text-[10px] font-bold uppercase text-ink-3">Marks</label>
+                                                <input type="number" value={subQForm.marks} onChange={e => setSubQForm(p => ({...p, marks: Number(e.target.value)}))} className="w-full border border-line bg-surf-2 text-slate-900 dark:text-slate-100 rounded-lg p-2 text-sm font-bold mt-1 outline-none focus:ring-2 focus:ring-indigo-500"/>
                                             </div>
                                        </div>
 
                                        {subQForm.type === 'mcq' && (
                                            <div className="mt-4 space-y-2">
-                                               <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Options</label>
+                                               <label className="text-[10px] font-bold uppercase text-ink-3">Options</label>
                                                {subQForm.options.map((opt, i) => (
                                                    <div key={i} className="flex flex-wrap gap-2 items-center">
-                                                       <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-slate-300'}`}><CheckCircle size={14}/></button>
+                                                       <button onClick={() => { const n = [...subQForm.options]; n.forEach(o => o.is_correct = false); n[i].is_correct = true; setSubQForm(p => ({...p, options: n})); }} className={`p-1.5 rounded-full border ${opt.is_correct ? 'bg-green-500 text-white' : 'text-ink-3 opacity-50'}`}><CheckCircle size={14}/></button>
                                                        <input className="flex-1 border-b text-sm p-1 outline-none" value={opt.option_text} onChange={e => { const n = [...subQForm.options]; n[i].option_text = e.target.value; setSubQForm(p => ({...p, options: n})); }} placeholder={`Option ${i+1}`}/>
                                                    </div>
                                                ))}
@@ -943,7 +943,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                                        )}
 
                                        <div className="mt-4 space-y-1">
-                                            <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Explanation</label>
+                                            <label className="text-[10px] font-bold uppercase text-ink-3">Explanation</label>
                                             <StableEditor uniqueKey={subQForm.editIndex !== null ? `sub-expl-${subQForm.editIndex}` : 'sub-expl-new'} initialContent={subQForm.explanation} onChange={val => setSubQForm(p => ({...p, explanation: val}))} />
                                        </div>
 
@@ -957,7 +957,7 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                    )}
                </div>
 
-               <div className="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-end sticky bottom-0 z-10">
+               <div className="px-6 py-4 bg-surf-1 border-t border-line flex justify-end sticky bottom-0 z-10">
                    <button onClick={handleSave} disabled={loading} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95">
                        {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Save size={18}/>} Save Question
                    </button>
@@ -971,29 +971,29 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                
                {/* SIDEBAR FILTERS */}
                {isSidebarOpen && (
-                   <div className="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 overflow-y-auto space-y-6 animate-in slide-in-from-left-4 h-full">
+                   <div className="w-64 flex-shrink-0 bg-surf-1 border border-line rounded-xl p-4 overflow-y-auto space-y-6 animate-in slide-in-from-left-4 h-full">
                        <div>
-                          <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Filters</h3>
+                          <h3 className="text-xs font-black text-ink-3 uppercase tracking-wider mb-3">Filters</h3>
                           <div className="space-y-3">
                               {/* Segment */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Segment</label>
-                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.segment} onChange={e => { setFilters(p=>({...p, segment:e.target.value})); loadGroups(e.target.value, true); }}><option value="">All Segments</option>{dropdowns.segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-ink-3">Segment</label>
+                                <select className="w-full border border-line bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.segment} onChange={e => { setFilters(p=>({...p, segment:e.target.value})); loadGroups(e.target.value, true); }}><option value="">All Segments</option>{dropdowns.segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                               </div>
                               {/* Group */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Group</label>
-                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.group} onChange={e => { setFilters(p=>({...p, group:e.target.value})); loadSubjects(e.target.value, true); }} disabled={!filters.segment}><option value="">All Groups</option>{filterGroupsList.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-ink-3">Group</label>
+                                <select className="w-full border border-line bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.group} onChange={e => { setFilters(p=>({...p, group:e.target.value})); loadSubjects(e.target.value, true); }} disabled={!filters.segment}><option value="">All Groups</option>{filterGroupsList.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}</select>
                               </div>
                               {/* Subject */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Subject</label>
-                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.subject} onChange={e => setFilters(p=>({...p, subject:e.target.value}))} disabled={!filters.group}><option value="">All Subjects</option>{filterSubjectsList.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
+                                <label className="text-[10px] font-bold text-ink-3">Subject</label>
+                                <select className="w-full border border-line bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.subject} onChange={e => setFilters(p=>({...p, subject:e.target.value}))} disabled={!filters.group}><option value="">All Subjects</option>{filterSubjectsList.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select>
                               </div>
                               {/* Type */}
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Type</label>
-                                <select className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.type} onChange={e => setFilters(p=>({...p, type:e.target.value}))}><option value="all">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Descriptive</option></select>
+                                <label className="text-[10px] font-bold text-ink-3">Type</label>
+                                <select className="w-full border border-line bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500" value={filters.type} onChange={e => setFilters(p=>({...p, type:e.target.value}))}><option value="all">All Types</option><option value="mcq">MCQ</option><option value="passage">Passage</option><option value="descriptive">Descriptive</option></select>
                               </div>
                           </div>
                        </div>
@@ -1002,42 +1002,42 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                )}
                
                {/* MAIN TABLE */}
-               <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden flex flex-col h-full">
-                   <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50">
-                       <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-2"/>
+               <div className="flex-1 bg-surf-1 border border-line rounded-xl overflow-hidden flex flex-col h-full">
+                   <div className="p-3 border-b border-line flex items-center gap-2 bg-surf-2/50">
+                       <Search className="w-4 h-4 text-ink-3 ml-2"/>
                        <input className="flex-1 bg-transparent text-slate-900 dark:text-slate-100 text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="Search questions or tags..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/>
                    </div>
                    <div className="flex-1 overflow-auto">
                        <table className="w-full text-left text-sm">
-                           <thead className="bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
+                           <thead className="bg-surf-2/50 sticky top-0 z-10">
                                <tr>
-                                   <th className="p-3 font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase w-12">#</th>
-                                   <th className="p-3 font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase">Question</th>
-                                   <th className="p-3 font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase w-32">Topic</th>
-                                   <th className="p-3 font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase w-24">Type</th>
-                                   <th className="p-3 font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase w-20 text-right">Actions</th>
+                                   <th className="p-3 font-bold text-ink-3 dark:text-slate-500 text-xs uppercase w-12">#</th>
+                                   <th className="p-3 font-bold text-ink-3 dark:text-slate-500 text-xs uppercase">Question</th>
+                                   <th className="p-3 font-bold text-ink-3 dark:text-slate-500 text-xs uppercase w-32">Topic</th>
+                                   <th className="p-3 font-bold text-ink-3 dark:text-slate-500 text-xs uppercase w-24">Type</th>
+                                   <th className="p-3 font-bold text-ink-3 dark:text-slate-500 text-xs uppercase w-20 text-right">Actions</th>
                                </tr>
                            </thead>
                            <tbody className="divide-y divide-slate-100">
                                {questions.map((q, i) => (
-                                   <tr key={q.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 group border-b border-slate-100 dark:border-slate-800 transition-colors">
-                                       <td className="p-3 text-xs text-slate-400 dark:text-slate-500 font-mono">{i + 1 + pagination.page * pagination.itemsPerPage}</td>
+                                   <tr key={q.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 group border-b border-line/50 transition-colors">
+                                       <td className="p-3 text-xs text-ink-3 font-mono">{i + 1 + pagination.page * pagination.itemsPerPage}</td>
                                        <td className="p-3">
-                                           <div className="line-clamp-2 text-slate-800 dark:text-slate-100 font-medium" dangerouslySetInnerHTML={{__html: q.question_text}}/>
-                                           <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{q.subjects?.title}</div>
+                                           <div className="line-clamp-2 text-ink-1 font-medium" dangerouslySetInnerHTML={{__html: q.question_text}}/>
+                                           <div className="text-[10px] text-ink-3 mt-1">{q.subjects?.title}</div>
                                        </td>
                                        <td className="p-3">
                                            <div className="flex flex-wrap gap-1">
                                                {q.topic_tag?.split(',').slice(0, 2).map((t:string, idx:number) => (
-                                                   <span key={idx} className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{t}</span>
+                                                   <span key={idx} className="text-[10px] bg-surf-2 border border-line px-1.5 py-0.5 rounded border border-line">{t}</span>
                                                ))}
-                                               {(q.topic_tag?.split(',').length || 0) > 2 && <span className="text-[10px] text-slate-400 dark:text-slate-500">...</span>}
+                                               {(q.topic_tag?.split(',').length || 0) > 2 && <span className="text-[10px] text-ink-3">...</span>}
                                            </div>
                                        </td>
-                                       <td className="p-3"><span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${q.question_type === 'passage' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500'}`}>{q.question_type}</span></td>
+                                       <td className="p-3"><span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${q.question_type === 'passage' ? 'bg-purple-100 text-purple-700' : 'bg-surf-2 border border-line text-ink-2 dark:text-slate-500'}`}>{q.question_type}</span></td>
                                        <td className="p-3 text-right">
                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                               <button onClick={() => handleEdit(q)} className="p-1.5 hover:bg-slate-100 dark:bg-slate-800 rounded text-slate-500 dark:text-slate-400 dark:text-slate-500"><Edit3 size={16}/></button>
+                                               <button onClick={() => handleEdit(q)} className="p-1.5 hover:bg-surf-2 border border-line rounded text-ink-3 dark:text-slate-500"><Edit3 size={16}/></button>
                                                <button onClick={() => handleDelete(q.id || '')} className="p-1.5 hover:bg-red-50 rounded text-red-500"><Trash2 size={16}/></button>
                                            </div>
                                        </td>
@@ -1046,11 +1046,11 @@ export default function QuestionBankManager({ darkMode = false }: { darkMode?: b
                            </tbody>
                        </table>
                    </div>
-                   <div className="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs">
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">Page {pagination.page + 1}</span>
+                   <div className="p-3 border-t border-line bg-surf-2/50 flex justify-between items-center text-xs">
+                        <span className="text-ink-3 dark:text-slate-500">Page {pagination.page + 1}</span>
                         <div className="flex flex-wrap gap-2">
-                            <button onClick={() => setPagination(p => ({...p, page: Math.max(0, p.page - 1)}))} disabled={pagination.page === 0} className="px-3 py-1 bg-white dark:bg-slate-900 border rounded disabled:opacity-50">Prev</button>
-                            <button onClick={() => setPagination(p => ({...p, page: p.page + 1}))} disabled={!hasMore} className="px-3 py-1 bg-white dark:bg-slate-900 border rounded disabled:opacity-50">Next</button>
+                            <button onClick={() => setPagination(p => ({...p, page: Math.max(0, p.page - 1)}))} disabled={pagination.page === 0} className="px-3 py-1 bg-surf-1 border rounded disabled:opacity-50">Prev</button>
+                            <button onClick={() => setPagination(p => ({...p, page: p.page + 1}))} disabled={!hasMore} className="px-3 py-1 bg-surf-1 border rounded disabled:opacity-50">Next</button>
                         </div>
                    </div>
                </div>

@@ -95,14 +95,14 @@ export default function ContentEditor({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+    <div className="bg-surf-1 rounded-2xl shadow-sm border border-line overflow-hidden animate-in fade-in slide-in-from-bottom-2">
        
        {/* HEADER */}
-       <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+       <div className="p-6 border-b border-line/50 flex justify-between items-center bg-surf-2/50">
           <div className="flex items-center gap-4">
               <button 
                   onClick={() => isDirty ? confirmAction("Discard unsaved changes?", () => setEditorMode(false)) : setEditorMode(false)} 
-                  className="flex items-center gap-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:text-slate-100 font-bold text-sm transition-colors"
+                  className="flex items-center gap-2 text-ink-3 dark:text-slate-500 hover:text-ink-1 font-bold text-sm transition-colors"
               >
                   <ChevronLeft className="w-4 h-4"/> Back to List
               </button>
@@ -134,10 +134,10 @@ export default function ContentEditor({
           <div className="lg:col-span-2 space-y-6">
               
               {/* TAB SWITCHER */}
-              <div className="flex border-b border-slate-200 dark:border-slate-700">
+              <div className="flex border-b border-line">
                   <button 
                     onClick={() => setEditorTab('content')}
-                    className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${editorTab === 'content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
+                    className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${editorTab === 'content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-ink-3 dark:text-slate-500 hover:text-ink-2'}`}
                   >
                     <Edit3 size={16}/> Write Content
                   </button>
@@ -146,7 +146,7 @@ export default function ContentEditor({
                     if(!resourceId) return toast.error("Please save the content first before adding questions.");
                         setEditorTab('questions');
                     }}
-                    className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${editorTab === 'questions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}
+                    className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${editorTab === 'questions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-ink-3 dark:text-slate-500 hover:text-ink-2'}`}
                   >
                     <HelpCircle size={16}/> Attached Questions
                   </button>
@@ -158,7 +158,7 @@ export default function ContentEditor({
                     {/* Title Input */}
                     <div className="space-y-3">
                         <input 
-                            className="w-full text-3xl font-black text-slate-800 dark:text-slate-100 placeholder:text-slate-300 outline-none border-b border-transparent focus:border-indigo-100 pb-2 transition-all" 
+                            className="w-full text-3xl font-black text-ink-1 placeholder:text-ink-3 opacity-50 outline-none border-b border-transparent focus:border-indigo-100 pb-2 transition-all" 
                             placeholder={activeTab === 'courses' ? "Course Title..." : "Enter a catchy title..."}
                             value={title}
                             onChange={e => { setTitle(e.target.value); markDirty(); }}
@@ -167,22 +167,22 @@ export default function ContentEditor({
                         
                         {/* Permalink Field */}
                         <div className="space-y-2">
-                            <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
-                                <div className="flex items-center pl-3 pr-2 py-2.5 bg-slate-100 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
-                                    <Globe className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 mr-2 shrink-0"/>
-                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 whitespace-nowrap select-none">
+                            <div className="flex items-center bg-surf-2/50 rounded-lg border border-line overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
+                                <div className="flex items-center pl-3 pr-2 py-2.5 bg-surf-2 border border-line border-r border-line">
+                                    <Globe className="w-3.5 h-3.5 text-ink-3 mr-2 shrink-0"/>
+                                    <span className="text-xs font-bold text-ink-3 dark:text-slate-500 whitespace-nowrap select-none">
                                         nextprepbd.com/{urlPrefix}
                                     </span>
                                 </div>
                                 <input 
-                                    className="flex-1 bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 px-3 py-2 outline-none placeholder:text-slate-300 min-w-0"
+                                    className="flex-1 bg-transparent text-sm font-bold text-ink-2 px-3 py-2 outline-none placeholder:text-ink-3 opacity-50 min-w-0"
                                     placeholder="auto-generated-slug"
                                     value={slug}
                                     onChange={e => { setSlug(e.target.value); markDirty(); }}
                                 />
                                 <button 
                                     onClick={generateSlug} 
-                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-2.5 border-l border-slate-200 dark:border-slate-700 transition-colors whitespace-nowrap"
+                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-2.5 border-l border-line transition-colors whitespace-nowrap"
                                 >
                                     Regenerate
                                 </button>
@@ -200,22 +200,22 @@ export default function ContentEditor({
                     </div>
 
                     {/* SEO SETTINGS */}
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className="bg-surf-2/50 p-6 rounded-xl border border-line/50 space-y-4">
+                        <h3 className="text-xs font-bold text-ink-3 uppercase tracking-widest flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-blue-400"></span> Search Engine Optimization
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Meta Title</label>
-                                <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none focus:border-indigo-500" value={seoTitle} onChange={e => {setSeoTitle(e.target.value); markDirty()}} />
+                                <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Meta Title</label>
+                                <input className="w-full p-2 bg-surf-1 border border-line rounded text-sm outline-none focus:border-indigo-500" value={seoTitle} onChange={e => {setSeoTitle(e.target.value); markDirty()}} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Tags (Keywords)</label>
-                                <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none focus:border-indigo-500" placeholder="education, math, tutorial" value={tags} onChange={e => {setTags(e.target.value); markDirty()}} />
+                                <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Tags (Keywords)</label>
+                                <input className="w-full p-2 bg-surf-1 border border-line rounded text-sm outline-none focus:border-indigo-500" placeholder="education, math, tutorial" value={tags} onChange={e => {setTags(e.target.value); markDirty()}} />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Meta Description</label>
-                                <textarea className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-sm h-20 resize-none outline-none focus:border-indigo-500" value={seoDesc} onChange={e => {setSeoDesc(e.target.value); markDirty()}} />
+                                <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Meta Description</label>
+                                <textarea className="w-full p-2 bg-surf-1 border border-line rounded text-sm h-20 resize-none outline-none focus:border-indigo-500" value={seoDesc} onChange={e => {setSeoDesc(e.target.value); markDirty()}} />
                             </div>
                         </div>
                     </div>
@@ -223,12 +223,12 @@ export default function ContentEditor({
               ) : (
                 /* QUESTIONS TAB */
                 <div className="animate-in fade-in">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Link Questions to this Post</h3>
+                    <div className="bg-surf-2/50 p-6 rounded-xl border border-line">
+                        <h3 className="text-lg font-bold text-ink-1 mb-4">Link Questions to this Post</h3>
                         {resourceId ? (
                             <QuestionLinker resourceId={resourceId} />
                         ) : (
-                            <div className="text-center p-8 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                            <div className="text-center p-8 text-ink-3 border-2 border-dashed border-line rounded-lg">
                                 <p>Please <b>save the content</b> first to enable question linking.</p>
                             </div>
                         )}
@@ -242,28 +242,28 @@ export default function ContentEditor({
               
               {/* COURSE DETAILS */}
               {activeTab === 'courses' && (
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-5 border-l-4 border-l-indigo-500">
+                  <div className="bg-surf-1 p-6 rounded-xl border border-line shadow-sm space-y-5 border-l-4 border-l-indigo-500">
                       <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2 flex items-center gap-2">
                           <FileText className="w-4 h-4"/> Course Info
                       </h3>
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Instructor</label>
+                          <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Instructor</label>
                           <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"/>
-                              <input className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold outline-none focus:border-indigo-500" placeholder="Instructor Name" value={instructor} onChange={e => {setInstructor(e.target.value); markDirty()}} />
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3"/>
+                              <input className="w-full pl-9 pr-3 py-2.5 bg-surf-2/50 border border-line rounded-lg text-sm font-bold outline-none focus:border-indigo-500" placeholder="Instructor Name" value={instructor} onChange={e => {setInstructor(e.target.value); markDirty()}} />
                           </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                           <div>
-                              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Duration</label>
+                              <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Duration</label>
                               <div className="relative">
-                                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"/>
-                                  <input className="w-full pl-9 pr-2 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="e.g. 20h" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
+                                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3"/>
+                                  <input className="w-full pl-9 pr-2 py-2.5 bg-surf-2/50 border border-line rounded-lg text-xs font-bold outline-none focus:border-indigo-500" placeholder="e.g. 20h" value={duration} onChange={e => {setDuration(e.target.value); markDirty()}} />
                               </div>
                           </div>
                           <div>
-                              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">Category</label>
-                              <select className="w-full p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:border-indigo-500" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
+                              <label className="block text-xs font-bold text-ink-3 dark:text-slate-500 mb-1">Category</label>
+                              <select className="w-full p-2.5 bg-surf-2/50 border border-line rounded-lg text-xs font-bold outline-none focus:border-indigo-500" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                                   <option value="">Select...</option>
                                   {filteredCategories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                               </select>
@@ -281,14 +281,14 @@ export default function ContentEditor({
               )}
 
               {/* GENERAL CONFIGURATION */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-5">
+              <div className="bg-surf-1 p-6 rounded-xl border border-line shadow-sm space-y-5">
                   <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-50 pb-2">Settings</h3>
                   
                   {activeTab !== 'courses' && (
                       <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Content Type</label>
+                          <label className="block text-xs font-bold text-ink-2 mb-2">Content Type</label>
                           <select 
-                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold outline-none focus:border-indigo-500 capitalize"
+                              className="w-full p-2.5 bg-surf-2/50 border border-line rounded-lg text-sm font-bold outline-none focus:border-indigo-500 capitalize"
                               value={type}
                               onChange={e => { setType(e.target.value); markDirty(); }}
                           >
@@ -316,40 +316,40 @@ export default function ContentEditor({
                   {/* FILE UPLOAD */}
                   {(['pdf', 'routine', 'syllabus', 'exam_result'].includes(type) || activeTab === 'ebooks') && activeTab !== 'courses' && (
                       <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          <label className="block text-xs font-bold text-ink-2 mb-2">
                               {activeTab === 'ebooks' ? 'Upload eBook PDF' : 'Upload File / Image'}
                           </label>
-                          <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:bg-slate-800/50 transition-colors relative">
+                          <div className="border-2 border-dashed border-line rounded-xl p-4 text-center hover:bg-surf-2/50 transition-colors relative">
                               <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setFile(e.target.files[0]); markDirty(); } }} />
                               {file ? (
                                   <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm"><FileText className="w-4 h-4"/> {file.name}</div>
                               ) : (
-                                  <div className="space-y-1"><Upload className="w-6 h-6 text-slate-300 mx-auto"/><p className="text-xs text-slate-400 dark:text-slate-500 font-bold">Click to upload</p></div>
+                                  <div className="space-y-1"><Upload className="w-6 h-6 text-ink-3 opacity-50 mx-auto"/><p className="text-xs text-ink-3 font-bold">Click to upload</p></div>
                               )}
                           </div>
-                          <input placeholder="Or Paste Link..." className="w-full mt-2 p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded text-xs" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
+                          <input placeholder="Or Paste Link..." className="w-full mt-2 p-2 bg-surf-2/50 border border-line rounded text-xs" value={link} onChange={e => { setLink(e.target.value); markDirty(); }} />
                       </div>
                   )}
 
                   {/* HIERARCHY SELECTOR */}
                   {['materials', 'segment_updates', 'courses'].includes(activeTab) && (
                       <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 mt-4">
+                          <label className="block text-xs font-bold text-ink-2 mb-2 mt-4">
                               Hierarchy <span className="text-red-500">*</span>
                           </label>
-                          <select className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium mb-2" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}>
+                          <select className="w-full p-2.5 bg-surf-1 border border-line rounded-lg text-sm font-medium mb-2" value={selectedSegment} onChange={e => { handleSegmentClick(e.target.value); markDirty(); }}>
                               <option value="">Select Segment...</option>
                               {segments.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                           </select>
 
                           {activeTab !== 'segment_updates' && selectedSegment && (
                               <div className="space-y-2">
-                                  <select className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
+                                  <select className="w-full p-2.5 bg-surf-1 border border-line rounded-lg text-sm font-medium" value={selectedGroup} onChange={e => { handleGroupClick(e.target.value); markDirty(); }}>
                                       <option value="">Select Group (Optional)</option>
                                       {groups.map((g:any) => <option key={g.id} value={g.id}>{g.title}</option>)}
                                   </select>
                                   {selectedGroup && (
-                                      <select className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}>
+                                      <select className="w-full p-2.5 bg-surf-1 border border-line rounded-lg text-sm font-medium" value={selectedSubject} onChange={e => { handleSubjectClick(e.target.value); markDirty(); }}>
                                           <option value="">Select Subject (Optional)</option>
                                           {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                                       </select>
@@ -362,12 +362,12 @@ export default function ContentEditor({
 
               {/* CATEGORY SELECTOR (Filtered) */}
               {(['ebooks', 'news'].includes(activeTab) || type === 'blog' || type === 'question') && activeTab !== 'courses' && (
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                  <div className="bg-surf-1 p-6 rounded-xl border border-line shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
-                          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Category</h3>
+                          <h3 className="text-xs font-bold text-ink-3 uppercase tracking-widest">Category</h3>
                           <button onClick={openCategoryModal} className="text-[10px] font-bold text-indigo-600 hover:underline">+ New</button>
                       </div>
-                      <select className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
+                      <select className="w-full p-2.5 bg-surf-1 border border-line rounded-lg text-sm font-medium" value={category} onChange={e => { setCategory(e.target.value); markDirty(); }}>
                           <option value="">Select Category...</option>
                           {filteredCategories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                       </select>
@@ -376,21 +376,21 @@ export default function ContentEditor({
 
               {/* COVER IMAGE */}
               {type !== 'question' && (
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                      <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  <div className="bg-surf-1 p-6 rounded-xl border border-line shadow-sm space-y-4">
+                      <h3 className="text-xs font-bold text-ink-3 uppercase tracking-widest">
                           {activeTab === 'courses' ? 'Course Thumbnail' : 'Cover Image'}
                       </h3>
-                      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                          <button onClick={() => setImageMethod('upload')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='upload' ? 'bg-white dark:bg-slate-900 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>Upload</button>
-                          <button onClick={() => setImageMethod('link')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='link' ? 'bg-white dark:bg-slate-900 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>Link</button>
+                      <div className="flex bg-surf-2 border border-line p-1 rounded-lg">
+                          <button onClick={() => setImageMethod('upload')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='upload' ? 'bg-surf-1 shadow text-ink-1' : 'text-ink-3 dark:text-slate-500'}`}>Upload</button>
+                          <button onClick={() => setImageMethod('link')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${imageMethod==='link' ? 'bg-surf-1 shadow text-ink-1' : 'text-ink-3 dark:text-slate-500'}`}>Link</button>
                       </div>
                       {imageMethod === 'upload' ? (
-                          <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 text-center hover:bg-slate-50 dark:bg-slate-800/50 transition-colors relative">
+                          <div className="border-2 border-dashed border-line rounded-lg p-6 text-center hover:bg-surf-2/50 transition-colors relative">
                              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); markDirty(); } }} />
-                             {imageFile ? <p className="text-xs font-bold text-indigo-600 truncate">{imageFile.name}</p> : <ImageIcon className="w-6 h-6 text-slate-300 mx-auto"/>}
+                             {imageFile ? <p className="text-xs font-bold text-indigo-600 truncate">{imageFile.name}</p> : <ImageIcon className="w-6 h-6 text-ink-3 opacity-50 mx-auto"/>}
                           </div>
                       ) : (
-                          <input className="w-full p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded text-xs" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
+                          <input className="w-full p-2 bg-surf-2/50 border border-line rounded text-xs" placeholder="https://..." value={imageLink} onChange={e => { setImageLink(e.target.value); markDirty(); }} />
                       )}
                   </div>
               )}

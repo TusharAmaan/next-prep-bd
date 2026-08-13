@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus , Layers, FolderTree, BookOpen} from "lucide-react";
 
 export default function HierarchyManager({ 
   segments, groups, subjects, 
@@ -49,93 +49,72 @@ export default function HierarchyManager({
     if (selectedGroup) fetchSubjects(selectedGroup);
   };
 
-  // --- RENDER HELPERS ---
-  const Column = ({ title, level, items, selectedId, onSelect, onDelete }: any) => (
-    <div 
-        className={`bg-white dark:bg-slate-900 border rounded-2xl flex flex-col overflow-hidden shadow-sm transition-all duration-200 ${
-            (level === 'group' && !selectedSegment) || (level === 'subject' && !selectedGroup) 
-            ? 'opacity-50 pointer-events-none grayscale' 
-            : 'opacity-100'
-        }`}
-        onClick={() => setActiveLevel(level)}
-    >
-        <div className={`p-4 font-bold border-b text-sm uppercase tracking-wider ${activeLevel === level ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400'}`}>
-            {title}
+      // --- RENDER HELPERS ---
+    const Column = ({ title, level, icon: Icon, items, selectedId, onSelect, onDelete }: any) => (
+        <div 
+            className={`bg-surf-1 border border-line rounded-xl overflow-hidden flex flex-col ${(level === 'group' && !selectedSegment) || (level === 'subject' && !selectedGroup) ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}
+            onClick={() => setActiveLevel(level)}
+        >
+            <div className="px-4 h-11 flex items-center justify-between border-b border-line bg-surf-2/60 shrink-0">
+                <span className={`text-[11px] font-bold tracking-wider ${activeLevel === level ? 'text-indigo-400' : 'text-ink-3'}`}>{title}</span>
+                <Icon className={`w-[13px] h-[13px] ${activeLevel === level ? 'text-indigo-400' : 'text-ink-3'}`} />
+            </div>
+            <div className="p-2 space-y-0.5 flex-1 max-h-96 min-h-[300px] overflow-y-auto custom-scrollbar">
+                {items.map((item: any) => {
+                    const isSelected = selectedId === String(item.id);
+                    return (
+                        <div key={item.id} className="relative group/row">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onSelect && onSelect(String(item.id)); }} 
+                                className={`w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors border ${isSelected ? 'bg-indigo-600/15 text-indigo-400 border-indigo-600/30' : 'text-ink-2 hover:bg-surf-2 border-transparent'}`}
+                            >
+                                {item.title}
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} 
+                                className="absolute right-2 top-1/2 -translate-y-1/2 icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                            >
+                                <Trash2 className="w-[13px] h-[13px]" />
+                            </button>
+                        </div>
+                    );
+                })}
+                {items.length === 0 && <div className="text-center text-[11.5px] text-ink-3 py-10 font-medium">No items yet</div>}
+            </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1 h-[400px]">
-            {items.map((item: any) => (
-                <div 
-                    key={item.id} 
-                    onClick={(e) => { e.stopPropagation(); onSelect && onSelect(String(item.id)); }} 
-                    className={`p-3 rounded-xl cursor-pointer flex justify-between items-center text-sm font-medium transition-colors ${
-                        selectedId === String(item.id) 
-                        ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                    }`}
-                >
-                    <span>{item.title}</span>
+    );
+
+    return (
+        <section className="section space-y-4 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 className="font-display font-bold text-[16px]">Hierarchy manager</h2>
+                    <p className="text-[12px] text-ink-3 mt-0.5">Organize your content structure</p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <input 
+                        className="flex-1 sm:w-48 bg-surf-1 border border-line rounded-lg px-3 h-9 text-[12px] outline-none focus:border-indigo-600 text-ink-1 placeholder:text-ink-3" 
+                        placeholder={`New ${activeLevel} name...`} 
+                        value={newName} 
+                        onChange={e => setNewName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                    />
                     <button 
-                        onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} 
-                        className={`p-1.5 rounded-lg transition-colors ${selectedId === String(item.id) ? 'text-indigo-200 hover:text-white hover:bg-white dark:bg-slate-900/20' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+                        onClick={handleAdd} 
+                        className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-medium transition-colors shrink-0"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Plus className="w-[14px] h-[14px]" /> Add {activeLevel}
                     </button>
                 </div>
-            ))}
-            {items.length === 0 && <div className="text-center text-xs text-slate-400 dark:text-slate-500 py-10">No items yet</div>}
-        </div>
-    </div>
-  );
-
-  return (
-    <div className="animate-fade-in h-full flex flex-col">
-        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-            <div>
-                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Hierarchy Manager</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Organize your content structure</p>
             </div>
-            <div className="flex gap-2 w-full md:w-auto">
-                <input 
-                    className="flex-1 md:w-64 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium" 
-                    placeholder={`New ${activeLevel} name...`} 
-                    value={newName} 
-                    onChange={e => setNewName(e.target.value)} 
-                />
-                <button 
-                    onClick={handleAdd} 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"
-                >
-                    <Plus className="w-4 h-4" /> Add {activeLevel}
-                </button>
-            </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Column 
-                title="1. Segments" 
-                level="segment" 
-                items={segments} 
-                selectedId={selectedSegment} 
-                onSelect={(id: string) => { setSelectedSegment(id); setSelectedGroup(""); fetchGroups(id); }} 
-                onDelete={(id: number) => handleDelete('segments', id)} 
-            />
-            <Column 
-                title="2. Groups" 
-                level="group" 
-                items={groups} 
-                selectedId={selectedGroup} 
-                onSelect={(id: string) => { setSelectedGroup(id); fetchSubjects(id); }} 
-                onDelete={(id: number) => handleDelete('groups', id)} 
-            />
-            <Column 
-                title="3. Subjects" 
-                level="subject" 
-                items={subjects} 
-                selectedId={null} 
-                onSelect={null} 
-                onDelete={(id: number) => handleDelete('subjects', id)} 
-            />
-        </div>
-    </div>
-  );
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <Column title="1 · SEGMENTS" level="segment" icon={Layers} items={segments} selectedId={selectedSegment} onSelect={(id: any) => { setSelectedSegment(id); setSelectedGroup(""); fetchGroups(id); fetchSubjects(""); }} onDelete={(id: any) => handleDelete('segments', id)} />
+                <Column title="2 · GROUPS" level="group" icon={FolderTree} items={groups} selectedId={selectedGroup} onSelect={(id: any) => { setSelectedGroup(id); fetchSubjects(id); }} onDelete={(id: any) => handleDelete('groups', id)} />
+                <Column title="3 · SUBJECTS" level="subject" icon={BookOpen} items={subjects} selectedId={null} onSelect={null} onDelete={(id: any) => handleDelete('subjects', id)} />
+            </div>
+        </section>
+    );
+
 }
+

@@ -114,7 +114,7 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Course management</h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Design, publish, and manage professional-grade courses.</p>
+                            <p className="text-ink-3 text-sm font-medium mt-1">Design, publish, and manage professional-grade courses.</p>
                         </div>
                         <button 
                             onClick={handleCreateNew}
@@ -125,7 +125,7 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                     </div>
 
                     {/* Toolbar */}
-                    <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-4 bg-surf-1 p-4 rounded-3xl border border-line/50 shadow-sm">
                         <div className="relative flex-1 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-indigo-500 transition-colors" />
                             <input 
@@ -133,7 +133,7 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                                 placeholder="Search courses..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all outline-none"
+                                className="w-full pl-12 pr-4 py-3 bg-surf-2 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all outline-none"
                             />
                         </div>
                     </div>
@@ -141,7 +141,7 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                     {/* Course Grid */}
                     {isLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {[1,2,3].map(i => <div key={i} className="h-80 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse"></div>)}
+                            {[1,2,3].map(i => <div key={i} className="h-80 bg-surf-2 border border-line rounded-2xl animate-pulse"></div>)}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -149,14 +149,14 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                                 <div 
                                     key={course.id}
                                     onClick={() => handleViewDashboard(course)}
-                                    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 transition-all group overflow-hidden flex flex-col cursor-pointer"
+                                    className="bg-surf-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 transition-all group overflow-hidden flex flex-col cursor-pointer"
                                 >
                                     {/* Course Image / Placeholder */}
-                                    <div className="h-44 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                                    <div className="h-44 bg-surf-2 border border-line relative overflow-hidden">
                                         {course.image_url ? (
                                             <img src={course.image_url} alt={course.title} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-700">
+                                            <div className="w-full h-full flex items-center justify-center text-ink-3 opacity-50 dark:text-slate-700">
                                                 <GraduationCap size={64} className="group-hover:rotate-12 transition-transform duration-500" />
                                             </div>
                                         )}
@@ -176,21 +176,21 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                                         </h3>
 
                                         <div className="flex flex-wrap gap-4 mb-6">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-ink-3">
                                                 <Users size={14} /> {course.course_enrollments?.length || 0} Students
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-ink-3">
                                                 <Clock size={14} /> {course.duration || 'Self-paced'}
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-ink-3">
                                                 <BookOpen size={14} /> {course.total_lessons || 0} Lessons
                                             </div>
                                         </div>
 
-                                        <div className="mt-auto pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                        <div className="mt-auto pt-5 border-t border-line/50 flex items-center justify-between">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] capitalize font-medium text-slate-500">Access cost</span>
-                                                <span className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-0.5">
+                                                <span className="text-base font-bold text-ink-1 flex items-center gap-0.5">
                                                     {course.price_type === 'free' ? 'Free' : 
                                                      course.price_type === 'subscription' ? 'Subscription' : 
                                                      <><DollarSign size={16}/>{course.price}</>}
@@ -199,14 +199,14 @@ export default function CourseManager({ darkMode = false }: { darkMode?: boolean
                                             <div className="flex gap-2">
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleEdit(course); }}
-                                                    className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all"
+                                                    className="p-3 bg-surf-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all"
                                                     title="Edit Course"
                                                 >
                                                     <Edit2 size={18} />
                                                 </button>
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); confirmDelete(course.id); }}
-                                                    className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-red-500 rounded-xl transition-all"
+                                                    className="p-3 bg-surf-2 text-slate-400 hover:text-red-500 rounded-xl transition-all"
                                                     title="Delete Course"
                                                 >
                                                     <Trash2 size={18} />

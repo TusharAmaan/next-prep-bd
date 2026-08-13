@@ -58,14 +58,14 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
       {/* Analytics Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-3xl font-black text-ink-1 flex items-center gap-3">
             <TrendingUp className="w-8 h-8 text-indigo-600" />
             Platform Intelligence
           </h2>
           <p className="text-slate-500 font-bold mt-1">Advanced metrics and deep system audit trails.</p>
         </div>
         <div className="flex gap-2">
-            <button className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:border-indigo-600 transition-all">
+            <button className="bg-surf-1 border-2 border-line px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:border-indigo-600 transition-all">
                 <Download size={18} /> EXPORT PDF
             </button>
             <button onClick={fetchData} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95">
@@ -77,9 +77,9 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
       {/* Grid: Trends & Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Student Performance Trends */}
-        <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl p-10 flex flex-col">
+        <div className="bg-surf-1 rounded-[40px] border border-line shadow-xl p-10 flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-xl font-black text-ink-1 flex items-center gap-2">
               <BarChart3 className="text-emerald-500" /> Academic Leaders
             </h3>
             <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-black">TOP 10 SUBJECTS</span>
@@ -89,17 +89,17 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
             {loading ? (
               <div className="flex justify-center p-12"><Loader2 className="animate-spin text-emerald-500" /></div>
             ) : studentStats.length === 0 ? (
-                <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+                <div className="text-center py-20 bg-surf-2/50 rounded-3xl border border-dashed border-line">
                     <p className="font-bold text-slate-400 italic">Insufficient analytical data.</p>
                 </div>
             ) : (
               studentStats.map((stat, idx) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-[10px]">{stat.subject}</span>
-                    <span className="font-black text-slate-900 dark:text-white">{stat.avg_score}% AVG</span>
+                    <span className="font-black text-ink-2 uppercase tracking-widest text-[10px]">{stat.subject}</span>
+                    <span className="font-black text-ink-1">{stat.avg_score}% AVG</span>
                   </div>
-                  <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-3 bg-surf-2 border border-line rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full" 
                       style={{ width: `${stat.avg_score}%` }} 
@@ -113,39 +113,39 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
 
         {/* Rapid Insights Grid */}
         <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between">
+            <div className="bg-surf-1 p-8 rounded-[40px] border border-line shadow-xl flex flex-col justify-between">
                 <div className="w-12 h-12 bg-indigo-100/50 rounded-2xl flex items-center justify-center text-indigo-600 mb-4">
                     <MousePointer2 size={24} />
                 </div>
                 <div>
-                    <p className="text-4xl font-black text-slate-900 dark:text-white">1,248</p>
+                    <p className="text-4xl font-black text-ink-1">1,248</p>
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Unique Sessions</p>
                 </div>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between">
+            <div className="bg-surf-1 p-8 rounded-[40px] border border-line shadow-xl flex flex-col justify-between">
                 <div className="w-12 h-12 bg-emerald-100/50 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
                     <UserCheck size={24} />
                 </div>
                 <div>
-                    <p className="text-4xl font-black text-slate-900 dark:text-white">84%</p>
+                    <p className="text-4xl font-black text-ink-1">84%</p>
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Retention Rate</p>
                 </div>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between">
+            <div className="bg-surf-1 p-8 rounded-[40px] border border-line shadow-xl flex flex-col justify-between">
                 <div className="w-12 h-12 bg-amber-100/50 rounded-2xl flex items-center justify-center text-amber-600 mb-4">
                     <Award size={24} />
                 </div>
                 <div>
-                    <p className="text-4xl font-black text-slate-900 dark:text-white">152</p>
+                    <p className="text-4xl font-black text-ink-1">152</p>
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Certificates Issued</p>
                 </div>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between">
+            <div className="bg-surf-1 p-8 rounded-[40px] border border-line shadow-xl flex flex-col justify-between">
                 <div className="w-12 h-12 bg-rose-100/50 rounded-2xl flex items-center justify-center text-rose-600 mb-4">
                     <ShieldAlert size={24} />
                 </div>
                 <div>
-                    <p className="text-4xl font-black text-slate-900 dark:text-white">03</p>
+                    <p className="text-4xl font-black text-ink-1">03</p>
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Critical Warnings</p>
                 </div>
             </div>
@@ -153,10 +153,10 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
       </div>
 
       {/* Audit Trail Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
+      <div className="bg-surf-1 rounded-[40px] border border-line shadow-2xl overflow-hidden">
         <div className="p-10 border-b dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-xl font-black text-ink-1 flex items-center gap-2">
                     <Activity className="text-indigo-600" /> Operational Audit Trail
                 </h3>
                 <p className="text-slate-500 font-bold text-sm mt-1">Forensic log of all administrative and student actions.</p>
@@ -169,10 +169,10 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
                         placeholder="Search logs..."
                         value={logSearch}
                         onChange={(e) => setLogSearch(e.target.value)}
-                        className="bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-600 rounded-2xl py-3 pl-12 pr-6 text-sm font-bold transition-all outline-none"
+                        className="bg-surf-2 border-2 border-transparent focus:border-indigo-600 rounded-2xl py-3 pl-12 pr-6 text-sm font-bold transition-all outline-none"
                     />
                 </div>
-                <button className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-500 hover:text-indigo-600 transition-all flex items-center gap-2 font-black text-xs">
+                <button className="p-3 bg-surf-2 border border-line rounded-2xl text-slate-500 hover:text-indigo-600 transition-all flex items-center gap-2 font-black text-xs">
                     <Filter size={18} /> FILTERS
                 </button>
             </div>
@@ -198,11 +198,11 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
                             <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
                                 <td className="px-10 py-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center font-black text-slate-500 text-xs">
+                                        <div className="w-9 h-9 bg-surf-2 border border-line rounded-xl flex items-center justify-center font-black text-slate-500 text-xs">
                                             {(log.actor?.full_name || 'S').charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{log.actor?.full_name || 'System'}</p>
+                                            <p className="font-bold text-ink-1 text-sm">{log.actor?.full_name || 'System'}</p>
                                             <p className="text-[10px] text-slate-400 font-black uppercase">{log.actor?.email || 'AUTOMATED_BOT'}</p>
                                         </div>
                                     </div>
@@ -213,7 +213,7 @@ export default function AnalyticsSuite({ darkMode = false }: { darkMode?: boolea
                                     </span>
                                 </td>
                                 <td className="px-10 py-6">
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-bold max-w-md line-clamp-1">{log.details || 'Operational record generated.'}</p>
+                                    <p className="text-sm text-ink-2 font-bold max-w-md line-clamp-1">{log.details || 'Operational record generated.'}</p>
                                 </td>
                                 <td className="px-10 py-6">
                                     <div className="flex items-center gap-2 text-slate-400 whitespace-nowrap">

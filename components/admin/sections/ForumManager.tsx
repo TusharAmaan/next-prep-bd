@@ -641,19 +641,19 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-ink-1 flex items-center gap-2">
             <ShieldAlert className="w-6 h-6 text-indigo-600"/> Forum Moderator
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Moderate Flagged Posts, Manage Student Discussions, Pin Announcements, and Edit Threads.</p>
+          <p className="text-ink-3 text-sm mt-1">Moderate Flagged Posts, Manage Student Discussions, Pin Announcements, and Edit Threads.</p>
         </div>
 
         {/* Tab Switcher */}
         {!editorMode && (
-          <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex bg-surf-1 p-1 rounded-xl border border-line shadow-sm">
             <button
               onClick={() => { setActiveTab('reports'); setSearchQuery(''); }}
               className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'reports' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                activeTab === 'reports' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-ink-1 hover:bg-surf-2'
               }`}
             >
               <AlertTriangle className="w-4 h-4" /> Flagged Reports
@@ -661,7 +661,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             <button
               onClick={() => { setActiveTab('threads'); setSearchQuery(''); }}
               className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'threads' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                activeTab === 'threads' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-ink-1 hover:bg-surf-2'
               }`}
             >
               <MessageSquare className="w-4 h-4" /> Discussions
@@ -672,16 +672,16 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
       {editorMode ? (
         /* CREATE / EDIT THREAD EDITOR */
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
+        <div className="bg-surf-1 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
           
           <div className="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-4">
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-extrabold text-ink-1 flex items-center gap-2">
               <PlusCircle className="w-5 h-5 text-indigo-600" />
               {editingThreadId ? "Edit Thread Details" : "Create New Forum Thread"}
             </h3>
             <button
               onClick={() => { setEditorMode(false); resetForm(); }}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 hover:bg-surf-2 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -691,7 +691,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             
             {/* Title */}
             <div className="md:col-span-2 space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thread Title</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Thread Title</label>
               <input 
                 type="text"
                 value={title}
@@ -703,17 +703,17 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   }
                 }}
                 placeholder="Enter discussion title..."
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
               />
             </div>
  
             {/* Type */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thread Type</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Thread Type</label>
               <select 
                 value={threadType}
                 onChange={(e) => setThreadType(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 text-sm font-semibold transition-all"
               >
                 <option value="standard">Standard Discussion</option>
                 <option value="question_post">MCQ / Practice Question</option>
@@ -724,11 +724,11 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
             {/* Difficulty */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Difficulty Level</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Difficulty Level</label>
               <select 
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 text-sm font-semibold transition-all"
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -738,11 +738,11 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
             {/* Segment */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Curriculum Segment</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Curriculum Segment</label>
               <select 
                 value={selSeg}
                 onChange={(e) => { setSelSeg(e.target.value); setSelGrp(""); setSelSub(""); }}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 text-sm font-semibold transition-all"
               >
                 <option value="">None / General</option>
                 {segmentsList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
@@ -751,12 +751,12 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
             {/* Group */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject Group</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Subject Group</label>
               <select 
                 value={selGrp}
                 onChange={(e) => { setSelGrp(e.target.value); setSelSub(""); }}
                 disabled={!selSeg}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 text-sm font-semibold transition-all disabled:opacity-50"
               >
                 <option value="">None / General</option>
                 {filteredGroups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
@@ -765,12 +765,12 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
             {/* Subject */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Subject</label>
               <select 
                 value={selSub}
                 onChange={(e) => setSelSub(e.target.value)}
                 disabled={!selGrp}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 text-sm font-semibold transition-all disabled:opacity-50"
               >
                 <option value="">None / General</option>
                 {filteredSubjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
@@ -778,8 +778,8 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             </div>
 
             {/* Topic tag system (YouTube Video Tag Style suggestions) */}
-            <div className="md:col-span-2 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topic Tags (Press Enter or comma to add)</label>
+            <div className="md:col-span-2 space-y-2 border-t border-line/50 pt-4">
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Topic Tags (Press Enter or comma to add)</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {seoTags.map(tag => (
                   <span key={tag} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold rounded-lg border border-indigo-100 dark:border-indigo-800">
@@ -824,11 +824,11 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                     }
                   }}
                   placeholder="Type topic tag (e.g. Data Sufficiency) and press Enter..."
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-100 text-sm font-semibold transition-all"
                 />
                 
                 {tagSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-[200] max-h-40 overflow-y-auto">
+                  <div className="absolute left-0 right-0 mt-1 bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-[200] max-h-40 overflow-y-auto">
                     {tagSuggestions.map(sugg => (
                       <button
                         key={sugg.name}
@@ -840,7 +840,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                           setTagInput("");
                           setTagSuggestions([]);
                         }}
-                        className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-855 transition-colors"
+                        className="w-full px-4 py-2 text-left text-xs font-semibold text-ink-2 hover:bg-slate-50 dark:hover:bg-slate-855 transition-colors"
                       >
                         {sugg.name}
                       </button>
@@ -854,7 +854,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
 
             {/* SEO / Metadata Section */}
-            <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <div className="md:col-span-2 space-y-4 border-t border-line/50 pt-4">
               <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">Metadata & SEO Settings</label>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -868,7 +868,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                       setIsSeoTitleEdited(true);
                     }}
                     placeholder="Enter Meta Title..."
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
                   />
                 </div>
 
@@ -882,7 +882,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                       setSeoTags(tagsArray);
                     }}
                     placeholder="tag1, tag2, tag3"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
                   />
                 </div>
 
@@ -893,7 +893,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                     onChange={(e) => setSeoDescription(e.target.value)}
                     placeholder="Enter Meta Description..."
                     rows={2}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-855 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-855 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 text-xs font-semibold"
                   />
                 </div>
               </div>
@@ -901,21 +901,21 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
             {/* Content Editor */}
             <div className="md:col-span-2 space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Post Body / Content</label>
+              <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Post Body / Content</label>
               <RichTextEditor content={content} onChange={setContent} darkMode={darkMode} />
             </div>
 
             {/* Dynamic Question Builder & Question Bank Popup Link */}
             {(threadType === 'question_post' || threadType === 'reading_comprehension') && (
-              <div className="md:col-span-2 space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="md:col-span-2 space-y-4 border-t border-line/50 pt-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Linked Questions</label>
+                  <label className="text-xs font-bold text-ink-3 uppercase tracking-wider">Linked Questions</label>
                   {(threadType !== 'question_post' || linkedQuestions.length === 0) && (
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setShowQuestionModal(true)}
-                        className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold transition-all"
+                        className="px-3 py-1.5 bg-slate-50 hover:bg-surf-2 border border-line dark:hover:bg-slate-750 text-indigo-600 dark:text-indigo-400 border border-line rounded-lg text-xs font-bold transition-all"
                       >
                         Link Question from Bank
                       </button>
@@ -963,7 +963,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                       </button>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Question {idx + 1}</span>
+                        <span className="font-extrabold text-ink-2 text-xs">Question {idx + 1}</span>
                         <select
                           value={q.question_type}
                           onChange={(e) => {
@@ -1013,7 +1013,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
 
                       {/* Options (MCQ only) */}
                       {(q.question_type?.toLowerCase() === "mcq" || q.question_type === "MCQ") && (
-                        <div className="space-y-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                        <div className="space-y-2 pl-4 border-l-2 border-line">
                           <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">
                             {isDataSufficiency ? "Data Sufficiency Choices (Select correct option)" : "Choices (Check correct one)"}
                           </label>
@@ -1033,7 +1033,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                 className="w-4 h-4 text-indigo-650 shrink-0"
                               />
                               {isDataSufficiency ? (
-                                <div className="flex-1 p-2.5 text-xs bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-700 dark:text-slate-350 font-semibold shadow-sm">
+                                <div className="flex-1 p-2.5 text-xs bg-slate-100/60 dark:bg-slate-800/60 border border-line/80 rounded-lg text-slate-700 dark:text-slate-350 font-semibold shadow-sm">
                                   <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-1.5">{OPTION_LETTERS[optIdx]}:</span>
                                   {opt.option_text}
                                 </div>
@@ -1059,7 +1059,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                     </div>
                   ))}
                   {linkedQuestions.length === 0 && (
-                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/10 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 font-semibold">
+                    <div className="p-8 text-center bg-surf-2/10 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 font-semibold">
                       No questions linked yet. Click above to select from bank or write new ones.
                     </div>
                   )}
@@ -1073,7 +1073,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
           <div className="flex justify-end gap-3 border-t border-slate-150 dark:border-slate-800 pt-4">
             <button
               onClick={() => { setEditorMode(false); resetForm(); }}
-              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all hover:bg-slate-200"
+              className="px-5 py-2.5 bg-surf-2 border border-line text-slate-600 dark:text-ink-3 opacity-50 rounded-xl text-xs font-bold transition-all hover:bg-slate-200"
             >
               Cancel
             </button>
@@ -1091,7 +1091,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
       ) : (
         <>
           {/* FILTER & ADD BAR */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-surf-1 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
@@ -1099,19 +1099,19 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                 placeholder={activeTab === 'reports' ? "Search Reports..." : "Search Discussions..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-250 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 text-xs bg-surf-2/50 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-850 dark:text-slate-250 transition-all"
               />
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto shrink-0">
               {activeTab === 'reports' ? (
-                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
+                <div className="flex bg-surf-2/50 p-1 rounded-xl border border-line w-full sm:w-auto">
                   {['all', 'pending', 'resolved', 'reviewed'].map((f: any) => (
                     <button
                       key={f}
                       onClick={() => setReportFilter(f)}
                       className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        reportFilter === f ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-855'
+                        reportFilter === f ? 'bg-surf-1 text-ink-1 shadow-sm' : 'text-slate-500 hover:text-slate-855'
                       }`}
                     >
                       {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -1130,9 +1130,9 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
           </div>
 
           {/* MAIN CONTAINER */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-300">
+          <div className="bg-surf-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-300">
             {loading ? (
-              <div className="p-16 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center">
+              <div className="p-16 text-center text-ink-3 flex flex-col items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin mb-3 text-indigo-500" />
                 <span>Gathering Records...</span>
               </div>
@@ -1140,7 +1140,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               /* REPORTS PANEL */
               <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {filteredReports.length === 0 ? (
-                  <div className="p-16 text-center text-slate-400 dark:text-slate-500">
+                  <div className="p-16 text-center text-ink-3">
                     <CheckCircle2 className="w-12 h-12 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
                     <p className="font-semibold">No Pending Flagged Reports Found.</p>
                   </div>
@@ -1180,12 +1180,12 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                           <div>
                             <h4 className="font-bold text-slate-800 dark:text-slate-200">
                               {isComment ? 'Reply in: ' : ''}
-                              <span className="text-slate-900 dark:text-white font-extrabold">
+                              <span className="text-ink-1 font-extrabold">
                                 {report.thread?.title || 'Deleted Discussion'}
                               </span>
                             </h4>
                             
-                            <p className="text-slate-600 dark:text-slate-400 text-xs mt-1.5 italic bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                            <p className="text-ink-2 text-xs mt-1.5 italic bg-surf-2/40 p-3 rounded-lg border border-line/50/50">
                               "{cleanSnippet}"
                             </p>
                           </div>
@@ -1206,7 +1206,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                             <Link
                               href={`/forum/thread/${report.thread_id}`}
                               target="_blank"
-                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all"
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-surf-2 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-ink-3 opacity-50 rounded-lg text-xs font-bold border border-line transition-all"
                             >
                               View on Board <ArrowUpRight className="w-3.5 h-3.5" />
                             </Link>
@@ -1216,7 +1216,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                             <>
                               <button
                                 onClick={() => updateReportStatus(report.id, 'reviewed')}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all"
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-surf-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-bold border border-line transition-all"
                               >
                                 Dismiss Report
                               </button>
@@ -1255,7 +1255,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               /* ALL THREADS PANEL */
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-xs font-bold">
+                  <thead className="bg-surf-2/50 border-b border-line text-ink-3 text-xs font-bold">
                     <tr>
                       <th className="px-6 py-4">Discussion</th>
                       <th className="px-6 py-4">Author</th>
@@ -1268,7 +1268,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                     {filteredThreads.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-12 text-center text-slate-400 dark:text-slate-500">
+                        <td colSpan={6} className="p-12 text-center text-ink-3">
                           No Discussions Found.
                         </td>
                       </tr>
@@ -1277,7 +1277,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                         const commentsCount = thread.forum_comments?.length || 0;
                         
                         return (
-                          <tr key={thread.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors border-b border-slate-100 dark:border-slate-800">
+                          <tr key={thread.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors border-b border-line/50">
                             
                             <td className="px-6 py-4 max-w-sm">
                               <div className="space-y-1">
@@ -1289,7 +1289,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                     {thread.difficulty}
                                   </span>
                                 )}
-                                <div className="font-extrabold text-slate-900 dark:text-white text-sm line-clamp-2 leading-snug">
+                                <div className="font-extrabold text-ink-1 text-sm line-clamp-2 leading-snug">
                                   {thread.title}
                                 </div>
                               </div>
@@ -1299,18 +1299,18 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                               <div className="font-bold text-slate-700 dark:text-slate-350">
                                 {thread.author?.full_name || 'Community Member'}
                               </div>
-                              <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                              <div className="text-[10px] text-ink-3">
                                 Rank: {thread.author?.gamification_rank || 'scholar'}
                               </div>
                             </td>
 
-                            <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            <td className="px-6 py-4 text-xs text-ink-3 font-medium">
                               {thread.segment?.title || 'general'}
                               {thread.group?.title && ` › ${thread.group.title}`}
                             </td>
 
                             <td className="px-6 py-4 text-xs text-center font-bold">
-                              <div className="flex items-center justify-center gap-3.5 text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center justify-center gap-3.5 text-ink-3">
                                 <span className="flex items-center gap-1" title="Upvotes">
                                   <ThumbsUp className="w-3.5 h-3.5" /> {thread.upvotes}
                                 </span>
@@ -1329,7 +1329,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                 className={`p-2 rounded-xl transition-all ${
                                   thread.is_pinned 
                                     ? 'bg-indigo-500 text-white shadow-md' 
-                                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    : 'text-slate-400 hover:bg-surf-2'
                                 }`}
                                 title={thread.is_pinned ? "Unpin thread" : "Pin thread"}
                               >
@@ -1347,7 +1347,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                                 </button>
                                 <button
                                   onClick={() => openRepliesDrawer(thread)}
-                                  className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 transition-colors"
+                                  className="px-2.5 py-1 bg-surf-2 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-600 dark:text-ink-3 opacity-50 rounded-lg text-xs font-bold border border-line transition-colors"
                                 >
                                   Replies
                                 </button>
@@ -1379,18 +1379,18 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
           
           <div className="flex-1" onClick={() => setSelectedThread(null)} />
 
-          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-350">
+          <div className="w-full max-w-2xl bg-surf-1 h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-350">
             
             <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedThread(null)}
-                  className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-500"
+                  className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-line hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-500"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Thread Moderation</h3>
+                  <h3 className="font-extrabold text-ink-1 text-base">Thread Moderation</h3>
                   <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Replies & Comments Manager</p>
                 </div>
               </div>
@@ -1405,18 +1405,18 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             </div>
 
             <div className="p-6 bg-slate-50/50 dark:bg-slate-800/10 border-b border-slate-200 dark:border-slate-800/50">
-              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1">{selectedThread.title}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: selectedThread.content }}></p>
+              <h4 className="text-sm font-extrabold text-ink-1 line-clamp-1">{selectedThread.title}</h4>
+              <p className="text-xs text-ink-3 font-medium mt-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: selectedThread.content }}></p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               {loadingComments ? (
-                <div className="py-12 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center">
+                <div className="py-12 text-center text-ink-3 flex flex-col items-center">
                   <Loader2 className="w-6 h-6 animate-spin mb-2 text-indigo-500" />
                   <span>Loading Comments...</span>
                 </div>
               ) : threadComments.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 dark:text-slate-500">
+                <div className="py-12 text-center text-ink-3">
                   <p>This Thread Has No Comments Yet.</p>
                 </div>
               ) : (
@@ -1424,7 +1424,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   {threadComments.map((comment) => (
                     <div 
                       key={comment.id}
-                      className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between gap-4"
+                      className="p-4 bg-surf-2/30 rounded-2xl border border-line/50 flex justify-between gap-4"
                     >
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -1474,10 +1474,10 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               ✓
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+              <h3 className="text-lg font-black text-ink-1">
                 Saved Successfully!
               </h3>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs font-semibold text-ink-3 leading-relaxed">
                 The forum discussion thread has been successfully published/updated on the discussion board.
               </p>
             </div>
@@ -1496,7 +1496,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   setShowSuccessToast(false);
                   setCreatedThreadId(null);
                 }}
-                className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
+                className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-ink-2 font-bold text-xs rounded-xl transition-all"
               >
                 Dismiss
               </button>
@@ -1510,13 +1510,13 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-[#1C1F26] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-w-4xl w-full flex flex-col max-h-[85vh] animate-scale-up text-left">
             <div className="flex items-center justify-between border-b border-slate-150 dark:border-slate-800 pb-4 mb-4">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-base font-extrabold text-ink-1">
                 Link Question from Bank
               </h3>
               <button
                 type="button"
                 onClick={() => setShowQuestionModal(false)}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-650 transition-colors"
+                className="p-1.5 hover:bg-surf-2 rounded-xl text-slate-400 hover:text-slate-650 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1531,13 +1531,13 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   placeholder="Search question bank..."
                   value={modalSearch}
                   onChange={(e) => setModalSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 font-semibold"
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-surf-2 border border-line rounded-xl outline-none focus:border-indigo-500 text-slate-855 dark:text-slate-100 font-semibold"
                 />
               </div>
               <select
                 value={modalTypeFilter}
                 onChange={(e) => setModalTypeFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 font-semibold"
+                className="px-3 py-2 text-xs bg-surf-2 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 font-semibold"
               >
                 <option value="all">All Types</option>
                 <option value="mcq">MCQ Choice Question</option>
@@ -1546,7 +1546,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
               <select
                 value={modalDifficultyFilter}
                 onChange={(e) => setModalDifficultyFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 font-semibold"
+                className="px-3 py-2 text-xs bg-surf-2 border border-line rounded-xl outline-none focus:border-indigo-500 text-ink-2 font-semibold"
               >
                 <option value="all">All Difficulties</option>
                 <option value="easy">Easy</option>
@@ -1558,7 +1558,7 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
             {/* Question List */}
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
               {filteredModalQuestions.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                <div className="py-12 text-center text-ink-3 text-xs font-semibold">
                   No matching questions found in the bank.
                 </div>
               ) : (
@@ -1569,14 +1569,14 @@ export default function ForumManager({ darkMode = false }: { darkMode?: boolean 
                   return (
                     <div 
                       key={q.id}
-                      className="p-4 bg-slate-50 dark:bg-slate-800/35 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 flex justify-between gap-4 items-center hover:border-indigo-500/30 transition-all"
+                      className="p-4 bg-surf-2/35 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 flex justify-between gap-4 items-center hover:border-indigo-500/30 transition-all"
                     >
                       <div className="space-y-1 text-left flex-1 min-w-0">
                         <div className="flex flex-wrap gap-2 items-center">
                           <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded uppercase">
                             {q.question_type}
                           </span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-400 rounded uppercase">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-850 text-ink-2 rounded uppercase">
                             {q.difficulty || 'medium'}
                           </span>
                         </div>

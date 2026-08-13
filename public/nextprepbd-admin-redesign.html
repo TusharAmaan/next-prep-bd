@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NextPrepBD — Admin Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>
+tailwind = { config: {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        base: { DEFAULT:'#0A0B0F', 2:'#08090C' },
+        surf: { 1:'#121319', 2:'#171922', 3:'#1D1F29' },
+        line: { DEFAULT:'#22242E', strong:'#2C2F3B' },
+        ink: { 1:'#EDEEF2', 2:'#9498A6', 3:'#5D6070' },
+        teal: { 50:'#E7F7F4', 200:'#9FE1D2', 400:'#2FB39A', 500:'#189E85', 600:'#0F8271', 700:'#0B6459' },
+        bronze: { 400:'#C99A5B', 500:'#B4813E', 600:'#93672F' },
+        rose: { 400:'#DB7D82', 500:'#C4555C', 600:'#A23E44' },
+      },
+      fontFamily: {
+        display: ['Manrope','sans-serif'],
+        sans: ['Inter','sans-serif'],
+        mono: ['IBM Plex Mono','monospace'],
+        bn: ['Noto Sans Bengali','sans-serif'],
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(0,0,0,0.4)',
+        pop: '0 12px 32px rgba(0,0,0,0.5)',
+      }
+    }
+  }
+} };
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { scrollbar-width: thin; scrollbar-color: #2C2F3B transparent; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #2C2F3B; border-radius: 8px; }
+  body { font-feature-settings: "tnum" 1; }
+  .section { animation: fadein .28s ease both; }
+  @keyframes fadein { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+  .navlabel, .grouplabel { transition: opacity .18s ease, width .18s ease, margin .18s ease; }
+  .sidebar-collapsed .navlabel, .sidebar-collapsed .grouplabel, .sidebar-collapsed .navmeta { opacity:0; width:0; margin:0; pointer-events:none; overflow:hidden; }
+  .sidebar-collapsed #brandtext { opacity:0; width:0; overflow:hidden; }
+  .tooltip { position:absolute; left:100%; margin-left:10px; top:50%; transform:translateY(-50%) scale(.95); background:#1D1F29; border:1px solid #2C2F3B; color:#EDEEF2; font-size:12px; padding:5px 10px; border-radius:7px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:80; box-shadow:0 8px 20px rgba(0,0,0,.5); }
+  .sidebar-collapsed .navitem:hover .tooltip { opacity:1; transform:translateY(-50%) scale(1); }
+  .navitem:not(.sidebar-collapsed-parent) .tooltip { display:none; }
+  .seg-btn[aria-selected="true"] { background:#1D1F29; color:#EDEEF2; box-shadow: inset 0 0 0 1px #2C2F3B; }
+  .row-actions { opacity:0; transform:translateX(4px); transition:opacity .15s ease, transform .15s ease; }
+  tr:hover .row-actions, .liststat:hover .row-actions { opacity:1; transform:translateX(0); }
+  .icon-btn { transition: background .15s ease, color .15s ease, transform .1s ease; }
+  .icon-btn:active { transform: scale(.92); }
+  input[type="text"], input[type="date"], input[type="email"], select { transition: border-color .15s ease, background .15s ease; }
+  .th-sort { cursor:pointer; user-select:none; }
+  .th-sort:hover { color:#EDEEF2; }
+  .bar { transition: height .5s cubic-bezier(.16,1,.3,1); }
+  .pulse-dot { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+</style>
+</head>
+<body class="bg-base text-ink-1 font-sans text-[13px] antialiased">
+<div class="flex h-screen overflow-hidden" id="app">
+
+<aside id="sidebar" class="flex flex-col shrink-0 w-[248px] bg-surf-1 border-r border-line transition-all duration-300 ease-out">
+  <div class="h-16 flex items-center gap-3 px-5 border-b border-line shrink-0 relative">
+    <div class="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white font-display font-800 text-[13px] shrink-0">N</div>
+    <div id="brandtext" class="overflow-hidden">
+      <p class="font-display font-800 text-[14px] leading-none tracking-tight whitespace-nowrap">NextPrepBD</p>
+      <p class="text-[10px] text-ink-3 tracking-wider mt-1 whitespace-nowrap">ADMIN CONSOLE</p>
+    </div>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5" id="navroot"></nav>
+
+  <div class="border-t border-line p-3 shrink-0">
+    <button id="collapseBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-ink-2 hover:bg-surf-2 hover:text-ink-1 transition-colors">
+      <i data-lucide="panel-left-close" class="w-[18px] h-[18px] shrink-0"></i>
+      <span class="navlabel whitespace-nowrap text-[12.5px] font-medium">Collapse menu</span>
+    </button>
+  </div>
+</aside>
+
+<div class="flex-1 flex flex-col min-w-0">
+  <header class="h-16 shrink-0 border-b border-line flex items-center justify-between px-6 bg-surf-1/60 backdrop-blur">
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="mobileNavBtn" class="lg:hidden icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-2"><i data-lucide="menu" class="w-[18px] h-[18px]"></i></button>
+      <div class="min-w-0">
+        <h1 id="pageTitle" class="font-display font-700 text-[16px] leading-none tracking-tight truncate">Overview</h1>
+        <p id="pageSub" class="text-[11.5px] text-ink-3 mt-1 truncate">NextPrep Command Center</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="hidden md:flex items-center gap-2 bg-surf-2 border border-line rounded-lg px-3 h-9 w-64 focus-within:border-teal-600">
+        <i data-lucide="search" class="w-[15px] h-[15px] text-ink-3"></i>
+        <input type="text" placeholder="Search console..." class="bg-transparent outline-none text-[12.5px] w-full placeholder:text-ink-3">
+      </div>
+      <button class="icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-2 relative" aria-label="Notifications">
+        <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+      </button>
+      <a href="https://nextprepbd.com/" target="_blank" class="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg border border-line text-ink-2 hover:text-ink-1 hover:border-line-strong text-[12px] font-medium transition-colors">
+        <i data-lucide="external-link" class="w-[13px] h-[13px]"></i> View site
+      </a>
+      <div class="w-8 h-8 rounded-full bg-bronze-500 flex items-center justify-center text-[12px] font-bold text-base ml-1">C</div>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-y-auto px-6 py-5" id="mainContent">
+<section data-section="dashboard" class="section space-y-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[17px]">Welcome back, Citi</h2>
+      <p class="text-ink-2 text-[12.5px] mt-0.5">Your command center is ready — 0 items are awaiting review today.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-line text-ink-2 hover:text-ink-1 hover:border-line-strong text-[12px] font-medium transition-colors">
+        <i data-lucide="list-checks" class="w-[14px] h-[14px]"></i> Review pending
+      </button>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors">
+        <i data-lucide="refresh-cw" class="w-[14px] h-[14px]"></i> Sync data
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-surf-1 border border-line rounded-xl p-4 hover:border-line-strong transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Students</span>
+        <i data-lucide="users" class="w-[14px] h-[14px] text-teal-400"></i>
+      </div>
+      <p class="font-mono font-600 text-[26px] mt-2 leading-none">39</p>
+      <p class="text-[11px] text-teal-400 mt-1.5 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +2 this week</p>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4 hover:border-line-strong transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Donations</span>
+        <i data-lucide="hand-coins" class="w-[14px] h-[14px] text-bronze-400"></i>
+      </div>
+      <p class="font-mono font-600 text-[26px] mt-2 leading-none">৳0</p>
+      <p class="text-[11px] text-ink-3 mt-1.5">No activity yet</p>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4 hover:border-line-strong transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Resources</span>
+        <i data-lucide="library-big" class="w-[14px] h-[14px] text-teal-400"></i>
+      </div>
+      <p class="font-mono font-600 text-[26px] mt-2 leading-none">36</p>
+      <p class="text-[11px] text-ink-3 mt-1.5">Active content units</p>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4 hover:border-line-strong transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Queue</span>
+        <i data-lucide="inbox" class="w-[14px] h-[14px] text-rose-400"></i>
+      </div>
+      <p class="font-mono font-600 text-[26px] mt-2 leading-none">0</p>
+      <p class="text-[11px] text-ink-3 mt-1.5">Requests pending</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-surf-1 border border-line rounded-xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-display font-700 text-[13.5px]">Platform growth</h3>
+          <p class="text-[11.5px] text-ink-3 mt-0.5">14-day trajectory across growth, content and users</p>
+        </div>
+        <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[11.5px]" role="tablist" data-tabgroup="growth">
+          <button class="seg-btn px-2.5 py-1 rounded-md text-ink-2 font-medium" aria-selected="true">Month</button>
+          <button class="seg-btn px-2.5 py-1 rounded-md text-ink-2 font-medium" aria-selected="false">Year</button>
+        </div>
+      </div>
+      <div class="flex items-end gap-2 h-36" id="growthChart"></div>
+      <div class="flex items-center gap-5 mt-3 pt-3 border-t border-line text-[11.5px] text-ink-2">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-teal-500"></span>Growth</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-bronze-500"></span>Content</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-ink-3"></span>Users</span>
+      </div>
+    </div>
+
+    <div class="bg-surf-1 border border-line rounded-xl p-5">
+      <h3 class="font-display font-700 text-[13.5px]">Content mix</h3>
+      <p class="text-[11.5px] text-ink-3 mt-0.5 mb-4">174 total items</p>
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-[12px] mb-1"><span class="text-ink-2">Materials</span><span class="font-mono">61</span></div>
+          <div class="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div class="h-full bg-teal-500 rounded-full" style="width:35%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[12px] mb-1"><span class="text-ink-2">Questions</span><span class="font-mono">103</span></div>
+          <div class="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div class="h-full bg-bronze-500 rounded-full" style="width:59%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[12px] mb-1"><span class="text-ink-2">eBooks</span><span class="font-mono">4</span></div>
+          <div class="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div class="h-full bg-ink-3 rounded-full" style="width:6%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[12px] mb-1"><span class="text-ink-2">Courses</span><span class="font-mono">1</span></div>
+          <div class="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div class="h-full bg-rose-500 rounded-full" style="width:2%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[12px] mb-1"><span class="text-ink-2">News</span><span class="font-mono">5</span></div>
+          <div class="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div class="h-full bg-teal-200 rounded-full" style="width:7%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-surf-1 border border-line rounded-xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display font-700 text-[13.5px]">Recent activity</h3>
+        <button class="text-[11.5px] text-teal-400 hover:text-teal-300 font-medium">View all</button>
+      </div>
+      <div class="divide-y divide-line" id="activityList"></div>
+    </div>
+
+    <div class="bg-surf-1 border border-line rounded-xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display font-700 text-[13.5px]">System updates</h3>
+        <span class="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-teal-600/15 text-teal-400 border border-teal-600/30">v0.2.1</span>
+      </div>
+      <div class="space-y-3.5 max-h-80 overflow-y-auto pr-1" id="updatesList"></div>
+    </div>
+  </div>
+</section>
+<section data-section="feedback" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">User feedback</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Manage support tickets and user inquiries</p>
+    </div>
+    <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="feedback">
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">All</button>
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">New</button>
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Read</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl divide-y divide-line" id="feedbackList"></div>
+</section>
+
+<section data-section="hierarchy" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Hierarchy manager</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Organize your content structure</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors">
+      <i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add segment
+    </button>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+      <div class="px-4 h-11 flex items-center justify-between border-b border-line bg-surf-2/60">
+        <span class="text-[11px] font-bold tracking-wider text-ink-3">1 · SEGMENTS</span>
+        <i data-lucide="layers" class="w-[13px] h-[13px] text-ink-3"></i>
+      </div>
+      <div class="p-2 space-y-0.5 max-h-96 overflow-y-auto">
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors bg-teal-600/15 text-teal-400 border border-teal-600/30">SSC</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">HSC</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Job Prep</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">University Admission</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Specialized Exams</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Master's Admission</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Skill Development</button>      </div>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+      <div class="px-4 h-11 flex items-center justify-between border-b border-line bg-surf-2/60">
+        <span class="text-[11px] font-bold tracking-wider text-ink-3">2 · GROUPS</span>
+        <i data-lucide="folder-tree" class="w-[13px] h-[13px] text-ink-3"></i>
+      </div>
+      <div class="p-2 space-y-0.5 max-h-96 overflow-y-auto">
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors bg-teal-600/15 text-teal-400 border border-teal-600/30">Science</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Business Studies</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Common</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Humanities</button>      </div>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+      <div class="px-4 h-11 flex items-center justify-between border-b border-line bg-surf-2/60">
+        <span class="text-[11px] font-bold tracking-wider text-ink-3">3 · SUBJECTS</span>
+        <i data-lucide="book-open" class="w-[13px] h-[13px] text-ink-3"></i>
+      </div>
+      <div class="p-2 space-y-0.5 max-h-96 overflow-y-auto">
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors bg-teal-600/15 text-teal-400 border border-teal-600/30">Physics</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Chemistry</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Biology</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Higher Math</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Bangla 1st Paper</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Bangla 2nd Paper</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">English 1st Paper</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">English 2nd Paper</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">General Math</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">Islam</button>
+<button class="w-full text-left px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors text-ink-2 hover:bg-surf-2 border border-transparent">BGS</button>      </div>
+    </div>
+  </div>
+</section>
+<section data-section="categories" class="section hidden space-y-4">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Class categories</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Tag and organize content across the library</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors">
+      <i data-lucide="plus" class="w-[14px] h-[14px]"></i> New category
+    </button>
+  </div>
+  <div class="flex flex-wrap gap-1.5" role="tablist" data-tabgroup="categories">
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="true">All</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">Blogs</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">PDFs</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">Videos</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">Questions</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">News</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">eBook</button>
+<button class="seg-btn px-3 py-1.5 rounded-lg text-[12px] font-medium border border-line text-ink-2 bg-surf-1" aria-selected="false">Course</button>  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Question">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-[14px] h-[14px] text-bronze-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Admission Prep</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · Question</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Question">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-[14px] h-[14px] text-bronze-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Bangladesh</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Question</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Question">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-[14px] h-[14px] text-bronze-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Bangladesh Judicial Service Commission</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Question</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Board Question</p><p class="text-[11px] text-ink-3 mt-0.5">16 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="News">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="newspaper" class="w-[14px] h-[14px] text-rose-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Board Questions</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · News</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Question">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-[14px] h-[14px] text-bronze-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Climate Change</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Question</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">College Questions</p><p class="text-[11px] text-ink-3 mt-0.5">4 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Data Science</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Economics</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Engineering</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Engineering Prep</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">English Grammar</p><p class="text-[11px] text-ink-3 mt-0.5">2 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Full Note</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="News">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="newspaper" class="w-[14px] h-[14px] text-rose-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">General Knowledge</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · News</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">History of Geography</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Job Prep Math Suggestions</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Literature</p><p class="text-[11px] text-ink-3 mt-0.5">2 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Machine Learning</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Medical Prep</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Permutation & Combinations</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Poems</p><p class="text-[11px] text-ink-3 mt-0.5">5 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Practice Book</p><p class="text-[11px] text-ink-3 mt-0.5">2 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Profit-Loss</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Question">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-[14px] h-[14px] text-bronze-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Reading Comprehension</p><p class="text-[11px] text-ink-3 mt-0.5">4 items linked · Question</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Statistics</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="eBook">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="book" class="w-[14px] h-[14px] text-teal-400"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Vocabulary</p><p class="text-[11px] text-ink-3 mt-0.5">1 items linked · eBook</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>
+<div class="liststat bg-surf-1 border border-line rounded-xl p-3.5 flex items-center justify-between hover:border-line-strong transition-colors" data-cattype="Blog">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="pen-line" class="w-[14px] h-[14px] text-ink-2"></i></div>
+        <div class="min-w-0"><p class="text-[12.5px] font-medium truncate">Web Development</p><p class="text-[11px] text-ink-3 mt-0.5">0 items linked · Blog</p></div>
+      </div>
+      <div class="row-actions flex items-center gap-1 shrink-0">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+      </div>
+    </div>  </div>
+</section>
+<section data-section="curriculum" class="section hidden space-y-4">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Curriculum explorer</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Browse lesson plans by subject and chapter</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <select class="h-9 bg-surf-2 border border-line rounded-lg px-3 text-[12px] text-ink-2 outline-none focus:border-teal-600"><option>Physics</option><option>Chemistry</option><option>Higher Math</option></select>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> New plan</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="th-sort text-left font-semibold px-4 py-2.5">Chapter</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Lessons</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="curriculumBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="lecture-sheets" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Lecture sheet system</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Upload and manage downloadable lecture sheets</p>
+    </div>
+    <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="sheets">
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">All sheets</button>
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Student requests</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden" data-panel-group="sheets" data-panel-index="0">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Sheet title</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Chapter</th>
+        <th class="text-left font-semibold px-4 py-2.5">Downloads</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="sheetsBody"></tbody>
+    </table>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden hidden" data-panel-group="sheets" data-panel-index="1">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Student</th>
+        <th class="text-left font-semibold px-4 py-2.5">Requested sheet</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="sheetRequestsBody"></tbody>
+    </table>
+  </div>
+</section>
+<section data-section="questions" class="section hidden space-y-4">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Question bank</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">103 questions across all subjects</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="questions">
+        <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">Repository</button>
+        <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Reports</button>
+      </div>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add question</button>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-2 bg-surf-2 border border-line rounded-lg px-3 h-9 w-full max-w-xs focus-within:border-teal-600">
+      <i data-lucide="search" class="w-[14px] h-[14px] text-ink-3"></i>
+      <input id="qSearch" type="text" placeholder="Search questions..." class="bg-transparent outline-none text-[12px] w-full placeholder:text-ink-3">
+    </div>
+    <select class="h-9 bg-surf-2 border border-line rounded-lg px-3 text-[12px] text-ink-2 outline-none focus:border-teal-600"><option>All subjects</option><option>Physics</option><option>Chemistry</option><option>English</option></select>
+    <select class="h-9 bg-surf-2 border border-line rounded-lg px-3 text-[12px] text-ink-2 outline-none focus:border-teal-600"><option>All difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden" data-panel-group="questions" data-panel-index="0">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="th-sort text-left font-semibold px-4 py-2.5" data-sort="text">Question</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Difficulty</th>
+        <th class="text-left font-semibold px-4 py-2.5">Type</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="questionsBody"></tbody>
+    </table>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden hidden" data-panel-group="questions" data-panel-index="1">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Question</th>
+        <th class="text-left font-semibold px-4 py-2.5">Reported by</th>
+        <th class="text-left font-semibold px-4 py-2.5">Reason</th>
+        <th class="text-left font-semibold px-4 py-2.5">Date</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="questionReportsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="exams" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Exam management</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Create and monitor mock exams</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="exams">
+        <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">Exams</button>
+        <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Student requests</button>
+      </div>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> Create exam</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden" data-panel-group="exams" data-panel-index="0">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Exam title</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Duration</th>
+        <th class="text-left font-semibold px-4 py-2.5">Participants</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="examsBody"></tbody>
+    </table>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden hidden" data-panel-group="exams" data-panel-index="1">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Student</th>
+        <th class="text-left font-semibold px-4 py-2.5">Requested exam</th>
+        <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="examRequestsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="qotd" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Question of the day</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Schedule daily challenge questions</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="calendar-plus" class="w-[14px] h-[14px]"></i> Schedule QotD</button>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-surf-1 border border-line rounded-xl overflow-hidden">
+      <table class="w-full text-[12.5px]">
+        <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+          <th class="text-left font-semibold px-4 py-2.5">Date</th>
+          <th class="text-left font-semibold px-4 py-2.5">Question</th>
+          <th class="text-left font-semibold px-4 py-2.5">Subject</th>
+          <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+        </tr></thead>
+        <tbody class="divide-y divide-line" id="qotdBody"></tbody>
+      </table>
+    </div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4">
+      <h3 class="font-display font-700 text-[13px] mb-3">Today's pick</h3>
+      <div class="bg-surf-2 border border-line rounded-lg p-3.5">
+        <p class="text-[10.5px] uppercase tracking-wider text-teal-400 font-semibold mb-1.5">Higher Math</p>
+        <p class="text-[12.5px] leading-relaxed">If sin θ + cosec θ = 2, find the value of sin⁷θ + cosec⁷θ.</p>
+      </div>
+      <div class="flex items-center justify-between mt-3 text-[11.5px] text-ink-3">
+        <span>142 responses</span><span>68% correct</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-section="materials" class="section hidden space-y-4">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Study materials</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">61 materials — notes, PDFs, and slides</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 bg-surf-2 border border-line rounded-lg px-3 h-9 w-56 focus-within:border-teal-600">
+        <i data-lucide="search" class="w-[14px] h-[14px] text-ink-3"></i>
+        <input id="mSearch" type="text" placeholder="Search materials..." class="bg-transparent outline-none text-[12px] w-full placeholder:text-ink-3">
+      </div>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="upload" class="w-[14px] h-[14px]"></i> Upload</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="th-sort text-left font-semibold px-4 py-2.5" data-sort="text">Title</th>
+        <th class="text-left font-semibold px-4 py-2.5">Category</th>
+        <th class="text-left font-semibold px-4 py-2.5">Format</th>
+        <th class="text-left font-semibold px-4 py-2.5">Size</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="materialsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="ebooks" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">eBooks library</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">4 published eBooks</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add eBook</button>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5" id="ebooksGrid"></div>
+</section>
+
+<section data-section="courses" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Premium courses</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">1 active course</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> New course</button>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl p-5 flex flex-col sm:flex-row gap-4">
+    <div class="w-full sm:w-40 h-24 rounded-lg bg-surf-2 border border-line flex items-center justify-center shrink-0">
+      <i data-lucide="graduation-cap" class="w-6 h-6 text-teal-400"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="font-display font-700 text-[13.5px]">Complete HSC Physics Mastery</p>
+          <p class="text-[11.5px] text-ink-3 mt-1">12 modules · 48 lessons · Bangla + English</p>
+        </div>
+        <span class="text-[10.5px] font-semibold px-2 py-1 rounded-md bg-teal-600/15 text-teal-400 border border-teal-600/30 shrink-0">Published</span>
+      </div>
+      <div class="flex items-center gap-5 mt-3 text-[11.5px] text-ink-2">
+        <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5"></i>0 enrolled</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="star" class="w-3.5 h-3.5"></i>No ratings yet</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="tag" class="w-3.5 h-3.5"></i>৳1,500</span>
+      </div>
+    </div>
+    <div class="row-actions flex sm:flex-col items-center gap-1 shrink-0">
+      <button class="icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[14px] h-[14px]"></i></button>
+      <button class="icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Settings"><i data-lucide="settings" class="w-[14px] h-[14px]"></i></button>
+    </div>
+  </div>
+</section>
+<section data-section="forum" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Forum moderator</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Review flagged posts and reports</p>
+    </div>
+    <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="forum">
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">Flagged reports</button>
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">All posts</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl p-14 flex flex-col items-center text-center" data-panel-group="forum" data-panel-index="0">
+    <i data-lucide="shield-check" class="w-8 h-8 text-teal-400 mb-3"></i>
+    <p class="text-[13px] font-medium">No flagged content</p>
+    <p class="text-[12px] text-ink-3 mt-1">The forum is currently clean — reported posts will show up here.</p>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden hidden" data-panel-group="forum" data-panel-index="1">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Post</th>
+        <th class="text-left font-semibold px-4 py-2.5">Author</th>
+        <th class="text-left font-semibold px-4 py-2.5">Replies</th>
+        <th class="text-left font-semibold px-4 py-2.5">Posted</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="forumPostsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="discussions" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Student discussions</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Threads started across the forum</p>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Thread</th>
+        <th class="text-left font-semibold px-4 py-2.5">Started by</th>
+        <th class="text-left font-semibold px-4 py-2.5">Replies</th>
+        <th class="text-left font-semibold px-4 py-2.5">Last activity</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="discussionsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="badges" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Gamification registry</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Badges, streaks, and reward tiers</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> New badge</button>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="badgesGrid"></div>
+</section>
+<section data-section="news" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Newsroom</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">5 published articles</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> New article</button>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Headline</th>
+        <th class="text-left font-semibold px-4 py-2.5">Category</th>
+        <th class="text-left font-semibold px-4 py-2.5">Published</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="newsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="newsletter" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Newsletter</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Subscriber list and campaign history</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="send" class="w-[14px] h-[14px]"></i> New campaign</button>
+  </div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Subscribers</span><p class="font-mono font-600 text-[22px] mt-1.5">0</p></div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Campaigns sent</span><p class="font-mono font-600 text-[22px] mt-1.5">0</p></div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Open rate</span><p class="font-mono font-600 text-[22px] mt-1.5">—</p></div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Unsubscribed</span><p class="font-mono font-600 text-[22px] mt-1.5">0</p></div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl p-14 flex flex-col items-center text-center">
+    <i data-lucide="mail" class="w-8 h-8 text-ink-3 mb-3"></i>
+    <p class="text-[13px] font-medium">No subscribers yet</p>
+    <p class="text-[12px] text-ink-3 mt-1">Once students opt in, their emails will be listed here.</p>
+  </div>
+</section>
+
+<section data-section="donations" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Donation hub</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Track contributions supporting free access</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-line text-ink-2 hover:text-ink-1 hover:border-line-strong text-[12px] font-medium transition-colors"><i data-lucide="download" class="w-[14px] h-[14px]"></i> Export report</button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Total raised</span><p class="font-mono font-600 text-[22px] mt-1.5">৳0</p></div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">Donors</span><p class="font-mono font-600 text-[22px] mt-1.5">0</p></div>
+    <div class="bg-surf-1 border border-line rounded-xl p-4"><span class="text-[11px] uppercase tracking-wider text-ink-3 font-semibold">This month</span><p class="font-mono font-600 text-[22px] mt-1.5">৳0</p></div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl p-14 flex flex-col items-center text-center">
+    <i data-lucide="hand-coins" class="w-8 h-8 text-ink-3 mb-3"></i>
+    <p class="text-[13px] font-medium">No donations recorded</p>
+    <p class="text-[12px] text-ink-3 mt-1">Contributions will be logged here as they come in.</p>
+  </div>
+</section>
+<section data-section="reviews" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Pending reviews</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Content and course submissions awaiting approval</p>
+    </div>
+    <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]" role="tablist" data-tabgroup="reviews">
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">Resources</button>
+      <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Courses</button>
+    </div>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden" data-panel-group="reviews" data-panel-index="0">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Resource</th>
+        <th class="text-left font-semibold px-4 py-2.5">Submitted by</th>
+        <th class="text-left font-semibold px-4 py-2.5">Type</th>
+        <th class="text-left font-semibold px-4 py-2.5">Submitted</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="resourceReviewsBody"></tbody>
+    </table>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl p-14 flex flex-col items-center text-center hidden" data-panel-group="reviews" data-panel-index="1">
+    <i data-lucide="clipboard-check" class="w-8 h-8 text-teal-400 mb-3"></i>
+    <p class="text-[13px] font-medium">Queue is clear</p>
+    <p class="text-[12px] text-ink-3 mt-1">Submitted courses will queue here for your approval.</p>
+  </div>
+</section>
+
+<section data-section="users" class="section hidden space-y-4">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">User management</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">39 registered accounts</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 bg-surf-2 border border-line rounded-lg px-3 h-9 w-56 focus-within:border-teal-600">
+        <i data-lucide="search" class="w-[14px] h-[14px] text-ink-3"></i>
+        <input id="uSearch" type="text" placeholder="Search users..." class="bg-transparent outline-none text-[12px] w-full placeholder:text-ink-3">
+      </div>
+      <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="user-plus" class="w-[14px] h-[14px]"></i> Invite</button>
+    </div>
+  </div>
+  <div class="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px] w-fit" role="tablist" data-tabgroup="users">
+    <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="true">All</button>
+    <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Pending</button>
+    <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Suspended</button>
+    <button class="seg-btn px-3 py-1.5 rounded-md text-ink-2 font-medium" aria-selected="false">Invites</button>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="th-sort text-left font-semibold px-4 py-2.5" data-sort="text">Name</th>
+        <th class="text-left font-semibold px-4 py-2.5">Role</th>
+        <th class="text-left font-semibold px-4 py-2.5">Segment</th>
+        <th class="text-left font-semibold px-4 py-2.5">Joined</th>
+        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="usersBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section data-section="updates" class="section hidden space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-display font-700 text-[16px]">Segment updates</h2>
+      <p class="text-[12px] text-ink-3 mt-0.5">Platform changelog and release notes</p>
+    </div>
+    <button class="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[12px] font-medium transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i> Log update</button>
+  </div>
+  <div class="bg-surf-1 border border-line rounded-xl overflow-hidden">
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="border-b border-line bg-surf-2/50 text-ink-3 text-[11px] uppercase tracking-wider">
+        <th class="text-left font-semibold px-4 py-2.5">Version</th>
+        <th class="text-left font-semibold px-4 py-2.5">Title</th>
+        <th class="text-left font-semibold px-4 py-2.5">Type</th>
+        <th class="text-left font-semibold px-4 py-2.5">Date</th>
+        <th class="text-right font-semibold px-4 py-2.5">Actions</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line" id="updatesBody"></tbody>
+    </table>
+  </div>
+</section>
+
+  </main>
+</div>
+</div>
+<script>
+const NAV = [
+  { group:'Dashboard & Insights', items:[
+    ['dashboard','layout-dashboard','Overview','NextPrep Command Center'],
+    ['feedback','message-square-warning','User Feedback','Support tickets and inquiries'],
+  ]},
+  { group:'Academic Curriculum', items:[
+    ['hierarchy','git-branch','Hierarchy Manager','Segments, groups and subjects'],
+    ['categories','tags','Class Categories','Content tagging system'],
+    ['curriculum','book-open','Lesson Plans','Curriculum explorer'],
+    ['lecture-sheets','file-text','Lecture Sheets','Downloadable sheet system'],
+  ]},
+  { group:'Assessments & Practice', items:[
+    ['questions','help-circle','Question Bank','103 questions catalogued'],
+    ['exams','clipboard-list','Exam Center','Mock exam management'],
+    ['qotd','calendar-clock','QotD Scheduler','Daily challenge question'],
+  ]},
+  { group:'Learning Materials', items:[
+    ['materials','folder-open','Study Materials','Notes, PDFs and slides'],
+    ['ebooks','book','eBooks Library','Published eBooks'],
+    ['courses','graduation-cap','Premium Courses','Paid course catalogue'],
+  ]},
+  { group:'Community & Gamification', items:[
+    ['forum','message-circle','Forum Moderator','Flagged posts and reports'],
+    ['discussions','messages-square','Student Discussions','Forum threads'],
+    ['badges','award','Badges & Rewards','Gamification registry'],
+  ]},
+  { group:'Newsroom', items:[
+    ['news','newspaper','Newsroom','Published articles'],
+    ['newsletter','mail','Newsletter','Subscribers and campaigns'],
+    ['donations','hand-coins','Donation Hub','Contribution tracking'],
+  ]},
+  { group:'System Administration', items:[
+    ['reviews','clipboard-check','Pending Reviews','Submission approvals'],
+    ['users','users','User Management','39 registered accounts'],
+    ['updates','history','Segment Updates','Platform changelog'],
+  ]},
+];
+
+function renderNav(){
+  const root = document.getElementById('navroot');
+  root.innerHTML = NAV.map(g => `
+    <div>
+      <p class="grouplabel px-3 text-[10px] font-bold tracking-wider text-ink-3 mb-1.5 whitespace-nowrap">${g.group.toUpperCase()}</p>
+      <div class="space-y-0.5">
+        ${g.items.map(([id,icon,label]) => `
+          <button class="navitem sidebar-collapsed-parent relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-ink-2 hover:bg-surf-2 hover:text-ink-1 transition-colors" data-nav="${id}">
+            <i data-lucide="${icon}" class="w-[17px] h-[17px] shrink-0"></i>
+            <span class="navlabel text-[12.5px] font-medium whitespace-nowrap overflow-hidden">${label}</span>
+            <span class="tooltip">${label}</span>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
+  root.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => goTo(btn.dataset.nav)));
+}
+
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('hidden', s.dataset.section !== id));
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    const active = btn.dataset.nav === id;
+    btn.classList.toggle('bg-teal-600', active);
+    btn.classList.toggle('text-white', active);
+    btn.classList.toggle('shadow-lg', active);
+    btn.classList.toggle('text-ink-2', !active);
+    if(active) btn.classList.remove('hover:bg-surf-2','hover:text-ink-1'); else btn.classList.add('hover:bg-surf-2','hover:text-ink-1');
+  });
+  const meta = NAV.flatMap(g=>g.items).find(i=>i[0]===id);
+  if(meta){ document.getElementById('pageTitle').textContent = meta[2]; document.getElementById('pageSub').textContent = meta[3]; }
+  document.getElementById('mainContent').scrollTop = 0;
+  if(window.innerWidth < 1024) document.getElementById('sidebar').classList.add('-translate-x-full');
+}
+
+document.getElementById('collapseBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('sidebar-collapsed');
+  document.getElementById('sidebar').classList.toggle('w-[248px]');
+  document.getElementById('sidebar').classList.toggle('w-[76px]');
+});
+
+document.getElementById('mobileNavBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('-translate-x-full');
+});
+
+const TAB_HANDLERS = {};
+document.querySelectorAll('[role="tablist"]').forEach(group => {
+  const gid = group.dataset.tabgroup;
+  const btns = Array.from(group.querySelectorAll('.seg-btn'));
+  const panels = gid ? Array.from(document.querySelectorAll(`[data-panel-group="${gid}"]`)) : [];
+  btns.forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      if(panels.length) panels.forEach(p => p.classList.toggle('hidden', Number(p.dataset.panelIndex) !== i));
+      if(gid && TAB_HANDLERS[gid]) TAB_HANDLERS[gid](i);
+    });
+  });
+});
+
+function rowActions(){
+  return `<div class="row-actions flex items-center justify-end gap-1">
+    <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1" aria-label="Edit"><i data-lucide="pencil" class="w-[13px] h-[13px]"></i></button>
+    <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400" aria-label="Delete"><i data-lucide="trash-2" class="w-[13px] h-[13px]"></i></button>
+  </div>`;
+}
+function statusPill(text, tone){
+  const tones = { good:'bg-teal-600/15 text-teal-400 border-teal-600/30', warn:'bg-bronze-500/15 text-bronze-400 border-bronze-500/30', bad:'bg-rose-500/15 text-rose-400 border-rose-500/30', muted:'bg-surf-2 text-ink-3 border-line' };
+  return `<span class="text-[10.5px] font-semibold px-2 py-1 rounded-md border ${tones[tone]}">${text}</span>`;
+}
+</script>
+<script>
+const CURRICULUM = [
+  ['Vectors','Physics',6,'good'],['Kinematics','Physics',8,'good'],['Newtonian Mechanics','Physics',5,'warn'],
+  ['Chemical Bonding','Chemistry',7,'good'],['Organic Chemistry Basics','Chemistry',9,'good'],
+  ['Differential Calculus','Higher Math',10,'good'],['Matrices','Higher Math',4,'warn'],
+  ['Cell Structure','Biology',6,'good'],['Genetics','Biology',5,'muted'],
+];
+document.getElementById('curriculumBody').innerHTML = CURRICULUM.map(([t,s,n,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${n}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Complete':tone==='warn'?'In progress':'Draft', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const SHEETS = [
+  ['Vector Algebra — Full Sheet','Physics','Vectors','412'],
+  ['Organic Nomenclature Cheat Sheet','Chemistry','Organic Chemistry Basics','289'],
+  ['Trigonometric Identities','Higher Math','Trigonometry','537'],
+  ['Cell Division Diagrams','Biology','Cell Structure','198'],
+  ['English Tense Rules Compiled','English 1st Paper','Grammar','624'],
+];
+document.getElementById('sheetsBody').innerHTML = SHEETS.map(([t,s,c,d]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium flex items-center gap-2"><i data-lucide="file-text" class="w-[13px] h-[13px] text-ink-3"></i>${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5 text-ink-2">${c}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const QUESTIONS = [
+  ['If sin θ + cosec θ = 2, find sin⁷θ + cosec⁷θ.','Higher Math','Hard','MCQ'],
+  ['A train 210m long crosses a platform in 22s. Find its speed.','General Math','Medium','MCQ'],
+  ['Identify the correct passive form of "She teaches English."','English Grammar','Easy','MCQ'],
+  ['Explain the significance of the Vernier Constant in measurement.','Physics','Medium','Written'],
+  ['Balance the redox reaction: KMnO4 + FeSO4 + H2SO4 →','Chemistry','Hard','Written'],
+  ['Which organelle is responsible for ATP synthesis?','Biology','Easy','MCQ'],
+  ['ঢাকা শহরের জলাবদ্ধতার প্রধান কারণ ব্যাখ্যা কর।','BGS','Medium','Written'],
+  ['Find the mixture ratio to achieve a 24% profit margin.','Profit-Loss','Medium','MCQ'],
+];
+function renderQuestions(list){
+  document.getElementById('questionsBody').innerHTML = list.map(([q,s,d,ty]) => {
+    const dtone = d==='Easy'?'good':d==='Medium'?'warn':'bad';
+    return `<tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 max-w-md truncate ${/[\u0980-\u09FF]/.test(q)?'font-bn':''}">${q}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5">${statusPill(d,dtone)}</td>
+    <td class="px-4 py-2.5 text-ink-2">${ty}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`; }).join('');
+  lucide.createIcons();
+}
+renderQuestions(QUESTIONS);
+document.getElementById('qSearch').addEventListener('input', e => {
+  const v = e.target.value.toLowerCase();
+  renderQuestions(QUESTIONS.filter(q => q[0].toLowerCase().includes(v) || q[1].toLowerCase().includes(v)));
+});
+
+const EXAMS = [
+  ['HSC Physics Model Test — Ch 1-4','Physics','90 min',214,'good'],
+  ['SSC General Math Weekly Quiz','General Math','45 min',356,'good'],
+  ['University Admission Full Mock #12','Mixed','180 min',89,'warn'],
+  ['BCS Preliminary Practice Set','Job Prep','120 min',421,'good'],
+  ['English Grammar Diagnostic','English','30 min',0,'muted'],
+];
+document.getElementById('examsBody').innerHTML = EXAMS.map(([t,s,d,p,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${p}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Live':tone==='warn'?'Scheduled':'Draft', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const QOTD = [
+  ['Aug 13, 2026','If sin θ + cosec θ = 2, find sin⁷θ + cosec⁷θ.','Higher Math'],
+  ['Aug 12, 2026','What is the SI unit of magnetic flux density?','Physics'],
+  ['Aug 11, 2026','Correct the sentence: "He does not like tea" (informal form).','English Grammar'],
+  ['Aug 10, 2026','Name the powerhouse of the cell.','Biology'],
+  ['Aug 09, 2026','Solve: 2x² - 5x + 2 = 0','General Math'],
+];
+document.getElementById('qotdBody').innerHTML = QOTD.map(([d,q,s]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-mono text-ink-2 whitespace-nowrap">${d}</td>
+    <td class="px-4 py-2.5 max-w-xs truncate">${q}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+</script>
+<script>
+const MATERIALS = [
+  ['Vector Algebra Complete Notes','Physics','PDF','4.2 MB'],
+  ['Organic Chemistry Reaction Map','Chemistry','PDF','2.8 MB'],
+  ['Differential Calculus Slide Deck','Higher Math','PPT','6.1 MB'],
+  ['Cell Biology Illustrated Guide','Biology','PDF','3.4 MB'],
+  ['English Vocabulary Builder','English','DOC','1.1 MB'],
+  ['BCS Preliminary Digest 2026','Job Prep','PDF','9.7 MB'],
+  ['Bangladesh Affairs Summary','BGS','PDF','2.3 MB'],
+  ['Trigonometry Formula Sheet','Higher Math','PDF','0.8 MB'],
+];
+function renderMaterials(list){
+  document.getElementById('materialsBody').innerHTML = list.map(([t,c,f,sz]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium flex items-center gap-2"><i data-lucide="file" class="w-[13px] h-[13px] text-ink-3"></i>${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${c}</td>
+    <td class="px-4 py-2.5"><span class="font-mono text-[10.5px] px-1.5 py-0.5 rounded bg-surf-2 border border-line text-ink-2">${f}</span></td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${sz}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+renderMaterials(MATERIALS);
+document.getElementById('mSearch').addEventListener('input', e => {
+  const v = e.target.value.toLowerCase();
+  renderMaterials(MATERIALS.filter(m => m[0].toLowerCase().includes(v) || m[1].toLowerCase().includes(v)));
+});
+
+const EBOOKS = [
+  ['SSC Physics Companion','Physics','412 reads'],
+  ['English Grammar Vault','English','367 reads'],
+  ['BCS General Knowledge Digest','Job Prep','598 reads'],
+  ['Bengali Literature Anthology','Bangla','204 reads'],
+];
+document.getElementById('ebooksGrid').innerHTML = EBOOKS.map(([t,s,r]) => `
+  <div class="liststat bg-surf-1 border border-line rounded-xl overflow-hidden hover:border-line-strong transition-colors">
+    <div class="h-24 bg-surf-2 flex items-center justify-center border-b border-line"><i data-lucide="book" class="w-6 h-6 text-teal-400"></i></div>
+    <div class="p-3">
+      <p class="text-[12px] font-medium truncate">${t}</p>
+      <p class="text-[11px] text-ink-3 mt-1">${s} · ${r}</p>
+      <div class="row-actions flex items-center gap-1 mt-2">
+        <button class="icon-btn p-1.5 rounded-md hover:bg-surf-2 text-ink-3 hover:text-ink-1"><i data-lucide="pencil" class="w-[12px] h-[12px]"></i></button>
+        <button class="icon-btn p-1.5 rounded-md hover:bg-rose-500/10 text-ink-3 hover:text-rose-400"><i data-lucide="trash-2" class="w-[12px] h-[12px]"></i></button>
+      </div>
+    </div>
+  </div>`).join('');
+
+const BADGES = [
+  ['Streak Starter','flame','7-day login streak','teal'],
+  ['Quiz Master','trophy','50 exams completed','bronze'],
+  ['Early Bird','sunrise','QotD before 9am, 10x','teal'],
+  ['Top Contributor','star','20 forum answers','bronze'],
+  ['Perfectionist','target','100% on any mock exam','rose'],
+];
+document.getElementById('badgesGrid').innerHTML = BADGES.map(([n,i,d,c]) => `
+  <div class="bg-surf-1 border border-line rounded-xl p-4 text-center hover:border-line-strong transition-colors">
+    <div class="w-10 h-10 mx-auto rounded-xl bg-${c==='teal'?'teal-600/15':c==='bronze'?'bronze-500/15':'rose-500/15'} flex items-center justify-center mb-2.5">
+      <i data-lucide="${i}" class="w-[18px] h-[18px] text-${c==='teal'?'teal-400':c==='bronze'?'bronze-400':'rose-400'}"></i>
+    </div>
+    <p class="text-[12px] font-semibold">${n}</p>
+    <p class="text-[10.5px] text-ink-3 mt-1 leading-snug">${d}</p>
+  </div>`).join('');
+
+const DISCUSSIONS = [
+  ['Best way to memorize organic reactions?','Rafiul Islam',14,'2h ago'],
+  ['Anyone else struggling with vector cross product direction?','Tasnia Rahman',9,'5h ago'],
+  ['BCS Prelim 2026 — syllabus changes discussion','Mahmudul Hasan',27,'1d ago'],
+  ['Share your English writing part strategy','Nusrat Jahan',6,'2d ago'],
+];
+document.getElementById('discussionsBody').innerHTML = DISCUSSIONS.map(([t,u,r,a]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium max-w-sm truncate">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${u}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${r}</td>
+    <td class="px-4 py-2.5 text-ink-3">${a}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const NEWSITEMS = [
+  ['NextPrepBD launches BCS Preliminary track','Announcements','Aug 05, 2026','good'],
+  ['HSC 2026 routine officially published','Board Questions','Jul 29, 2026','good'],
+  ['New Higher Math problem sets added weekly','Platform','Jul 20, 2026','good'],
+  ['University admission circular season begins','Admission Prep','Jul 10, 2026','muted'],
+  ['Ramadan study schedule guide released','Guides','Jun 28, 2026','muted'],
+];
+document.getElementById('newsBody').innerHTML = NEWSITEMS.map(([t,c,d,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium max-w-sm truncate">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${c}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Published':'Archived', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const USERS = [
+  ['Rafiul Islam','Student','SSC','Jul 02, 2026','good'],
+  ['Tasnia Rahman','Student','HSC','Jun 28, 2026','good'],
+  ['Mahmudul Hasan','Student','Job Prep','Jun 21, 2026','good'],
+  ['Nusrat Jahan','Student','University Admission','Jun 15, 2026','good'],
+  ['Abdullah All Masum','Admin','—','Jan 10, 2026','good'],
+  ['Bibi Hazera','Moderator','HSC','May 30, 2026','good'],
+  ['Sadia Afrin','Student','SSC','May 22, 2026','warn'],
+  ['Kamrul Hasan','Student','Job Prep','May 14, 2026','bad'],
+];
+function renderUsers(list){
+  document.getElementById('usersBody').innerHTML = list.map(([n,r,s,j,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-surf-2 border border-line flex items-center justify-center text-[10px] font-bold text-ink-2 shrink-0">${n.split(' ').map(w=>w[0]).slice(0,2).join('')}</span>
+      ${n}
+    </td>
+    <td class="px-4 py-2.5 text-ink-2">${r}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${j}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Active':tone==='warn'?'Pending':'Suspended', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+renderUsers(USERS);
+document.getElementById('uSearch').addEventListener('input', e => {
+  const v = e.target.value.toLowerCase();
+  renderUsers(USERS.filter(u => u[0].toLowerCase().includes(v) || u[1].toLowerCase().includes(v)));
+});
+
+const UPDATES = [
+  ['v0.2.1','Question bank difficulty filter added','Feature','Aug 10, 2026'],
+  ['v0.2.0','QotD scheduler rebuilt','Feature','Aug 02, 2026'],
+  ['v0.1.9','Fixed lecture sheet download counter','Fix','Jul 24, 2026'],
+  ['v0.1.8','Forum moderation tools introduced','Feature','Jul 12, 2026'],
+  ['v0.1.7','Performance improvements on materials page','Improvement','Jun 30, 2026'],
+];
+document.getElementById('updatesBody').innerHTML = UPDATES.map(([v,t,ty,d]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-mono text-teal-400">${v}</td>
+    <td class="px-4 py-2.5 font-medium">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${ty}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+</script>
+<script>
+const ACTIVITY = [
+  ['user-plus','New student registered — Sadia Afrin','12 min ago','teal-400'],
+  ['file-plus','Lecture sheet uploaded — Trigonometric Identities','48 min ago','bronze-400'],
+  ['help-circle','14 new questions added to Higher Math','2h ago','teal-400'],
+  ['message-square','Forum thread flagged for review','4h ago','rose-400'],
+  ['calendar-clock','QotD scheduled for Aug 14','6h ago','ink-3'],
+];
+document.getElementById('activityList').innerHTML = ACTIVITY.map(([i,t,ts,c]) => `
+  <div class="flex items-center gap-3 py-2.5">
+    <div class="w-7 h-7 rounded-lg bg-surf-2 flex items-center justify-center shrink-0"><i data-lucide="${i}" class="w-[13px] h-[13px] text-${c}"></i></div>
+    <p class="text-[12px] flex-1 min-w-0 truncate">${t}</p>
+    <span class="text-[11px] text-ink-3 shrink-0 font-mono">${ts}</span>
+  </div>`).join('');
+
+document.getElementById('updatesList').innerHTML = UPDATES.slice(0,4).map(([v,t,ty,d]) => `
+  <div class="border-l-2 border-teal-600 pl-3">
+    <p class="text-[10px] font-mono text-teal-400">${v} · ${d}</p>
+    <p class="text-[12px] mt-0.5 leading-snug">${t}</p>
+  </div>`).join('');
+
+const chartData = [40,55,48,62,58,71,66,80,74,88,82,95,90,100];
+document.getElementById('growthChart').innerHTML = chartData.map((v,i) => `
+  <div class="flex-1 flex flex-col items-center justify-end h-full group">
+    <div class="bar w-full rounded-t bg-teal-600 group-hover:bg-teal-500" style="height:${v*0.32}%"></div>
+  </div>`).join('');
+
+document.querySelectorAll('.th-sort').forEach(th => {
+  let asc = true;
+  th.addEventListener('click', () => {
+    const tbody = th.closest('table').querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const idx = Array.from(th.parentNode.children).indexOf(th);
+    rows.sort((a,b) => {
+      const av = a.children[idx].textContent.trim().toLowerCase();
+      const bv = b.children[idx].textContent.trim().toLowerCase();
+      return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+    asc = !asc;
+    rows.forEach(r => tbody.appendChild(r));
+  });
+});
+
+const FEEDBACK = [
+  ['Ariful Karim','Question answer key seems wrong for Chapter 3 Physics MCQ 12.','new','Aug 12, 2026'],
+  ['Mim Akter','Can you add audio lectures for English speaking practice?','new','Aug 11, 2026'],
+  ['Tanvir Ahmed','Request: add Bangla subtitles to video lectures.','new','Aug 06, 2026'],
+  ['Shahriar Kabir','Loved the new QotD streak feature, thanks!','read','Aug 09, 2026'],
+  ['Farzana Yasmin','Payment for the Physics course did not reflect in my account.','read','Aug 07, 2026'],
+];
+function renderFeedback(list){
+  document.getElementById('feedbackList').innerHTML = list.length ? list.map(([n,m,st,d]) => `
+    <div class="flex items-start justify-between gap-3 p-4">
+      <div class="flex items-start gap-3 min-w-0">
+        <span class="w-7 h-7 rounded-full bg-surf-2 border border-line flex items-center justify-center text-[10px] font-bold text-ink-2 shrink-0 mt-0.5">${n.split(' ').map(w=>w[0]).slice(0,2).join('')}</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="text-[12.5px] font-medium">${n}</p>
+            ${statusPill(st==='new'?'New':'Read', st==='new'?'warn':'muted')}
+          </div>
+          <p class="text-[12px] text-ink-2 mt-1 leading-relaxed">${m}</p>
+          <p class="text-[11px] text-ink-3 mt-1 font-mono">${d}</p>
+        </div>
+      </div>
+      ${rowActions()}
+    </div>`).join('') : `<div class="p-14 flex flex-col items-center text-center"><i data-lucide="inbox" class="w-8 h-8 text-ink-3 mb-3"></i><p class="text-[13px] font-medium">No feedback found</p><p class="text-[12px] text-ink-3 mt-1">Nothing in this view yet.</p></div>`;
+  lucide.createIcons();
+}
+renderFeedback(FEEDBACK);
+TAB_HANDLERS['feedback'] = (i) => {
+  const filtered = i===0 ? FEEDBACK : i===1 ? FEEDBACK.filter(f=>f[2]==='new') : FEEDBACK.filter(f=>f[2]==='read');
+  renderFeedback(filtered);
+};
+
+TAB_HANDLERS['categories'] = (i) => {
+  const labels = ['All','Blog','PDF','Video','Question','News','eBook','Course'];
+  const target = labels[i];
+  document.querySelectorAll('[data-cattype]').forEach(card => {
+    card.classList.toggle('hidden', target !== 'All' && card.dataset.cattype !== target);
+  });
+};
+
+const SHEET_REQUESTS = [
+  ['Rafiul Islam','Vector Algebra Advanced Problems','Physics','warn'],
+  ['Tasnia Rahman','Organic Reaction Mechanisms Sheet','Chemistry','warn'],
+  ['Mahmudul Hasan','BCS Written English Compiled Sheet','English','good'],
+  ['Nusrat Jahan','Genetics Quick Revision Sheet','Biology','bad'],
+];
+document.getElementById('sheetRequestsBody').innerHTML = SHEET_REQUESTS.map(([n,t,s,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium">${n}</td>
+    <td class="px-4 py-2.5 text-ink-2">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Fulfilled':tone==='warn'?'Pending':'Declined', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const QUESTION_REPORTS = [
+  ['A train 210m long crosses a platform in 22s. Find its speed.','Sadia Afrin','Answer key mismatch','Aug 10, 2026'],
+  ['Balance the redox reaction: KMnO4 + FeSO4 + H2SO4 →','Kamrul Hasan','Diagram missing','Aug 08, 2026'],
+  ['Identify the correct passive form of "She teaches English."','Mim Akter','Ambiguous options','Aug 04, 2026'],
+];
+document.getElementById('questionReportsBody').innerHTML = QUESTION_REPORTS.map(([q,n,r,d]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 max-w-sm truncate">${q}</td>
+    <td class="px-4 py-2.5 text-ink-2">${n}</td>
+    <td class="px-4 py-2.5 text-ink-2">${r}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const EXAM_REQUESTS = [
+  ['Farzana Yasmin','Full syllabus HSC Chemistry mock','Chemistry','warn'],
+  ['Tanvir Ahmed','University admission math-only set','General Math','good'],
+  ['Ariful Karim','BCS Preliminary Bangla section','Job Prep','warn'],
+];
+document.getElementById('examRequestsBody').innerHTML = EXAM_REQUESTS.map(([n,t,s,tone]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium">${n}</td>
+    <td class="px-4 py-2.5 text-ink-2">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${s}</td>
+    <td class="px-4 py-2.5">${statusPill(tone==='good'?'Scheduled':'Pending', tone)}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const FORUM_POSTS = [
+  ['Best way to memorize organic reactions?','Rafiul Islam',14,'2h ago'],
+  ['Anyone else struggling with vector cross product direction?','Tasnia Rahman',9,'5h ago'],
+  ['BCS Prelim 2026 — syllabus changes discussion','Mahmudul Hasan',27,'1d ago'],
+  ['Share your English writing part strategy','Nusrat Jahan',6,'2d ago'],
+  ['Study group for HSC Physics — anyone in Dhaka?','Sadia Afrin',11,'3d ago'],
+];
+document.getElementById('forumPostsBody').innerHTML = FORUM_POSTS.map(([t,u,r,a]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium max-w-sm truncate">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${u}</td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${r}</td>
+    <td class="px-4 py-2.5 text-ink-3">${a}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const RESOURCE_REVIEWS = [
+  ['Advanced Trigonometry Notes','Rafiul Islam','PDF','Aug 12, 2026'],
+  ['Organic Chemistry Video Series','Tasnia Rahman','Video','Aug 09, 2026'],
+  ['English Idioms Flashcard Set','Mahmudul Hasan','PDF','Aug 05, 2026'],
+];
+document.getElementById('resourceReviewsBody').innerHTML = RESOURCE_REVIEWS.map(([t,n,ty,d]) => `
+  <tr class="hover:bg-surf-2/50 transition-colors">
+    <td class="px-4 py-2.5 font-medium">${t}</td>
+    <td class="px-4 py-2.5 text-ink-2">${n}</td>
+    <td class="px-4 py-2.5"><span class="font-mono text-[10.5px] px-1.5 py-0.5 rounded bg-surf-2 border border-line text-ink-2">${ty}</span></td>
+    <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+    <td class="px-4 py-2.5">${rowActions()}</td>
+  </tr>`).join('');
+
+const INVITES = [
+  ['pending-invite-01@gmail.com','Moderator','Aug 11, 2026'],
+  ['pending-invite-02@gmail.com','Student','Aug 09, 2026'],
+];
+TAB_HANDLERS['users'] = (i) => {
+  if(i===3){
+    document.getElementById('usersBody').innerHTML = INVITES.map(([e,r,d]) => `
+      <tr class="hover:bg-surf-2/50 transition-colors">
+        <td class="px-4 py-2.5 font-medium">${e}</td>
+        <td class="px-4 py-2.5 text-ink-2">${r}</td>
+        <td class="px-4 py-2.5 text-ink-2">—</td>
+        <td class="px-4 py-2.5 font-mono text-ink-2">${d}</td>
+        <td class="px-4 py-2.5">${statusPill('Invited','warn')}</td>
+        <td class="px-4 py-2.5">${rowActions()}</td>
+      </tr>`).join('');
+    lucide.createIcons();
+    return;
+  }
+  const toneMap = { 1:'warn', 2:'bad' };
+  const filtered = i===0 ? USERS : USERS.filter(u => u[4]===toneMap[i]);
+  renderUsers(filtered);
+};
+
+TAB_HANDLERS['growth'] = (i) => {
+  const scaled = i===0 ? chartData : chartData.map(v => Math.round(v*0.7 + Math.random()*10));
+  document.getElementById('growthChart').innerHTML = scaled.map(v => `
+    <div class="flex-1 flex flex-col items-center justify-end h-full group">
+      <div class="bar w-full rounded-t bg-teal-600 group-hover:bg-teal-500" style="height:${Math.min(v,100)*0.32}%"></div>
+    </div>`).join('');
+};
+
+renderNav();
+goTo('dashboard');
+lucide.createIcons();
+</script>
+</body>
+</html>

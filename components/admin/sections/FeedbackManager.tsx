@@ -75,122 +75,102 @@ export default function FeedbackManager({ onUpdate, darkMode = false }: { onUpda
     return true;
   });
 
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-indigo-600"/> User Feedback
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage support tickets and user inquiries.</p>
-        </div>
-        
-        <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          {['all', 'new', 'read'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
-                filter === f ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* LIST */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        {loading ? (
-            <div className="p-12 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                Loading messages...
+      return (
+        <section className="section space-y-4 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 className="font-display font-bold text-[16px]">User feedback</h2>
+                    <p className="text-[12px] text-ink-3 mt-0.5">Manage support tickets and user inquiries</p>
+                </div>
+                <div className="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[12px]">
+                    {['all', 'new', 'read'].map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-3 py-1.5 rounded-md font-medium capitalize transition-colors ${filter === f ? 'bg-surf-1 text-ink-1 border border-line shadow-sm' : 'text-ink-2 hover:bg-surf-1/50 border border-transparent'}`}
+                        >
+                            {f}
+                        </button>
+                    ))}
+                </div>
             </div>
-        ) : filteredFeedbacks.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center">
-                <Mail className="w-10 h-10 mb-3 opacity-20" />
-                <p>No feedback found.</p>
-            </div>
-        ) : (
-            <div className="divide-y divide-slate-100">
-                {filteredFeedbacks.map((item) => {
-                    // RESOLVE USER DETAILS:
-                    // Priority 1: Linked Profile Data
-                    // Priority 2: Direct columns on feedback table (full_name, email) - standard fallback
-                    // Priority 3: "Anonymous" / "No email"
-                    const displayName = item.profiles?.full_name || item.full_name || "Anonymous";
-                    const displayEmail = item.profiles?.email || item.email || "No email";
 
-                    return (
-                    <div 
-                        key={item.id} 
-                        className={`p-6 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 flex flex-col md:flex-row gap-4 border-b border-slate-100 dark:border-slate-800 ${item.status !== 'read' ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
-                    >
-                        {/* Status Dot */}
-                        <div className="pt-2">
-                            {item.status !== 'read' ? (
-                                <div className="w-3 h-3 bg-indigo-600 rounded-full shadow-sm shadow-indigo-300" title="New"></div>
-                            ) : (
-                                <div className="w-3 h-3 bg-slate-200 dark:bg-slate-700 rounded-full" title="Read"></div>
-                            )}
-                        </div>
+            <div className="bg-surf-1 border border-line rounded-xl divide-y divide-line overflow-hidden">
+                {loading ? (
+                    <div className="p-12 text-center text-ink-3 flex flex-col items-center">
+                        <Loader2 className="w-6 h-6 animate-spin mb-2 text-indigo-500" />
+                        <span className="text-[12px] font-medium">Loading messages...</span>
+                    </div>
+                ) : filteredFeedbacks.length === 0 ? (
+                    <div className="p-12 text-center text-ink-3 flex flex-col items-center bg-surf-2/30">
+                        <Mail className="w-8 h-8 mb-3 opacity-30" />
+                        <p className="text-[12px] font-medium">No feedback found.</p>
+                    </div>
+                ) : (
+                    filteredFeedbacks.map((item) => {
+                        const displayName = item.profiles?.full_name || item.full_name || "Anonymous";
+                        const displayEmail = item.profiles?.email || item.email || "No email";
+                        const isNew = item.status !== 'read';
 
-                        {/* Content */}
-                        <div className="flex-1 space-y-2">
-                            <div className="flex flex-wrap justify-between items-start gap-2">
-                                <div>
-                                    {/* Subject / Category display */}
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                                        {item.category ? <span className="uppercase text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded mr-2">{item.category}</span> : null}
-                                        {/* If you have a 'subject' column, use it. Otherwise, show preview of message */}
-                                        {item.subject || "Feedback Message"}
-                                    </h4>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                        <span className="font-bold text-indigo-600">
-                                            {displayName}
-                                        </span>
-                                        <span>•</span>
-                                        <span>{displayEmail}</span>
-                                    </div>
+                        return (
+                            <div 
+                                key={item.id} 
+                                className={`p-4 flex gap-4 transition-colors ${isNew ? 'bg-indigo-600/5 hover:bg-indigo-600/10' : 'hover:bg-surf-2'}`}
+                            >
+                                <div className="mt-1 shrink-0">
+                                    {isNew ? (
+                                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" title="New"></div>
+                                    ) : (
+                                        <div className="w-2.5 h-2.5 rounded-full bg-surf-2 border border-line" title="Read"></div>
+                                    )}
                                 </div>
-                                <div className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-2 py-1 rounded-md shadow-sm">
-                                    <Clock className="w-3 h-3" />
-                                    {new Date(item.created_at).toLocaleDateString()}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-2">
+                                        <div>
+                                            <h4 className="font-bold text-[13px] text-ink-1 flex items-center flex-wrap gap-2">
+                                                {item.category && <span className="uppercase text-[9px] bg-surf-2 border border-line text-ink-3 px-1.5 py-0.5 rounded">{item.category}</span>}
+                                                {item.subject || "Feedback Message"}
+                                            </h4>
+                                            <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-ink-3">
+                                                <span className="font-bold text-indigo-400">{displayName}</span>
+                                                <span>·</span>
+                                                <span className="truncate">{displayEmail}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-ink-3 bg-surf-2 px-2 py-1 rounded-md border border-line shrink-0">
+                                            <Clock className="w-3 h-3" />
+                                            {new Date(item.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <p className="text-[12.5px] text-ink-2 leading-relaxed bg-surf-2/50 p-3 rounded-lg border border-line/50 whitespace-pre-wrap">
+                                        {item.message}
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-1.5 shrink-0 ml-2">
+                                    {isNew && (
+                                        <button 
+                                            onClick={() => markAsRead(item.id)}
+                                            className="icon-btn w-8 h-8 rounded-lg flex items-center justify-center text-indigo-400 bg-indigo-600/10 hover:bg-indigo-600 hover:text-white transition-colors"
+                                            title="Mark as Read"
+                                        >
+                                            <CheckCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => deleteFeedback(item.id)}
+                                        className="icon-btn w-8 h-8 rounded-lg flex items-center justify-center text-ink-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
-
-                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed bg-white dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50 whitespace-pre-wrap">
-                                {item.message}
-                            </p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex md:flex-col gap-2 pt-1">
-                            {item.status !== 'read' && (
-                                <button 
-                                    onClick={() => markAsRead(item.id)}
-                                    className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors flex items-center justify-center gap-2 md:w-10"
-                                    title="Mark as Read"
-                                >
-                                    <CheckCircle className="w-5 h-5" />
-                                </button>
-                            )}
-                            <button 
-                                onClick={() => deleteFeedback(item.id)}
-                                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2 md:w-10"
-                                title="Delete"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                )})}
+                        )
+                    })
+                )}
             </div>
-        )}
-      </div>
-    </div>
-  );
+        </section>
+    );
+
 }
+

@@ -85,7 +85,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
             <div className="flex items-center gap-4">
                 <button 
                     onClick={onBack}
-                    className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 transition-all text-slate-500"
+                    className="p-3 bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 transition-all text-slate-500"
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -96,7 +96,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div className="bg-surf-1 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
                         <Users size={24} />
                     </div>
@@ -105,7 +105,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                         <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{course.course_enrollments?.length || 0}</h3>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div className="bg-surf-1 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
                         <Trophy size={24} />
                     </div>
@@ -114,7 +114,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                         <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{completions.length}</h3>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div className="bg-surf-1 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center">
                         <CheckCircle2 size={24} />
                     </div>
@@ -127,8 +127,8 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center gap-4 flex-wrap">
+            <div className="bg-surf-1 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-line/50 flex justify-between items-center gap-4 flex-wrap">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                         {activeTab === 'certificates' ? 'Certificate Issuance Log' : 'Pending Payments'}
                     </h3>
@@ -139,12 +139,12 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                             placeholder="Search..." 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full md:w-64 pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all outline-none"
+                            className="w-full md:w-64 pl-10 pr-4 py-2 bg-surf-2 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all outline-none"
                         />
                     </div>
                 </div>
 
-                <div className="flex border-b border-slate-100 dark:border-slate-800">
+                <div className="flex border-b border-line/50">
                     <button 
                         onClick={() => setActiveTab('certificates')}
                         className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'certificates' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
@@ -165,7 +165,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                 {activeTab === 'certificates' ? (
                     <div className="p-0 overflow-x-auto">
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50 dark:bg-slate-800/50">
+                            <thead className="bg-surf-2/50">
                                 <tr>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest">Student</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest">Certificate No.</th>
@@ -182,14 +182,14 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                                     <tr>
                                         <td colSpan={4} className="p-12 text-center">
                                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
-                                                <Trophy size={32} className="text-slate-300" />
+                                                <Trophy size={32} className="text-ink-3 opacity-50" />
                                             </div>
                                             <h4 className="text-lg font-semibold text-slate-700">No completions yet</h4>
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredCompletions.map(cert => (
-                                        <tr key={cert.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <tr key={cert.id} className="hover:bg-surf-2 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="font-semibold text-slate-800 dark:text-white">{cert.profiles?.full_name || 'Unknown Student'}</div>
                                                 <div className="text-xs text-slate-500 mt-0.5">{cert.profiles?.email}</div>
@@ -200,12 +200,12 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                                <span className="text-sm font-medium text-slate-600 dark:text-ink-3 opacity-50">
                                                     {new Date(cert.issued_at).toLocaleDateString()}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button className="text-slate-400 hover:text-indigo-600 p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
+                                                <button className="text-slate-400 hover:text-indigo-600 p-2 bg-surf-1 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
                                                     <Download size={16} />
                                                 </button>
                                             </td>
@@ -219,7 +219,7 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                     <div className="p-0 overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-line/50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <th className="p-4 pl-6">Student Email</th>
                                     <th className="p-4">Method & Amount</th>
                                     <th className="p-4">Sender Number</th>
@@ -231,14 +231,14 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                                 {payments.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="p-12 text-center text-slate-500">
-                                            <CheckCircle2 size={40} className="mx-auto mb-4 text-slate-300 dark:text-slate-700" />
+                                            <CheckCircle2 size={40} className="mx-auto mb-4 text-ink-3 opacity-50 dark:text-slate-700" />
                                             <p className="font-semibold">No pending payments.</p>
                                         </td>
                                     </tr>
                                 ) : (
                                     payments.map(payment => (
                                         <tr key={payment.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <td className="p-4 pl-6 font-semibold text-sm text-slate-700 dark:text-slate-300">
+                                            <td className="p-4 pl-6 font-semibold text-sm text-ink-2">
                                                 {payment.user?.email || 'Unknown User'}
                                             </td>
                                             <td className="p-4">
@@ -246,14 +246,14 @@ export default function CourseDashboard({ course, onBack }: { course: any, onBac
                                                     <span className={`text-[10px] font-bold uppercase tracking-widest ${payment.payment_method === 'bkash' ? 'text-[#E2136E]' : 'text-[#F37021]'}`}>
                                                         {payment.payment_method}
                                                     </span>
-                                                    <span className="font-semibold text-slate-900 dark:text-white">৳{payment.amount}</span>
+                                                    <span className="font-semibold text-ink-1">৳{payment.amount}</span>
                                                 </div>
                                             </td>
-                                            <td className="p-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                            <td className="p-4 text-sm font-medium text-ink-2">
                                                 {payment.sender_number}
                                             </td>
                                             <td className="p-4">
-                                                <span className="font-mono text-sm font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300 uppercase">
+                                                <span className="font-mono text-sm font-bold bg-surf-2 border border-line px-2 py-1 rounded text-ink-2 uppercase">
                                                     {payment.transaction_id}
                                                 </span>
                                             </td>

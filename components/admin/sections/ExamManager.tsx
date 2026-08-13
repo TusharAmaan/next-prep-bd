@@ -230,23 +230,23 @@ export default function ExamManager({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-xl sm:text-3xl font-black text-ink-1 flex items-center gap-3">
             <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
             Exam Management
           </h2>
           <p className="text-slate-500 font-bold mt-1 text-[10px] sm:text-base">Schedule and publish live exams.</p>
         </div>
-        <div className="flex flex-wrap bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
+        <div className="flex flex-wrap bg-surf-2 border border-line p-1 rounded-xl w-full md:w-auto">
           <button 
             onClick={() => setActiveView('exams')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'exams' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'exams' ? 'bg-surf-1 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
           >
             <Calendar className="w-4 h-4" />
             Exams
           </button>
           <button 
             onClick={() => setActiveView('requests')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeView === 'requests' ? 'bg-surf-1 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
           >
             <Clock className="w-4 h-4" />
             Student Requests
@@ -273,7 +273,7 @@ export default function ExamManager({
                 className={`px-5 py-2 rounded-xl text-xs font-bold capitalize tracking-wide transition-all ${
                     activeStatus === status 
                     ? "bg-indigo-600 text-white" 
-                    : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
+                    : "bg-surf-1 text-slate-500 border border-slate-200 dark:border-slate-800"
                 }`}
             >
                 {status}
@@ -287,7 +287,7 @@ export default function ExamManager({
                 className={`px-5 py-2 rounded-xl text-xs font-bold capitalize tracking-wide transition-all ${
                     activeRequestStatus === status 
                     ? "bg-indigo-600 text-white" 
-                    : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
+                    : "bg-surf-1 text-slate-500 border border-slate-200 dark:border-slate-800"
                 }`}
             >
                 {status}
@@ -297,7 +297,7 @@ export default function ExamManager({
       </div>
 
       {/* List */}
-      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+      <div className="bg-surf-1 rounded-[40px] border border-line shadow-xl overflow-hidden">
         {loading ? (
           <div className="p-24 flex flex-col items-center">
             <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
@@ -306,7 +306,7 @@ export default function ExamManager({
         ) : activeView === 'exams' ? (
           exams.length === 0 ? (
             <div className="p-24 text-center">
-              <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <AlertCircle className="w-12 h-12 text-ink-3 opacity-50 mx-auto mb-4" />
               <p className="font-bold text-slate-500">No exams found in this category.</p>
             </div>
           ) : (
@@ -369,7 +369,7 @@ export default function ExamManager({
         ) : (
           requests.length === 0 ? (
             <div className="p-24 text-center">
-              <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <AlertCircle className="w-12 h-12 text-ink-3 opacity-50 mx-auto mb-4" />
               <p className="font-bold text-slate-500">No exam requests found.</p>
             </div>
           ) : (
@@ -430,7 +430,7 @@ export default function ExamManager({
                           </>
                         )}
                         {req.status !== 'pending' && (
-                          <span className="text-[10px] font-bold text-slate-300 italic">Resolved</span>
+                          <span className="text-[10px] font-bold text-ink-3 opacity-50 italic">Resolved</span>
                         )}
                       </td>
                     </tr>
@@ -445,9 +445,9 @@ export default function ExamManager({
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-surf-1 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="p-6 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{editingExam ? 'Edit' : 'Create'} professional exam</h3>
+                    <h3 className="text-xl font-bold text-ink-1">{editingExam ? 'Edit' : 'Create'} professional exam</h3>
                     <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-400 hover:text-rose-500"><X size={20} /></button>
                 </div>
                 
@@ -455,9 +455,9 @@ export default function ExamManager({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-5">
                             <div>
-                                <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Exam title</label>
+                                <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Exam title</label>
                                 <input 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                    className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                     placeholder="e.g. Higher Math 1st Paper Final Model Test"
                                     value={formData.title}
                                     onChange={e => setFormData({...formData, title: e.target.value})}
@@ -465,9 +465,9 @@ export default function ExamManager({
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Type</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Type</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.exam_type}
                                         onChange={e => setFormData({...formData, exam_type: e.target.value})}
                                     >
@@ -478,9 +478,9 @@ export default function ExamManager({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Status</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Status</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.status}
                                         onChange={e => setFormData({...formData, status: e.target.value})}
                                     >
@@ -496,19 +496,19 @@ export default function ExamManager({
                         <div className="space-y-5">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Duration (min)</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Duration (min)</label>
                                     <input 
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.duration_minutes}
                                         onChange={e => setFormData({...formData, duration_minutes: Number(e.target.value)})}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Total marks</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Total marks</label>
                                     <input 
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.total_marks}
                                         onChange={e => setFormData({...formData, total_marks: Number(e.target.value)})}
                                     />
@@ -516,9 +516,9 @@ export default function ExamManager({
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Segment</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Segment</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.segment_id}
                                         onChange={e => setFormData({...formData, segment_id: e.target.value, group_id: "", subject_id: ""})}
                                     >
@@ -527,9 +527,9 @@ export default function ExamManager({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Group</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Group</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.group_id}
                                         onChange={e => setFormData({...formData, group_id: e.target.value, subject_id: ""})}
                                         disabled={!formData.segment_id}
@@ -541,9 +541,9 @@ export default function ExamManager({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Subject</label>
+                                    <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Subject</label>
                                     <select 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-surf-2 border border-line rounded-xl px-4 py-3 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                         value={formData.subject_id}
                                         onChange={e => setFormData({...formData, subject_id: e.target.value})}
                                         disabled={!formData.segment_id}
@@ -587,10 +587,10 @@ export default function ExamManager({
 
                     <div className="pt-4">
                         <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Exam questions</h4>
+                            <h4 className="text-lg font-bold text-ink-1">Exam questions</h4>
                             <span className="text-sm font-medium text-slate-500">{formData.questions?.length || 0} questions added</span>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                        <div className="bg-surf-2/50 p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
                             <p className="text-slate-500 font-medium mb-2 text-sm">Question linking module will be available in the next version.</p>
                             <span className="text-xs font-semibold text-slate-400">Saved exams use JSON format internally</span>
                         </div>
@@ -598,7 +598,7 @@ export default function ExamManager({
                 </div>
 
                 <div className="p-6 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3">
-                    <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-semibold text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all">Cancel</button>
+                    <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-semibold text-sm text-ink-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all">Cancel</button>
                     <button onClick={handleSave} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-sm hover:bg-indigo-700 transition-all active:scale-95">Save changes</button>
                 </div>
             </div>

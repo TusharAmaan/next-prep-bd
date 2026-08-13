@@ -9,6 +9,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        base: { DEFAULT: 'var(--color-base)', 2: 'var(--color-base-2)' },
+        surf: { 1: 'var(--color-surf-1)', 2: 'var(--color-surf-2)', 3: 'var(--color-surf-3)' },
+        line: { DEFAULT: 'var(--color-line)', strong: 'var(--color-line-strong)' },
+        ink: { 1: 'var(--color-ink-1)', 2: 'var(--color-ink-2)', 3: 'var(--color-ink-3)' },
+        bronze: { 400: 'var(--color-bronze-400)', 500: 'var(--color-bronze-500)', 600: 'var(--color-bronze-600)' },
+      },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "var(--font-bangla)", "sans-serif"],
         'bangla': ['var(--font-bangla)', 'serif'],

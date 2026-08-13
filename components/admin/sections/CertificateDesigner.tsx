@@ -365,11 +365,11 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
     <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans">
       
       {/* HEADERBAR */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center shrink-0">
+      <div className="bg-surf-1 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setView('list')}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500"
+            className="p-2 hover:bg-surf-2 rounded-lg text-slate-500"
           >
             <ChevronLeft size={20} />
           </button>
@@ -412,10 +412,10 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
             {designs.map(design => (
               <div 
                 key={design.id} 
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 group hover:border-indigo-500 transition-all cursor-pointer shadow-sm"
+                className="bg-surf-1 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 group hover:border-indigo-500 transition-all cursor-pointer shadow-sm"
                 onClick={() => loadDesign(design)}
               >
-                <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 overflow-hidden border border-slate-100 dark:border-slate-700 relative">
+                <div className="aspect-[4/3] bg-surf-2 border border-line rounded-2xl mb-4 overflow-hidden border border-slate-100 dark:border-slate-700 relative">
                   {design.preview_image ? (
                     <img src={design.preview_image} alt={design.name} className="w-full h-full object-contain" />
                   ) : (
@@ -443,14 +443,14 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
           
           {/* TEMPLATE SIDEBAR */}
           {showTemplates && (
-            <div className="absolute left-20 top-0 bottom-0 w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 shadow-2xl animate-in slide-in-from-left duration-300 overflow-y-auto p-6">
+            <div className="absolute left-20 top-0 bottom-0 w-80 bg-surf-1 border-r border-slate-200 dark:border-slate-800 z-50 shadow-2xl animate-in slide-in-from-left duration-300 overflow-y-auto p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-tight">Templates</h3>
                     <button onClick={() => setShowTemplates(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
                 </div>
                 <div className="space-y-4">
                     {templates.map(t => (
-                        <div key={t.id} onClick={() => applyTemplate(t.json)} className="p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-indigo-500 cursor-pointer group transition-all">
+                        <div key={t.id} onClick={() => applyTemplate(t.json)} className="p-4 border border-line/50 rounded-2xl hover:border-indigo-500 cursor-pointer group transition-all">
                             <h4 className="font-bold text-sm dark:text-white">{t.name}</h4>
                             <p className="text-[10px] text-slate-500 mt-1">{t.description}</p>
                         </div>
@@ -460,9 +460,9 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
           )}
 
           {/* TOOLBAR (LEFT) */}
-          <div className="w-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-6 gap-6 shrink-0 z-10">
+          <div className="w-20 bg-surf-1 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-6 gap-6 shrink-0 z-10">
              <button onClick={() => setShowTemplates(!showTemplates)} className={`p-3 rounded-2xl transition-all ${showTemplates ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`} title="Templates"><Layout size={24}/></button>
-             <div className="w-8 h-px bg-slate-100 dark:bg-slate-800" />
+             <div className="w-8 h-px bg-surf-2 border border-line" />
               <button onClick={addText} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Text"><Type size={24}/></button>
              <button onClick={addRect} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Shape"><Square size={24}/></button>
              <button onClick={addCircle} className="p-3 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl transition-all" title="Add Circle"><CircleIcon size={24}/></button>
@@ -470,14 +470,14 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
                 <ImageIcon size={24}/>
                 <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
              </label>
-             <div className="w-8 h-px bg-slate-100 dark:bg-slate-800" />
+             <div className="w-8 h-px bg-surf-2 border border-line" />
              <div className="flex flex-col gap-2">
                 {placeholders.map(p => (
                     <button key={p.tag} onClick={() => addPlaceholder(p.tag)} className="p-2 text-[8px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-center leading-tight w-12" title={p.label}> {p.label.split(' ')[0]} </button>
                 ))}
              </div>
              <div className="mt-auto">
-               <button onClick={deleteObject} className="p-3 text-slate-300 hover:text-red-600 rounded-2xl transition-all" disabled={!selectedObject} title="Delete Selected">
+               <button onClick={deleteObject} className="p-3 text-ink-3 opacity-50 hover:text-red-600 rounded-2xl transition-all" disabled={!selectedObject} title="Delete Selected">
                  <Trash2 size={24}/>
                </button>
              </div>
@@ -487,14 +487,14 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
           <div className="flex-1 flex flex-col overflow-hidden">
              
              {/* PROPERTIES BAR */}
-             <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center gap-6 shrink-0 overflow-x-auto no-scrollbar">
+             <div className="h-14 bg-surf-1 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center gap-6 shrink-0 overflow-x-auto no-scrollbar">
                 {selectedObject ? (
                   <>
                     {/* Text Properties */}
                     {(selectedObject instanceof IText) && (
                       <div className="flex items-center gap-4">
                         <select 
-                          className="bg-slate-100 dark:bg-slate-800 dark:text-white rounded-lg px-2 py-1 text-xs font-bold outline-none"
+                          className="bg-surf-2 border border-line dark:text-white rounded-lg px-2 py-1 text-xs font-bold outline-none"
                           value={selectedObject.fontFamily}
                           onChange={e => updateSelected({ fontFamily: e.target.value })}
                         >
@@ -502,13 +502,13 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
                         </select>
                         
                         <div className="flex border dark:border-slate-700 rounded-lg overflow-hidden shrink-0">
-                          <button onClick={() => updateSelected({ fontWeight: selectedObject.fontWeight === 'bold' ? 'normal' : 'bold' })} className={`p-2 ${selectedObject.fontWeight === 'bold' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}><Bold size={14}/></button>
-                          <button onClick={() => updateSelected({ fontStyle: selectedObject.fontStyle === 'italic' ? 'normal' : 'italic' })} className={`p-2 ${selectedObject.fontStyle === 'italic' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}><Italic size={14}/></button>
+                          <button onClick={() => updateSelected({ fontWeight: selectedObject.fontWeight === 'bold' ? 'normal' : 'bold' })} className={`p-2 ${selectedObject.fontWeight === 'bold' ? 'bg-indigo-600 text-white' : 'hover:bg-surf-2'}`}><Bold size={14}/></button>
+                          <button onClick={() => updateSelected({ fontStyle: selectedObject.fontStyle === 'italic' ? 'normal' : 'italic' })} className={`p-2 ${selectedObject.fontStyle === 'italic' ? 'bg-indigo-600 text-white' : 'hover:bg-surf-2'}`}><Italic size={14}/></button>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 shrink-0 border-l border-slate-100 dark:border-slate-800 pl-4">
+                    <div className="flex items-center gap-2 shrink-0 border-l border-line/50 pl-4">
                       <Palette size={14} className="text-slate-400" />
                       <div className="flex gap-1">
                         {colors.map(c => (
@@ -517,15 +517,15 @@ export default function CertificateDesigner({ darkMode = false }: { darkMode?: b
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 border-l border-slate-100 dark:border-slate-800 pl-4">
+                    <div className="flex items-center gap-4 border-l border-line/50 pl-4">
                         <div className="flex items-center gap-2">
                            <Sun size={14} className="text-slate-400" />
                            <input type="range" min="0" max="1" step="0.1" value={selectedObject.opacity || 1} onChange={e => updateSelected({ opacity: parseFloat(e.target.value) })} className="w-20 accent-indigo-600" />
                         </div>
                         <div className="flex border dark:border-slate-700 rounded-lg overflow-hidden">
-                           <button onClick={() => alignItem('left')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800"><AlignLeft size={14}/></button>
-                           <button onClick={() => alignItem('center')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800"><AlignCenter size={14}/></button>
-                           <button onClick={() => alignItem('right')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800"><AlignRight size={14}/></button>
+                           <button onClick={() => alignItem('left')} className="p-2 hover:bg-surf-2"><AlignLeft size={14}/></button>
+                           <button onClick={() => alignItem('center')} className="p-2 hover:bg-surf-2"><AlignCenter size={14}/></button>
+                           <button onClick={() => alignItem('right')} className="p-2 hover:bg-surf-2"><AlignRight size={14}/></button>
                         </div>
                     </div>
                   </>

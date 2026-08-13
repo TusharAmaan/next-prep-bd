@@ -89,7 +89,7 @@ export default function NewsletterManager({ darkMode }: { darkMode?: boolean }) 
                     </table>
                     {!loading && filtered.length === 0 && (
                         <div className="py-20 text-center flex flex-col items-center gap-4">
-                           <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 dark:text-slate-600"><Search className="w-8 h-8"/></div>
+                           <div className="w-16 h-16 bg-surf-2 rounded-2xl flex items-center justify-center text-ink-3 opacity-50 dark:text-slate-600"><Search className="w-8 h-8"/></div>
                            <p className="text-slate-400 text-sm font-medium">No subscribers found matching your search.</p>
                         </div>
                     )}

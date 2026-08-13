@@ -66,8 +66,8 @@ export default function PendingManagerPreview() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Pending Approvals</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <h2 className="text-xl font-bold text-ink-1">Pending Approvals</h2>
+          <p className="text-sm text-ink-3 mt-1">
             Review and moderate newly submitted forum posts before they go live.
           </p>
         </div>
@@ -78,17 +78,17 @@ export default function PendingManagerPreview() {
             <input 
               type="text" 
               placeholder="Search posts..." 
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="w-full pl-9 pr-4 py-2 bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
             />
           </div>
-          <button className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors">
+          <button className="p-2 bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors">
             <Filter className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Content section */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="p-8 text-center text-slate-500">
             <div className="animate-spin w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -96,11 +96,11 @@ export default function PendingManagerPreview() {
           </div>
         ) : pendingPosts.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center justify-center">
-            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-4">
+            <div className="w-16 h-16 bg-surf-2 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <CheckCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">All caught up!</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">There are no pending posts requiring your approval right now.</p>
+            <h3 className="text-lg font-semibold text-ink-1 mb-1">All caught up!</h3>
+            <p className="text-sm text-ink-3">There are no pending posts requiring your approval right now.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
@@ -109,8 +109,8 @@ export default function PendingManagerPreview() {
                 
                 {/* Post details */}
                 <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">
+                  <div className="flex items-center gap-3 text-xs font-medium text-ink-3">
+                    <span className="flex items-center gap-1.5 bg-surf-2 border border-line px-2 py-1 rounded-md text-ink-2">
                       <User className="w-3.5 h-3.5" />
                       {post.author?.full_name || 'Unknown User'}
                     </span>
@@ -125,12 +125,12 @@ export default function PendingManagerPreview() {
                     )}
                   </div>
                   
-                  <h4 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                  <h4 className="text-base font-semibold text-ink-1 line-clamp-2 leading-snug">
                     {post.title}
                   </h4>
                   
                   <div 
-                    className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 prose dark:prose-invert max-w-none"
+                    className="text-sm text-ink-2 line-clamp-3 prose dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: post.content }}
                   />
                 </div>

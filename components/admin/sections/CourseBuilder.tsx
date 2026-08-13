@@ -335,7 +335,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                             message: "You have unsaved changes. Are you sure you want to go back?",
                             onConfirm: onBack
                         }) : onBack()}
-                        className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm"
+                        className="p-3 bg-surf-1 border border-line/50 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm"
                     >
                         <ArrowLeft size={20} />
                     </button>
@@ -343,14 +343,14 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                         <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">
                             {course ? 'Edit Course' : 'Create Course'}
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+                        <p className="text-ink-3 text-sm font-medium mt-1">
                             {courseData.title || "Untitled Course Draft"}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 flex shadow-sm">
+                    <div className="bg-surf-1 p-1.5 rounded-2xl border border-line/50 flex shadow-sm">
                         {steps.map((step) => (
                             <button
                                 key={step.id}
@@ -367,7 +367,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
             <div className="w-full">
                 {/* STEP 1: INFO */}
                 {activeStep === 1 && (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-surf-1 rounded-2xl border border-line/50 shadow-sm p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         
                         <div className="space-y-8">
                             <div className="space-y-6">
@@ -377,7 +377,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         type="text"
                                         value={courseData.title}
                                         onChange={e => { setCourseData({ ...courseData, title: e.target.value }); markDirty(); }}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all"
+                                        className="w-full bg-surf-2 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all"
                                         placeholder="Enter course name..."
                                     />
                                 </div>
@@ -387,7 +387,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="block text-[10px] font-semibold text-slate-500 capitalize tracking-wide">Course Description</label>
-                                    <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                                    <div className="flex bg-surf-2 border border-line rounded-lg p-1">
                                         <button 
                                             onClick={() => setDescriptionMode('visual')}
                                             className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${descriptionMode === 'visual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -402,7 +402,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <div className="bg-surf-1 rounded-xl overflow-hidden border border-line shadow-sm">
                                     {descriptionMode === 'visual' ? (
                                         <RichTextEditor 
                                             initialValue={courseData.description}
@@ -413,7 +413,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                             rows={12}
                                             value={courseData.description}
                                             onChange={e => { setCourseData({ ...courseData, description: e.target.value }); markDirty(); }}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none px-5 py-4 text-sm font-mono outline-none resize-y"
+                                            className="w-full bg-surf-2 border-none px-5 py-4 text-sm font-mono outline-none resize-y"
                                             placeholder="<p>What will students learn?</p>"
                                         />
                                     )}
@@ -427,7 +427,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     <div className="relative">
                                         <div 
                                             onClick={() => setLevelDropdownOpen(!levelDropdownOpen)}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none cursor-pointer flex justify-between items-center group transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
+                                            className="w-full bg-surf-2 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none cursor-pointer flex justify-between items-center group transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
                                         >
                                             <span className="text-slate-800 dark:text-white">{courseData.level}</span>
                                             <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${levelDropdownOpen ? 'rotate-180' : ''}`} />
@@ -438,7 +438,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                     className="fixed inset-0 z-40" 
                                                     onClick={() => setLevelDropdownOpen(false)}
                                                 ></div>
-                                                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-[#1E232F] border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-[#1E232F] border border-line/50 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                                                     {['Beginner', 'Intermediate', 'Advanced'].map(level => (
                                                         <div 
                                                             key={level}
@@ -447,7 +447,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                                 setLevelDropdownOpen(false);
                                                                 markDirty();
                                                             }}
-                                                            className={`px-5 py-3.5 text-sm font-semibold cursor-pointer transition-colors ${courseData.level === level ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300'}`}
+                                                            className={`px-5 py-3.5 text-sm font-semibold cursor-pointer transition-colors ${courseData.level === level ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80 text-ink-2'}`}
                                                         >
                                                             {level}
                                                         </div>
@@ -461,7 +461,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     <label className="block text-[10px] font-semibold text-slate-500 capitalize tracking-wide mb-2">Status</label>
                                     <div
                                         onClick={() => setCourseData({ ...courseData, is_published: !courseData.is_published })}
-                                        className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all border-2 ${courseData.is_published ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400'}`}
+                                        className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all border-2 ${courseData.is_published ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-surf-2 border-transparent text-slate-400'}`}
                                     >
                                         {courseData.is_published ? <Rocket size={16} /> : <BookOpen size={16} />}
                                         <span className="text-xs font-semibold capitalize tracking-wide">{courseData.is_published ? 'Published' : 'Draft'}</span>
@@ -472,7 +472,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                             {/* COVER IMAGE */}
                             <div className="space-y-4">
                                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Course Cover Image</label>
-                                <div className="aspect-[3/1] bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-8 group relative overflow-hidden transition-all hover:border-indigo-400 w-full">
+                                <div className="aspect-[3/1] bg-surf-2 rounded-2xl border-2 border-dashed border-line flex flex-col items-center justify-center p-8 group relative overflow-hidden transition-all hover:border-indigo-400 w-full">
                                     {courseData.image_url ? (
                                         <>
                                             <img src={courseData.image_url} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
@@ -480,7 +480,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         </>
                                     ) : (
                                         <>
-                                            <ImageIcon size={48} className="text-slate-300 mb-4 group-hover:scale-110 transition-transform" />
+                                            <ImageIcon size={48} className="text-ink-3 opacity-50 mb-4 group-hover:scale-110 transition-transform" />
                                             <p className="text-xs font-bold text-slate-400">Drag & drop or click to upload</p>
                                         </>
                                     )}
@@ -490,13 +490,13 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     placeholder="Or paste an image URL..."
                                     value={courseData.image_url}
                                     onChange={e => setCourseData({ ...courseData, image_url: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-[10px] font-bold outline-none"
+                                    className="w-full bg-surf-2 border-none rounded-xl px-4 py-3 text-[10px] font-bold outline-none"
                                 />
                             </div>
                         </div>
 
                         {/* SIGNATURE SECTION */}
-                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 mt-8 space-y-4">
+                        <div className="p-6 bg-surf-2/50 rounded-2xl border border-line/50 mt-8 space-y-4">
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
                                     <Trophy size={16} className="text-amber-500" /> Certificate Signature Setup
@@ -511,7 +511,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         type="text"
                                         value={courseData.instructor_signature_text || ""}
                                         onChange={e => { setCourseData({ ...courseData, instructor_signature_text: e.target.value }); markDirty(); }}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
+                                        className="w-full bg-surf-1 border border-line rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
                                         placeholder="e.g. John Doe"
                                     />
                                 </div>
@@ -520,7 +520,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     <select
                                         value={courseData.instructor_signature_font || "Caveat"}
                                         onChange={e => { setCourseData({ ...courseData, instructor_signature_font: e.target.value }); markDirty(); }}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
+                                        className="w-full bg-surf-1 border border-line rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
                                     >
                                         <option value="Caveat">Caveat (Modern Casual)</option>
                                         <option value="Great Vibes">Great Vibes (Elegant Script)</option>
@@ -536,7 +536,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         type="text"
                                         value={courseData.admin_signature_text || "MD Tushar Aman"}
                                         onChange={e => { setCourseData({ ...courseData, admin_signature_text: e.target.value }); markDirty(); }}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
+                                        className="w-full bg-surf-1 border border-line rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
                                         placeholder="e.g. MD Tushar Aman"
                                     />
                                 </div>
@@ -545,7 +545,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     <select
                                         value={courseData.admin_signature_font || "Caveat"}
                                         onChange={e => { setCourseData({ ...courseData, admin_signature_font: e.target.value }); markDirty(); }}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
+                                        className="w-full bg-surf-1 border border-line rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-all"
                                     >
                                         <option value="Caveat">Caveat (Modern Casual)</option>
                                         <option value="Great Vibes">Great Vibes (Elegant Script)</option>
@@ -556,7 +556,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                 {courseData.instructor_signature_text && (
-                                    <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center min-h-[120px]">
+                                    <div className="p-6 bg-surf-1 rounded-xl border border-line flex flex-col items-center justify-center min-h-[120px]">
                                         <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-4">Instructor Preview</p>
                                         <span style={{ fontFamily: `'${courseData.instructor_signature_font}', cursive` }} className="text-4xl text-slate-800 dark:text-white">
                                             {courseData.instructor_signature_text}
@@ -564,7 +564,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                     </div>
                                 )}
                                 {(courseData.admin_signature_text || "MD Tushar Aman") && (
-                                    <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center min-h-[120px]">
+                                    <div className="p-6 bg-surf-1 rounded-xl border border-line flex flex-col items-center justify-center min-h-[120px]">
                                         <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-4">Admin Preview</p>
                                         <span style={{ fontFamily: `'${courseData.admin_signature_font || 'Caveat'}', cursive` }} className="text-4xl text-slate-800 dark:text-white">
                                             {courseData.admin_signature_text || "MD Tushar Aman"}
@@ -606,14 +606,14 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                         <div className="space-y-4 min-h-[300px]">
                             {lessons.length === 0 ? (
                                 <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-12 text-center flex flex-col items-center justify-center">
-                                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-4">
+                                    <div className="w-12 h-12 bg-surf-2 border border-line rounded-full flex items-center justify-center text-slate-400 mb-4">
                                         <BookOpen size={24} />
                                     </div>
                                     <h4 className="text-lg font-bold text-slate-800 dark:text-white">No Modules Yet</h4>
                                     <p className="text-slate-500 text-sm max-w-sm mt-2 mb-6">Create your first module to start organizing your course content.</p>
                                     <button 
                                         onClick={handleAddLesson}
-                                        className="px-6 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                        className="px-6 py-2.5 bg-surf-1 border border-line shadow-sm text-ink-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                                     >
                                         Add First Module
                                     </button>
@@ -627,11 +627,11 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                         onDragOver={(e) => handleDragOver(e, lesson.id)}
                                         onDragEnd={handleDragEnd}
                                         onDrop={(e) => handleDrop(e, lesson.id)}
-                                        className={`bg-white dark:bg-slate-900 rounded-xl border ${dragOverLessonId === lesson.id ? 'border-indigo-500 shadow-lg scale-[1.01]' : 'border-slate-200 dark:border-slate-800'} shadow-sm overflow-hidden group/lesson transition-all duration-200 ${draggedLessonId === lesson.id ? 'opacity-50' : 'opacity-100'}`}
+                                        className={`bg-surf-1 rounded-xl border ${dragOverLessonId === lesson.id ? 'border-indigo-500 shadow-lg scale-[1.01]' : 'border-slate-200 dark:border-slate-800'} shadow-sm overflow-hidden group/lesson transition-all duration-200 ${draggedLessonId === lesson.id ? 'opacity-50' : 'opacity-100'}`}
                                     >
-                                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 cursor-move" onDragOver={(e) => e.preventDefault()}>
+                                        <div className="p-4 bg-surf-2/50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 cursor-move" onDragOver={(e) => e.preventDefault()}>
                                             <div className="flex items-center gap-3 flex-1 mr-4">
-                                                <div className="w-6 h-6 shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded flex items-center justify-center font-bold text-xs">
+                                                <div className="w-6 h-6 shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-ink-3 opacity-50 rounded flex items-center justify-center font-bold text-xs">
                                                     {lIndex + 1}
                                                 </div>
                                                 <input 
@@ -642,7 +642,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                 />
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <div className="flex items-center gap-2 mr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5">
+                                                <div className="flex items-center gap-2 mr-4 bg-surf-1 border border-line rounded-lg px-3 py-1.5">
                                                     <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Passing Score:</span>
                                                     <input 
                                                         type="number" 
@@ -670,7 +670,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                     ) : (
                                                         <div 
                                                             onClick={() => setEditingContentId(content.id)}
-                                                            className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg group/content hover:border-indigo-300 dark:hover:border-indigo-600 transition-all shadow-sm cursor-pointer mb-2"
+                                                            className="flex items-center justify-between p-3 bg-surf-1 border border-slate-200 dark:border-slate-800 rounded-lg group/content hover:border-indigo-300 dark:hover:border-indigo-600 transition-all shadow-sm cursor-pointer mb-2"
                                                         >
                                                             <div className="flex items-center gap-3 w-full">
                                                                 <div className="text-slate-400">
@@ -678,7 +678,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                                     {content.content_type === 'article' && <BookOpen size={14} />}
                                                                     {content.content_type === 'quiz' && <CheckCircle2 size={14} />}
                                                                 </div>
-                                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1">{content.title || 'Untitled Content'}</span>
+                                                                <span className="text-sm font-medium text-ink-2 flex-1">{content.title || 'Untitled Content'}</span>
                                                                 
                                                                 {/* Summary pills */}
                                                                 <div className="flex gap-2">
@@ -690,7 +690,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                                             <div className="flex items-center gap-2 opacity-0 group-hover/content:opacity-100 transition-opacity">
                                                                 <button 
                                                                     onClick={(e) => { e.stopPropagation(); handleDeleteContent(content.id); }} 
-                                                                    className="p-1.5 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 rounded"
+                                                                    className="p-1.5 text-slate-400 hover:text-red-500 bg-surf-2 rounded"
                                                                 >
                                                                     <X size={14} />
                                                                 </button>
@@ -712,7 +712,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                         </div>
 
                         <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 mt-8">
-                            <button onClick={() => setActiveStep(1)} className="px-5 py-2.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Back</button>
+                            <button onClick={() => setActiveStep(1)} className="px-5 py-2.5 bg-surf-1 text-ink-2 border border-line rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Back</button>
                             <button onClick={() => setActiveStep(3)} className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-sm">Next Step <ChevronRight size={16} /></button>
                         </div>
                     </div>
@@ -720,7 +720,7 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
 
                 {/* STEP 3: PRICING */}
                 {activeStep === 3 && (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12 space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-surf-1 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12 space-y-12 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
                                 { id: 'free', label: 'Free Access', icon: Globe, desc: 'Publicly accessible for all logged-in users.' },
@@ -730,42 +730,42 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                                 <div
                                     key={item.id}
                                     onClick={() => setCourseData({ ...courseData, price_type: item.id })}
-                                    className={`p-8 rounded-2xl border transition-all cursor-pointer ${courseData.price_type === item.id ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                                    className={`p-8 rounded-2xl border transition-all cursor-pointer ${courseData.price_type === item.id ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700 shadow-sm' : 'bg-surf-1 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-surf-2'}`}
                                 >
                                     <div className="flex items-center justify-between mb-6">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${courseData.price_type === item.id ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${courseData.price_type === item.id ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-surf-2 border border-line text-slate-500'}`}>
                                             <item.icon size={24} />
                                         </div>
                                         {courseData.price_type === item.id && <CheckCircle2 size={24} className="text-indigo-600 dark:text-indigo-400" />}
                                     </div>
-                                    <h4 className="font-semibold text-lg text-slate-900 dark:text-white mb-2">{item.label}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                                    <h4 className="font-semibold text-lg text-ink-1 mb-2">{item.label}</h4>
+                                    <p className="text-sm text-ink-3 leading-relaxed">{item.desc}</p>
                                 </div>
                             ))}
                         </div>
 
                         {(courseData.price_type === 'one_time' || courseData.price_type === 'subscription') && (
-                            <div className="max-w-3xl mx-auto pt-8 border-t border-slate-100 dark:border-slate-800 space-y-8 animate-in fade-in">
+                            <div className="max-w-3xl mx-auto pt-8 border-t border-line/50 space-y-8 animate-in fade-in">
                                 <div className="text-center mb-10">
                                     <h3 className="text-xl font-bold text-slate-800 dark:text-white">Set your course pricing</h3>
                                     <p className="text-sm text-slate-500 mt-2">Enter the regular price and an optional discounted price to attract more students.</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-3">
-                                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Regular Price</label>
+                                        <label className="block text-sm font-semibold text-ink-2">Regular Price</label>
                                         <div className="relative group">
                                             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl font-medium text-slate-400">৳</span>
                                             <input
                                                 type="number"
                                                 value={courseData.price}
                                                 onChange={e => setCourseData({ ...courseData, price: e.target.value })}
-                                                className="w-full pl-12 pr-6 py-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-2xl text-2xl font-semibold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/20 focus:border-indigo-500 transition-all shadow-sm"
+                                                className="w-full pl-12 pr-6 py-5 bg-surf-1 border border-line hover:border-line-strong rounded-2xl text-2xl font-semibold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/20 focus:border-indigo-500 transition-all shadow-sm"
                                                 placeholder="0.00"
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Discounted Price <span className="font-normal text-slate-400">(Optional)</span></label>
+                                        <label className="block text-sm font-semibold text-ink-2">Discounted Price <span className="font-normal text-slate-400">(Optional)</span></label>
                                         <div className="relative group">
                                             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl font-medium text-emerald-500/50">৳</span>
                                             <input
@@ -781,8 +781,8 @@ export default function CourseBuilder({ course, onBack }: CourseBuilderProps) {
                             </div>
                         )}
 
-                        <div className="pt-10 mt-10 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between gap-4">
-                            <button onClick={() => setActiveStep(2)} className="px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-base hover:bg-slate-50 transition-all shadow-sm">Previous</button>
+                        <div className="pt-10 mt-10 border-t border-line/50 flex flex-col md:flex-row justify-between gap-4">
+                            <button onClick={() => setActiveStep(2)} className="px-8 py-4 bg-surf-1 text-slate-600 border border-line rounded-xl font-semibold text-base hover:bg-slate-50 transition-all shadow-sm">Previous</button>
                             <button onClick={() => handleSaveInfo(4)} className="flex-1 md:flex-none px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"><CheckCircle2 size={20} /> Save & Launch Course</button>
                         </div>
                     </div>

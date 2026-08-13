@@ -83,7 +83,7 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
       {/* Header with Quick Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-xl md:text-3xl font-bold text-ink-1 flex items-center gap-3">
             <Calendar className="w-8 h-8 text-amber-500" />
             Daily engagement console
           </h2>
@@ -99,24 +99,24 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-surf-1 p-6 rounded-2xl border border-line shadow-sm">
           <p className="text-slate-500 font-semibold text-sm mb-1">Upcoming</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="text-3xl font-bold text-ink-1">
             {scheduled.filter(s => new Date(s.scheduled_date) >= new Date()).length}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-surf-1 p-6 rounded-2xl border border-line shadow-sm">
           <p className="text-slate-500 font-semibold text-sm mb-1">Streak</p>
           <p className="text-3xl font-bold text-amber-500">14 Days</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-surf-1 p-6 rounded-2xl border border-line shadow-sm">
           <p className="text-slate-500 font-semibold text-sm mb-1">Total served</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">{scheduled.length}</p>
+          <p className="text-3xl font-bold text-ink-1">{scheduled.length}</p>
         </div>
       </div>
 
       {/* Main Schedule List */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="bg-surf-1 rounded-2xl border border-line shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-24 flex flex-col items-center">
             <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
@@ -152,11 +152,11 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
                         </div>
                       </td>
                       <td className="px-10 py-8 max-w-xl">
-                        <p className="font-medium text-slate-700 dark:text-slate-300 line-clamp-2">
+                        <p className="font-medium text-ink-2 line-clamp-2">
                           {item.question?.question_text || "Question description missing / deleted."}
                         </p>
                         <div className="flex gap-2 mt-2">
-                          <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-0.5 rounded text-[10px] font-semibold capitalize tracking-wide">
+                          <span className="bg-surf-2 border border-line text-slate-600 px-2 py-0.5 rounded text-[10px] font-semibold capitalize tracking-wide">
                             {item.question?.topic_tag || 'General'}
                           </span>
                         </div>
@@ -183,31 +183,31 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
       {/* Scheduler Dialog */}
       {isSearchOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-xl animate-in zoom-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden border border-white/20">
+          <div className="bg-surf-1 w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden border border-white/20">
             <div className="p-8">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Schedule QotD</h3>
-                <button onClick={() => setIsSearchOpen(false)} className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 transition-all">
+                <h3 className="text-xl font-bold text-ink-1">Schedule QotD</h3>
+                <button onClick={() => setIsSearchOpen(false)} className="w-10 h-10 bg-surf-2 border border-line rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 transition-all">
                   <X size={20} />
                 </button>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Target date</label>
+                  <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Target date</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none" size={20} />
                     <input 
                       type="date" 
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 font-medium text-slate-800 dark:text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+                      className="w-full bg-surf-2 border border-line rounded-xl py-3 pl-12 pr-4 font-medium text-slate-800 dark:text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">Find MCQ in bank</label>
+                  <label className="text-sm font-semibold text-ink-2 mb-1.5 block">Find MCQ in bank</label>
                   <div className="flex gap-3">
                     <div className="relative flex-1">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -217,7 +217,7 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                        className="w-full bg-surf-2 border border-line rounded-xl py-3 pl-12 pr-4 font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                       />
                     </div>
                     <button 
@@ -235,12 +235,12 @@ export default function QotDManager({ darkMode = false }: { darkMode?: boolean }
                     <button 
                       key={q.id}
                       onClick={() => scheduleQuestion(q.id)}
-                      className="w-full text-left p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all group"
+                      className="w-full text-left p-4 bg-surf-2/50 rounded-xl border border-transparent hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all group"
                     >
                       <p className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-amber-700 dark:group-hover:text-amber-400 mb-1.5">
                         {q.question_text}
                       </p>
-                      <span className="text-[10px] font-semibold text-slate-500 capitalize tracking-wide bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                      <span className="text-[10px] font-semibold text-slate-500 capitalize tracking-wide bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-line">
                         {q.topic_tag || 'General'}
                       </span>
                     </button>

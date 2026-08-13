@@ -1,158 +1,10 @@
-"use client";
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import {
-  Trash2, Tag, Plus, Filter, RefreshCw, X,
-  FileText, Calendar, ChevronLeft, ChevronRight, Loader2, ExternalLink,
-  BookOpen, Briefcase, Bell, HelpCircle, Newspaper
-} from "lucide-react";
+const fs = require('fs');
+const path = require('path');
 
-export default function CategoryManager({ 
-  categories = [], 
-  search, setSearch, 
-  fetchCategories,
-  darkMode = false
-}: any) {
-  
-  // --- 1. STATE ---
-  const [activeFilter, setActiveFilter] = useState("all");
-  
-  // Creation / Deletion
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatType, setNewCatType] = useState("resource"); // Changed default to 'resource' (most common)
-  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+const filePath = path.join(__dirname, 'components', 'admin', 'sections', 'CategoryManager.tsx');
+let content = fs.readFileSync(filePath, 'utf8');
 
-  // Counts & Real-time Data
-  const [localCounts, setLocalCounts] = useState<Record<string, number>>({});
-  const [loadingCounts, setLoadingCounts] = useState(false);
-
-  // Viewing Posts (The Popup)
-  const [viewingCategory, setViewingCategory] = useState<any | null>(null);
-  const [linkedPosts, setLinkedPosts] = useState<any[]>([]);
-  const [postsLoading, setPostsLoading] = useState(false);
-  const [postPage, setPostPage] = useState(0);
-  const [totalLinked, setTotalLinked] = useState(0);
-  const POSTS_PER_PAGE = 5;
-
-  // --- HELPER: GET TABLE NAME ---
-  const getTableForType = (type: string) => {
-      const t = (type || 'general').toLowerCase();
-      if (t === 'ebook') return 'ebooks';
-      if (t === 'course') return 'courses';
-      if (t === 'news') return 'news';
-      return 'resources'; // Default for blog, question, pdf, general, resource
-  };
-
-  // --- 2. FETCH COUNTS ---
-  const fetchCounts = useCallback(async () => {
-    if (categories.length === 0) return;
-    setLoadingCounts(true);
-    const newCounts: Record<string, number> = {};
-
-    await Promise.all(categories.map(async (cat: any) => {
-        const table = getTableForType(cat.type);
-        
-        const { count } = await supabase
-            .from(table)
-            .select('*', { count: 'exact', head: true })
-            .eq('category', cat.name); 
-        
-        newCounts[cat.id] = count || 0;
-    }));
-
-    setLocalCounts(newCounts);
-    setLoadingCounts(false);
-  }, [categories]);
-
-  useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
-
-
-  // --- 3. FETCH LINKED POSTS ---
-  const fetchLinkedPosts = async (category: any, page: number) => {
-    setPostsLoading(true);
-    const start = page * POSTS_PER_PAGE;
-    const end = start + POSTS_PER_PAGE - 1;
-    const table = getTableForType(category.type);
-
-    const { data, count, error } = await supabase
-        .from(table)
-        .select('*', { count: 'exact' })
-        .eq('category', category.name)
-        .range(start, end)
-        .order('created_at', { ascending: false });
-
-    if (!error) {
-        setLinkedPosts(data || []);
-        setTotalLinked(count || 0);
-    }
-    setPostsLoading(false);
-  };
-
-  const openCategoryDetails = (cat: any) => {
-    setViewingCategory(cat);
-    setPostPage(0);
-    fetchLinkedPosts(cat, 0);
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 0) return;
-    setPostPage(newPage);
-    if (viewingCategory) fetchLinkedPosts(viewingCategory, newPage);
-  };
-
-
-  // --- 4. ACTIONS (Create/Delete) ---
-  const handleDelete = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation(); 
-    if (!confirm("Delete this category? Items linked to it might lose their tag.")) return;
-    setIsDeleting(id);
-    const { error } = await supabase.from('categories').delete().eq('id', id);
-    setIsDeleting(null);
-    if (!error) {
-        fetchCategories();
-    }
-  };
-
-  const handleAdd = async () => {
-    if (!newCatName.trim()) return alert("Name required");
-    
-    // Ensure we are saving the correct type string
-    // This fixes the issue where categories might get saved with a generic type 
-    // and then filter out of specific dropdowns.
-    const { error } = await supabase
-      .from('categories')
-      .insert([{ name: newCatName.trim(), type: newCatType }]);
-
-    if (!error) {
-        setNewCatName("");
-        setIsCreateModalOpen(false);
-        fetchCategories();
-    } else {
-        alert(error.message);
-    }
-  };
-
-  // Filtering Logic
-  const filteredList = categories.filter((c: any) => {
-      const categoryType = (c.type || 'general').toLowerCase().trim();
-      const currentFilter = activeFilter.toLowerCase().trim();
-      const categoryName = (c.name || '').toLowerCase();
-      const searchTerm = (search || '').toLowerCase();
-      
-      // Match type exactly unless filter is 'all'
-      // Note: 'general' often overlaps with 'resource', so check your DB schema
-      const matchesType = currentFilter === 'all' || categoryType === currentFilter;
-      const matchesSearch = categoryName.includes(searchTerm);
-      return matchesType && matchesSearch;
-  });
-
-  // Updated Tabs list to match your likely DB schema for types
-  const tabs = ['all', 'blog', 'pdf', 'video', 'question', 'news', 'ebook', 'course'];
-
-      return (
+const newReturn = `    return (
         <section className="section space-y-4 animate-in fade-in duration-300">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
@@ -161,7 +13,7 @@ export default function CategoryManager({
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button onClick={() => { fetchCategories(); fetchCounts(); }} className="icon-btn flex items-center justify-center w-9 h-9 rounded-lg border border-line text-ink-3 hover:text-ink-1 hover:bg-surf-2 transition-colors" title="Refresh Data">
-                        <RefreshCw className={`w-[14px] h-[14px] ${loadingCounts ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={\`w-[14px] h-[14px] \${loadingCounts ? 'animate-spin' : ''}\`} />
                     </button>
                     <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-medium transition-colors">
                         <Plus className="w-[14px] h-[14px]" /> New category
@@ -174,7 +26,7 @@ export default function CategoryManager({
                     <button 
                         key={t}
                         onClick={() => setActiveFilter(t)}
-                        className={`px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors ${activeFilter === t ? 'bg-surf-2 border-line-strong text-ink-1' : 'bg-surf-1 border-line text-ink-2 hover:bg-surf-2'}`}
+                        className={\`px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors \${activeFilter === t ? 'bg-surf-2 border-line-strong text-ink-1' : 'bg-surf-1 border-line text-ink-2 hover:bg-surf-2'}\`}
                     >
                         {t === 'resource' ? 'Materials' : (t === 'blog' ? 'Blogs' : (t === 'pdf' ? 'PDFs' : (t === 'video' ? 'Videos' : (t === 'question' ? 'Questions' : t))))}
                     </button>
@@ -205,7 +57,7 @@ export default function CategoryManager({
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="w-8 h-8 rounded-lg bg-surf-2 flex items-center justify-center shrink-0">
-                                            <Icon className={`w-[14px] h-[14px] ${iconColor}`} />
+                                            <Icon className={\`w-[14px] h-[14px] \${iconColor}\`} />
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-[12.5px] font-medium truncate text-ink-1" title={cat.name}>{cat.name}</p>
@@ -229,6 +81,7 @@ export default function CategoryManager({
                 </div>
             )}
 
+            {/* Modals remain structurally similar, just updated classes */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-base/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-surf-1 border border-line rounded-[1.5rem] shadow-2xl w-full max-w-sm overflow-hidden">
@@ -300,11 +153,11 @@ export default function CategoryManager({
                                 linkedPosts.map((post: any) => (
                                     <div key={post.id} className="p-4 rounded-xl border border-line bg-surf-1 hover:bg-surf-2 transition-colors flex justify-between items-start gap-4">
                                         <div>
-                                            <a href={`/${getTableForType(viewingCategory.type)}/${post.slug || post.id}`} target="_blank" rel="noreferrer" className="font-bold text-[14px] text-indigo-400 hover:underline">{post.title}</a>
+                                            <a href={\`/\${getTableForType(viewingCategory.type)}/\${post.slug || post.id}\`} target="_blank" rel="noreferrer" className="font-bold text-[14px] text-indigo-400 hover:underline">{post.title}</a>
                                             <p className="text-[11px] text-ink-3 mt-1.5 line-clamp-1">{post.excerpt || post.description || "No description available."}</p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${post.status === 'published' || post.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{post.status}</span>
+                                            <span className={\`text-[10px] font-bold px-2 py-0.5 rounded \${post.status === 'published' || post.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}\`}>{post.status}</span>
                                             <p className="text-[10px] text-ink-3 mt-1">{new Date(post.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
@@ -326,6 +179,20 @@ export default function CategoryManager({
             )}
         </section>
     );
+`;
 
+const returnIndex = content.indexOf('return (');
+if (returnIndex !== -1) {
+    const endFunctionIndex = content.lastIndexOf('}');
+    let newContent = content.substring(0, returnIndex) + newReturn + '\n}\n\n' + content.substring(endFunctionIndex + 1);
+    
+    // add missing icons
+    if (!newContent.includes('HelpCircle')) {
+        newContent = newContent.replace('BookOpen, Briefcase, Bell', 'BookOpen, Briefcase, Bell, HelpCircle, Newspaper');
+    }
+
+    fs.writeFileSync(filePath, newContent);
+    console.log("Updated CategoryManager.tsx layout!");
+} else {
+    console.log("Could not find return statement in CategoryManager.tsx");
 }
-

@@ -270,215 +270,198 @@ export default function AdminDashboard() {
     ];
 
     return (
-        <div className={`flex min-h-screen transition-colors duration-500 font-sans ${isDark ? 'bg-[#0a0c14]' : 'bg-[#f8fafc]'}`}>
+        <div className="bg-base text-ink-1 font-sans text-[13px] antialiased flex h-screen overflow-hidden">
             
-            {/* --- AURORA SIDEBAR --- */}
-            <div 
-              className={`fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-              onClick={() => setIsSidebarOpen(false)}
-            />
-
-            <aside className={`fixed top-0 bottom-0 left-0 ${isDark ? 'bg-[#121421] border-slate-800' : 'bg-white border-slate-200'} z-[70] transition-all duration-300 flex flex-col ${isSidebarCollapsed ? 'w-20' : 'w-[280px]'} ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} shadow-2xl lg:shadow-none`}>
-                
-                {/* Logo Section with Aurora Glow */}
-                <div className="h-24 flex items-center px-8 relative overflow-hidden shrink-0">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600/10 via-purple-600/5 to-transparent blur-2xl"></div>
+            <aside className={`flex flex-col shrink-0 ${isSidebarCollapsed ? 'w-[72px]' : 'w-[248px]'} bg-surf-1 border-r border-line transition-all duration-300 ease-out z-[70] ${isSidebarOpen ? 'fixed inset-y-0 left-0 translate-x-0' : 'fixed inset-y-0 -translate-x-full lg:static lg:translate-x-0'}`}>
+                <div className="h-16 flex items-center gap-3 px-5 border-b border-line shrink-0 relative">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-display font-bold text-[13px] shrink-0">N</div>
                     {!isSidebarCollapsed && (
-                      <div className="flex items-center gap-4 relative z-10 transition-all duration-300">
-                         <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30 transform rotate-3">N</div>
-                         <div>
-                            <h2 className={`text-xl font-black tracking-tighter leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>NextPrep<span className="text-indigo-600">BD</span></h2>
-                            <p className="text-[10px] font-bold text-slate-400 tracking-wider mt-1">Admin Console</p>
-                         </div>
-                      </div>
+                        <div className="overflow-hidden">
+                            <p className="font-display font-bold text-[14px] leading-none tracking-tight whitespace-nowrap">NextPrepBD</p>
+                            <p className="text-[10px] text-ink-3 tracking-wider mt-1 whitespace-nowrap">ADMIN CONSOLE</p>
+                        </div>
                     )}
-                    {isSidebarCollapsed && <div className="mx-auto w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30">N</div>}
-                    
                     {/* Mobile Close Button */}
-                    <button 
-                      onClick={() => setIsSidebarOpen(false)}
-                      className="lg:hidden absolute top-6 right-6 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 transition-all"
-                    >
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden absolute top-4 right-4 p-2 rounded-xl text-ink-2 hover:bg-surf-2 transition-all">
                         <X className="w-5 h-5"/>
                     </button>
                 </div>
 
-                {/* Nav Section */}
-                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-8 custom-scrollbar">
+                <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 custom-scrollbar">
                     {navGroups.map((group, gIdx) => (
-                      <div key={gIdx} className="space-y-2">
-                        {!isSidebarCollapsed && (
-                          <p className={`px-4 text-[10px] font-black tracking-wider transition-colors ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {group.label}
-                          </p>
-                        )}
-                        <div className="space-y-1">
-                          {group.items.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = activeTab === item.id;
-                            
-                            return (
-                              <button 
-                                key={item.id}
-                                onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
-                                className={`w-full group flex items-center gap-3 px-4 py-3 rounded-2xl transition-all relative ${
-                                  isActive 
-                                  ? (isDark ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold" : "bg-indigo-600 text-white shadow-lg shadow-indigo-300 font-bold") 
-                                  : (isDark ? "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")
-                                }`}
-                              >
-                                  <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
-                                  {!isSidebarCollapsed && <span className="text-sm tracking-tight">{item.label}</span>}
-                                  
-                                  {item.badge ? (
-                                    <span className={`absolute right-3 top-1/2 -translate-y-1/2 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 ${isDark ? 'border-[#121421]' : 'border-white'} shadow-sm`}>
-                                      {item.badge}
-                                    </span>
-                                  ) : null}
-                                  
-                                  {/* Tooltip for collapsed mode */}
-                                  {isSidebarCollapsed && (
-                                    <div className="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-[-10px] group-hover:translate-x-0 whitespace-nowrap z-[100] shadow-xl">
-                                      {item.label}
-                                    </div>
-                                  )}
-                              </button>
-                            );
-                          })}
+                        <div key={gIdx}>
+                            {!isSidebarCollapsed && <div className="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-ink-3 uppercase">{group.label}</div>}
+                            <div className="space-y-0.5">
+                                {group.items.map(item => {
+                                    const Icon = item.icon;
+                                    const isActive = activeTab === item.id;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                                            className={`w-full group flex items-center gap-3 px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors relative ${isActive ? 'bg-surf-2 text-ink-1' : 'text-ink-2 hover:bg-surf-2 hover:text-ink-1'}`}
+                                            title={isSidebarCollapsed ? item.label : ""}
+                                        >
+                                            {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-indigo-500 rounded-r-full"></div>}
+                                            <Icon className={`w-[16px] h-[16px] shrink-0 ${isActive ? 'text-indigo-400' : 'text-ink-3 group-hover:text-ink-2'}`} />
+                                            {!isSidebarCollapsed && <span>{item.label}</span>}
+                                            {!isSidebarCollapsed && (item.badge ?? 0) > 0 && <span className="ml-auto bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono px-1.5 py-0.5 rounded">{item.badge}</span>}
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
-                      </div>
                     ))}
                 </nav>
 
-                {/* Footer Section */}
-                <div className={`p-6 mt-auto shrink-0 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                   <button 
-                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                     className={`w-full h-12 rounded-2xl flex items-center justify-center transition-all ${isDark ? 'bg-slate-800/50 text-slate-500 hover:text-indigo-400 hover:bg-slate-800' : 'bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
-                   >
-                     {isSidebarCollapsed ? <Menu className="w-5 h-5"/> : <div className="text-[10px] font-black tracking-wider flex items-center gap-3">Collapse menu <ChevronRight className="w-4 h-4 rotate-180"/></div>}
-                   </button>
+                <div className="border-t border-line p-3 shrink-0">
+                    <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-ink-2 hover:bg-surf-2 hover:text-ink-1 transition-colors justify-center lg:justify-start">
+                        <Menu className="w-[18px] h-[18px] shrink-0" />
+                        {!isSidebarCollapsed && <span className="whitespace-nowrap text-[12.5px] font-medium">Collapse menu</span>}
+                    </button>
                 </div>
             </aside>
 
             {/* --- MAIN STACK --- */}
-            <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'} w-full relative`}>
+            <div className="flex-1 flex flex-col min-w-0 bg-base">
                 
                 {/* Header */}
-                <AdminHeader 
-                    user={currentUser} 
-                    activeTab={activeTab} 
-                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                    notifications={notifications}
-                />
+                <header className="h-16 shrink-0 border-b border-line flex items-center justify-between px-6 bg-surf-1/60 backdrop-blur z-[60]">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-2"><Menu className="w-[18px] h-[18px]"/></button>
+                        <div className="min-w-0">
+                            <h1 className="font-display font-bold text-[16px] leading-none tracking-tight truncate capitalize">{activeTab.replace('_', ' ')}</h1>
+                            <p className="text-[11.5px] text-ink-3 mt-1 truncate">NextPrep Command Center</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="hidden md:flex items-center gap-2 bg-surf-2 border border-line rounded-lg px-3 h-9 w-64 focus-within:border-indigo-600">
+                            <Search className="w-[15px] h-[15px] text-ink-3" />
+                            <input type="text" placeholder="Search console..." className="bg-transparent outline-none text-[12.5px] w-full placeholder:text-ink-3" />
+                        </div>
+                        <button className="icon-btn p-2 rounded-lg hover:bg-surf-2 text-ink-2 relative" aria-label="Notifications">
+                            <Bell className="w-[18px] h-[18px]" />
+                            {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500"></span>}
+                        </button>
+                        <a href="https://nextprepbd.com/" target="_blank" rel="noreferrer" className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg border border-line text-ink-2 hover:text-ink-1 hover:border-line-strong text-[12px] font-medium transition-colors">
+                            <Monitor className="w-[13px] h-[13px]" /> View site
+                        </a>
+                        <div className="w-8 h-8 rounded-full bg-bronze-500 flex items-center justify-center text-[12px] font-bold text-base ml-1">{currentUser?.full_name?.charAt(0) || 'C'}</div>
+                    </div>
+                </header>
 
-                <div className="flex-1 p-4 sm:p-6 w-full">
+                <main className="flex-1 overflow-y-auto px-6 py-5" id="mainContent">
                     
                     {activeTab === 'overview' && (
-                        <div className="space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                             
-                             {/* Aurora Welcome Hero */}
-                             <div className="relative overflow-hidden rounded-[2.5rem] p-8 sm:p-12 bg-indigo-600 text-white shadow-2xl shadow-indigo-500/20">
-                                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
-                                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-600/30 rounded-full blur-[80px] -ml-24 -mb-24"></div>
-                                
-                                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                                    <div className="text-center md:text-left">
-                                        <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">Welcome back, {currentUser?.full_name?.split(' ')[0] || 'Admin'}!</h1>
-                                        <p className="text-indigo-100 text-sm sm:text-lg font-medium max-w-lg leading-relaxed opacity-90">Your command center is ready. You have <span className="font-black text-white underline underline-offset-4 decoration-rose-400">{stats.pendingCount} items</span> awaiting review today.</p>
+                        <section className="section space-y-5 animate-in fade-in duration-500">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="font-display font-bold text-[20px] text-ink-1">Welcome back, {currentUser?.full_name?.split(' ')[0] || 'Admin'}!</h2>
+                                    <p className="text-[12.5px] text-ink-3 mt-1">Here's what's happening on your platform today.</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={fetchDashboardData} className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-line text-ink-2 hover:text-ink-1 hover:border-line-strong text-[12px] font-medium transition-colors">
+                                        <RefreshCw className="w-[14px] h-[14px]" /> Sync data
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="bg-surf-1 border border-line rounded-xl p-4 flex flex-col justify-between">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                                            <Users className="w-[15px] h-[15px] text-indigo-400" />
+                                        </div>
+                                        <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">+{stats.users.trend}%</span>
                                     </div>
-                                    <div className="flex flex-wrap justify-center gap-4">
-                                        <button onClick={() => setActiveTab('pending')} className="px-6 py-3 bg-white text-indigo-700 rounded-2xl text-xs font-black tracking-wide shadow-xl hover:scale-105 transition-all active:scale-95">Review pending</button>
-                                        <button onClick={fetchDashboardData} className="px-6 py-3 bg-indigo-500/30 backdrop-blur-md text-white border border-white/20 rounded-2xl text-xs font-black tracking-wide hover:bg-indigo-500/50 transition-all flex items-center gap-2">
-                                            <RefreshCw className="w-4 h-4"/> Sync data
-                                        </button>
-                                    </div>
-                                </div>
-                             </div>
-
-                              {/* Stats Grid - High Density */}
-                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                                <div className={`p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border transition-all hover:shadow-2xl hover:-translate-y-1 ${isDark ? 'bg-[#1a1d2d] border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
-                                   <div className="flex items-center justify-between mb-3 sm:mb-4">
-                                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-500/10 text-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><Users className="w-5 h-5 sm:w-6 sm:h-6"/></div>
-                                      <span className="text-[8px] sm:text-[10px] font-black text-green-500 bg-green-500/10 px-2 py-1 rounded-lg">+{stats.users.trend}</span>
-                                   </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Students</p>
-                                   <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.users.total.toLocaleString()}</h4>
-                                </div>
-
-                                <div className={`p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border transition-all hover:shadow-2xl hover:-translate-y-1 ${isDark ? 'bg-[#1a1d2d] border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
-                                   <div className="flex items-center justify-between mb-3 sm:mb-4">
-                                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/10 text-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><DollarSign className="w-5 h-5 sm:w-6 sm:h-6"/></div>
-                                      <span className="text-[8px] sm:text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">{stats.donations.count}</span>
-                                   </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Donations</p>
-                                   <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>৳{stats.donations.total.toLocaleString()}</h4>
-                                </div>
-
-                                <div className={`p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border transition-all hover:shadow-2xl hover:-translate-y-1 ${isDark ? 'bg-[#1a1d2d] border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
-                                   <div className="flex items-center justify-between mb-3 sm:mb-4">
-                                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/10 text-blue-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><FileStack className="w-5 h-5 sm:w-6 sm:h-6"/></div>
-                                      <span className="text-[8px] sm:text-[10px] font-black text-blue-400 bg-blue-400/10 px-2 py-1 rounded-lg">ACT</span>
-                                   </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Resources</p>
-                                   <h4 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.materials.total}</h4>
-                                </div>
-
-                                <div className={`p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border transition-all hover:shadow-2xl hover:-translate-y-1 ${isDark ? 'bg-[#1a1d2d] border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
-                                   <div className="flex items-center justify-between mb-3 sm:mb-4">
-                                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-500/10 text-rose-500 rounded-xl sm:rounded-2xl flex items-center justify-center"><AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6"/></div>
-                                      <span className={`text-[8px] sm:text-[10px] font-black px-2 py-1 rounded-lg ${stats.pendingCount > 0 ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>REQ</span>
-                                   </div>
-                                   <p className={`text-[9px] sm:text-[11px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Queue</p>
-                                   <h4 className={`text-xl sm:text-3xl font-black mt-1 ${stats.pendingCount > 0 ? 'text-rose-500' : isDark ? 'text-white' : 'text-slate-900'}`}>{stats.pendingCount}</h4>
-                                </div>
-                             </div>
-
-
-                             {/* Mid Section: Chart & Activity */}
-                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
-                                <div className="lg:col-span-2 space-y-8 sm:space-y-12">
-                                   <div className={`rounded-[2.5rem] border p-6 sm:p-10 ${isDark ? 'bg-[#1a1d2d] border-slate-800' : 'bg-white border-slate-100 shadow-lg'}`}>
-                                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
-                                         <div>
-                                            <h4 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Platform Growth</h4>
-                                            <p className="text-[10px] font-black text-slate-450 dark:text-slate-500 mt-2">Aggregate growth charts and trends</p>
-                                         </div>
-                                         <div className="flex gap-1 bg-slate-100 dark:bg-slate-805 p-1 rounded-xl">
-                                            {['Month', 'Year'].map(t => <button key={t} className="px-4 py-2 rounded-lg text-[10px] font-black tracking-wider transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm">View {t.toLowerCase()}</button>)}
-                                         </div>
-                                      </div>
-                                      <div className="h-[300px] sm:h-[400px]"><AnalyticsChart /></div>
-                                   </div>
-                                   
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
-                                      <PlatformInsights />
-                                      <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
-                                   </div>
+                                    <div><p className="text-[11.5px] text-ink-3 mb-0.5">Total Users</p><p className="font-display font-bold text-[20px] tracking-tight text-ink-1">{stats.users.total.toLocaleString()}</p></div>
                                 </div>
                                 
-                                <div className="lg:col-span-1 space-y-8 sm:space-y-12">
-                                   <ActivityFeed activities={activities.slice(0, 10)} onViewAll={() => setIsActivityModalOpen(true)} />
-                                   
-                                   {/* Advanced Control Box */}
-                                   <div className="bg-gradient-to-br from-[#1e1b4b] to-[#312e81] rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl group">
-                                      <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl -mr-24 -mt-24 group-hover:scale-125 transition-transform duration-1000"></div>
-                                      <Database className="w-10 h-10 text-indigo-400/50 mb-8" />
-                                      <h4 className="text-2xl font-black mb-4 leading-tight">System Core</h4>
-                                      <p className="text-indigo-200/80 text-sm mb-10 leading-relaxed font-medium font-sans">Manage database schemas, caching layers, and high-level platform hierarchy.</p>
-                                      <button onClick={() => setActiveTab('hierarchy')} className="w-full py-4 bg-white text-indigo-955 rounded-2xl text-xs font-bold tracking-wide shadow-xl hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                                          Hierarchy manager <ChevronRight className="w-4 h-4"/>
-                                      </button>
-                                   </div>
+                                <div className="bg-surf-1 border border-line rounded-xl p-4 flex flex-col justify-between">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                            <DollarSign className="w-[15px] h-[15px] text-emerald-400" />
+                                        </div>
+                                        <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{stats.donations.count} counts</span>
+                                    </div>
+                                    <div><p className="text-[11.5px] text-ink-3 mb-0.5">Donations</p><p className="font-display font-bold text-[20px] tracking-tight text-ink-1">৳{stats.donations.total.toLocaleString()}</p></div>
                                 </div>
-                             </div>
 
-                        </div>
+                                <div className="bg-surf-1 border border-line rounded-xl p-4 flex flex-col justify-between">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                                            <FileStack className="w-[15px] h-[15px] text-blue-400" />
+                                        </div>
+                                    </div>
+                                    <div><p className="text-[11.5px] text-ink-3 mb-0.5">Resources</p><p className="font-display font-bold text-[20px] tracking-tight text-ink-1">{stats.materials.total}</p></div>
+                                </div>
+
+                                <div className="bg-surf-1 border border-line rounded-xl p-4 flex flex-col justify-between">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
+                                            <AlertTriangle className="w-[15px] h-[15px] text-rose-400" />
+                                        </div>
+                                        {stats.pendingCount > 0 && <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse">REQ</span>}
+                                    </div>
+                                    <div><p className="text-[11.5px] text-ink-3 mb-0.5">Pending Approvals</p><p className="font-display font-bold text-[20px] tracking-tight text-ink-1">{stats.pendingCount}</p></div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <div className="lg:col-span-2 bg-surf-1 border border-line rounded-xl p-5">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-display font-bold text-[13.5px]">Platform Growth</h3>
+                                        <div className="flex bg-surf-2 border border-line rounded-lg p-0.5 text-[11px]">
+                                            <button className="px-3 py-1 rounded-md text-ink-1 bg-surf-1 border border-line shadow-sm">Monthly</button>
+                                            <button className="px-3 py-1 rounded-md text-ink-3 hover:text-ink-2">Yearly</button>
+                                        </div>
+                                    </div>
+                                    <div className="h-64"><AnalyticsChart /></div>
+                                </div>
+                                <div className="bg-surf-1 border border-line rounded-xl p-5 flex flex-col">
+                                    <h3 className="font-display font-bold text-[13.5px] mb-4">Content Mix</h3>
+                                    <div className="flex-1 flex flex-col justify-center space-y-4">
+                                        <div>
+                                            <div className="flex justify-between text-[12px] mb-1"><span className="text-ink-2">Video Lectures</span><span className="font-mono">42</span></div>
+                                            <div className="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{width: '45%'}}></div></div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-[12px] mb-1"><span className="text-ink-2">PDF Notes</span><span className="font-mono">87</span></div>
+                                            <div className="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div className="h-full bg-blue-400 rounded-full" style={{width: '85%'}}></div></div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-[12px] mb-1"><span className="text-ink-2">Quizzes</span><span className="font-mono">15</span></div>
+                                            <div className="h-1.5 bg-surf-2 rounded-full overflow-hidden"><div className="h-full bg-emerald-400 rounded-full" style={{width: '25%'}}></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <div className="lg:col-span-2 bg-surf-1 border border-line rounded-xl p-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-display font-bold text-[13.5px]">Recent activity</h3>
+                                        <button className="text-[11.5px] text-indigo-400 hover:text-indigo-300 font-medium">View all</button>
+                                    </div>
+                                    <div className="divide-y divide-line">
+                                        <ActivityFeed activities={activities.slice(0,5)} onViewAll={()=>{}} />
+                                    </div>
+                                </div>
+                                <div className="bg-surf-1 border border-line rounded-xl p-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-display font-bold text-[13.5px]">System updates</h3>
+                                    </div>
+                                    <div className="space-y-3.5 max-h-80 overflow-y-auto pr-1">
+                                        <VersionNote latestUpdate={latestUpdate} onUpdate={fetchDashboardData} />
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                     )}
 
                     {/* Department Sections */}
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="animate-in fade-in duration-500 mt-2">
                       {activeTab === 'donations' && <DonationManager darkMode={isDark} />}
                       {activeTab === 'newsletter' && <NewsletterManager darkMode={isDark} />}
                       {activeTab === 'question_bank' && <QuestionBankManager darkMode={isDark} />}
@@ -494,60 +477,32 @@ export default function AdminDashboard() {
                       {activeTab === 'exams' && <ExamManager segments={segments} groups={groups} subjects={subjects} darkMode={isDark} /> }
                       {activeTab === 'feedback' && <FeedbackManager darkMode={isDark} />}
                       {activeTab === 'forum_manager' && <ForumManager darkMode={isDark} />}
-                      {activeTab === 'discussion' && <div className="p-6 h-full bg-white dark:bg-[#1a1d2d] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"><Discussion itemType="admin" itemId="admin" /></div>}
+                      {activeTab === 'discussion' && <div className="p-6 h-full bg-surf-1 rounded-xl border border-line shadow-sm"><Discussion itemType="admin" itemId="admin" /></div>}
                       {activeTab === 'news' && <ContentManager activeTab="news" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                       {activeTab === 'materials' && <ContentManager activeTab="materials" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                       {activeTab === 'segment_updates' && <ContentManager activeTab="segment_updates" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                       {activeTab === 'ebooks' && <ContentManager activeTab="ebooks" segments={segments} groups={groups} subjects={subjects} categories={categories} fetchGroups={fetchGroups} fetchSubjects={fetchSubjects} showSuccess={showSuccess} showError={showError} confirmAction={()=>{}} openCategoryModal={()=>{}} darkMode={isDark} />}
                     </div>
 
-                </div>
-            </main>
-
+                </main>
+            </div>
 
             {/* Modal */}
             {modal.isOpen && (
-                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2rem] p-10 max-w-sm w-full text-center shadow-3xl animate-in zoom-in-95 duration-200">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${modal.type === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-green-50 text-green-600'}`}>
-                           {modal.type === 'error' ? <AlertTriangle className="w-8 h-8"/> : <CheckCircleIcon className="w-8 h-8"/>}
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-base/80 backdrop-blur-sm p-4">
+                    <div className="bg-surf-1 border border-line rounded-[1.5rem] p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 ${modal.type === 'error' ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                           {modal.type === 'error' ? <AlertTriangle className="w-6 h-6"/> : <LucideCheckCircle2 className="w-6 h-6"/>}
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-2">{modal.type === 'error' ? 'Error' : 'Success!'}</h3>
-                        <p className="text-slate-500 font-medium leading-relaxed mb-8">{modal.message}</p>
-                        <button onClick={closeModal} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold tracking-widest shadow-xl hover:bg-slate-800 transition-all">Continue</button>
-                    </div>
-                </div>
-            )}
-            {/* Activity View All Modal */}
-            {isActivityModalOpen && (
-                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2.5rem] shadow-3xl w-full max-w-2xl overflow-hidden flex flex-col h-[80vh] animate-in slide-in-from-bottom-8 duration-300">
-                        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                                   <Clock className="w-6 h-6 text-indigo-600" /> Recent Activities
-                                </h3>
-                                <p className="text-[11px] font-bold tracking-widest text-slate-400 mt-1">Platform-wide audit trail</p>
-                            </div>
-                            <button onClick={() => setIsActivityModalOpen(false)} className="p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 text-slate-400"><X className="w-5 h-5"/></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-8 space-y-2 custom-scrollbar">
-                           <ActivityFeed activities={activities} onViewAll={() => {}} />
-                        </div>
-                        <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-                            <button onClick={() => setIsActivityModalOpen(false)} className="px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold tracking-widest hover:bg-slate-800 transition-all">Close</button>
-                        </div>
+                        <h3 className="text-lg font-bold text-ink-1 mb-2">{modal.type === 'error' ? 'Error' : 'Success!'}</h3>
+                        <p className="text-ink-3 font-medium text-[12.5px] leading-relaxed mb-6">{modal.message}</p>
+                        <button onClick={closeModal} className="w-full py-2.5 bg-ink-1 text-base rounded-lg font-medium shadow-xl hover:opacity-90 transition-all">Continue</button>
                     </div>
                 </div>
             )}
         </div>
     );
+
 }
 
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M20 6 9 17l-5-5"/>
-    </svg>
-  );
-}
+
