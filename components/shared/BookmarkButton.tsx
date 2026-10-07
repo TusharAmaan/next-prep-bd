@@ -5,11 +5,15 @@ import { Bookmark } from 'lucide-react';
 import { supabase } from "@/lib/supabaseClient";
 
 interface BookmarkButtonProps {
-  itemType: 'course' | 'post' | 'lecture_sheet' | 'question' | 'ebook' | 'news' | 'segment_post';
+  itemType: 'course' | 'post' | 'lecture_sheet' | 'question' | 'ebook' | 'news' | 'segment_post' | 'curriculum';
   itemId: string | number;
   metadata?: {
     title: string;
     thumbnail_url?: string;
+    subject_id?: string | number;
+    subject_title?: string;
+    unit_title?: string;
+    url?: string;
   };
 }
 

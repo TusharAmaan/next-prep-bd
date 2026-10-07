@@ -15,7 +15,7 @@ import { Metadata } from 'next';
 import { Noto_Serif_Bengali } from "next/font/google";
 import { getBreadcrumbSchema, getArticleSchema } from "@/lib/seo-utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600; // Cache blog post for 10 minutes
 
 const bengaliFont = Noto_Serif_Bengali({ 
   subsets: ["bengali"],

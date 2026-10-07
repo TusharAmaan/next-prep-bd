@@ -13,7 +13,7 @@ import Link from "next/link";
 import ProseStyles from "@/components/post/ProseStyles";
 import { ChevronRight } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // Cache news article for 5 minutes
 
 function getQueryColumn(param: string) {
   const isNumeric = /^\d+$/.test(param);

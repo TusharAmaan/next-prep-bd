@@ -14,26 +14,81 @@ export async function generateMetadata({ params }: { params: Promise<{ subjectId
   const { contentId, subjectId } = await params;
 
   const supabase = await createClient();
-  const { data: content } = await supabase
-    .from('lesson_plan_contents')
-    .select(`*, lesson_plan_lessons (*, lesson_plan_units (*))`)
-    .eq('id', contentId)
-    .single();
+  const [{ data: content }, { data: subData }] = await Promise.all([
+    supabase
+      .from('lesson_plan_contents')
+      .select(`*, lesson_plan_lessons (*, lesson_plan_units (*))`)
+      .eq('id', contentId)
+      .single(),
+    supabase
+      .from('subjects')
+      .select('*, groups(title, slug, segments(title, slug))')
+      .eq('id', subjectId)
+      .single()
+  ]);
 
-  if (!content) return { title: 'Content Not Found' };
+  if (!content) return { title: 'Lesson Not Found | NextPrepBD' };
+
+  const unitTitle = content.lesson_plan_lessons?.lesson_plan_units?.title || '';
+  const lessonTitle = content.lesson_plan_lessons?.title || '';
+  const subjectTitle = subData?.title || 'Academic Subject';
+  const groupTitle = subData?.groups?.title || '';
+  const segmentTitle = subData?.groups?.segments?.title || '';
+
+  const metaTitle = `${content.title} | ${subjectTitle} Curriculum - NextPrepBD`;
+  const metaDescription = `Study "${content.title}" in ${lessonTitle ? `${lessonTitle}, ` : ''}${unitTitle ? `${unitTitle} - ` : ''}${subjectTitle}${segmentTitle ? ` (${segmentTitle})` : ''}. Comprehensive lessons, syllabus notes, and exam practice on NextPrepBD.`;
 
   return {
-    title: `${content.title} - ${content.lesson_plan_lessons?.title} | NextPrepBD`,
-    description: `Study ${content.title} as part of the ${content.lesson_plan_lessons?.lesson_plan_units?.title} module. Access high-quality lesson plans and academic intelligence on NextPrepBD.`,
+    title: metaTitle,
+    description: metaDescription,
+    keywords: [
+      content.title,
+      subjectTitle,
+      lessonTitle,
+      unitTitle,
+      groupTitle,
+      segmentTitle,
+      'NCTB Curriculum',
+      'Bangladesh Academic Syllabus',
+      'Class Lessons BD',
+      'NextPrepBD'
+    ].filter(Boolean),
     alternates: {
-      canonical: `/curriculum/${subjectId}/${contentId}`,
+      canonical: `https://nextprepbd.com/curriculum/${subjectId}/${contentId}`,
     },
     openGraph: {
-      title: `${content.title} - NextPrepBD Curriculum`,
-      description: `In-depth lesson plan for ${content.title}. Master your syllabus with strategic academic content.`,
+      title: `${content.title} - ${subjectTitle} | NextPrepBD Curriculum`,
+      description: metaDescription,
       url: `https://nextprepbd.com/curriculum/${subjectId}/${contentId}`,
+      siteName: 'NextPrepBD',
+      locale: 'en_US',
       type: 'article',
+      images: [
+        {
+          url: 'https://nextprepbd.com/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${content.title} - ${subjectTitle} NextPrepBD`
+        }
+      ]
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${content.title} | ${subjectTitle} - NextPrepBD`,
+      description: metaDescription,
+      images: ['https://nextprepbd.com/og-image.png']
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      }
+    }
   };
 }
 
@@ -50,6 +105,19 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
     .single();
   
   if (!initialContent) return notFound();
+
+  // Dynamically resolve author profile if author_id is recorded
+  if (initialContent.author_id) {
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('id', initialContent.author_id)
+      .single();
+    if (authorProfile?.full_name) {
+      initialContent.author = authorProfile;
+      initialContent.author_name = authorProfile.full_name;
+    }
+  }
 
   // Increment view count (Server-side)
   await supabase.from('lesson_plan_contents').update({ view_count: (initialContent.view_count || 0) + 1 }).eq('id', contentId);
@@ -79,30 +147,72 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser();
 
   const currentUrl = `https://nextprepbd.com/curriculum/${subjectId}/${contentId}`;
-  
-  // SEO Schemas
+  const unitTitle = initialContent.lesson_plan_lessons?.lesson_plan_units?.title || "Unit";
+  const lessonTitle = initialContent.lesson_plan_lessons?.title || "Lesson";
+  const segmentTitle = subData?.groups?.segments?.title || "";
+  const groupTitle = subData?.groups?.title || "";
+
+  // Full Hierarchical Breadcrumb Structure for Google
   const breadcrumbItems = [
-    { name: "Home", item: "https://nextprepbd.com" },
-    { name: "Curriculum", item: "https://nextprepbd.com/curriculum" },
-    { name: subData?.title || "Subject", item: `https://nextprepbd.com/curriculum/${subjectId}` },
-    { name: initialContent.title, item: currentUrl }
+    { name: "Home", item: "/" },
+    { name: "Curriculum", item: "/curriculum" },
+    ...(subData?.groups?.segments?.slug ? [{ name: subData.groups.segments.title, item: `/resources/${subData.groups.segments.slug}` }] : []),
+    ...(subData?.groups?.slug && subData?.groups?.segments?.slug ? [{ name: subData.groups.title, item: `/resources/${subData.groups.segments.slug}/${subData.groups.slug}` }] : []),
+    ...(subData?.slug && subData?.groups?.slug && subData?.groups?.segments?.slug ? [{ name: subData.title, item: `/resources/${subData.groups.segments.slug}/${subData.groups.slug}/${subData.slug}` }] : []),
+    ...(unitTitle ? [{ name: unitTitle, item: `/curriculum/${subjectId}/${contentId}` }] : []),
+    { name: initialContent.title, item: `/curriculum/${subjectId}/${contentId}` }
   ];
   const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
+
+  // Google LearningResource Educational Schema
+  const learningResourceSchema = {
+    "@context": "https://schema.org",
+    "@type": ["Article", "LearningResource"],
+    "headline": initialContent.title,
+    "name": initialContent.title,
+    "description": `Study ${initialContent.title} as part of ${unitTitle} in ${subData?.title || 'Academic'} curriculum.`,
+    "learningResourceType": "LessonPlan",
+    "educationalLevel": segmentTitle ? `${segmentTitle} Curriculum` : "NCTB Curriculum",
+    "inLanguage": initialContent.version === 'en' ? 'en' : 'bn-BD',
+    "isAccessibleForFree": true,
+    "url": currentUrl,
+    "datePublished": initialContent.created_at,
+    "dateModified": initialContent.created_at,
+    "teaches": initialContent.title,
+    "author": {
+      "@type": "Person",
+      "name": initialContent.author_name || initialContent.author?.full_name || `${subData?.title || 'Academic'} Curriculum Faculty`
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "NextPrepBD",
+      "url": "https://nextprepbd.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://nextprepbd.com/icon.png"
+      }
+    },
+    "isPartOf": {
+      "@type": "Course",
+      "name": `${subData?.title || 'Academic'} Curriculum`,
+      "description": `Standardized curriculum course for ${subData?.title || 'Subject'}.`,
+      "provider": {
+        "@type": "Organization",
+        "name": "NextPrepBD",
+        "sameAs": "https://nextprepbd.com"
+      }
+    }
+  };
 
   const articleSchema = getArticleSchema({
     title: initialContent.title,
     description: `Strategic lesson plan for ${initialContent.title}. Part of ${initialContent.lesson_plan_lessons?.title}.`,
     url: currentUrl,
     datePublished: initialContent.created_at,
-    authorName: "NextPrepBD Academic Team"
+    authorName: initialContent.author_name || initialContent.author?.full_name || `${subData?.title || 'Academic'} Curriculum Faculty`
   });
 
   // Right rail data
-  const unitTitle = initialContent.lesson_plan_lessons?.lesson_plan_units?.title || "Unit";
-  const lessonTitle = initialContent.lesson_plan_lessons?.title || "Lesson";
-  const segmentTitle = subData?.groups?.segments?.title || "";
-  const groupTitle = subData?.groups?.title || "";
-
   // Count total contents in the hierarchy
   const totalContents = (hierarchyData || []).reduce((sum: number, unit: any) => {
     return sum + (unit.lesson_plan_lessons || []).reduce((lSum: number, lesson: any) => {
@@ -122,8 +232,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
   ];
 
   const quickLinks = [
-    { label: `${subData?.title || "Subject"} curriculum`, href: `/curriculum/${subjectId}` },
-    { label: "All curricula", href: "/curriculum" },
+    { label: "Academic Curriculum", href: "/curriculum" },
     ...(subData?.groups?.segments?.slug ? [{ label: `${segmentTitle} resources`, href: `/resources/${subData.groups.segments.slug}` }] : []),
     { label: "Forum", href: "/forum" },
   ];
@@ -144,10 +253,10 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
           {totalLessons} lessons across {(hierarchyData || []).length} units. Track your progress.
         </p>
         <Link
-          href={`/curriculum/${subjectId}`}
+          href="/curriculum"
           className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white text-indigo-700 rounded-xl text-xs font-bold shadow-md hover:bg-indigo-50 transition-all"
         >
-          View full curriculum <ChevronRight className="w-3.5 h-3.5" />
+          Explore All Curricula <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
     </PostRightRail>
@@ -158,6 +267,10 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(learningResourceSchema) }}
       />
       <script
         type="application/ld+json"

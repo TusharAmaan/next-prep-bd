@@ -76,9 +76,10 @@ export default async function UpdateDetailsPage({ params }: { params: Promise<{ 
   const currentUrl = `https://nextprepbd.com/resources/${segment_slug}/updates/${post.id}`;
 
   const breadcrumbItems = [
-    { name: "Home", item: "https://nextprepbd.com" },
-    { name: "Resources", item: "https://nextprepbd.com/resources" },
-    { name: post.segments?.title || "Segment", item: `https://nextprepbd.com/resources/${segment_slug}` },
+    { name: "Home", item: "/" },
+    { name: "Resources", item: "/resources" },
+    { name: post.segments?.title || "Segment", item: `/resources/${segment_slug}` },
+    { name: "Updates & Routines", item: `/resources/${segment_slug}/updates` },
     { name: post.title, item: currentUrl }
   ];
 

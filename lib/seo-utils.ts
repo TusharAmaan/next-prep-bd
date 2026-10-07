@@ -241,3 +241,142 @@ export function getQAPageSchema(qa: {
   
   return schema;
 }
+
+/**
+ * Generate LearningResource JSON-LD Schema (for Curriculum Lessons)
+ * Conforms to Google Educational Material / LearningResource structured data
+ */
+export function getLearningResourceSchema(resource: {
+  name: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified?: string;
+  authorName?: string;
+  educationalLevel?: string;
+  courseName?: string;
+  unitName?: string;
+  lessonName?: string;
+  inLanguage?: string;
+}) {
+  const schema: any = {
+    "@context": "https://schema.org",
+    "@type": ["Article", "LearningResource"],
+    "headline": resource.name,
+    "name": resource.name,
+    "description": resource.description,
+    "learningResourceType": "LessonPlan",
+    "educationalLevel": resource.educationalLevel || "National Curriculum and Textbook Board (NCTB)",
+    "inLanguage": resource.inLanguage || "bn-BD",
+    "isAccessibleForFree": true,
+    "url": resource.url,
+    "datePublished": resource.datePublished,
+    "dateModified": resource.dateModified || resource.datePublished,
+    "teaches": resource.name,
+    "author": {
+      "@type": "Person",
+      "name": resource.authorName || "NextPrepBD Academic Faculty"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": siteConfig.name,
+      "url": siteConfig.url,
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteConfig.url}/icon.png`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": resource.url
+    }
+  };
+
+  if (resource.courseName) {
+    schema.isPartOf = {
+      "@type": "Course",
+      "name": resource.courseName,
+      "provider": {
+        "@type": "Organization",
+        "name": siteConfig.name,
+        "sameAs": siteConfig.url
+      }
+    };
+  }
+
+  return schema;
+}
+
+/**
+ * Generate Course JSON-LD Schema with Units/Syllabus
+ */
+export function getCurriculumCourseSchema(course: {
+  name: string;
+  description: string;
+  url: string;
+  educationalLevel?: string;
+  providerName?: string;
+  syllabusUnits?: { name: string; description?: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": course.name,
+    "description": course.description,
+    "url": course.url,
+    "educationalCredentialAwarded": course.educationalLevel || "National Curriculum (NCTB)",
+    "inLanguage": "bn-BD",
+    "isAccessibleForFree": true,
+    "provider": {
+      "@type": "Organization",
+      "name": course.providerName || siteConfig.name,
+      "sameAs": siteConfig.url
+    },
+    "hasCourseInstance": {
+      "@type": "CourseInstance",
+      "courseMode": "online",
+      "inLanguage": "bn-BD"
+    },
+    ...(course.syllabusUnits && course.syllabusUnits.length > 0 ? {
+      "syllabusSections": course.syllabusUnits.map((unit, idx) => ({
+        "@type": "Syllabus",
+        "position": idx + 1,
+        "name": unit.name,
+        "description": unit.description || `${unit.name} syllabus unit`
+      }))
+    } : {})
+  };
+}
+
+/**
+ * Generate EducationalOccupationalProgram schema (for Segments & Groups)
+ */
+export function getEducationalProgramSchema(program: {
+  name: string;
+  description: string;
+  url: string;
+  courses?: { name: string; url: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "EducationalOccupationalProgram",
+    "name": program.name,
+    "description": program.description,
+    "url": program.url,
+    "provider": {
+      "@type": "EducationalOrganization",
+      "name": siteConfig.name,
+      "url": siteConfig.url
+    },
+    "hasCourse": (program.courses || []).map(course => ({
+      "@type": "Course",
+      "name": course.name,
+      "url": course.url,
+      "provider": {
+        "@type": "Organization",
+        "name": siteConfig.name
+      }
+    }))
+  };
+}
+

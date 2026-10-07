@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120; // Cache for 2 minutes to protect serverless CPU
 
 export default async function ForumIndexPage() {
   const supabase = await createClient();

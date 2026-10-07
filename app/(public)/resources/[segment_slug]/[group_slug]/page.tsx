@@ -84,10 +84,20 @@ export default async function GroupPage({
 
     const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
 
-    // Helper Config
+    const programSchema = {
+        "@context": "https://schema.org",
+        "@type": "EducationalOccupationalProgram",
+        "name": `${groupData.title} Academic Stream - ${segmentData.title}`,
+        "description": `Official curriculum, study resources, question banks, and routines for ${groupData.title} students under ${segmentData.title}.`,
+        "url": `https://nextprepbd.com/resources/${segment_slug}/${group_slug}`,
+        "provider": {
+            "@type": "EducationalOrganization",
+            "name": "NextPrepBD",
+            "url": "https://nextprepbd.com"
+        }
+    };
+
     const getPageTitle = () => {
-        if (type === 'pdf') return 'Study Materials';
-        if (type === 'video') return 'Video Classes';
         if (type === 'update') return 'Group Updates';
         if (type === 'question') return 'Question Bank';
         return 'Resources';
@@ -143,7 +153,7 @@ export default async function GroupPage({
             <>
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, programSchema]) }}
                 />
                 <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white transition-colors duration-300">
                     <div className="bg-slate-900 text-white pt-24 md:pt-32 pb-16 md:pb-24 px-4 md:px-6 relative overflow-hidden border-b border-white/5">
@@ -203,9 +213,9 @@ export default async function GroupPage({
         supabase.from("subjects").select("*").eq("group_id", groupData.id).order("id"),
         supabase.from("resources").select("*, subjects(title), groups(title), profiles(full_name)").eq("group_id", groupData.id).eq("type", "blog").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
         supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).in("type", ["pdf", "video"]).eq("status", "approved").order("created_at", { ascending: false }).limit(5),
-        supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(15),
+        supabase.from("resources").select("*, subjects(title)").eq("group_id", groupData.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(50),
         supabase.from("resources").select("category").eq("group_id", groupData.id).eq("type", "question").eq("status", "approved"),
-        supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(15),
+        supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("resources").select("*", { count: 'exact', head: true }).eq("group_id", groupData.id).eq("type", "question").eq("status", "approved"),
         supabase.from("resources").select("*", { count: 'exact', head: true }).eq("group_id", groupData.id).in("type", ["pdf", "video"]).eq("status", "approved")
     ]);
@@ -287,7 +297,7 @@ export default async function GroupPage({
         <>
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, programSchema]) }}
             />
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white pt-16 transition-colors duration-300 relative overflow-hidden">
                 {/* Decorative Colorful Ambient Background Blobs */}
@@ -417,9 +427,6 @@ export default async function GroupPage({
                                 </section>
                             )}
 
-                            {/* QUICK UPDATES */}
-                            <QuickUpdatesSection updates={updates || []} segmentSlug={segment_slug} />
-
                             {/* QUESTION BANK */}
                             <QuestionBankSection
                                 questions={questions || []}
@@ -427,6 +434,9 @@ export default async function GroupPage({
                                 browseAllHref={`/resources/${segment_slug}/${group_slug}?type=question`}
                                 subtitle={`Board questions and school exams for ${groupData.title}`}
                             />
+
+                            {/* QUICK UPDATES */}
+                            <QuickUpdatesSection updates={updates || []} segmentSlug={segment_slug} />
 
                             {/* STUDY VAULT */}
                             <section>

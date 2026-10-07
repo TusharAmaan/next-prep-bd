@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { BookOpen, Clock, User, ArrowRight, Search, GraduationCap, Sparkles, Star } from "lucide-react";
 import BookmarkButton from "@/components/shared/BookmarkButton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600; // Cache on Edge CDN for 10 minutes
 
 export default async function CoursesPage() {
   // 1. Fetch data

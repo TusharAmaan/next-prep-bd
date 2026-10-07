@@ -290,29 +290,56 @@ export default function LessonPlanManager({ subjects: initialSubjects, darkMode 
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       if (editingContent) {
-        const { error } = await supabase
+        const updatePayload: any = { 
+          title: editorTitle, 
+          type: editorType, 
+          content_body: editorBody, 
+          order_index: editorOrderIndex 
+        };
+        if (user?.id) updatePayload.author_id = user.id;
+
+        let { error } = await supabase
           .from('lesson_plan_contents')
-          .update({ 
-            title: editorTitle, 
-            type: editorType, 
-            content_body: editorBody, 
-            order_index: editorOrderIndex 
-          })
+          .update(updatePayload)
           .eq('id', editingContent.id);
+        
+        if (error && error.message?.includes('author_id')) {
+          delete updatePayload.author_id;
+          const retry = await supabase
+            .from('lesson_plan_contents')
+            .update(updatePayload)
+            .eq('id', editingContent.id);
+          error = retry.error;
+        }
+
         if (error) throw error;
         toast.success("Content updated successfully!");
       } else {
-        const { error } = await supabase
+        const insertPayload: any = { 
+          title: editorTitle, 
+          type: editorType, 
+          content_body: editorBody, 
+          order_index: editorOrderIndex, 
+          lesson_id: parentLesson.id, 
+          version: versionFilter 
+        };
+        if (user?.id) insertPayload.author_id = user.id;
+
+        let { error } = await supabase
           .from('lesson_plan_contents')
-          .insert([{ 
-            title: editorTitle, 
-            type: editorType, 
-            content_body: editorBody, 
-            order_index: editorOrderIndex, 
-            lesson_id: parentLesson.id, 
-            version: versionFilter 
-          }]);
+          .insert([insertPayload]);
+
+        if (error && error.message?.includes('author_id')) {
+          delete insertPayload.author_id;
+          const retry = await supabase
+            .from('lesson_plan_contents')
+            .insert([insertPayload]);
+          error = retry.error;
+        }
+
         if (error) throw error;
         toast.success("Content created successfully!");
       }

@@ -5,10 +5,12 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
-      // Don't let Google index your Admin Panel!
-      disallow: ['/admin/', '/login', '/dashboard'], 
+      allow: ['/', '/curriculum/', '/resources/'],
+      disallow: ['/admin/', '/login', '/dashboard', '/student/', '/tutor/', '/api/'], 
     },
-    sitemap: `${siteConfig.url}/sitemap.xml`,
+    sitemap: [
+      `${siteConfig.url}/sitemap.xml`,
+      `${siteConfig.url}/forum-sitemap.xml`
+    ],
   };
 }

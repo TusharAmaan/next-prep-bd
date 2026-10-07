@@ -115,7 +115,22 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Include /tutor in the matcher now
-    '/((?!_next/static|_next/image|favicon.ico|ads\\.txt|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match only routes that require protection, role checks, or API rate limiting:
+     * - /admin/:path*
+     * - /tutor/:path*
+     * - /editor/:path*
+     * - /student/:path*
+     * - /login
+     * - /register
+     * - /api/:path*
+     */
+    '/admin/:path*',
+    '/tutor/:path*',
+    '/editor/:path*',
+    '/student/:path*',
+    '/login',
+    '/register',
+    '/api/:path*',
   ],
 }

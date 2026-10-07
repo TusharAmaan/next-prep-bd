@@ -83,7 +83,8 @@ interface Resource {
   title: string;
   type: string;
   created_at: string;
-  resource_id: number;
+  resource_id: number | string;
+  metadata?: any;
 }
 
 interface ExamPaper {
@@ -165,15 +166,19 @@ export default function ModernStudentDashboard() {
     return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
   }, [filteredBookmarks]);
 
-  const getLibraryLink = (type: string, id: number) => {
+  const getLibraryLink = (type: string, id: number | string, metadata?: any) => {
     switch(type) {
       case 'course': return `/courses/${id}`;
       case 'ebook': return `/ebooks/${id}`;
       case 'news': return `/news/${id}`;
       case 'question': return `/question/${id}`;
       case 'post': return `/blog/${id}`;
+      case 'curriculum':
+      case 'curriculum_lesson':
+      case 'lesson':
+        return metadata?.url || (metadata?.subject_id ? `/curriculum/${metadata.subject_id}/${id}` : `/curriculum`);
       case 'segment_post': return `/resources/redirect/${id}`; // Future-proofing
-      default: return `/blog/${id}`;
+      default: return metadata?.url || `/blog/${id}`;
     }
   };
 
@@ -296,7 +301,8 @@ export default function ModernStudentDashboard() {
           title: b.metadata?.title || 'Untitled',
           type: b.item_type,
           created_at: b.created_at,
-          resource_id: b.item_id
+          resource_id: b.item_id,
+          metadata: b.metadata
         })));
       }
 
@@ -841,6 +847,7 @@ export default function ModernStudentDashboard() {
               <div className="flex flex-wrap gap-2 px-2 overflow-x-auto pb-2 scrollbar-hide">
                  {[
                    { id: 'all', label: 'All Items' },
+                   { id: 'curriculum', label: 'Curriculum' },
                    { id: 'post', label: 'Blogs' },
                    { id: 'course', label: 'Courses' },
                    { id: 'ebook', label: 'Ebooks' },
@@ -868,9 +875,9 @@ export default function ModernStudentDashboard() {
                   <div key={type} className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 tracking-tight capitalize flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        {type === "question" ? <HelpCircle className="w-4 h-4" /> : (type === "course" ? <PlayCircle className="w-4 h-4" /> : (type === "ebook" ? <BookOpen className="w-4 h-4" /> : <FileText className="w-4 h-4" />))}
+                        {type === "question" ? <HelpCircle className="w-4 h-4" /> : (type === "course" ? <PlayCircle className="w-4 h-4" /> : (type === "ebook" ? <BookOpen className="w-4 h-4" /> : (type === "curriculum" || type === "curriculum_lesson" ? <GraduationCap className="w-4 h-4" /> : <FileText className="w-4 h-4" />)))}
                       </div>
-                      {type.replace('_', ' ')}s
+                      {type === "curriculum" ? "Curriculum Lessons" : `${type.replace('_', ' ')}s`}
                       <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
                     </h3>
                     
@@ -879,17 +886,20 @@ export default function ModernStudentDashboard() {
                         <div key={bkm.id} className="min-w-[280px] md:min-w-[320px] max-w-[320px] snap-center bg-white rounded-3xl p-6 border border-slate-100 hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm flex flex-col focus-within:ring-2 focus-within:ring-indigo-200">
                           <div className="flex justify-between items-start mb-6">
                             <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                              {bkm.type === "question" ? <HelpCircle className="w-8 h-8" /> : (bkm.type === "course" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "ebook" ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />))}
+                              {bkm.type === "question" ? <HelpCircle className="w-8 h-8" /> : (bkm.type === "course" ? <PlayCircle className="w-8 h-8" /> : (bkm.type === "ebook" ? <BookOpen className="w-8 h-8" /> : (bkm.type === "curriculum" || bkm.type === "curriculum_lesson" ? <GraduationCap className="w-8 h-8" /> : <FileText className="w-8 h-8" />)))}
                             </div>
-                            <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} metadata={{ title: bkm.title }} />
+                            <BookmarkButton itemType={bkm.type as any} itemId={bkm.resource_id} metadata={bkm.metadata || { title: bkm.title }} />
                           </div>
                           <div className="space-y-4 flex-1 flex flex-col justify-between">
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">{bkm.type.replace('_', ' ')}</span>
+                                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">{bkm.type === 'curriculum' ? 'CURRICULUM LESSON' : bkm.type.replace('_', ' ')}</span>
+                                {bkm.metadata?.subject_title && (
+                                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded truncate max-w-[120px]">{bkm.metadata.subject_title}</span>
+                                )}
                               </div>
                               <Link 
-                                  href={getLibraryLink(bkm.type, bkm.resource_id)}
+                                  href={getLibraryLink(bkm.type, bkm.resource_id, bkm.metadata)}
                                   className="block"
                               >
                                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight leading-tight line-clamp-2">
@@ -900,7 +910,7 @@ export default function ModernStudentDashboard() {
                             <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-4">
                               <span className="text-[11px] font-bold text-slate-400">Saved: {new Date(bkm.created_at).toLocaleDateString()}</span>
                               <Link 
-                                 href={getLibraryLink(bkm.type, bkm.resource_id)}
+                                 href={getLibraryLink(bkm.type, bkm.resource_id, bkm.metadata)}
                                  className="text-xs font-bold text-slate-900 hover:text-indigo-600 tracking-widest transition-colors flex items-center gap-1 group/btn"
                               >
                                  View <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />

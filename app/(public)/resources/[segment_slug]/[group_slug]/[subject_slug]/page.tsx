@@ -89,6 +89,22 @@ export default async function SubjectPage({
 
   const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
 
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": `${subject.title} - ${segmentData.title} (${groupData.title})`,
+    "description": `Comprehensive study materials, question banks, routines, and curriculum for ${subject.title} under ${segmentData.title} ${groupData.title}.`,
+    "url": `https://nextprepbd.com/resources/${segment_slug}/${group_slug}/${subject_slug}`,
+    "educationalCredentialAwarded": `${segmentData.title} Curriculum`,
+    "inLanguage": "bn-BD",
+    "isAccessibleForFree": true,
+    "provider": {
+      "@type": "EducationalOrganization",
+      "name": "NextPrepBD",
+      "url": "https://nextprepbd.com"
+    }
+  };
+
   const getPageTitle = () => {
     if (type === 'pdf') return 'Study Materials';
     if (type === 'video') return 'Video Classes';
@@ -115,7 +131,7 @@ export default async function SubjectPage({
         <>
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, courseSchema]) }}
             />
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white transition-colors duration-300">
                 <div className="bg-slate-900 text-white pt-32 pb-24 px-6 relative overflow-hidden border-b border-white/5">
@@ -173,8 +189,8 @@ export default async function SubjectPage({
   ] = await Promise.all([
     supabase.from("resources").select("*, subjects(title), groups(title), profiles(full_name)").eq("subject_id", subject.id).eq("type", "blog").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
     supabase.from("resources").select("*, subjects(title)").eq("subject_id", subject.id).in("type", ["pdf", "video"]).eq("status", "approved").order("created_at", { ascending: false }).limit(6),
-    supabase.from("resources").select("*, subjects(title)").eq("subject_id", subject.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(15),
-    supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(15),
+    supabase.from("resources").select("*, subjects(title)").eq("subject_id", subject.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(50),
+    supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(50),
     supabase.from("resources").select("*", { count: 'exact', head: true }).eq("subject_id", subject.id).in("type", ["pdf", "video"]).eq("status", "approved"),
     supabase.from("resources").select("*", { count: 'exact', head: true }).eq("subject_id", subject.id).eq("type", "question").eq("status", "approved"),
     supabase.from("resources").select("*", { count: 'exact', head: true }).eq("subject_id", subject.id).eq("type", "blog").eq("status", "approved")
@@ -251,7 +267,7 @@ export default async function SubjectPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, courseSchema]) }}
       />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white pt-16 transition-colors duration-300 relative overflow-hidden">
         {/* Decorative Colorful Ambient Background Blobs */}
@@ -339,8 +355,49 @@ export default async function SubjectPage({
 
             {/* PAGE CONTENT CONTAINER */}
             <div className="mt-6 md:mt-8 space-y-6 md:space-y-10">
-              
-              {/* EXPERT INSIGHTS (BLOGS FIRST) */}
+
+              {/* 1. LESSON PLAN / CURRICULUM WIDGET */}
+              <Link
+                href="/curriculum"
+                className="block group bg-white dark:bg-[#0c1222] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 relative overflow-hidden"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-sm">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <span className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 tracking-wide bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/60">
+                        Interactive Syllabus Navigator
+                      </span>
+                    </div>
+                    <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      Master Syllabus Milestones for {subject.title}
+                    </h3>
+                    <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                      Follow structured NCTB chapter plans, test your knowledge with micro-exams, and track your milestone completion path.
+                    </p>
+                  </div>
+                  <div className="shrink-0 self-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 shadow-2xs">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+
+              {/* 2. QUESTION BANK */}
+              <QuestionBankSection 
+                questions={questions || []} 
+                segmentSlug={segment_slug} 
+                browseAllHref={`/resources/${segment_slug}/${group_slug}/${subject_slug}?type=question`} 
+                title="Academic Solutions"
+                subtitle={`Board questions and institutional exam archives for ${subject.title}`}
+                defaultSubjectTitle={subject.title}
+              />
+
+              {/* 3. QUICK UPDATES */}
+              <QuickUpdatesSection updates={updates || []} segmentSlug={segment_slug} />
+
+              {/* 4. EXPERT INSIGHTS */}
               <section>
                 <div className="flex items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-3">
@@ -405,47 +462,6 @@ export default async function SubjectPage({
                   </div>
                 )}
               </section>
-
-              {/* QUESTION BANK (SECOND) */}
-              <QuestionBankSection 
-                questions={questions || []} 
-                segmentSlug={segment_slug} 
-                browseAllHref={`/resources/${segment_slug}/${group_slug}/${subject_slug}?type=question`} 
-                title="Academic Solutions"
-                subtitle={`Board questions and school exams for ${subject.title}`}
-                defaultSubjectTitle={subject.title}
-              />
-
-              {/* LESSON PLAN / CURRICULUM WIDGET */}
-              <Link
-                href={`/curriculum/${subject.id}`}
-                className="block group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 md:p-6 shadow-sm hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:shadow-md transition-all duration-300 relative overflow-hidden"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-sm">
-                    <Layers className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wide bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full">
-                        Interactive lesson plan
-                      </span>
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-slate-850 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      Track syllabus milestones for {subject.title}
-                    </h3>
-                    <p className="text-[11px] md:text-xs text-slate-450 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                      Visualize your learning progress, check off completed chapters, and follow curated study guidelines designed to streamline your preparation path.
-                    </p>
-                  </div>
-                  <div className="shrink-0 self-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* QUICK UPDATES (THIRD) */}
-              <QuickUpdatesSection updates={updates || []} segmentSlug={segment_slug} />
 
               {/* SUBJECT VAULT (FOURTH) */}
               <section>

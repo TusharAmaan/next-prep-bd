@@ -78,7 +78,18 @@ export default async function SegmentPage({
 
     const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
 
-    // Helper Config
+    const programSchema = {
+        "@context": "https://schema.org",
+        "@type": "EducationalOccupationalProgram",
+        "name": `${segmentData.title} Academic Program`,
+        "description": `Comprehensive curriculum framework, subject resources, notice board, and past papers for ${segmentData.title} students in Bangladesh.`,
+        "url": `https://nextprepbd.com/resources/${segment_slug}`,
+        "provider": {
+            "@type": "EducationalOrganization",
+            "name": "NextPrepBD",
+            "url": "https://nextprepbd.com"
+        }
+    };
     const getPageTitle = () => {
         if (type === 'pdf') return 'Study Materials';
         if (type === 'video') return 'Video Classes';
@@ -122,7 +133,7 @@ export default async function SegmentPage({
             <>
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, programSchema]) }}
                 />
                 <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white transition-colors duration-300">
                     <div className="bg-slate-900 text-white pt-24 md:pt-32 pb-16 md:pb-24 px-4 md:px-6 relative overflow-hidden border-b border-white/5">
@@ -182,9 +193,9 @@ export default async function SegmentPage({
         supabase.from("groups").select("*").eq("segment_id", segmentData.id).order("id"),
         supabase.from("resources").select("*, subjects(title), groups(title), profiles(full_name)").eq("segment_id", segmentData.id).eq("type", "blog").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
         supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).in("type", ["pdf", "video"]).eq("status", "approved").order("created_at", { ascending: false }).limit(5),
-        supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(15),
+        supabase.from("resources").select("*, subjects(title)").eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved").order("created_at", { ascending: false }).limit(50),
         supabase.from("resources").select("category").eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved"),
-        supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(15),
+        supabase.from("segment_updates").select("id, title, type, created_at, attachment_url").eq("segment_id", segmentData.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("resources").select("*", { count: 'exact', head: true }).eq("segment_id", segmentData.id).eq("type", "question").eq("status", "approved"),
         supabase.from("resources").select("*", { count: 'exact', head: true }).eq("segment_id", segmentData.id).eq("type", "blog").eq("status", "approved")
     ]);
@@ -266,7 +277,7 @@ export default async function SegmentPage({
         <>
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, programSchema]) }}
             />
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white pt-16 transition-colors duration-300 relative overflow-hidden">
                 {/* Decorative Colorful Ambient Background Blobs */}
